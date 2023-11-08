@@ -13,7 +13,7 @@ github取消了https的用户名+密码验证方式，改用personal access toke
     gh auth status
     gh auth login -h github.com
 
-`gh`生成的配置在`~/.config/gh/`目录下。
+`gh`生成的配置在`~/.config/gh/hosts.yml`文件中。
 
 
 
