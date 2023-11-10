@@ -4,7 +4,15 @@ date: 2023-11-07 15:36:21
 tags:
 ---
 
+## Terms
+
+resident set size (RSS)
+
 ## Comands
+
+## File
+
+/proc/self/statm
 
 ### top
 
@@ -18,6 +26,8 @@ tags:
 ### ps
 
 #### Files
+
+`TIME`: the cumulated CPU time in [DD-]hh:mm:ss format (time=TIME)
 
 | Field  | value & means                                                  |
 |--------|----------------------------------------------------------------|

@@ -20,3 +20,5 @@ Penny想要气气Sheldon，她故意把ken曲解成玩偶，说：你的ken可�
 a rule of thumb: 经验法则。见[柯林斯词典](https://www.collinsdictionary.com/zh/dictionary/english/a-rule-of-thumb)。
 
 vice versa: 反之亦然。近义词：conversely.
+
+on (a) par with: 相当，对等，可媲美。See more: [on (a) par with](https://www.merriam-webster.com/dictionary/on%20%28a%29%20par%20with)
