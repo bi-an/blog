@@ -44,7 +44,7 @@ void foo(int id, const char *fmt, ...)
     char timebuf[64];
     // size_t strftime(char *s, size_t max, const char *format, const struct tm *tm);
     snprintf(timebuf, MAXLEN - n, "%d-%02d-%02d %d:%d:%d.%ld %s",
-             tm.tm_year + 1900, tm.tm_mon, tm.tm_mday,
+             tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
              tm.tm_hour, tm.tm_min, tm.tm_sec, tv.tv_usec, tm.tm_zone);
 
     printf(buf, timebuf);
