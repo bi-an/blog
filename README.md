@@ -1,4 +1,4 @@
-# Download the repository
+# Download
 
 ```bash
 git clone https://github.com/bi-an/blog.git
