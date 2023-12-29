@@ -1,6 +1,6 @@
 ---
 title: namespace in c++
-tags: cpp
+tags: c/cpp
 categories: Programming
 date: 2023-11-02 09:53:52
 ---

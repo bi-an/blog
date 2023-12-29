@@ -1,10 +1,11 @@
 ---
 title: Written in Blood
 date: 2023-12-23 19:22:48
-tags:
+categories: English
+tags: movie
 ---
 
-## 句子
+## 台词
 
 Phoenix turned and fired twice, the 34 millimetre bullects spitting through the air and splintering the brickwork two inches to the left of the Russia thug's shoulder. A moment later came the reply of the Uzi semiautomatic and Phoenix twisted round. 菲尼克斯转身开了两枪，34毫米的子弹在空中喷射，将俄罗斯暴徒肩膀左侧两英寸砖墙击碎。过一会儿，乌兹半自动冲锋枪回应了，菲尼克斯扭过身来。
 
@@ -47,4 +48,8 @@ hum 哼声
 greatgrandson 曾孙
 Sir 爵士
 Napoleon 拿破仑
-The Right Honourable [阁下](https://en.wikipedia.org/wiki/The_Right_Honourable)，Right是副词，意思是'very' or 'fully'。从语法上说，The Right Honourable 是形容短语，直接用来称呼人名或者某人用来自称都是不正确的，应该与其引用的名称或名称一起使用第三人称。
+The Right Honourable[^1] [阁下](https://en.wikipedia.org/wiki/The_Right_Honourable)，Right是副词，意思是'very' or 'fully'。从语法上说，The Right Honourable 是形容短语，直接用来称呼人名或者某人用来自称都是不正确的，应该与其引用的名称或名称一起使用第三人称。
+
+## Reference
+
+[1]: [阁下](https://en.wikipedia.org/wiki/The_Right_Honourable)

@@ -1,8 +1,8 @@
 ---
 title: variadic function
+categories: Programming
 tags:
-  - cpp
-  - c
+  - c/cpp
 date: 2023-11-03 18:52:32
 ---
 

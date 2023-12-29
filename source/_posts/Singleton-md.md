@@ -1,6 +1,7 @@
 ---
 title: Singleton.md
 date: 2023-11-30 17:44:24
+categories: Programming
 tags:
 ---
 

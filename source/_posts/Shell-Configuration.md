@@ -1,7 +1,8 @@
 ---
 title: Shell Configuration
 date: 2023-11-13 14:27:59
-tags:
+categories: Programming
+tags: Linux
 ---
 
 ## Color Scheme
