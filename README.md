@@ -13,5 +13,5 @@ cd themes/next && git submodule init && git submodule update
 
 Priority:
 
-- `themes/<scheme_name>/_config.yml` configuration overwrites `_config.yml` configuration.
-- `_config.<scheme_name>.yml` configuration overwrites `themes/<scheme_name>/_config.yml` configuration.
+- `themes/<scheme_name>/_config.yml` overwrites `_config.yml`.
+- `_config.<scheme_name>.yml` overwrites `themes/<scheme_name>/_config.yml`.
