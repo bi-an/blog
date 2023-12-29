@@ -30,7 +30,7 @@ NAME
 
 References
 
-    [查看进程占用的端口](https://zhuanlan.zhihu.com/p/45920111)
+[查看进程占用的端口](https://zhuanlan.zhihu.com/p/45920111)
 
 COMMANDS
 
