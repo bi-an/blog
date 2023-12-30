@@ -1,8 +1,8 @@
 ---
 title: cmake usage
 date: 2023-12-07 10:58:25
-categories: Programming
-tags: Tools
+categories: Tools
+tags: cmake
 ---
 
 Specify the search path for `pkg_check_modules`: [Solution](https://stackoverflow.com/questions/44487053/set-pkg-config-path-in-cmake)
