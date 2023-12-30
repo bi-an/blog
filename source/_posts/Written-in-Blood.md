@@ -5,6 +5,10 @@ categories: English
 tags: movie
 ---
 
+## 电影链接
+
+[Midsomer Murders： Season 1 Episode 2 - Written in Blood](https://tubitv.com/tv-shows/520415/s01-e02-written-in-blood)
+
 ## 台词
 
 Phoenix turned and fired twice, the 34 millimetre bullects spitting through the air and splintering the brickwork two inches to the left of the Russia thug's shoulder. A moment later came the reply of the Uzi semiautomatic and Phoenix twisted round. 菲尼克斯转身开了两枪，34毫米的子弹在空中喷射，将俄罗斯暴徒肩膀左侧两英寸砖墙击碎。过一会儿，乌兹半自动冲锋枪回应了，菲尼克斯扭过身来。
@@ -23,8 +27,19 @@ The repetitive beat of the innercity drum.
 The Right Honourable William Lyddiard. 威廉·利迪亚德阁下。
 
 -Do you ever regret marrying hime, Amy? I wonder if you ever think that but for you he might still be alive? 你后悔嫁给他吗，埃米？我不知道你是否想过，如果不是因为你，他可能现在还活着？
--(Amy) No.
--Well I do.
+-(Amy) No. 没有想过。
+-Well I do. 我想过。
+
+-So we come to the question of which writer we invite to address us? 所以我们打算请哪位作家来给我们做演讲呢？
+-How about Jilly Cooper?
+-I think he said a writer.
+-Do you think we could interest Frederick Forsythe?
+-I rather doubt it.
+-Oh, it's a wonderful idea, Gerald. Especially since you're writing a thriller. I think Frederick Forsythe would be first rate! 我认为Frederick Forsythe是第一流的。
+-He'd never come. He'd just pretend he didn't have time. They always do.
+-I'd like Seamus Heaney.
+-The poet?
+-Not another poet. That last one was such a ghastly little man.
 
 ##  词汇
 
@@ -48,8 +63,9 @@ hum 哼声
 greatgrandson 曾孙
 Sir 爵士
 Napoleon 拿破仑
-The Right Honourable[^1] [阁下](https://en.wikipedia.org/wiki/The_Right_Honourable)，Right是副词，意思是'very' or 'fully'。从语法上说，The Right Honourable 是形容短语，直接用来称呼人名或者某人用来自称都是不正确的，应该与其引用的名称或名称一起使用第三人称。
-
-## Reference
-
-[1]: [阁下](https://en.wikipedia.org/wiki/The_Right_Honourable)
+The Right Honourable [阁下](https://en.wikipedia.org/wiki/The_Right_Honourable)。其中，Right是副词，意思是'very' or 'fully'。从语法上说，The Right Honourable 是形容短语，直接用来称呼人名或者某人用来自称都是不正确的，应该与其引用的名称或名称一起使用第三人称。
+address 演讲
+first rate 第一流
+pretend 假装
+ghastly US:/ˈɡæst.li/ UK:/ˈɡɑːst.li/ 阴森的，可怕的，非常坏的
+bestseller 畅销书
