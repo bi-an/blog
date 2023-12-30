@@ -1,5 +1,5 @@
 ---
-title: IB
+title: Getting Started with IB
 date: 2023-12-06 09:41:56
 categories: Programming
 tags: IB

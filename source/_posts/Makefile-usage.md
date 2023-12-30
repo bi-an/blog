@@ -2,15 +2,14 @@
 title: Makefile usage
 date: 2023-11-17 14:19:35
 categories: Programming
-tags: makefile
+tags: Tools
 ---
 
-## "make run" argument:
+## "make run" argument
 
-https://stackoverflow.com/questions/2214575/passing-arguments-to-make-run
+See [here](https://stackoverflow.com/questions/2214575/passing-arguments-to-make-run).
 
-"@:"
-https://unix.stackexchange.com/questions/92978/what-does-this-2-mean-in-shell-scripting
+`@:` See [here](https://unix.stackexchange.com/questions/92978/what-does-this-2-mean-in-shell-scripting).
 
 This works fine for me:
 

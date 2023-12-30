@@ -2,7 +2,7 @@
 title: Virtual memory
 date: 2023-11-07 15:36:21
 categories: Programming
-tags:
+tags: Linux
 ---
 
 ## Terms

@@ -2,9 +2,7 @@
 title: Debugging-Tips
 date: 2023-12-21 15:13:46
 categories: Programming
-tags:
-    - gdb
-    - c/cpp
+tags: Tools
 ---
 
 ## gdb

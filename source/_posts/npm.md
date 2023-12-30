@@ -9,7 +9,7 @@ tags: npm
 
 `npm root` - Current installation root path.
 `npm root -g` - The global installation root path.
-`npm uninstall` - Should remove the items in the `package.json` file and delete the `package-lock.json` file and the `node_modules` directory.
+`npm uninstall` - After executing this command, you should also remove the items in the `package.json` file and delete the `package-lock.json` file and the `node_modules` directory.
 
 ## Reference
 
