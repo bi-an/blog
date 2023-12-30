@@ -2,7 +2,7 @@
 title: Written in Blood
 date: 2023-12-23 19:22:48
 categories: English
-tags: movie
+tags: movies
 ---
 
 ## 电影链接
@@ -11,7 +11,7 @@ tags: movie
 
 ## 台词
 
-Phoenix turned and fired twice, the 34 millimetre bullects spitting through the air and splintering the brickwork two inches to the left of the Russia thug's shoulder. A moment later came the reply of the Uzi semiautomatic and Phoenix twisted round. 菲尼克斯转身开了两枪，34毫米的子弹在空中喷射，将俄罗斯暴徒肩膀左侧两英寸砖墙击碎。过一会儿，乌兹半自动冲锋枪回应了，菲尼克斯扭过身来。
+Phoenix turned and fired twice, the 34 millimetre bullets spitting through the air and splintering the brickwork two inches to the left of the Russia thug's shoulder. A moment later came the reply of the Uzi semiautomatic and Phoenix twisted round. 菲尼克斯转身开了两枪，34毫米的子弹在空中喷射，将俄罗斯暴徒肩膀左侧两英寸砖墙击碎。过一会儿，乌兹半自动冲锋枪回应了，菲尼克斯扭过身来。
 
 Her lips, searching in the sapphire, honeyscented darkness, found his; cool, forceful, unresisting, and as the frozen waves crashed down. 当冰冷、有力、不可抗拒的浪汹涌而下的时候，她的嘴唇在蓝宝石般散发着蜜香的夜色中寻找，找到了他的嘴唇。
 
@@ -57,6 +57,8 @@ honey 蜂蜜，蜜
 scent 香味（a pleasant natural smell）；scented 散发香味的
 resist 抗拒的；unresisted 不可抗拒的。
 masculine 男性的。
+tear 撕，撕破，撕毁；拆；泪水。
+nightshirt 睡衣
 scum 浮渣
 scum-bag 渣子袋，这里应该是“渣男”、“人渣”的意思，骂人的话。
 hum 哼声

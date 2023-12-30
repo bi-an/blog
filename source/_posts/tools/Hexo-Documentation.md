@@ -1,7 +1,7 @@
 ---
 title: Hexo Documentation
 date: 2023-12-07 10:06:59
-categories: Documentation
+categories: Tools
 tags: hexo
 ---
 
