@@ -1,8 +1,8 @@
 ---
 title: KiB vs KB vs kB
-date: 2023-11-07 15:26:48
 categories: Programming
 tags: Terms
+date: 2023-11-07 15:26:48
 ---
 
 

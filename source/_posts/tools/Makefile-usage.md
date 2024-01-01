@@ -1,8 +1,8 @@
 ---
 title: Makefile usage
-date: 2023-11-17 14:19:35
 categories: Tools
 tags: makefile
+date: 2023-11-17 14:19:35
 ---
 
 ## "make run" argument

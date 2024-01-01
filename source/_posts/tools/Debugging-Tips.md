@@ -1,8 +1,8 @@
 ---
 title: Debugging Tips
-date: 2023-12-21 15:13:46
 categories: Tools
 tags: c/cpp
+date: 2023-12-21 15:13:46
 ---
 
 ## gdb

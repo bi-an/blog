@@ -1,8 +1,8 @@
 ---
 title: Singleton
-date: 2023-11-30 17:44:24
 categories: Programming
 tags: c/cpp
+date: 2023-11-30 17:44:24
 ---
 
 

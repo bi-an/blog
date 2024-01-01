@@ -1,8 +1,8 @@
 ---
 title: Shell Configuration
-date: 2023-11-13 14:27:59
 categories: Tools
 tags: shell
+date: 2023-11-13 14:27:59
 ---
 
 ## Color Scheme
