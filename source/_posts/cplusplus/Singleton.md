@@ -1,7 +1,7 @@
 ---
 title: Singleton
-categories: Programming
-tags: c/cpp
+categories: c/cpp
+tags: syntax
 date: 2023-11-30 17:44:24
 ---
 

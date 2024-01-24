@@ -1,12 +1,14 @@
 ---
 title: KiB vs KB vs kB
-categories: Programming
-tags: Terms
+categories: Misc
+tags: concepts
 date: 2023-11-07 15:26:48
 ---
 
 
 See the article: [Prefixes for binary multiples](https://physics.nist.gov/cuu/Units/binary.html)
+
+Table:
 
 <table border="0" cellspacing="0" cellpadding="3">
 <tbody><tr>

@@ -1,8 +1,8 @@
 ---
 title: variadic function
-categories: Programming
+categories: c/cpp
 tags:
-  - c/cpp
+  - syntax
 date: 2023-11-03 18:52:32
 ---
 
@@ -11,7 +11,7 @@ date: 2023-11-03 18:52:32
 
 See more: [Variadic functions in C](https://www.geeksforgeeks.org/variadic-functions-in-c/)
 
-示例1：`ap_list` + `vsnprintf`
+Example1：`ap_list` + `vsnprintf`
 
 ```cpp
 #include <stdarg.h>
@@ -62,7 +62,7 @@ int main()
 }
 ```
 
-示例2：`va_list` + `va_arg`
+Example2：`va_list` + `va_arg`
 
 ```cpp
 #include <stdarg.h>

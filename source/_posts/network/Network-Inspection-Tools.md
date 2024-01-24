@@ -1,6 +1,6 @@
 ---
 title: Network Inspection Tools
-categories: Tools
+categories: Network
 tags: tcp/ip
 date: 2023-12-29 09:55:00
 ---
@@ -26,9 +26,9 @@ NAME
 
 NAME
 
-    ss - athoher to investigate sockets.
+    ss - another to investigate sockets.
 
-References
+Reference
 
 [查看进程占用的端口](https://zhuanlan.zhihu.com/p/45920111)
 
@@ -38,11 +38,15 @@ COMMANDS
 
 OPTIONS
 
-    -l, --listening
-
     -n, --numberic
 
+    -l, --listening
+
     -t, --tcp
+        Note: Only established (non-listening) connections.
+
+    -a, --all
+        Display both listening and non-linstening (for TCP this means established connections) sockets.
 
     -u, --udp
 

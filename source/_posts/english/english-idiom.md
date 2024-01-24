@@ -21,4 +21,8 @@ Penny想要气气Sheldon，她故意把ken曲解成玩偶，说：你的ken可�
 6. IMHO: In my humble opinion 恕我直言。humble 谦逊的。
 7. AFAIK: As far as I know 据我所知。
 8. miss the forest for the trees. / not see the forest for the trees. 只见树木、不见森林。参见[剑桥词典](https://dictionary.cambridge.org/us/dictionary/english/not-see-the-forest-for-the-trees)：to be unable to get a general understanding of a situation because you are too worried about the details 因太注重细节而无法从整体角度看待问题。
-
+9. irrespective of 不论
+10. sell sb out. 出卖某人。
+11. mood swings. 情绪波动。 swing v. 摇摆；swings n. 秋千。
+12. buy that... 相信…… e.g. I didn't think the doctor was gonna buy that...
+13. 

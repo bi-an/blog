@@ -1,6 +1,6 @@
 ---
 title: Socket Programming
-categories: Programming
+categories: Network
 tags: tcp/ip
 date: 2023-11-27 11:05:29
 ---

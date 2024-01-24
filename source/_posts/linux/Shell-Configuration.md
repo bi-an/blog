@@ -1,6 +1,6 @@
 ---
 title: Shell Configuration
-categories: Tools
+categories: Linux
 tags: shell
 date: 2023-11-13 14:27:59
 ---

@@ -1,3 +1,9 @@
+# Synopsis
+
+This is bi-an's personal blog.
+
+Preview: [Home Page](https://bi-an.github.io/blog)
+
 # Download
 
 ```bash

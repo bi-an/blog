@@ -1,7 +1,7 @@
 ---
 title: Virtual memory
-categories: Programming
-tags: Linux
+categories: Linux
+tags: memory
 date: 2023-11-07 15:36:21
 ---
 
