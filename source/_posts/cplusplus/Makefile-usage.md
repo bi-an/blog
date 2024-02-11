@@ -61,3 +61,9 @@ all: $(SRCS:.c=)
 最后两行其实不需要，默认规则已经足够了。
 
 其中，`$(SRCS:.c=.o)`表示将变量`SRCS`中的每个单词（以空格分割）中的`.c`替换为`.o`。以上代码则是将所有`.c`都去掉。
+
+## 括号
+
+引用变量时，Shell使用大括号，Makefile则大括号和小括号都行。但是在命令中使用Shell变量就需要使用大括号。
+
+[参考](https://blog.csdn.net/bigmarco/article/details/6687337)

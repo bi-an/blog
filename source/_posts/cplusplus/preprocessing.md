@@ -8,6 +8,7 @@ tags: syntax
 ## 预定义宏
 
 `#if defined(__linux)`
+`#ifdef LINUX2`
 
 ## C标准预定义宏
 
@@ -19,7 +20,6 @@ tags: syntax
 ## GNU C预定义宏
 
 [官方文档](https://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html)
-
 
 * `__COUNTER__`: 扩展为从`0`开始的连续整数值，每次在源码中出现，则加`1`。不同源文件的`__COUNTER__`互不影响。
 

@@ -60,7 +60,7 @@ delete 2
 
 ### 条件断点
 
-参考：[博客](http://c.biancheng.net/view/8255.html)。
+参考：[博客](http://c.biancheng.net/view/8255.html)、[文档](https://ftp.gnu.org/old-gnu/Manuals/gdb/html_node/gdb_28.html)。
 
 `break ... if cond`
 

@@ -14,6 +14,11 @@ date: 2023-12-29 09:55:00
     man 7 socket - socket options
     man 7 tcp - tcp options
 
+## Files
+
+    /proc/sys/net/ipv4/ip_local_port_range
+    
+
 ## Commands
 
 ### ip
@@ -101,3 +106,15 @@ lsof -i:<port>
 lsof -i -P -n | grep LISTEN
 lsof -nP -iTCP -sTCP:LISTEN
 ```
+
+### nc/netcat/nmap
+
+
+### socket
+
+Create a TCP or a UNIX domain socket and connect to stdin/out.
+
+Installation:
+
+    sudo apt-get install socket
+

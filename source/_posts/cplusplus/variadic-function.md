@@ -11,7 +11,36 @@ date: 2023-11-03 18:52:32
 
 See more: [Variadic functions in C](https://www.geeksforgeeks.org/variadic-functions-in-c/)
 
-Example1：`ap_list` + `vsnprintf`
+
+### `vprintf`
+
+```cpp
+#include <stdarg.h>
+#include <stdio.h>
+
+void myPrintf(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
+}
+
+int main() {
+  long int time = 100;
+  myPrintf("Elapsed time is: %ld seconds.\n", time);
+
+  return 0;
+}
+```
+
+Output:
+
+```bash
+$ ./a.out 
+Elapsed time is: 100 seconds.
+```
+
+### `ap_list` + `vsnprintf`
 
 ```cpp
 #include <stdarg.h>
@@ -62,7 +91,8 @@ int main()
 }
 ```
 
-Example2：`va_list` + `va_arg`
+
+### `va_list` + `va_arg`
 
 ```cpp
 #include <stdarg.h>
@@ -90,4 +120,14 @@ int main() {
   return 0;
 }
 ```
+
+Output:
+
+```bash
+$ ./a.out 
+fmt=Elapsed time is: %ld seconds.
+
+Elapsed time is: 100 seconds.
+```
+
 
