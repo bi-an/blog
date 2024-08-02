@@ -28,9 +28,9 @@
 <meta property="og:description" content="编译主要步骤参考博客  预处理  1gcc -E test.c -o test.i   编译  翻译成汇编代码。   1gcc -S test.i -o test.s   汇编  将汇编代码转成机器码。   1gcc -c test.s -o test.o   链接  该目标文件与其他目标文件、库文件、启动文件等链接起来生成可执行文件。   1gcc test.o -o test  链接C++名称">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-01-23T21:36:08.000Z">
-<meta property="article:modified_time" content="2024-02-11T00:22:13.662Z">
+<meta property="article:modified_time" content="2024-08-02T11:28:18.138Z">
 <meta property="article:author" content="bi-an">
-<meta property="article:tag" content="build">
+<meta property="article:tag" content="compile">
 <meta name="twitter:card" content="summary">
 
 <link rel="canonical" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/Compilation-Principle/">
@@ -229,7 +229,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-02-11 00:22:13" itemprop="dateModified" datetime="2024-02-11T00:22:13+00:00">2024-02-11</time>
+                <time title="Modified: 2024-08-02 11:28:18" itemprop="dateModified" datetime="2024-08-02T11:28:18+00:00">2024-08-02</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -331,6 +331,28 @@ ldconfig 期望的符号链接有某种特定的形式，比如：
     因此，永远不要在不受信任的可执行文件上使用ldd，因为会导致随意代码的运行。更安全替代方法为：
         $ objdump -p /path/to/program | grep NEEDED
     注意，这种替代方法只会显示该可执行文件的直接依赖，而ldd显示该可执行文件的整个依赖树。
+
+解释ldd的输出:
+$ ldd -v libibsupport_real.so 
+./libibsupport_real.so: /usr/lib64/libibverbs.so.1: version `IBVERBS_1.8&#39; not found (required by ./libibsupport_real.so)
+    linux-vdso.so.1 =&gt;  (0x00002ad3e49e3000)
+    libibverbs.so.1 =&gt; /usr/lib64/libibverbs.so.1 (0x00002ad3e589b000)
+    ...
+
+    Version information:
+    ./libibsupport_real.so:
+            libgcc_s.so.1 (GCC_3.0) =&gt; /usr/lib64/libgcc_s.so.1
+            libibverbs.so.1 (IBVERBS_1.8) =&gt; not found
+            libibverbs.so.1 (IBVERBS_1.1) =&gt; /usr/lib64/libibverbs.so.1
+            ...
+    /usr/lib64/libnl-3.so.200:
+                libm.so.6 (GLIBC_2.2.5) =&gt; /usr/lib64/libm.so.6
+                ...
+在&quot;Version information&quot;中，&quot;libgcc_s.so.1 (GCC_3.0) =&gt; /usr/lib64/libgcc_s.so.1&quot;表示：
+    &quot;libgcc_s.so.1&quot;指定一个shared library的名字（libgcc_s.so.1是GCC runtime library的一部分），该shared library为&quot;./libibsupport_real.so&quot;所依赖；
+    &quot;(GCC_3.0)&quot;表明&quot;libgcc_s.so.1&quot;需要3.0版本及以上的GNU Compiler Collection (GCC)；
+    &quot;=&gt;&quot;指出满足依赖的shared library；
+    &quot;/usr/lib64/libgcc_s.so.1&quot;是满足要求的shared library的路径。
 </code></pre>
 <p>  <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/34428037/how-to-interpret-the-output-of-the-ldd-program">ldd output说明</a></p>
 <p>sprof</p>
@@ -370,22 +392,48 @@ The trusted directories:
     ld.so 和 ld-linux.so* 寻找和加载程序所需的共享对象（共享库），准备程序的运行，然后运行它。
 
     如果在编译期没有向 ld(1) 指定 -static 选项，则Linux二进制文件需要动态连接（在运行时连接）。
-
-    
 </code></pre>
-<h3 id="名字"><a href="#名字" class="headerlink" title="名字"></a>名字</h3><p>参考：<code>man ldconfig</code></p>
-<p>SONAME</p>
-<p>参考：<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Soname">SONAME Wiki</a></p>
-<pre><code>GNU linker使用 -hname 或 -soname=name 来指定该库的library name field。
-在内部，linker会创建一个 DT_SONAME field并且用 name 来填充它。
+<h3 id="SONAME"><a href="#SONAME" class="headerlink" title="SONAME"></a>SONAME</h3><p>参考：<code>man ldconfig</code><br>参考：<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Soname">SONAME Wiki</a></p>
+<blockquote>
+<p>GNU linker使用 -hname 或 -soname&#x3D;name 来指定该库的library name field。<br>在内部，linker会创建一个 DT_SONAME field并且用 name 来填充它。</p>
+</blockquote>
+<ol>
+<li>指定SONAME：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#Use ld:</span></span><br><span class="line">$ ld -shared -soname libexample.so.1 -o libexample.so.1.2.3 file1.o file2.o</span><br><span class="line"><span class="comment">#Use gcc or g++:</span></span><br><span class="line">$ gcc -shared -Wl,-soname,libexample.so.1 -o libexample.so.1.2.3 file1.o file2.o</span><br></pre></td></tr></table></figure>
 
-查询SONAME
-    $ objdump -p libx.so.1.3 | grep SONAME
-        SONAME     libx.so.1
-    或
-    $ readelf -d libtsan.so | grep SONAME
-     0x000000000000000e (SONAME)             Library soname: [libtsan.so.0]
-</code></pre>
+<ol start="2">
+<li>安装时创建软链接：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ln</span> -s libexample.so.1.2.3 libexample.so.1</span><br><span class="line"><span class="built_in">ln</span> -s libexample.so.1 libexample.so</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>查看SONAME：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#Use objdump</span></span><br><span class="line">$ objdump -p libexample.so.1.3 | grep SONAME</span><br><span class="line">  SONAME               libexample.so.1</span><br><span class="line"><span class="comment">#Use readelf</span></span><br><span class="line">$ readelf -d libexample.so | grep SONAME</span><br><span class="line"> 0x000000000000000e (SONAME)             Library soname: [libexample.so.1]</span><br></pre></td></tr></table></figure>
+
+<h3 id="versioning-information"><a href="#versioning-information" class="headerlink" title="versioning information"></a>versioning information</h3><p>定制函数版本：</p>
+<ol>
+<li>example.c中定义函数<code>my_printf</code>：</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">my_printf</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* format)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%s&quot;</span>, format);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>version_script.txt中定义函数的版本为<code>VERSION_1</code>：</li>
+</ol>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">VERSION_1 &#123;</span><br><span class="line"> global:</span><br><span class="line">   my_printf;</span><br><span class="line"> local:</span><br><span class="line">   *;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>编译时指定<code>version_script.txt</code>为version-script：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -shared -Wl,--version-script=version_script.txt -o libexample.so example.o</span><br></pre></td></tr></table></figure>
+
+<p>其中，<code>-Wl,</code>引出连接器选项。</p>
+<ol start="4">
+<li>使用<code>readelf -sW libexample.so</code>查看函数<code>my_printf</code>的版本号（”VERSION_1”）：</li>
+</ol>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Symbol table &#x27;.dynsym&#x27; contains 8 entries:</span><br><span class="line">   Num:    Value          Size Type    Bind   Vis      Ndx Name</span><br><span class="line">     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND </span><br><span class="line">     1: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_deregisterTMCloneTable</span><br><span class="line">     2: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND printf@GLIBC_2.2.5 (3)</span><br><span class="line">     3: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND __gmon_start__</span><br><span class="line">     4: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_registerTMCloneTable</span><br><span class="line">     5: 0000000000000000     0 FUNC    WEAK   DEFAULT  UND __cxa_finalize@GLIBC_2.2.5 (3)</span><br><span class="line">     6: 0000000000001105    39 FUNC    GLOBAL DEFAULT   13 my_printf@@VERSION_1</span><br><span class="line">     7: 0000000000000000     0 OBJECT  GLOBAL DEFAULT  ABS VERSION_1</span><br></pre></td></tr></table></figure>
+
 <h3 id="ELF"><a href="#ELF" class="headerlink" title="ELF"></a>ELF</h3><pre><code>ELF - Executable and Linking Format.
 ELF描述了normal executable files、relocatable object files、core files和shared objects的格式。
 </code></pre>
@@ -447,7 +495,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
 
       <footer class="post-footer">
           <div class="post-tags">
-              <a href="/blog/tags/build/" rel="tag"># build</a>
+              <a href="/blog/tags/compile/" rel="tag"># compile</a>
           </div>
 
         
@@ -521,7 +569,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E4%B8%BB%E8%A6%81%E6%AD%A5%E9%AA%A4"><span class="nav-number">1.</span> <span class="nav-text">编译主要步骤</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%93%BE%E6%8E%A5"><span class="nav-number">2.</span> <span class="nav-text">链接</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#C-%E5%90%8D%E7%A7%B0%E4%BF%AE%E9%A5%B0"><span class="nav-number">3.</span> <span class="nav-text">C++名称修饰</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F"><span class="nav-number">3.1.</span> <span class="nav-text">环境变量</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%BD%E6%95%B0"><span class="nav-number">3.2.</span> <span class="nav-text">函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4"><span class="nav-number">3.3.</span> <span class="nav-text">命令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%87%E4%BB%B6"><span class="nav-number">3.4.</span> <span class="nav-text">文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%8D%E5%AD%97"><span class="nav-number">3.5.</span> <span class="nav-text">名字</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ELF"><span class="nav-number">3.6.</span> <span class="nav-text">ELF</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%93%BE%E6%8E%A5%E5%90%8D"><span class="nav-number">3.7.</span> <span class="nav-text">链接名</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%93%BE%E6%8E%A5%E5%99%A8%E9%80%89%E9%A1%B9"><span class="nav-number">3.8.</span> <span class="nav-text">链接器选项</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Tips"><span class="nav-number">3.9.</span> <span class="nav-text">Tips</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Notice"><span class="nav-number">3.10.</span> <span class="nav-text">Notice</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E4%B8%BB%E8%A6%81%E6%AD%A5%E9%AA%A4"><span class="nav-number">1.</span> <span class="nav-text">编译主要步骤</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%93%BE%E6%8E%A5"><span class="nav-number">2.</span> <span class="nav-text">链接</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#C-%E5%90%8D%E7%A7%B0%E4%BF%AE%E9%A5%B0"><span class="nav-number">3.</span> <span class="nav-text">C++名称修饰</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F"><span class="nav-number">3.1.</span> <span class="nav-text">环境变量</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%BD%E6%95%B0"><span class="nav-number">3.2.</span> <span class="nav-text">函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4"><span class="nav-number">3.3.</span> <span class="nav-text">命令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%87%E4%BB%B6"><span class="nav-number">3.4.</span> <span class="nav-text">文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SONAME"><span class="nav-number">3.5.</span> <span class="nav-text">SONAME</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#versioning-information"><span class="nav-number">3.6.</span> <span class="nav-text">versioning information</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ELF"><span class="nav-number">3.7.</span> <span class="nav-text">ELF</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%93%BE%E6%8E%A5%E5%90%8D"><span class="nav-number">3.8.</span> <span class="nav-text">链接名</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%93%BE%E6%8E%A5%E5%99%A8%E9%80%89%E9%A1%B9"><span class="nav-number">3.9.</span> <span class="nav-text">链接器选项</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Tips"><span class="nav-number">3.10.</span> <span class="nav-text">Tips</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Notice"><span class="nav-number">3.11.</span> <span class="nav-text">Notice</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -537,7 +585,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-count">56</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -550,7 +598,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">30</span>
+        <span class="site-state-item-count">33</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
