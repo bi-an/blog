@@ -25,4 +25,4 @@ Penny想要气气Sheldon，她故意把ken曲解成玩偶，说：你的ken可�
 10. sell sb out. 出卖某人。
 11. mood swings. 情绪波动。 swing v. 摇摆；swings n. 秋千。
 12. buy that... 相信…… e.g. I didn't think the doctor was gonna buy that...
-13. 
+13. Roger that. / Copy that. [参考](https://medium.com/@methark/copy-that-or-roger-that-whats-the-difference-63ad1367ff22)

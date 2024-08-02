@@ -2,7 +2,7 @@
 title: Compilation Principle
 date: 2024-01-23 21:36:08
 categories: c/cpp
-tags: build
+tags: compile
 ---
 
 ## 编译主要步骤
@@ -107,6 +107,28 @@ ldd
             $ objdump -p /path/to/program | grep NEEDED
         注意，这种替代方法只会显示该可执行文件的直接依赖，而ldd显示该可执行文件的整个依赖树。
 
+    解释ldd的输出:
+    $ ldd -v libibsupport_real.so 
+    ./libibsupport_real.so: /usr/lib64/libibverbs.so.1: version `IBVERBS_1.8' not found (required by ./libibsupport_real.so)
+        linux-vdso.so.1 =>  (0x00002ad3e49e3000)
+        libibverbs.so.1 => /usr/lib64/libibverbs.so.1 (0x00002ad3e589b000)
+        ...
+
+        Version information:
+        ./libibsupport_real.so:
+                libgcc_s.so.1 (GCC_3.0) => /usr/lib64/libgcc_s.so.1
+                libibverbs.so.1 (IBVERBS_1.8) => not found
+                libibverbs.so.1 (IBVERBS_1.1) => /usr/lib64/libibverbs.so.1
+                ...
+        /usr/lib64/libnl-3.so.200:
+                    libm.so.6 (GLIBC_2.2.5) => /usr/lib64/libm.so.6
+                    ...
+    在"Version information"中，"libgcc_s.so.1 (GCC_3.0) => /usr/lib64/libgcc_s.so.1"表示：
+        "libgcc_s.so.1"指定一个shared library的名字（libgcc_s.so.1是GCC runtime library的一部分），该shared library为"./libibsupport_real.so"所依赖；
+        "(GCC_3.0)"表明"libgcc_s.so.1"需要3.0版本及以上的GNU Compiler Collection (GCC)；
+        "=>"指出满足依赖的shared library；
+        "/usr/lib64/libgcc_s.so.1"是满足要求的shared library的路径。
+
   [ldd output说明](https://stackoverflow.com/questions/34428037/how-to-interpret-the-output-of-the-ldd-program)
 
 sprof
@@ -154,27 +176,89 @@ ld.so
 
         如果在编译期没有向 ld(1) 指定 -static 选项，则Linux二进制文件需要动态连接（在运行时连接）。
 
-        
 
-
-### 名字
+### SONAME
 
 参考：`man ldconfig`
-
-SONAME
-
 参考：[SONAME Wiki](https://en.wikipedia.org/wiki/Soname)
 
-    GNU linker使用 -hname 或 -soname=name 来指定该库的library name field。
-    在内部，linker会创建一个 DT_SONAME field并且用 name 来填充它。
+> GNU linker使用 -hname 或 -soname=name 来指定该库的library name field。
+> 在内部，linker会创建一个 DT_SONAME field并且用 name 来填充它。
 
-    查询SONAME
-        $ objdump -p libx.so.1.3 | grep SONAME
-            SONAME     libx.so.1
-        或
-        $ readelf -d libtsan.so | grep SONAME
-         0x000000000000000e (SONAME)             Library soname: [libtsan.so.0]
+1. 指定SONAME：
 
+```bash
+#Use ld:
+$ ld -shared -soname libexample.so.1 -o libexample.so.1.2.3 file1.o file2.o
+#Use gcc or g++:
+$ gcc -shared -Wl,-soname,libexample.so.1 -o libexample.so.1.2.3 file1.o file2.o
+```
+
+2. 安装时创建软链接：
+
+```bash
+ln -s libexample.so.1.2.3 libexample.so.1
+ln -s libexample.so.1 libexample.so
+```
+
+3. 查看SONAME：
+
+```bash
+#Use objdump
+$ objdump -p libexample.so.1.3 | grep SONAME
+  SONAME               libexample.so.1
+#Use readelf
+$ readelf -d libexample.so | grep SONAME
+ 0x000000000000000e (SONAME)             Library soname: [libexample.so.1]
+```
+
+### versioning information
+
+定制函数版本：
+
+1. example.c中定义函数`my_printf`：
+
+```cpp
+#include <stdio.h>
+
+void my_printf(const char* format) {
+    printf("%s", format);
+}
+```
+
+2. version_script.txt中定义函数的版本为`VERSION_1`：
+
+```text
+VERSION_1 {
+ global:
+   my_printf;
+ local:
+   *;
+};
+```
+
+3. 编译时指定`version_script.txt`为version-script：
+
+```bash
+gcc -shared -Wl,--version-script=version_script.txt -o libexample.so example.o
+```
+
+其中，`-Wl,`引出连接器选项。
+
+4. 使用`readelf -sW libexample.so`查看函数`my_printf`的版本号（"VERSION_1"）：
+
+```text
+Symbol table '.dynsym' contains 8 entries:
+   Num:    Value          Size Type    Bind   Vis      Ndx Name
+     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_deregisterTMCloneTable
+     2: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND printf@GLIBC_2.2.5 (3)
+     3: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND __gmon_start__
+     4: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_registerTMCloneTable
+     5: 0000000000000000     0 FUNC    WEAK   DEFAULT  UND __cxa_finalize@GLIBC_2.2.5 (3)
+     6: 0000000000001105    39 FUNC    GLOBAL DEFAULT   13 my_printf@@VERSION_1
+     7: 0000000000000000     0 OBJECT  GLOBAL DEFAULT  ABS VERSION_1
+```
 
 ### ELF
 
@@ -247,3 +331,4 @@ $ lsof -p 6919 | grep mem
 ### Notice
 
 1. 生成so时，链接器不会寻找其so依赖；executable会寻找so的依赖关系。换句话说，即使so生成过程不报错，但是executable生成时可能会报错。
+

@@ -83,27 +83,27 @@ sudo yum install glibc
 
 ```bash
 $ strings /usr/lib/libstdc++.so.* | grep LIBCXX
+[sjcvl-zhigaoz ] /lan/cva_rel/vxe_main/24.02.650.d000/tools.lnx86/lib/64bit % strings /usr/lib/libstdc++.so.* | grep LIBCXX
 GLIBCXX_3.4
 GLIBCXX_3.4.1
 GLIBCXX_3.4.2
 ...
-GLIBCXX_3.4.28
-GLIBCXX_3.4.29
-GLIBCXX_3.4.30
+GLIBCXX_3.4.19
 GLIBCXX_DEBUG_MESSAGE_LENGTH
+
 $ strings /usr/lib/libc.so.* | grep GLIBC
-GLIBC_2.2.5
-GLIBC_2.2.6
+GLIBC_2.0
+GLIBC_2.1
+GLIBC_2.1.1
 ...
-GLIBC_2.34
-GLIBC_2.35
+GLIBC_2.17
 GLIBC_PRIVATE
 ```
 
 如果你有一个使用了libstdc++的特定的binary或application，可以用下面的命令来检查其版本：
 
 ```bash
-$ ldd <your_binary_or_applicatio> | grep libstdc++
+$ ldd <your_binary_or_application> | grep libstdc++
 ```
 
 使用vscode的“Remote SSH”工具试图连接到Linux时，可能会报错如下：
