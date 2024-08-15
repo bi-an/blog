@@ -107,6 +107,12 @@ sudo apt update
 sudo apt install gdb
 ```
 
+## gdb attach 权限报错
+
+This is due to kernel hardening in Linux; you can disable this behavior by `echo 0 > /proc/sys/kernel/yama/ptrace_scope` or by modifying it in `/etc/sysctl.d/10-ptrace.conf`.
+
+[How to solve "ptrace operation not permitted" when trying to attach GDB to a process?](https://stackoverflow.com/questions/19215177/how-to-solve-ptrace-operation-not-permitted-when-trying-to-attach-gdb-to-a-pro)
+
 ## gdb debug forks
 
 [Reference](https://www-zeuthen.desy.de/unix/unixguide/infohtml/gdb/Forks.html)
