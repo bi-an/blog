@@ -30,7 +30,7 @@ tags: gdb
 * `show directories`
 * `print` - gdb默认设置打印字符串的长度为200；更改打印最大长度：`set print elements <number-of-elements>`，`0`表示unlimited.
 * `ptype <variable name>` - 打印变量类型。
-
+* `finish` - 从函数中返回，并打印函数返回值（即使函数的return语句很复杂，也可以获取返回值）。
 
 ## 环境变量
 
