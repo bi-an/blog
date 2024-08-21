@@ -36,3 +36,8 @@ tags: gcc
   - `string-index`指定哪个参数是format string（从1开始）。
   - `first-to-check`指定format string对应的第一个参数的序号。
   对于那些无法检查参数的函数（比如`vprintf`），该参数指定为`0`。在这种情况下，编译器仅检查format string的一致性。对于`strftime`格式，该参数必须为`0`。
+
+
+## 选项
+
+* `-save-temps`: 可以保留所有中间文件，例如预编译文件、汇编文件、目标文件等。
