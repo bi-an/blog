@@ -193,6 +193,263 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/Cpp-Debug-Tools/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/cplusplus/Cpp-Debug-Tools/" class="post-title-link" itemprop="url">Cpp Debug Tools</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 21:27:05" itemprop="dateCreated datePublished" datetime="2024-01-23T21:27:05+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-06 10:38:45" itemprop="dateModified" datetime="2024-09-06T10:38:45+00:00">2024-09-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Unit-testing-framework"><a href="#Unit-testing-framework" class="headerlink" title="Unit testing framework"></a>Unit testing framework</h2><p><a target="_blank" rel="noopener" href="https://cpptest.sourceforge.io/tutorial.html">CppTest</a></p>
+<h2 id="Memory-check"><a href="#Memory-check" class="headerlink" title="Memory check"></a>Memory check</h2><p>valgrind<br>参考：<br>    <a target="_blank" rel="noopener" href="https://jvns.ca/blog/2018/04/28/debugging-a-segfault-on-linux/">博客</a><br>    <a target="_blank" rel="noopener" href="https://valgrind.org/docs/manual/ms-manual.html">文档</a><br>    <a target="_blank" rel="noopener" href="https://courses.cs.washington.edu/courses/cse326/05wi/valgrind-doc/ms_main.html">可以使用PostScript查看图形化结果</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/google/sanitizers/wiki/AddressSanitizer">AddressSanitizer</a></p>
+<h2 id="Performance-analyzer"><a href="#Performance-analyzer" class="headerlink" title="Performance analyzer"></a>Performance analyzer</h2><p>Oracle Developer Studio：</p>
+<p><a target="_blank" rel="noopener" href="https://www.oracle.com/application-development/technologies/developerstudio-features.html#performance-analyzer-tab">Performance Analyzer</a>：<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afagg.html#OSSPAgrkam">手册</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.oracle.com/application-development/technologies/developerstudio-features.html#thread-analyzer-tab">Thread Analyzer</a></p>
+<p><a target="_blank" rel="noopener" href="https://ftp.gnu.org/old-gnu/Manuals/gprof-2.9.1/html_mono/gprof.html">gprof</a>: <a target="_blank" rel="noopener" href="https://blog.csdn.net/luronggui/article/details/118141262">使用方法</a></p>
+<h3 id="timer"><a href="#timer" class="headerlink" title="timer"></a>timer</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ /usr/bin/time -p <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
+
+<p>Or,</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ time <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
+
+<p>其中（参考<a target="_blank" rel="noopener" href="https://ostechnix.com/how-to-find-the-execution-time-of-a-command-or-process-in-linux/">链接</a>），</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">type</span> -a time</span><br><span class="line">time is a shell keyword</span><br><span class="line">time is /usr/bin/time</span><br></pre></td></tr></table></figure>
+
+<h3 id="CPU时间"><a href="#CPU时间" class="headerlink" title="CPU时间"></a>CPU时间</h3><p>Function’s CPU time:</p>
+<pre><code>* Inclusive time: total cpu time, include all functions it calls.
+* Exclusive time: only the time used by the function itself, exclusive all its children.
+
+Refer to [here](https://stackoverflow.com/questions/15760447/what-is-the-meaning-of-incl-cpu-time-excl-cpu-time-incl-real-cpu-time-excl-re/74426370).
+</code></pre>
+<ol>
+<li><p>Wall time: total time the process used, containing IO time.</p>
+</li>
+<li><p>CPU usage (CPU利用率) &#x3D; CPU time &#x2F; Wall time.</p>
+</li>
+<li><p>real&#x2F;user&#x2F;system time</p>
+<ul>
+<li><strong>Real</strong> is wall clock time - time from start to finish of the call. This is all elapsed time including time slices used by other processes and time the process spends blocked (for example if it is waiting for I&#x2F;O to complete).</li>
+<li><strong>User</strong> is the amount of CPU time spent in user-mode code (outside the kernel) within the process. This is only actual CPU time used in executing the process. Other processes and time the process spends blocked do not count towards this figure.</li>
+<li><strong>Sys</strong> is the amount of CPU time spent in the kernel within the process. This means executing CPU time spent in system calls within the kernel, as opposed to library code, which is still running in user-space. Like ‘user’, this is only CPU time used by the process. See below for a brief description of kernel mode (also known as ‘supervisor’ mode) and the system call mechanism.</li>
+</ul>
+<p> Refer to <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1">here</a>.</p>
+</li>
+<li><p>CPU 时间可能大于墙上时间：</p>
+<p>这是因为 CPU 时间是所有 CPU 核的运行时间的累加和，墙上时间则是实际的时间。此时 CPU 利用率大于 100%. （这是自己的理解）</p>
+</li>
+<li><p>TODO: Is CPU time in flame graph sum of all the CPU time? Or is it the wall time when CPU works?</p>
+</li>
+</ol>
+<h2 id="debug-tool"><a href="#debug-tool" class="headerlink" title="debug tool"></a>debug tool</h2><h3 id="gdb"><a href="#gdb" class="headerlink" title="gdb"></a>gdb</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(gdb) breakpoint exit</span><br><span class="line">(gdb) breakpoint _exit</span><br><span class="line">(gdb) breakpoint atexit</span><br><span class="line">(gdb) breakpoint abort</span><br></pre></td></tr></table></figure>
+
+
+<p>Enable coredump: <a target="_blank" rel="noopener" href="https://medium.com/@sourabhedake/core-dumps-how-to-enable-them-73856a437711">how to do</a></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ulimit</span> -c unlimited</span><br></pre></td></tr></table></figure>
+
+<p>Where is the core dumped file:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">grep <span class="string">&#x27;kernel.core_pattern&#x27;</span> /etc/sysctl.conf</span><br></pre></td></tr></table></figure>
+
+<h3 id="strace"><a href="#strace" class="headerlink" title="strace"></a>strace</h3><p>Example:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">strace -f -o strace.log -tt -y -yy -e trace=desc,process,network</span><br></pre></td></tr></table></figure>
+
+<p>Refer to <a target="_blank" rel="noopener" href="https://gist.github.com/graste/929bb122c353bdd90c20">here</a></p>
+<blockquote>
+<p>-e trace&#x3D;ipc – communication between processes (IPC)<br>-e trace&#x3D;memory – memory syscalls<br>-e trace&#x3D;network – network syscalls<br>-e trace&#x3D;process – process calls (like fork, exec)<br>-e trace&#x3D;signal – process signal handling (like HUP, exit)<br>-e trace&#x3D;file – file related syscalls<br>-e trace&#x3D;desc – all file descriptor related system calls</p>
+</blockquote>
+<h3 id="DDT"><a href="#DDT" class="headerlink" title="DDT"></a>DDT</h3><p><a target="_blank" rel="noopener" href="https://www.linaroforge.com/linaroDdt">DDT</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/personal_site/Mkdocs-Configuration/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/personal_site/Mkdocs-Configuration/" class="post-title-link" itemprop="url">Mkdocs Configuration</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 21:13:02" itemprop="dateCreated datePublished" datetime="2024-01-23T21:13:02+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-06 10:38:45" itemprop="dateModified" datetime="2024-09-06T10:38:45+00:00">2024-09-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Tools/" itemprop="url" rel="index"><span itemprop="name">Tools</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Configuration"><a href="#Configuration" class="headerlink" title="Configuration"></a>Configuration</h2><p><code>mkdocs.yml</code> 文件是 MkDocs 文档生成器的配置文件。</p>
+<p>示例：<a target="_blank" rel="noopener" href="https://github.com/squidfunk/mkdocs-material/blob/master/mkdocs.yml"><code>mkdocs.yml</code></a></p>
+<h3 id="theme"><a href="#theme" class="headerlink" title="theme"></a>theme</h3><p>该文件中的 <code>theme</code> 部分用于指定用于生成文档的主题。</p>
+<p>在这种情况下，使用的主题是 Material。 <code>name</code> 字段指定主题的名称，而 <code>custom_dir</code> 字段指定包含主题自定义内容的目录。 <code>features</code> 字段指定可以为主题启用的可选功能列表。</p>
+<p>以下是在此配置文件中列出的可选功能：</p>
+<ul>
+<li><code>announce.dismiss</code>: 启用可关闭的公告横幅，显示在文档的每个页面顶部。</li>
+<li><code>content.action.edit</code>: 在每个页面上启用“编辑”按钮，以便用户可以轻松编辑页面内容。</li>
+<li><code>content.action.view</code>: 在每个页面上启用“查看源代码”按钮，以便用户可以查看页面的源代码。</li>
+<li><code>content.code.annotate</code>: 启用代码注释功能，使用户可以添加注释以解释代码。</li>
+<li><code>content.code.copy</code>: 启用代码复制功能，使用户可以轻松复制代码。</li>
+<li><code>content.tooltips</code>: 启用工具提示功能，使用户可以在鼠标悬停时查看有关页面元素的信息。</li>
+<li><code>navigation.footer</code>: 在每个页面上启用页脚导航栏。</li>
+<li><code>navigation.indexes</code>: 启用索引导航栏，使用户可以轻松浏览文档中的索引。</li>
+<li><code>navigation.sections</code>: 启用部分导航栏，使用户可以轻松浏览文档中的各个部分。</li>
+<li><code>navigation.tabs</code>: 启用选项卡导航栏，使用户可以轻松浏览文档中的各个选项卡。</li>
+<li><code>navigation.top</code>: 在每个页面上启用顶部导航栏。</li>
+<li><code>navigation.tracking</code>: 启用导航跟踪功能，使用户可以跟踪他们在文档中的位置。</li>
+<li><code>search.highlight</code>: 启用搜索结果高亮显示功能。</li>
+<li><code>search.share</code>: 启用共享搜索结果功能，使用户可以轻松共享搜索结果。</li>
+<li><code>search.suggest</code>: 启用搜索建议功能，使用户可以在输入搜索查询时获得建议。</li>
+<li><code>toc.follow</code>: 启用目录跟随功能，使目录始终保持可见。</li>
+</ul>
+<p><code>palette</code> 字段指定了一个颜色方案，该方案包含以下内容：</p>
+<ul>
+<li><code>scheme</code>: 指定颜色方案的名称。</li>
+<li><code>primary</code>: 指定主要颜色。</li>
+<li><code>accent</code>: 指定强调颜色。</li>
+<li><code>toggle</code>: 指定切换到暗模式时使用的图标和名称。</li>
+</ul>
+<p>第一个方案名为 default，其中主要颜色和强调颜色均为 indigo。切换到暗模式时，使用的图标为 material&#x2F;brightness-7，名称为“切换到暗模式”。</p>
+<p>第二个方案名为 slate，其中主要颜色和强调颜色均为 indigo。切换到亮模式时，使用的图标为 material&#x2F;brightness-4，名称为“切换到亮模式”。</p>
+<p>font 字段指定了用于文本和代码的字体。在此配置文件中，文本字体为 Roboto，代码字体为 Roboto Mono。 favicon 字段指定了网站图标的路径。 icon 字段指定了网站标志的路径。</p>
+<p>favicon 和 icon 是网站的两个不同元素。</p>
+<p>favicon 是网站的图标，通常显示在浏览器标签页上。它可以是一个小的图像文件，通常是 .ico 格式。在 mkdocs.yml 文件中，可以使用 favicon 字段来指定网站图标的路径。</p>
+<p>icon 是网站的标志，通常显示在网站的标题栏或页眉中。它可以是一个图像文件，例如 .png 或 .jpg 文件。在 mkdocs.yml 文件中，可以使用 icon 字段来指定网站标志的路径。</p>
+<h3 id="plugin"><a href="#plugin" class="headerlink" title="plugin"></a>plugin</h3><p>这里列出了三个插件：blog、search和minify。其中，blog插件用于支持博客功能，search插件用于支持搜索功能，而minify插件用于压缩HTML文件。在search插件中，separator参数指定了搜索时的分隔符，这里的分隔符包括空格、连字符、逗号、冒号、等号、感叹号、方括号、括号、引号、反引号和斜杠等。</p>
+<h3 id="extra"><a href="#extra" class="headerlink" title="extra"></a>extra</h3><h4 id="analytics"><a href="#analytics" class="headerlink" title="analytics"></a>analytics</h4><p>analytics参数用于指定网站分析服务提供商和属性ID，例如衡量网站流量。</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://squidfunk.github.io/mkdocs-material/setup/setting-up-site-analytics/">Setting up site analytics</a></li>
+<li><a target="_blank" rel="noopener" href="https://analytics.google.com/analytics/academy/course/6">google免费课程</a></li>
+</ul>
+<h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2><p>See <a target="_blank" rel="noopener" href="https://mkdocs.readthedocs.io/en/0.10/user-guide/configuration/">the doc</a>.</p>
+<ol>
+<li>Keep underscore in file name</li>
+</ol>
+<p>refer to: </p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://pypi.org/project/mkdocs-gen-nav-plugin/">https://pypi.org/project/mkdocs-gen-nav-plugin/</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/mkdocs/mkdocs/issues/2017">https://github.com/mkdocs/mkdocs/issues/2017</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/squidfunk/mkdocs-material/discussions/5977">https://github.com/squidfunk/mkdocs-material/discussions/5977</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.mkdocs.org/user-guide/writing-your-docs/#meta-data">https://www.mkdocs.org/user-guide/writing-your-docs/#meta-data</a></li>
+<li>No help: <a target="_blank" rel="noopener" href="https://www.mkdocs.org/user-guide/custom-themes/#pagetitle">https://www.mkdocs.org/user-guide/custom-themes/#pagetitle</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/linux/File-System/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +481,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-23 14:44:13" itemprop="dateModified" datetime="2024-08-23T14:44:13+00:00">2024-08-23</time>
+                <time title="Modified: 2024-09-06 10:38:45" itemprop="dateModified" datetime="2024-09-06T10:38:45+00:00">2024-09-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -305,7 +562,7 @@
 <p>FAT32允许的最大文件大小为4Gb。直至WindowsXP，FAT32是默认的文件系统，之后被NTFS取代。<br>虽然FAT非常基础，但是它支持几乎所有的设备和操作系统。</p>
 <p><strong>注：</strong> 驱动器（<a target="_blank" rel="noopener" href="https://www.computerhope.com/jargon/d/drive.htm">drive</a>），是一个能存储和读取非易失信息的位置，比如磁盘（disk）或光盘（disc）。</p>
 <p>如下图，驱动器A:是一个软盘（<a target="_blank" rel="noopener" href="https://www.computerhope.com/jargon/f/fdd.htm">floppy drive</a>），<br>驱动器C:是主硬盘（primary hard drivce），<br>驱动器D:和E:是分区，F:是<a target="_blank" rel="noopener" href="https://www.computerhope.com/jargon/c/cdrom.htm">CD-ROM</a>。<br>CD-ROM常常是最后一个盘符（drive letter）。<br>在多数情况下，硬盘是C:驱动器，CD-ROM或其他光盘是D:驱动器。</p>
-<p><img src="/blog/2024/01/23/linux/File-System/my-compu-drive.webp" alt="驱动器示例" title="驱动器示例图"></p>
+<p><img src="/blog/my-compu-drive.webp" alt="驱动器示例" title="驱动器示例图"></p>
 <ul>
 <li>NTFS</li>
 </ul>
@@ -324,7 +581,7 @@
 </li>
 </ul>
 <h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>下图是一个分区和文件系统的层次结构示例：</p>
-<p><img src="/blog/2024/01/23/linux/File-System/Example-of-partition-and-filesystem1-768x340.png.webp" alt="分区和文件系统的层次结构示例图" title="分区和文件系统的层次结构示例图"></p>
+<p><img src="/blog/Example-of-partition-and-filesystem1-768x340.png.webp" alt="分区和文件系统的层次结构示例图" title="分区和文件系统的层次结构示例图"></p>
 <p>我有一个500GB的SSD，分成3个分区（boot、home、root），使用GPT作为分区表。</p>
 <p>我没有分出swap分区。所有的分区都跑在ext4文件系统上。</p>
 <p>在一个双启动（dual-booted）存储设备（Windows和Linux）上，还有几个适用于Windwows的NTFS分区。</p>
@@ -424,7 +681,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-23 14:44:13" itemprop="dateModified" datetime="2024-08-23T14:44:13+00:00">2024-08-23</time>
+                <time title="Modified: 2024-09-06 10:38:45" itemprop="dateModified" datetime="2024-09-06T10:38:45+00:00">2024-09-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -501,7 +758,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-23 14:44:13" itemprop="dateModified" datetime="2024-08-23T14:44:13+00:00">2024-08-23</time>
+                <time title="Modified: 2024-09-06 10:38:45" itemprop="dateModified" datetime="2024-09-06T10:38:45+00:00">2024-09-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -575,7 +832,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-23 14:44:13" itemprop="dateModified" datetime="2024-08-23T14:44:13+00:00">2024-08-23</time>
+                <time title="Modified: 2024-09-06 10:38:45" itemprop="dateModified" datetime="2024-09-06T10:38:45+00:00">2024-09-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -656,7 +913,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-23 14:44:13" itemprop="dateModified" datetime="2024-08-23T14:44:13+00:00">2024-08-23</time>
+                <time title="Modified: 2024-09-06 10:38:45" itemprop="dateModified" datetime="2024-09-06T10:38:45+00:00">2024-09-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -731,7 +988,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-23 14:44:13" itemprop="dateModified" datetime="2024-08-23T14:44:13+00:00">2024-08-23</time>
+                <time title="Modified: 2024-09-06 10:38:45" itemprop="dateModified" datetime="2024-09-06T10:38:45+00:00">2024-09-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -827,7 +1084,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-23 14:44:13" itemprop="dateModified" datetime="2024-08-23T14:44:13+00:00">2024-08-23</time>
+                <time title="Modified: 2024-09-06 10:38:45" itemprop="dateModified" datetime="2024-09-06T10:38:45+00:00">2024-09-06</time>
               </span>
 
           
@@ -980,7 +1237,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-23 14:44:13" itemprop="dateModified" datetime="2024-08-23T14:44:13+00:00">2024-08-23</time>
+                <time title="Modified: 2024-09-06 10:38:45" itemprop="dateModified" datetime="2024-09-06T10:38:45+00:00">2024-09-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1030,157 +1287,6 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
 <li><a target="_blank" rel="noopener" href="https://www.jetbrains.com/help/hub/markdown-syntax.html">JetBrains: Markdown Syntax</a></li>
 <li><a target="_blank" rel="noopener" href="https://www.markdownguide.org/extended-syntax/">Markdown Guide: Extended Syntax</a></li>
 </ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/01/misc/Book-List/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/01/misc/Book-List/" class="post-title-link" itemprop="url">Book List</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-01 21:10:04" itemprop="dateCreated datePublished" datetime="2024-01-01T21:10:04+00:00">2024-01-01</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-23 14:44:13" itemprop="dateModified" datetime="2024-08-23T14:44:13+00:00">2024-08-23</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Misc/" itemprop="url" rel="index"><span itemprop="name">Misc</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="推荐书籍"><a href="#推荐书籍" class="headerlink" title="推荐书籍"></a>推荐书籍</h2><ol>
-<li>多人在线游戏架构实战：基于C++的分布式游戏编程&#x2F;彭放编著. –北京：机械工业出版社，2020.11 （ISBN 978-7-111-66792-6）</li>
-</ol>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/12/29/personal_site/npm/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2023/12/29/personal_site/npm/" class="post-title-link" itemprop="url">npm</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2023-12-29 11:01:11" itemprop="dateCreated datePublished" datetime="2023-12-29T11:01:11+00:00">2023-12-29</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-23 14:44:13" itemprop="dateModified" datetime="2024-08-23T14:44:13+00:00">2024-08-23</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Tools/" itemprop="url" rel="index"><span itemprop="name">Tools</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Options"><a href="#Options" class="headerlink" title="Options"></a>Options</h2><p><code>npm root</code> - Current installation root path.<br><code>npm root -g</code> - The global installation root path.<br><code>npm uninstall</code> - After executing this command, you should also remove the items in the <code>package.json</code> file and delete the <code>package-lock.json</code> file and the <code>node_modules</code> directory.</p>
-<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><p><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/5926672/where-does-npm-install-packages">Where does npm install packages?</a><br><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/66978786/cannot-uninstall-two-npm-packages">Cannot Uninstall two npm Packages</a></p>
 
       
     </div>
@@ -1267,7 +1373,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">56</span>
+          <span class="site-state-item-count">58</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1280,7 +1386,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">33</span>
+        <span class="site-state-item-count">34</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
