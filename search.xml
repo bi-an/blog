@@ -33,7 +33,7 @@
       <link href="/blog/2024/09/06/linux/File-Exists/"/>
       <url>/blog/2024/09/06/linux/File-Exists/</url>
       
-        <content type="html"><![CDATA[<h1 id="判断文件是否存在"><a href="#判断文件是否存在" class="headerlink" title="判断文件是否存在"></a>判断文件是否存在</h1><h2 id="相关函数"><a href="#相关函数" class="headerlink" title="相关函数"></a>相关函数</h2><ul><li><code>access</code></li><li><code>stat</code></li><li><code>inotify_node</code></li><li><code>opendir</code></li><li><code>readdir</code></li></ul><h2 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h2><p>文件系统并不会实时刷新缓存，尤其是在网络文件系统中。这会导致文件即使已经创建，<code>access</code>或<code>stat</code>函数依然返回”No such file”。<br>但是<code>ls</code>可以看到文件，这是因为<code>ls</code>和<code>access</code>函数的实现机制不同。</p><p>我们可以改用<code>readdir</code>来读取目录。</p>]]></content>
+        <content type="html"><![CDATA[<h1 id="判断文件是否存在"><a href="#判断文件是否存在" class="headerlink" title="判断文件是否存在"></a>判断文件是否存在</h1><h2 id="相关函数"><a href="#相关函数" class="headerlink" title="相关函数"></a>相关函数</h2><ul><li><code>access</code></li><li><code>stat</code></li><li><code>inotify_node</code></li><li><code>opendir</code></li><li><code>readdir</code></li></ul><h2 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h2><p>文件系统并不会实时刷新缓存，尤其是在网络文件系统中。这会导致文件即使已经创建，<code>access</code>或<code>stat</code>函数依然返回”No such file”。<br>但是<code>ls</code>可以看到文件，这是因为<code>ls</code>和<code>access</code>函数的实现机制不同。</p><p>例如：</p><p>在<code>NFS</code>文件系统中，创建文件之后立即调用<code>stat</code>命令查看文件，<code>stat</code>会报告“文件不存在”。<br>删除文件之后立即调用<code>stat</code>命令查看文件，发现<code>stat</code>依然可以看到该文件。</p><p>我们可以改用<code>readdir</code>来读取目录，因为目录会被更快地更新缓存。</p>]]></content>
       
       
       <categories>
