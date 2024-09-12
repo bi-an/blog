@@ -223,9 +223,9 @@ $ readelf -d libexample.so | grep SONAME
  0x000000000000000e (SONAME)             Library soname: [libexample.so.1]
 ```
 
-### versioning information
+### 符号版本控制（symbol versioning）
 
-定制函数版本：
+#### 定制函数版本：
 
 1. example.c中定义函数`my_printf`：
 
@@ -256,7 +256,9 @@ gcc -shared -Wl,--version-script=version_script.txt -o libexample.so example.o
 
 其中，`-Wl,`引出连接器选项。
 
-4. 使用`readelf -sW libexample.so`查看函数`my_printf`的版本号（"VERSION_1"）：
+4. 查看：
+   1. 使用`readelf -sW libexample.so`查看函数`my_printf`的版本号（"VERSION_1"）：
+   2. 使用`objdump -T libexample.so`
 
 ```text
 Symbol table '.dynsym' contains 8 entries:
@@ -270,6 +272,43 @@ Symbol table '.dynsym' contains 8 entries:
      6: 0000000000001105    39 FUNC    GLOBAL DEFAULT   13 my_printf@@VERSION_1
      7: 0000000000000000     0 OBJECT  GLOBAL DEFAULT  ABS VERSION_1
 ```
+
+#### 程序依赖的库版本
+
+有如下简单代码：
+
+```cpp
+// file: main.cc
+int main() {
+        return 0;
+}
+```
+
+正常编译：
+
+```bash
+g++ main.cc -o a.out
+```
+
+查看符号：
+
+```bash
+strings a.out
+```
+
+你会发现其中有一些版本信息：
+
+```
+...
+GLIBC_2.2.5
+GLIBC_2.34
+...
+```
+
+这是因为编译器和链接器生成库或可执行文件时，会根据系统上安装的glibc版本（因为库和可执行文件依赖glibc），
+为库或可执行文件的函数符号附加上特定的版本信息。
+为了保证向下兼容，glibc通过符号控制保留了多个版本的符号，支持老版本的软件能在较新的系统上运行。
+例如，如果某个函数在glibc2.2.5中引入，它可以继续保留在之后的版本中，但符号标记为GLIBC_2.2.5。
 
 ### ELF
 
