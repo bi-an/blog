@@ -193,6 +193,67 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/24/cplusplus/%E7%BB%9F%E8%AE%A1%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E6%AC%A1%E6%95%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/09/24/cplusplus/%E7%BB%9F%E8%AE%A1%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E6%AC%A1%E6%95%B0/" class="post-title-link" itemprop="url">统计函数调用次数</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2024-09-24 21:43:55 / Modified: 13:50:56" itemprop="dateCreated datePublished" datetime="2024-09-24T21:43:55+00:00">2024-09-24</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="宏实现"><a href="#宏实现" class="headerlink" title="宏实现"></a>宏实现</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unordered_map&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建一个全局哈希表，用于记录每个函数的调用次数</span></span><br><span class="line">std::unordered_map&lt;std::string, <span class="type">int</span>&gt; functionCallCount;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 宏定义用于统计函数调用次数</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> COUNT_START(func) \</span></span><br><span class="line"><span class="meta">    functionCallCount[#func]++; \</span></span><br><span class="line"><span class="meta">    std::cout &lt;&lt; #func &lt;&lt; <span class="string">&quot; has been called &quot;</span> &lt;&lt; functionCallCount[#func] &lt;&lt; <span class="string">&quot; times.&quot;</span> &lt;&lt; std::endl;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 示例函数</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Function f is executing.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">COUNT_START</span>(f); <span class="comment">// 调用f并统计</span></span><br><span class="line">    <span class="built_in">f</span>(); <span class="comment">// 实际调用</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">COUNT_START</span>(f); <span class="comment">// 再次调用f并统计</span></span><br><span class="line">    <span class="built_in">f</span>(); <span class="comment">// 实际调用</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="std-function-实现"><a href="#std-function-实现" class="headerlink" title="std::function 实现"></a>std::function 实现</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;functional&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unordered_map&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建一个全局哈希表，用于记录每个函数的调用次数</span></span><br><span class="line">std::unordered_map&lt;std::string, <span class="type">int</span>&gt; functionCallCount;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 包装器函数，统计调用次数</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Func, <span class="keyword">typename</span>... Args&gt;</span><br><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">callWithCount</span><span class="params">(<span class="type">const</span> std::string&amp; funcName, Func func, Args&amp;&amp;... args)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 每次调用，函数名对应的计数器递增</span></span><br><span class="line">    functionCallCount[funcName]++;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 输出函数的调用次数</span></span><br><span class="line">    std::cout &lt;&lt; funcName &lt;&lt; <span class="string">&quot; has been called &quot;</span> </span><br><span class="line">              &lt;&lt; functionCallCount[funcName] &lt;&lt; <span class="string">&quot; times.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 调用实际的函数并返回结果</span></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">func</span>(std::forward&lt;Args&gt;(args)...);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 示例函数1</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">add</span><span class="params">(<span class="type">int</span> a, <span class="type">int</span> b)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> a + b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 示例函数2</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">printMessage</span><span class="params">(<span class="type">const</span> std::string&amp; message)</span> </span>&#123;</span><br><span class="line">    std::cout &lt;&lt; message &lt;&lt; std::endl;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 调用add函数并统计</span></span><br><span class="line">    <span class="type">int</span> result = <span class="built_in">callWithCount</span>(<span class="string">&quot;add&quot;</span>, add, <span class="number">5</span>, <span class="number">3</span>);</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Result of add: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 调用printMessage函数并统计</span></span><br><span class="line">    <span class="built_in">callWithCount</span>(<span class="string">&quot;printMessage&quot;</span>, printMessage, <span class="string">&quot;Hello, World!&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 再次调用同样的函数</span></span><br><span class="line">    result = <span class="built_in">callWithCount</span>(<span class="string">&quot;add&quot;</span>, add, <span class="number">10</span>, <span class="number">20</span>);</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Result of add: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">callWithCount</span>(<span class="string">&quot;printMessage&quot;</span>, printMessage, <span class="string">&quot;This is a test message.&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/17/cplusplus/cpp%E4%B8%ADbool%E5%92%8Cint%E7%9A%84%E6%AF%94%E8%BE%83/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -216,10 +277,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2024-09-17 21:19:50 / Modified: 13:29:20" itemprop="dateCreated datePublished" datetime="2024-09-17T21:19:50+00:00">2024-09-17</time>
+              <time title="Created: 2024-09-17 21:19:50" itemprop="dateCreated datePublished" datetime="2024-09-17T21:19:50+00:00">2024-09-17</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-24 13:50:56" itemprop="dateModified" datetime="2024-09-24T13:50:56+00:00">2024-09-24</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -301,7 +368,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-17 13:29:20" itemprop="dateModified" datetime="2024-09-17T13:29:20+00:00">2024-09-17</time>
+                <time title="Modified: 2024-09-24 13:50:56" itemprop="dateModified" datetime="2024-09-24T13:50:56+00:00">2024-09-24</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -389,7 +456,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-17 13:29:20" itemprop="dateModified" datetime="2024-09-17T13:29:20+00:00">2024-09-17</time>
+                <time title="Modified: 2024-09-24 13:50:56" itemprop="dateModified" datetime="2024-09-24T13:50:56+00:00">2024-09-24</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -473,7 +540,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-17 13:29:20" itemprop="dateModified" datetime="2024-09-17T13:29:20+00:00">2024-09-17</time>
+                <time title="Modified: 2024-09-24 13:50:56" itemprop="dateModified" datetime="2024-09-24T13:50:56+00:00">2024-09-24</time>
               </span>
 
           
@@ -555,7 +622,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-17 13:29:20" itemprop="dateModified" datetime="2024-09-17T13:29:20+00:00">2024-09-17</time>
+                <time title="Modified: 2024-09-24 13:50:56" itemprop="dateModified" datetime="2024-09-24T13:50:56+00:00">2024-09-24</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -630,7 +697,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-17 13:29:20" itemprop="dateModified" datetime="2024-09-17T13:29:20+00:00">2024-09-17</time>
+                <time title="Modified: 2024-09-24 13:50:56" itemprop="dateModified" datetime="2024-09-24T13:50:56+00:00">2024-09-24</time>
               </span>
 
           
@@ -702,7 +769,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-17 13:29:20" itemprop="dateModified" datetime="2024-09-17T13:29:20+00:00">2024-09-17</time>
+                <time title="Modified: 2024-09-24 13:50:56" itemprop="dateModified" datetime="2024-09-24T13:50:56+00:00">2024-09-24</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -787,7 +854,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-17 13:29:20" itemprop="dateModified" datetime="2024-09-17T13:29:20+00:00">2024-09-17</time>
+                <time title="Modified: 2024-09-24 13:50:56" itemprop="dateModified" datetime="2024-09-24T13:50:56+00:00">2024-09-24</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -884,7 +951,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-17 13:29:20" itemprop="dateModified" datetime="2024-09-17T13:29:20+00:00">2024-09-17</time>
+                <time title="Modified: 2024-09-24 13:50:56" itemprop="dateModified" datetime="2024-09-24T13:50:56+00:00">2024-09-24</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -917,101 +984,6 @@
 </ol>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/times.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">clock_t</span> <span class="title">times</span><span class="params">(<span class="keyword">struct</span> tms *buf)</span></span>;</span><br></pre></td></tr></table></figure>
 
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/29/linux/Introduction-to-memory/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/29/linux/Introduction-to-memory/" class="post-title-link" itemprop="url">Introduction to memory</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-29 14:25:24" itemprop="dateCreated datePublished" datetime="2024-01-29T14:25:24+00:00">2024-01-29</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-17 13:29:20" itemprop="dateModified" datetime="2024-09-17T13:29:20+00:00">2024-09-17</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="malloc-free"><a href="#malloc-free" class="headerlink" title="malloc&#x2F;free"></a>malloc&#x2F;free</h2><p>See <a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Backtraces.html">this example</a></p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">char</span> ** <span class="title">backtrace_symbols</span> <span class="params">(<span class="type">void</span> *<span class="type">const</span> *buffer, <span class="type">int</span> size)</span> </span></span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>The return value of backtrace_symbols is a pointer obtained via the malloc function, and it is the responsibility of the caller to free that pointer. Note that only the return value need be freed, not the individual strings.</p>
-</blockquote>
-<p>Question: Why does it say “only the return value need be freed, not the individual strings”?</p>
-<p>Let us observe the defintion of the <code>malloc</code>&#x2F;<code>free</code> functions first:</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> *<span class="title">malloc</span><span class="params">( <span class="type">size_t</span> size )</span></span>;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">free</span><span class="params">( <span class="type">void</span> *ptr )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<p><code>free</code> takes a <code>void*</code> pointer to deallocate the memory, it doesn’t care what type it is, even if it is a multi-level pointer. It means that <code>malloc</code> has stored the memory size in some place and <code>free</code> will find it beforing deallocate the memory.</p>
-<p>Let us return the question. The memory pointer returned by <code>backtrace_symbols</code> is the <code>char**</code> type, it must be a whole block contigunous memory using <code>malloc</code> and might be enforced to be transformed as <code>char**</code> pointer when returing. So when we <code>free</code> the memory block, the Linux kernel find its actual memory size and deallocate it.</p>
-<p>Example:</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">char</span>** strings = (<span class="type">char</span>**)<span class="built_in">malloc</span>(<span class="number">3</span> * <span class="built_in">sizeof</span>(<span class="type">char</span>*) + <span class="number">3</span> * <span class="number">50</span>); <span class="comment">// assuming a maximum 50 characters per sentence</span></span><br><span class="line">    <span class="type">char</span>* block = (<span class="type">char</span>*)(strings + <span class="number">3</span>);</span><br><span class="line">    <span class="type">char</span>* s1 = <span class="built_in">strcpy</span>(block, <span class="string">&quot;The first sentence&quot;</span>); block += <span class="built_in">strlen</span>(s1) + <span class="number">1</span>;</span><br><span class="line">    <span class="type">char</span>* s2 = <span class="built_in">strcpy</span>(block, <span class="string">&quot;The second sentence&quot;</span>); block += <span class="built_in">strlen</span>(s2) + <span class="number">1</span>;</span><br><span class="line">    <span class="type">char</span>* s3 = <span class="built_in">strcpy</span>(block, <span class="string">&quot;The third sentence&quot;</span>);</span><br><span class="line">    strings[<span class="number">0</span>] = s1;</span><br><span class="line">    strings[<span class="number">1</span>] = s2;</span><br><span class="line">    strings[<span class="number">2</span>] = s3;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">3</span>; ++i) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>, strings[i]);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">free</span>(strings); <span class="comment">// deallocate all memory at once</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>More elegant but less economical code:</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">char</span>** strings = (<span class="type">char</span>**)<span class="built_in">malloc</span>(<span class="number">3</span> * <span class="built_in">sizeof</span>(<span class="type">char</span>*) + <span class="number">3</span> * <span class="number">50</span>);</span><br><span class="line">    <span class="type">char</span>* block = (<span class="type">char</span>*)(strings + <span class="number">3</span>);</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">3</span>; ++i) &#123;</span><br><span class="line">        strings[i] = block + i * <span class="number">50</span>; <span class="comment">// Assuming a maximum of 50 characters per sentence</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">strcpy</span>(strings[<span class="number">0</span>], <span class="string">&quot;The first sentence&quot;</span>);</span><br><span class="line">    <span class="built_in">strcpy</span>(strings[<span class="number">1</span>], <span class="string">&quot;The second sentence&quot;</span>);</span><br><span class="line">    <span class="built_in">strcpy</span>(strings[<span class="number">2</span>], <span class="string">&quot;The third sentence&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">3</span>; ++i) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>, strings[i]);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">free</span>(strings); <span class="comment">// deallocate all memory at once</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Memory_002dmapped-I_002fO.html">The GNU C Library (glibc) manual: 13.8 Memory-mapped I&#x2F;O</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Memory-Protection.html">The GNU C Library (glibc) manual: 3.4 Memory Protection</a></li>
-</ul>
 
       
     </div>
@@ -1098,7 +1070,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">59</span>
+          <span class="site-state-item-count">60</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
