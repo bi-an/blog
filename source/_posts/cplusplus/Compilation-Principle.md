@@ -1,5 +1,5 @@
 ---
-title: Compilation Principle
+title: 编译原理
 date: 2024-01-23 21:36:08
 categories: c/cpp
 tags: compile
@@ -258,7 +258,6 @@ gcc -shared -Wl,--version-script=version_script.txt -o libexample.so example.o
 
 4. 查看：
    1. 使用`readelf -sW libexample.so`查看函数`my_printf`的版本号（"VERSION_1"）：
-   2. 使用`objdump -T libexample.so`
 
 ```text
 Symbol table '.dynsym' contains 8 entries:
@@ -272,6 +271,60 @@ Symbol table '.dynsym' contains 8 entries:
      6: 0000000000001105    39 FUNC    GLOBAL DEFAULT   13 my_printf@@VERSION_1
      7: 0000000000000000     0 OBJECT  GLOBAL DEFAULT  ABS VERSION_1
 ```
+
+   2. 使用`objdump -T libexample.so`
+   3. 使用`nm -D libexample.so`
+
+#### 实现同一个函数有多个版本
+
+1. 编写源代码
+
+```cpp
+#include <stdio.h>
+
+void foo() {
+    printf("foo version 1.0\n");
+}
+
+void foo_v2() {
+    printf("foo_v2 version 2.0\n");
+}
+```
+
+2. 编写版本脚本
+
+例如，version_script.map文件如下：
+
+```bash
+VERS_1.0 {
+    global: # global表示符号全局可见；默认为局部（也可能通过local显式声明为局部），不会被导出
+        foo;
+} VERS_1.1;
+
+VERS_1.1 {
+    global:
+        foo_v2;
+    foo; # VER_1.1继承自VER_1.0
+         # 1. foo在VER_1.0中已经声明为了global，不需要再次声明global
+         # 2. 当然可以再次显式声明为global，但是这不是推荐的做法
+         # 3. 假设foo在VER_1.0中不是global，此处声明为global，
+         # 会将原本不是global的foo变得全局可见
+         # 4. 我们其实无需再次导出foo，因为除非我们显式隐藏（使用local关键字），foo就在
+         # VER_1.1是和VER_1.0中的可见性保持一致
+         # 5. 如果希望在VER_1.1中的foo与VER_1.0有不同的行为，那么需要再次将其导出
+} VERS_2.0;
+
+VERS_2.0 {
+    global:
+        foo_v2
+};
+```
+
+VER_1.1继承了VER_1.0的全部符号，同时VER_1.1可以增加或修改符号。
+
+VER_1.0：第一个版本，导出foo符号；
+VER_1.1：第二个版本，引入foo_v2，并重新导出foo；
+
 
 #### 程序依赖的库版本
 
@@ -381,4 +434,23 @@ $ lsof -p 6919 | grep mem
 ### Notice
 
 1. 生成so时，链接器不会寻找其so依赖；executable会寻找so的依赖关系。换句话说，即使so生成过程不报错，但是executable生成时可能会报错。
+2. 生成so时，如果引用了其他 so ，只要 include 其他 so 的头文件，引用头文件中的符号时，就能编译通过。但是这样生成的 so 没有加上对应符号的依赖。
+   此时用 readelf -s 查看对应的符号，其 type 为 NOTYPE 。
 
+    ```text
+    $ readelf -sW libb.so
+
+    Symbol table '.dynsym' contains 14 entries:
+    Num:    Value          Size Type    Bind   Vis      Ndx Name
+     6: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT  UND _Z1fv
+    ```
+
+3. 如果加上对应 -la 选项，就会从 liba.so 中寻找依赖的符号，如果找到，则添加进入 so 的依赖项中。当运行时则会加载 liba.so ，否则运行时不会加载。
+   用 readelf -s 查看对应的符号，其 type 不再时 NOTYPE ，而是 FUNC （如果该符号是一个函数的话）。
+
+    ```text
+     6: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND _Z1fv
+    ```
+
+   如果没有找到符号，或者说 liba.so 中根本没有实现这个函数，那么其 type 依然是 NOTYPE ，此时也不会报错。
+   注意：如果只是 include 头文件，也就说只有某个符号的声明，并没有其定义或引用它，那么 so 中不会生成其信息。
