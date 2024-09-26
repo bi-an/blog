@@ -9,6 +9,8 @@ tags: c/cpp
 > /usr/include/c++/11/bits/shared_ptr_base.h
 > /usr/include/c++/11/bits/shared_ptr.h
 
+博客：https://zhiqiang.org/coding/std-shared-ptr.html
+
 ## `std::shared_ptr` 的性质
 
 1. 复制构造、析构是线程安全的。
@@ -19,17 +21,14 @@ tags: c/cpp
 
 写操作和复制构造、析构的主要区别是：
 
-    2.1 复制构造、析构函数中，单个线程只处理一个对象，复制构造函数将其他对象复制过来之后，
-不会改动其他对象的资源（引用计数、所管理的内存）。
+* 复制构造、析构函数中，单个线程只处理一个对象，复制构造函数将其他对象复制过来之后，不会改动其他对象的资源（引用计数、所管理的内存）。
+* 但是写操作可能多个线程都在处理该 shared_ptr 。例如多个线程都对同一个 shared_ptr 进行赋值：
 
-    2.2 但是写操作可能多个线程都在处理该 shared_ptr 。例如多个线程都对同一个 shared_ptr 进行
-赋值：
-
-    ```cpp
-    shared_ptr<int> sp1 = make_shared<int>(1);
-    sp1 = sp2; // 线程 1
-    sp1 = sp3; // 线程 2
-    ```
+```cpp
+shared_ptr<int> sp1 = make_shared<int>(1);
+sp1 = sp2; // 线程 1
+sp1 = sp3; // 线程 2
+```
 
 对比源码分析：
 
@@ -62,4 +61,4 @@ tags: c/cpp
 
 永远不要手动 `delete use_count`，因为其他线程可能此时正在使用该资源，例如解引用 `*use_count`。
 
-{% include code/SharedPtr.hpp %}
+{% include_code SharedPtr.hpp lang:cpp from:1 SharedPtr.hpp %}
