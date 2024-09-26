@@ -54,8 +54,8 @@ For bug reporting instructions, please see:
 Note:
 
 
-`%` 可以用来转义某行，任何句首带有`%`的行将被视作字符串，直接放入到输出文件中。
-注意：`rpcgen`可能改变该行的位置，所以应该在输出文件中对这些行进行仔细检查。
+`%` 可以用来转义某行，任何句首带有 `%` 的行将被视作字符串，直接放入到输出文件中。 
+注意：`rpcgen` 可能改变该行的位置，所以应该在输出文件中对这些行进行仔细检查。
 
 `rpcgen` provides an additional preprocessing feature: any line that begins with a percent sign (`%`) is passed directly to the output file, with no action on the line's content. Use caution because `rpcgen` does not always place the lines where you intend. Check the output source file and, if needed, edit it.
 
@@ -65,9 +65,9 @@ Note:
 #include "abc.h"
 ```
 
-当执行`rpcgen infile`命令时，由于"abc.h"不存在，可能会报错。
+当执行 `rpcgen infile` 命令时，由于 "abc.h" 不存在，可能会报错。
 
-但是如果在句首添加一个`%`符号，则可以绕过检查。
+但是如果在句首添加一个 `%` 符号，则可以绕过检查。
 
 ```rpc
 %#include "abc.h"
