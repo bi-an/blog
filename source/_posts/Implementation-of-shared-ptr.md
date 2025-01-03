@@ -62,3 +62,7 @@ sp1 = sp3; // 线程 2
 永远不要手动 `delete use_count`，因为其他线程可能此时正在使用该资源，例如解引用 `*use_count`。
 
 {% include_code SharedPtr.hpp lang:cpp from:1 SharedPtr.hpp %}
+
+## 参考
+
+https://gcc.gnu.org/onlinedocs/libstdc++/manual/ext_concurrency.html

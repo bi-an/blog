@@ -23,6 +23,25 @@
 	      {
 		__atomic_thread_fence (__ATOMIC_ACQ_REL);
 	      }
+
+            // Be race-detector-friendly.  For more info see bits/c++config.
+            _GLIBCXX_SYNCHRONIZATION_HAPPENS_BEFORE(&_M_weak_count);
+	    if (__gnu_cxx::__exchange_and_add_dispatch(&_M_weak_count,
+						       -1) == 1)
+              {
+                _GLIBCXX_SYNCHRONIZATION_HAPPENS_AFTER(&_M_weak_count);
+	        _M_destroy();
+              }
+	  }
+      }
+
+    private:
+      _Sp_counted_base(_Sp_counted_base const&) = delete;
+      _Sp_counted_base& operator=(_Sp_counted_base const&) = delete;
+
+      // using _Atomic_word = int;
+      _Atomic_word  _M_use_count;     // #shared
+      _Atomic_word  _M_weak_count;    // #weak + (#shared != 0)
     };
 
   template<_Lock_policy _Lp>
