@@ -35,3 +35,11 @@ void print_trace() {
     }
 }
 ```
+
+## 第三方库
+
+breakpad: https://blog.csdn.net/weixin_45609638/article/details/125090204
+
+https://juejin.cn/post/6899070041074073614
+
+https://juejin.cn/post/7130820896213712927
