@@ -454,3 +454,62 @@ $ lsof -p 6919 | grep mem
 
    如果没有找到符号，或者说 liba.so 中根本没有实现这个函数，那么其 type 依然是 NOTYPE ，此时也不会报错。
    注意：如果只是 include 头文件，也就说只有某个符号的声明，并没有其定义或引用它，那么 so 中不会生成其信息。
+
+
+## 示例
+
+### 运行时错误："/path/to/a.out: /usr/lib/x86_64-linux-gnu/libstdc++.so.6: version `GLIBCXX_3.4.30' not found (required by /path/to/libxxx.so)"
+
+解释：`libxxx.so` 引用了一个 `GLIBCXX_3.4.30` 的符号（可能是全局变量或函数），但是在系统的 `/usr/lib/x86_64-linux-gnu/libstdc++.so.6` 中没有这个版本的符号。
+
+```bash
+$ strings /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep 'GLIBCXX_3.4.'
+GLIBCXX_3.4.1
+...
+GLIBCXX_3.4.27
+GLIBCXX_3.4.28
+# 没有 GLIBCXX_3.4.30
+
+$ strings /path/to/libxxx.so | grep 'GLIBCXX_3.4.30' | c++filt
+GLIBCXX_3.4.30
+std::condition_variable::wait(std::unique_lock<std::mutex>&)@@GLIBCXX_3.4.30
+```
+
+这往往是因为原始的版本中，`libxxx.so` 是在一台机器中编译的，此时将该机器的 `GLIBCXX_3.4.30` 符号编译到其中了。但是运行时的机器是另一台，该机器上
+不存在 `GLIBCXX_3.4.30` 版本，所以运行时报错。
+
+或者，因为环境变量的配置错误，编译时和运行时引用的 `libstdc++.so.6` 不是同一个，这也会导致运行时可能找不到编译时的 `GLIBCXX_3.4.30` 版本。
+
+可以在源文件中使用指定的版本（使用运行时的版本，比如 `GLIBCXX_3.4.11` ）：
+
+1. 查找版本：
+
+```bash
+$ objdump -T /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep condition_variable | c++filt
+00000000000d52d0 g    DF .text  000000000000000c  GLIBCXX_3.4.30 std::condition_variable::wait(std::unique_lock<std::mutex>&)
+00000000000ac730 g    DF .text  000000000000001c (GLIBCXX_3.4.11) std::condition_variable::wait(std::unique_lock<std::mutex>&)
+
+$ objdump -T /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep condition_variable
+00000000000d52d0 g    DF .text  000000000000000c  GLIBCXX_3.4.30 _ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE
+00000000000ac730 g    DF .text  000000000000001c (GLIBCXX_3.4.11) _ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE
+```
+
+可以确定符号为 `_ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE` ，版本为 `GLIBCXX_3.4.11` 。
+
+在源文件中指定版本
+
+{% include_code symver lang:cpp from:1 symver.cpp %}
+
+编译：
+
+```bash
+g++ symver.cpp
+```
+
+验证符号版本：
+
+```bash
+$ strings a.out | grep condition_variable | c++filt
+std::condition_variable::wait(std::unique_lock<std::mutex>&)
+std::condition_variable::wait(std::unique_lock<std::mutex>&)@GLIBCXX_3.4.11
+```

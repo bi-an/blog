@@ -25,7 +25,21 @@ Priority:
 
 如何 include 文件：
 
-https://hexo.io/docs/tag-plugins
+https://hexo.io/docs/tag-plugins#Include-Code
+
+在 `_config.yml` 添加配置项：
+
+```bash
+code_dir: downloads/code
+```
+
+语法：
+
+```bash
+{% include_code [title] [lang:language] [from:line] [to:line] path/to/file %}
+```
+
+其中，`[]` 表示可选，实际语句中不能包括中括号。
 
 ## Plugins
 
