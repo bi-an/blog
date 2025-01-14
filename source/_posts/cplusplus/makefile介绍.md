@@ -1,5 +1,5 @@
 ---
-title: Makefile usage
+title: makefile 介绍
 categories: c/cpp
 tags: build
 date: 2023-11-17 14:19:35

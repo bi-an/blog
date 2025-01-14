@@ -1,5 +1,5 @@
 ---
-title: gcc VS glibc
+title: gcc 与 glibc
 date: 2024-02-02 13:24:45
 categories: c/cpp
 tags:

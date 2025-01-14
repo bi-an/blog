@@ -1,5 +1,5 @@
 ---
-title: cpp中bool和int的比较
+title: C++ 的 bool 和 int
 date: 2024-09-17 21:19:50
 categories: c/cpp
 tags: cpp

@@ -1,5 +1,5 @@
 ---
-title: gdb Usage
+title: gdb 入门
 date: 2024-01-23 21:44:37
 categories: c/cpp
 tags: gdb

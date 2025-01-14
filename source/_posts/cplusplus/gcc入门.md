@@ -1,5 +1,5 @@
 ---
-title: gcc Usage
+title: gcc 入门
 date: 2024-01-23 21:44:11
 categories: c/cpp
 tags: gcc

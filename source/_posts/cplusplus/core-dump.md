@@ -1,5 +1,5 @@
 ---
-title: Coredump
+title: core dump
 date: 2024-01-23 21:42:51
 categories: c/cpp
 tags: debug

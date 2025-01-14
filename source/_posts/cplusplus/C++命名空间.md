@@ -1,5 +1,5 @@
 ---
-title: namespace in c++
+title: C++ 命名空间
 categories: c/cpp
 tags: syntax
 date: 2023-11-02 09:53:52

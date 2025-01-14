@@ -1,5 +1,5 @@
 ---
-title: Cpp Debug Tools
+title: C++ 调试工具
 date: 2024-01-23 21:27:05
 categories: c/cpp
 tags: debug

@@ -1,5 +1,5 @@
 ---
-title: C++ Initializer List
+title: C++ 初始化列表
 date: 2024-01-26 10:31:32
 categories: c/cpp
 tags: syntax

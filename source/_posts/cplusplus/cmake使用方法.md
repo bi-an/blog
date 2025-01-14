@@ -1,5 +1,5 @@
 ---
-title: cmake usage
+title: cmake 入门
 date: 2023-12-07 10:58:25
 categories: c/cpp
 tags: build
