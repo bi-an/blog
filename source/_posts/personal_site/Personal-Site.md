@@ -112,6 +112,13 @@ sudo apt-get install openssh-server
 sudo service ssh start
 ```
 
+#### ssh-keygen
+
+```bash
+# 删除错误的 know_hosts 项
+ssh-keygen -f "/home/<user>/.ssh/known_hosts" -R "ubuntu"
+```
+
 #### 通过https登录到github
 
 `git push`不再支持输入用户名和密码，当提示输入密码时，需要输入personal access token.
