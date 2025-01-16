@@ -93,6 +93,17 @@ DFT 对芯片来说不是必需的，一些低成本的芯片没有插入 DFT �
 
 版图布局规划（FloorPlan）：将芯片整体规划，以及内部数字、模拟电路的位置、面积、形状等特征的规划。
 
+<figure style="text-align:center;">
+<a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/WpHYGBcg/20250116222241.jpg" alt="20250116222241"/></a>
+<figcaption>FloorPlan示例</figcaption>
+</figure>
+
+- Pad: FloorPlan的周围是芯片引脚(Pad)。Pad实际指的是芯片引脚之外的一块金属。
+- IO: 包括Pad和内部逻辑在内的整个引脚设计。
+
+一个完整的引脚设计如图：
+
+<a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/MKfPd9z4/20250116222905.jpg" alt="20250116222905"/></a>
 
 ## IC设计工具
 
@@ -200,8 +211,14 @@ register，这是对功能强调的名称，其物理实体很多，比如触发
 
 本书说的寄存器，基本可以替换为触发器。在数字芯片 EDA 工具链中，两个概念也是混用的，一个 reg 既可以指寄存器，也可以指触发器。另外，所谓时序逻辑门电路，也基本等同于触发器。
 
-### 设计的边界
+### 设计(Design)的边界
 
-<a href='https://postimg.cc/JDSBLFx3' target='_blank'><img src='https://i.postimg.cc/JDSBLFx3/20250116211433.jpg' border='0' alt='20250116211433'/></a>
+<a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/gjQMGZHN/20250116211433.jpg" alt="20250116211433"/></a>
 
-[20250116211433.jpg](https://postimg.cc/JDSBLFx3)
+- Pad：芯片（封装）之外的引脚。
+- 元器件：指芯片内的组合逻辑门电路及时序逻辑门电路。这些标准的元器件也被称为标准单元(Standard Cell)。
+- 标准单元库/工艺库：元器件的集合。
+
+数字设计只能在 Foundry 提供的已有的选项中挑选元器件。
+
+
