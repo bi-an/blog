@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh_CN">
 <head>
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
@@ -24,7 +24,7 @@
 <meta property="og:title" content="江南人物的博客">
 <meta property="og:url" content="https://bi-an.github.io/blog/page/2/index.html">
 <meta property="og:site_name" content="江南人物的博客">
-<meta property="og:locale" content="en_US">
+<meta property="og:locale" content="zh_CN">
 <meta property="article:author" content="bi-an">
 <meta name="twitter:card" content="summary">
 
@@ -37,7 +37,7 @@
     sidebar: "",
     isHome : true,
     isPost : false,
-    lang   : 'en'
+    lang   : 'zh_CN'
   };
 </script>
 
@@ -192,7 +192,367 @@
       
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/02/24/thread/TBB-Learning/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/02/24/thread/TBB-Learning/" class="post-title-link" itemprop="url">TBB Learning</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-02-24 14:59:52" itemprop="dateCreated datePublished" datetime="2024-02-24T14:59:52+00:00">2024-02-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-01-16 15:02:09" itemprop="dateModified" datetime="2025-01-16T15:02:09+00:00">2025-01-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="Control-the-number-threads"><a href="#Control-the-number-threads" class="headerlink" title="Control the number threads"></a>Control the number threads</h1><ul>
+<li>Method 1: Use the environment variable <code>TBB_NUM_THREADS</code> for the gloabl setting.</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> TBB_NUM_THREADS=4</span><br></pre></td></tr></table></figure>
+
+<p>TODO: It doesn’t seem to work!</p>
+<ul>
+<li>Method 2: Use <code>tbb::task_arena</code> or <code>tbb::task_scheduler_init</code> (Deprecated).</li>
+</ul>
+<p>TBB will use this setting locally within the scope of the <code>tbb::task_arena</code>.</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tbb/pipeline.h&gt;</span></span></span><br><span class="line"><span class="comment">// Deprecated:</span></span><br><span class="line"><span class="comment">// #include &lt;tbb/task_scheduler_init.h&gt;</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tbb/task_arena.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Define your pipeline body</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MyPipeline</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">operator</span><span class="params">()</span> <span class="params">(tbb::flow_control&amp; fc)</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="comment">// Your pipeline logic here</span></span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line">        <span class="comment">// Inform the pipeline that there is no more data</span></span><br><span class="line">        fc.<span class="built_in">stop</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Deprecated: tbb::task_scheduler_init init(1);</span></span><br><span class="line">    <span class="function">tbb::task_arena <span class="title">arena</span><span class="params">(<span class="number">4</span>)</span></span>; <span class="comment">// 4 threads</span></span><br><span class="line">    <span class="comment">// Do some tasks:</span></span><br><span class="line">    tbb::<span class="built_in">parallel_pipeline</span>(<span class="comment">/* max_number_of_live_tokens */</span> <span class="number">4</span>, MyPipeline);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/02/02/cplusplus/gcc%E4%B8%8Eglibc/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/02/02/cplusplus/gcc%E4%B8%8Eglibc/" class="post-title-link" itemprop="url">gcc 与 glibc</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-02-02 13:24:45" itemprop="dateCreated datePublished" datetime="2024-02-02T13:24:45+00:00">2024-02-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-01-16 15:02:09" itemprop="dateModified" datetime="2025-01-16T15:02:09+00:00">2025-01-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="gcc"><a href="#gcc" class="headerlink" title="gcc"></a>gcc</h2><p>gcc是一个编译套件，包含c、c++、Fortran语言的编译器。</p>
+<h2 id="glibc"><a href="#glibc" class="headerlink" title="glibc"></a>glibc</h2><p>glibc是一个library，为C程序提供基础公共功能，包括系统调用、数学函数和其他核心组件。<br>Linux平台和vscode似乎都依赖glibc，如果擅自将<code>LD_LIBRARY_PATH</code>更改为其他版本的glibc路径，则bash会直接crash。</p>
+<h3 id="glibc包含以下bin和lib："><a href="#glibc包含以下bin和lib：" class="headerlink" title="glibc包含以下bin和lib："></a>glibc包含以下bin和lib：</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cd</span> glibc-v2.34/Linux/RHEL7.0-2017-x86_64/bin &amp;&amp; <span class="built_in">ls</span></span><br><span class="line">catchsegv  getconf  iconv  locale     makedb  pcprofiledump  sotruss  tzselect  zdump</span><br><span class="line">gencat     getent   ldd    localedef  mtrace  pldd           sprof    xtrace</span><br><span class="line"></span><br><span class="line"><span class="comment"># 进入其他版本的glibc/lib目录执行ls命令会报错，大概原因可能是因为当前路径的glibc的lib和系统的lib冲突。</span></span><br><span class="line">$ <span class="built_in">cd</span> ../lib &amp;&amp; <span class="built_in">ls</span></span><br><span class="line"><span class="built_in">ls</span>: relocation error: ./libc.so.6: symbol __tunable_get_val, version GLIBC_PRIVATE not defined <span class="keyword">in</span> file ld-linux-x86-64.so.2 with <span class="built_in">link</span> time reference</span><br><span class="line"></span><br><span class="line">$ <span class="built_in">cd</span> .. &amp;&amp; <span class="built_in">ls</span> lib</span><br><span class="line">Mcrt1.o               libanl.so.1             libm.so             libnss_hesiod.so.2</span><br><span class="line">Scrt1.o               libc.a                  libm.so.6           libpcprofile.so</span><br><span class="line">audit                 libc.so                 libmcheck.a         libpthread.a</span><br><span class="line">crt1.o                libc.so.6               libmemusage.so      libpthread.so.0</span><br><span class="line">crti.o                libc_malloc_debug.so    libmvec.a           libresolv.a</span><br><span class="line">crtn.o                libc_malloc_debug.so.0  libmvec.so          libresolv.so</span><br><span class="line">gconv                 libc_nonshared.a        libmvec.so.1        libresolv.so.2</span><br><span class="line">gcrt1.o               libcrypt.a              libnsl.so.1         librt.a</span><br><span class="line">ld-linux-x86-64.so.2  libcrypt.so             libnss_compat.so    librt.so.1</span><br><span class="line">libBrokenLocale.a     libcrypt.so.1           libnss_compat.so.2  libthread_db.so</span><br><span class="line">libBrokenLocale.so    libdl.a                 libnss_db.so        libthread_db.so.1</span><br><span class="line">libBrokenLocale.so.1  libdl.so.2              libnss_db.so.2      libutil.a</span><br><span class="line">libSegFault.so        libg.a                  libnss_dns.so.2     libutil.so.1</span><br><span class="line">libanl.a              libm-2.34.a             libnss_files.so.2</span><br><span class="line">libanl.so             libm.a                  libnss_hesiod.so</span><br></pre></td></tr></table></figure>
+
+<h3 id="查看glibc的版本："><a href="#查看glibc的版本：" class="headerlink" title="查看glibc的版本："></a>查看glibc的版本：</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 从上可知，ldd是glibc的核心组件之一</span></span><br><span class="line">$ ldd --version</span><br></pre></td></tr></table></figure>
+
+<h3 id="寻找libc-so的路径："><a href="#寻找libc-so的路径：" class="headerlink" title="寻找libc.so的路径："></a>寻找libc.so的路径：</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ locate libc.so</span><br><span class="line">/usr/lib/x86_64-linux-gnu/libc.so</span><br><span class="line">/usr/lib/x86_64-linux-gnu/libc.so.6</span><br><span class="line">$ locate libstdc++.so</span><br><span class="line">/usr/lib/gcc/x86_64-linux-gnu/11/libstdc++.so</span><br><span class="line">/usr/lib/x86_64-linux-gnu/libstdc++.so.6</span><br><span class="line">/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30</span><br><span class="line">/usr/share/gdb/auto-load/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30-gdb.py</span><br></pre></td></tr></table></figure>
+
+<h3 id="安装glibc："><a href="#安装glibc：" class="headerlink" title="安装glibc："></a>安装glibc：</h3><p>Ubuntu平台</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install lib6</span><br></pre></td></tr></table></figure>
+
+<p>RedHat平台</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo yum install glibc</span><br></pre></td></tr></table></figure>
+
+<h3 id="检查GNC-C-Library-libstdc-的版本："><a href="#检查GNC-C-Library-libstdc-的版本：" class="headerlink" title="检查GNC C++ Library (libstdc++)的版本："></a>检查GNC C++ Library (libstdc++)的版本：</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">$ strings /usr/lib/libstdc++.so.* | grep LIBCXX</span><br><span class="line">[sjcvl-zhigaoz ] /lan/cva_rel/vxe_main/24.02.650.d000/tools.lnx86/lib/64bit % strings /usr/lib/libstdc++.so.* | grep LIBCXX</span><br><span class="line">GLIBCXX_3.4</span><br><span class="line">GLIBCXX_3.4.1</span><br><span class="line">GLIBCXX_3.4.2</span><br><span class="line">...</span><br><span class="line">GLIBCXX_3.4.19</span><br><span class="line">GLIBCXX_DEBUG_MESSAGE_LENGTH</span><br><span class="line"></span><br><span class="line">$ strings /usr/lib/libc.so.* | grep GLIBC</span><br><span class="line">GLIBC_2.0</span><br><span class="line">GLIBC_2.1</span><br><span class="line">GLIBC_2.1.1</span><br><span class="line">...</span><br><span class="line">GLIBC_2.17</span><br><span class="line">GLIBC_PRIVATE</span><br></pre></td></tr></table></figure>
+
+<p>如果你有一个使用了libstdc++的特定的binary或application，可以用下面的命令来检查其版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ldd &lt;your_binary_or_application&gt; | grep libstdc++</span><br></pre></td></tr></table></figure>
+
+<p>使用vscode的“Remote SSH”工具试图连接到Linux时，可能会报错如下：</p>
+<blockquote>
+<p>Warning: Missing GLIBCXX &gt;&#x3D; 3.4.25! from &#x2F;usr&#x2F;lib64&#x2F;libstdc++.so.6.0.19<br>Warning: Missing GLIBC &gt;&#x3D; 2.28! from &#x2F;usr&#x2F;lib64&#x2F;libc-2.17.so<br>Error: Missing required dependencies. Please refer to our FAQ <a target="_blank" rel="noopener" href="https://aka.ms/vscode-remote/faq/old-linux">https://aka.ms/vscode-remote/faq/old-linux</a> for additional information.</p>
+</blockquote>
+<p>这是因为Linux系统上的glibc版本中不包含GLIBCXX_3.4.25及以上的版本。此时需要降级vscode（建议做法）或升级glibc（似乎很难）。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/30/misc/Timing-Tools/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/30/misc/Timing-Tools/" class="post-title-link" itemprop="url">Timing Tools</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-30 11:07:39" itemprop="dateCreated datePublished" datetime="2024-01-30T11:07:39+00:00">2024-01-30</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-01-16 15:02:09" itemprop="dateModified" datetime="2025-01-16T15:02:09+00:00">2025-01-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="times"><a href="#times" class="headerlink" title="times"></a>times</h2><ol>
+<li>bash built-in</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">times</span></span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>function</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/times.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">clock_t</span> <span class="title">times</span><span class="params">(<span class="keyword">struct</span> tms *buf)</span></span>;</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/29/linux/Introduction-to-memory/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/29/linux/Introduction-to-memory/" class="post-title-link" itemprop="url">Introduction to memory</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-29 14:25:24" itemprop="dateCreated datePublished" datetime="2024-01-29T14:25:24+00:00">2024-01-29</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-01-16 15:02:09" itemprop="dateModified" datetime="2025-01-16T15:02:09+00:00">2025-01-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="malloc-free"><a href="#malloc-free" class="headerlink" title="malloc&#x2F;free"></a>malloc&#x2F;free</h2><p>See <a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Backtraces.html">this example</a></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">char</span> ** <span class="title">backtrace_symbols</span> <span class="params">(<span class="type">void</span> *<span class="type">const</span> *buffer, <span class="type">int</span> size)</span> </span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>The return value of backtrace_symbols is a pointer obtained via the malloc function, and it is the responsibility of the caller to free that pointer. Note that only the return value need be freed, not the individual strings.</p>
+</blockquote>
+<p>Question: Why does it say “only the return value need be freed, not the individual strings”?</p>
+<p>Let us observe the defintion of the <code>malloc</code>&#x2F;<code>free</code> functions first:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> *<span class="title">malloc</span><span class="params">( <span class="type">size_t</span> size )</span></span>;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">free</span><span class="params">( <span class="type">void</span> *ptr )</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p><code>free</code> takes a <code>void*</code> pointer to deallocate the memory, it doesn’t care what type it is, even if it is a multi-level pointer. It means that <code>malloc</code> has stored the memory size in some place and <code>free</code> will find it beforing deallocate the memory.</p>
+<p>Let us return the question. The memory pointer returned by <code>backtrace_symbols</code> is the <code>char**</code> type, it must be a whole block contigunous memory using <code>malloc</code> and might be enforced to be transformed as <code>char**</code> pointer when returing. So when we <code>free</code> the memory block, the Linux kernel find its actual memory size and deallocate it.</p>
+<p>Example:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">char</span>** strings = (<span class="type">char</span>**)<span class="built_in">malloc</span>(<span class="number">3</span> * <span class="built_in">sizeof</span>(<span class="type">char</span>*) + <span class="number">3</span> * <span class="number">50</span>); <span class="comment">// assuming a maximum 50 characters per sentence</span></span><br><span class="line">    <span class="type">char</span>* block = (<span class="type">char</span>*)(strings + <span class="number">3</span>);</span><br><span class="line">    <span class="type">char</span>* s1 = <span class="built_in">strcpy</span>(block, <span class="string">&quot;The first sentence&quot;</span>); block += <span class="built_in">strlen</span>(s1) + <span class="number">1</span>;</span><br><span class="line">    <span class="type">char</span>* s2 = <span class="built_in">strcpy</span>(block, <span class="string">&quot;The second sentence&quot;</span>); block += <span class="built_in">strlen</span>(s2) + <span class="number">1</span>;</span><br><span class="line">    <span class="type">char</span>* s3 = <span class="built_in">strcpy</span>(block, <span class="string">&quot;The third sentence&quot;</span>);</span><br><span class="line">    strings[<span class="number">0</span>] = s1;</span><br><span class="line">    strings[<span class="number">1</span>] = s2;</span><br><span class="line">    strings[<span class="number">2</span>] = s3;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">3</span>; ++i) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>, strings[i]);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">free</span>(strings); <span class="comment">// deallocate all memory at once</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>More elegant but less economical code:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">char</span>** strings = (<span class="type">char</span>**)<span class="built_in">malloc</span>(<span class="number">3</span> * <span class="built_in">sizeof</span>(<span class="type">char</span>*) + <span class="number">3</span> * <span class="number">50</span>);</span><br><span class="line">    <span class="type">char</span>* block = (<span class="type">char</span>*)(strings + <span class="number">3</span>);</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">3</span>; ++i) &#123;</span><br><span class="line">        strings[i] = block + i * <span class="number">50</span>; <span class="comment">// Assuming a maximum of 50 characters per sentence</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">strcpy</span>(strings[<span class="number">0</span>], <span class="string">&quot;The first sentence&quot;</span>);</span><br><span class="line">    <span class="built_in">strcpy</span>(strings[<span class="number">1</span>], <span class="string">&quot;The second sentence&quot;</span>);</span><br><span class="line">    <span class="built_in">strcpy</span>(strings[<span class="number">2</span>], <span class="string">&quot;The third sentence&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">3</span>; ++i) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>, strings[i]);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">free</span>(strings); <span class="comment">// deallocate all memory at once</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Memory_002dmapped-I_002fO.html">The GNU C Library (glibc) manual: 13.8 Memory-mapped I&#x2F;O</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Memory-Protection.html">The GNU C Library (glibc) manual: 3.4 Memory Protection</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/29/UML/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -217,14 +577,14 @@
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2024-01-29 11:10:46" itemprop="dateCreated datePublished" datetime="2024-01-29T11:10:46+08:00">2024-01-29</time>
+              <time title="Created: 2024-01-29 11:10:46" itemprop="dateCreated datePublished" datetime="2024-01-29T11:10:46+00:00">2024-01-29</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-15 20:48:26" itemprop="dateModified" datetime="2024-08-15T20:48:26+08:00">2024-08-15</time>
+                <time title="Modified: 2025-01-16 15:02:09" itemprop="dateModified" datetime="2025-01-16T15:02:09+00:00">2025-01-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -268,7 +628,7 @@
       
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/26/linux/Shell-Commands/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -293,14 +653,14 @@
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2024-01-26 15:57:35" itemprop="dateCreated datePublished" datetime="2024-01-26T15:57:35+08:00">2024-01-26</time>
+              <time title="Created: 2024-01-26 15:57:35" itemprop="dateCreated datePublished" datetime="2024-01-26T15:57:35+00:00">2024-01-26</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-15 20:48:26" itemprop="dateModified" datetime="2024-08-15T20:48:26+08:00">2024-08-15</time>
+                <time title="Modified: 2025-01-16 15:02:09" itemprop="dateModified" datetime="2025-01-16T15:02:09+00:00">2025-01-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -386,8 +746,8 @@
       
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/26/cplusplus/Cpp-Initializer-List/">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/26/cplusplus/C++%E5%88%9D%E5%A7%8B%E5%8C%96%E5%88%97%E8%A1%A8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -401,7 +761,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2024/01/26/cplusplus/Cpp-Initializer-List/" class="post-title-link" itemprop="url">C++ Initializer List</a>
+            <a href="/blog/2024/01/26/cplusplus/C++%E5%88%9D%E5%A7%8B%E5%8C%96%E5%88%97%E8%A1%A8/" class="post-title-link" itemprop="url">C++ 初始化列表</a>
         </h2>
 
         <div class="post-meta">
@@ -411,14 +771,14 @@
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2024-01-26 10:31:32" itemprop="dateCreated datePublished" datetime="2024-01-26T10:31:32+08:00">2024-01-26</time>
+              <time title="Created: 2024-01-26 10:31:32" itemprop="dateCreated datePublished" datetime="2024-01-26T10:31:32+00:00">2024-01-26</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-15 20:48:26" itemprop="dateModified" datetime="2024-08-15T20:48:26+08:00">2024-08-15</time>
+                <time title="Modified: 2025-01-16 15:02:09" itemprop="dateModified" datetime="2025-01-16T15:02:09+00:00">2025-01-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -463,7 +823,7 @@
       
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/25/linux/Brackets-in-Bash/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -488,14 +848,14 @@
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2024-01-25 13:22:53" itemprop="dateCreated datePublished" datetime="2024-01-25T13:22:53+08:00">2024-01-25</time>
+              <time title="Created: 2024-01-25 13:22:53" itemprop="dateCreated datePublished" datetime="2024-01-25T13:22:53+00:00">2024-01-25</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-15 20:48:26" itemprop="dateModified" datetime="2024-08-15T20:48:26+08:00">2024-08-15</time>
+                <time title="Modified: 2025-01-16 15:02:09" itemprop="dateModified" datetime="2025-01-16T15:02:09+00:00">2025-01-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -566,7 +926,7 @@
       
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/25/linux/Regular-Expression/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -591,14 +951,14 @@
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2024-01-25 13:13:41" itemprop="dateCreated datePublished" datetime="2024-01-25T13:13:41+08:00">2024-01-25</time>
+              <time title="Created: 2024-01-25 13:13:41" itemprop="dateCreated datePublished" datetime="2024-01-25T13:13:41+00:00">2024-01-25</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-15 20:48:26" itemprop="dateModified" datetime="2024-08-15T20:48:26+08:00">2024-08-15</time>
+                <time title="Modified: 2025-01-16 15:02:09" itemprop="dateModified" datetime="2025-01-16T15:02:09+00:00">2025-01-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -670,7 +1030,7 @@
       
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/24/english/The-Killings-at-Badger-s-Drift/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -695,14 +1055,14 @@
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2024-01-24 17:39:03" itemprop="dateCreated datePublished" datetime="2024-01-24T17:39:03+08:00">2024-01-24</time>
+              <time title="Created: 2024-01-24 17:39:03" itemprop="dateCreated datePublished" datetime="2024-01-24T17:39:03+00:00">2024-01-24</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-15 20:48:26" itemprop="dateModified" datetime="2024-08-15T20:48:26+08:00">2024-08-15</time>
+                <time title="Modified: 2025-01-16 15:02:09" itemprop="dateModified" datetime="2025-01-16T15:02:09+00:00">2025-01-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1167,644 +1527,10 @@ PHSICIAN &amp; SURGEON
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/24/misc/VSCode-Usage/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/24/misc/VSCode-Usage/" class="post-title-link" itemprop="url">VSCode Usage</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-24 17:26:44" itemprop="dateCreated datePublished" datetime="2024-01-24T17:26:44+08:00">2024-01-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-15 20:48:26" itemprop="dateModified" datetime="2024-08-15T20:48:26+08:00">2024-08-15</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Misc/" itemprop="url" rel="index"><span itemprop="name">Misc</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Reduce-the-disk-usage-of-VSCode"><a href="#Reduce-the-disk-usage-of-VSCode" class="headerlink" title="Reduce the disk usage of VSCode"></a>Reduce the disk usage of VSCode</h2><p>以下文件可以删除：</p>
-<ul>
-<li><p>.vscode-server&#x2F;data&#x2F;User&#x2F;workspaceStorage&#x2F;*：几十GB.</p>
-</li>
-<li><p>.vscode-server：<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/58453967/vscode-remote-ssh-vscode-server-taking-up-a-lot-of-space">参考</a></p>
-</li>
-<li><p>.config: 可以针对每个目录找到相应的程序，比如 Chrome，然后有针对性地删除一些文件。参考<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/58453967/vscode-remote-ssh-vscode-server-taking-up-a-lot-of-space">这里</a>。</p>
-</li>
-<li><p>.cache: 和 .config 类似处理，参考<a target="_blank" rel="noopener" href="https://superuser.com/questions/366771/what-does-cache-do-it-consumes-a-huge-disk-space">这里</a>。</p>
-<p>  .cache&#x2F;vscode-cpptools: This cache folder stores cached precompiled headers or “ipch” files that the IntelliSense engine uses to improve performance. You can limit the size of the cache by changing the setting value of C_Cpp.intelliSenseCacheSize. 参考<a target="_blank" rel="noopener" href="https://github.com/microsoft/vscode-cpptools/issues/6594">这里</a>：<br>  <img src="/blog/image.png" alt="C_Cpp.intelliSenseCacheSize"></p>
-</li>
-</ul>
-<h2 id="Hot-keys"><a href="#Hot-keys" class="headerlink" title="Hot keys"></a>Hot keys</h2><ol>
-<li>跳转到对应大括号：<code>Ctrl Shift \</code></li>
-</ol>
-<h2 id="Debug-code-in-VSCode"><a href="#Debug-code-in-VSCode" class="headerlink" title="Debug code in VSCode"></a>Debug code in VSCode</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://code.visualstudio.com/Docs/editor/debugging#_multitarget-debugging">Debug multiple processes in VSCode</a></li>
-<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/60515935/visual-studio-code-does-not-attach-debugger-to-multi-processes-in-python-using-p">Debug Python Subprocess</a></li>
-</ul>
-<h2 id="Useful-plugins"><a href="#Useful-plugins" class="headerlink" title="Useful plugins"></a>Useful plugins</h2><ul>
-<li><code>Remote - SSH</code>: Windows 连接 Linux。前置条件：Windows 本身需要安装 ssh 命令行工具。</li>
-<li><code>Perforce for VS Code</code>: perforce 工具。</li>
-<li><code>intent-rainbow</code>: 用彩色显示缩进。</li>
-<li><code>C/C++</code></li>
-<li><code>Makefile Tools</code></li>
-<li><code>Verilog Format</code></li>
-<li><code>All in one</code></li>
-<li><code>c/c++ definition generator</code></li>
-<li><code>KoroFileHeader</code>: 参考<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/610490070">这里</a>。</li>
-</ul>
-<h2 id="Useful-configurations"><a href="#Useful-configurations" class="headerlink" title="Useful configurations"></a>Useful configurations</h2><p><a target="_blank" rel="noopener" href="https://www.cxyzjd.com/article/weixin_45461426/105936955">自动填充头文件，比如ifndef宏</a></p>
-<p>配置文件：</p>
-<ul>
-<li>launch.json</li>
-<li>tasks.json: <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/48273346/vscode-command-for-user-input-in-debug-launch-config">ref</a>, <a target="_blank" rel="noopener" href="https://code.visualstudio.com/updates/v1_30#_improved-user-input-variables-for-task-and-debug-configurations">ref</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/Print-The-Stack-Trace-of-A-Process/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/cplusplus/Print-The-Stack-Trace-of-A-Process/" class="post-title-link" itemprop="url">Print The Stack Trace of A Process</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 22:33:09" itemprop="dateCreated datePublished" datetime="2024-01-23T22:33:09+08:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-15 20:48:26" itemprop="dateModified" datetime="2024-08-15T20:48:26+08:00">2024-08-15</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h2><p><a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Backtraces.html">glic Functions</a></p>
-<pre><code>backtrace
-backtrace_symbols
-backtrace_symbols_fd
-</code></pre>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;execinfo.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print_trace</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">static</span> <span class="type">const</span> <span class="type">int</span> SIZE = <span class="number">10</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">void</span>* buffer[SIZE];</span><br><span class="line">    <span class="type">char</span>** strings;</span><br><span class="line">    <span class="type">int</span> size, i;</span><br><span class="line"></span><br><span class="line">    size = <span class="built_in">backtrace</span>(buffer, SIZE);</span><br><span class="line">    strings = <span class="built_in">backtrace_symbols</span>(buffer, size);</span><br><span class="line">    <span class="keyword">if</span> (strings != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Obtained %d stack frames.\n&quot;</span>, size);</span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; size; ++i)</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>, strings[i]);</span><br><span class="line">        <span class="built_in">free</span>(strings);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/linux/Build-Linux-Kernel-Module/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/linux/Build-Linux-Kernel-Module/" class="post-title-link" itemprop="url">Build Linux Kernel Module</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 22:24:57" itemprop="dateCreated datePublished" datetime="2024-01-23T22:24:57+08:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-15 20:48:26" itemprop="dateModified" datetime="2024-08-15T20:48:26+08:00">2024-08-15</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="内核编译"><a href="#内核编译" class="headerlink" title="内核编译"></a>内核编译</h2><p>obj-m: <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/57839941/what-is-the-meaning-of-obj-m-in-linux-device-driver-makefile">链接</a></p>
-<p>make modules: <a target="_blank" rel="noopener" href="https://askubuntu.com/questions/1363530/what-does-make-and-make-modules-do-when-compiling-building-the-kernel">链接</a></p>
-<h2 id="编译内核模块"><a href="#编译内核模块" class="headerlink" title="编译内核模块"></a>编译内核模块</h2><p><a target="_blank" rel="noopener" href="https://tldp.org/LDP/lkmpg/2.6/html/x181.html">文档</a></p>
-<p>Makefile:</p>
-<pre><code>obj-m += hello-1.o
-
-all:
-    make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
-
-clean:
-    make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
-</code></pre>
-<p><code>make -C</code> changes to a new directory where the new makefiles will be run.</p>
-<p><code>M=$(PWD)</code> defines a variable <code>M</code> which the child makefiles can use.</p>
-<h2 id="命令"><a href="#命令" class="headerlink" title="命令"></a>命令</h2><ul>
-<li><code>insmod</code>: 插入一个模块（.ko）到kernel中。</li>
-<li><code>rmmod</code>: 从内核中删除一个模块。</li>
-<li><code>modprobe</code>: 从内核中增删模块。<code>modprobe</code>从<code>/lib/modules/`uname -r`</code>中搜索所有的模块和其他文件，除了<code>/etc/modprobe.d</code>目录中的可选配置文件（参见<code>modprobe.d(5)</code>）。</li>
-<li><code>lsmod</code>: 显示当前加载的内核模块的状态（即对<code>/proc/modules</code>内容的格式化）。</li>
-<li><code>modinfo</code>: 从命令行指定的内核模块中提取信息，如果没有给出模块名称，那么会搜索<code>/lib/modules/version</code>目录，就像<code>modprobe</code>加载模块时一样。</li>
-<li><code>depmod</code>: 生成<code>modules.dep</code>和映射文件。</li>
-<li><code>dmesg</code>: 打印或控制内核ring buffer（存储kernel message）。</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/misc/PCIE/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/misc/PCIE/" class="post-title-link" itemprop="url">Introducation to PCIE</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 22:04:18" itemprop="dateCreated datePublished" datetime="2024-01-23T22:04:18+08:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-15 20:48:26" itemprop="dateModified" datetime="2024-08-15T20:48:26+08:00">2024-08-15</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Misc/" itemprop="url" rel="index"><span itemprop="name">Misc</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="词汇表（Glossary）"><a href="#词汇表（Glossary）" class="headerlink" title="词汇表（Glossary）"></a>词汇表（Glossary）</h1><ul>
-<li>BAR: base address register.</li>
-<li>PCI configuration space.</li>
-<li>sba: system bus address.</li>
-</ul>
-<p><a target="_blank" rel="noopener" href="https://wiki.osdev.org/PCI">PCI</a></p>
-<p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/PCI_configuration_space">PCI configurtation space</a></p>
-<pre><code>PCI设备有一组被称为configuratin space的寄存器，并且PCI Express引入了Extended configuration space。configuration space寄存器被映射到memory locations。
-驱动设备和诊断软件必须要有权限访问configuration space，操作系统通常使用APIs来授权访问设备configuration space。
-</code></pre>
-<p>PCI configuration space有两种类型的Header（64 bytes）：</p>
-<h2 id="Header-Type-0x0"><a href="#Header-Type-0x0" class="headerlink" title="Header Type 0x0"></a>Header Type 0x0</h2><style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-rcf9{background-color:#F9F9F9;text-align:left;vertical-align:middle}
-.tg .tg-tbl0{background-color:#F9F9F9;font-weight:bold;text-align:center;vertical-align:middle}
-</style>
-<table class="tg">
-<thead>
-  <tr>
-    <th class="tg-tbl0">Register</th>
-    <th class="tg-tbl0">Offset</th>
-    <th class="tg-tbl0">Bits 31-24</th>
-    <th class="tg-tbl0">Bits 23-16</th>
-    <th class="tg-tbl0">Bits 15-8</th>
-    <th class="tg-tbl0">Bits 7-0</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td class="tg-rcf9">0x0</td>
-    <td class="tg-rcf9">0x0</td>
-    <td class="tg-rcf9" colspan="2">Device ID</td>
-    <td class="tg-rcf9" colspan="2">Vendor ID</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x1</td>
-    <td class="tg-rcf9">0x4</td>
-    <td class="tg-rcf9" colspan="2">Status</td>
-    <td class="tg-rcf9" colspan="2">Command</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x2</td>
-    <td class="tg-rcf9">0x8</td>
-    <td class="tg-rcf9">Class code</td>
-    <td class="tg-rcf9">Subclass</td>
-    <td class="tg-rcf9">Prog IF</td>
-    <td class="tg-rcf9">Revision ID</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x3</td>
-    <td class="tg-rcf9">0xC</td>
-    <td class="tg-rcf9">BIST</td>
-    <td class="tg-rcf9">Header type</td>
-    <td class="tg-rcf9">Latency Timer</td>
-    <td class="tg-rcf9">Cache Line Size</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x4</td>
-    <td class="tg-rcf9">0x10</td>
-    <td class="tg-rcf9" colspan="4">Base address #0 (BAR0)</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x5</td>
-    <td class="tg-rcf9">0x14</td>
-    <td class="tg-rcf9" colspan="4">Base address #1 (BAR1)</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x6</td>
-    <td class="tg-rcf9">0x18</td>
-    <td class="tg-rcf9">Secondary Latency Timer</td>
-    <td class="tg-rcf9">Subordinate Bus Number</td>
-    <td class="tg-rcf9">Secondary Bus Number</td>
-    <td class="tg-rcf9">Primary Bus Number</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x7</td>
-    <td class="tg-rcf9">0x1C</td>
-    <td class="tg-rcf9" colspan="2">Secondary Status</td>
-    <td class="tg-rcf9">I/O Limit</td>
-    <td class="tg-rcf9">I/O Base</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x8</td>
-    <td class="tg-rcf9">0x20</td>
-    <td class="tg-rcf9" colspan="2">Memory Limit</td>
-    <td class="tg-rcf9" colspan="2">Memory Base</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x9</td>
-    <td class="tg-rcf9">0x24</td>
-    <td class="tg-rcf9" colspan="2">Prefetchable Memory Limit</td>
-    <td class="tg-rcf9" colspan="2">Prefetchable Memory Base</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xA</td>
-    <td class="tg-rcf9">0x28</td>
-    <td class="tg-rcf9" colspan="4">Prefetchable Base Upper 32 Bits</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xB</td>
-    <td class="tg-rcf9">0x2C</td>
-    <td class="tg-rcf9" colspan="4">Prefetchable Limit Upper 32 Bits</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xC</td>
-    <td class="tg-rcf9">0x30</td>
-    <td class="tg-rcf9" colspan="2">I/O Limit Upper 16 Bits</td>
-    <td class="tg-rcf9" colspan="2">I/O Base Upper 16 Bits</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xD</td>
-    <td class="tg-rcf9">0x34</td>
-    <td class="tg-rcf9" colspan="3">Reserved</td>
-    <td class="tg-rcf9">Capability Pointer</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xE</td>
-    <td class="tg-rcf9">0x38</td>
-    <td class="tg-rcf9" colspan="4">Expansion ROM base address</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xF</td>
-    <td class="tg-rcf9">0x3C</td>
-    <td class="tg-rcf9" colspan="2">Bridge Control</td>
-    <td class="tg-rcf9">Interrupt PIN</td>
-    <td class="tg-rcf9">Interrupt Line</td>
-  </tr>
-</tbody>
-</table>
-
-<h2 id="Header-Type-0x1"><a href="#Header-Type-0x1" class="headerlink" title="Header Type 0x1"></a>Header Type 0x1</h2><style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-rcf9{background-color:#F9F9F9;text-align:left;vertical-align:middle}
-.tg .tg-tbl0{background-color:#F9F9F9;font-weight:bold;text-align:center;vertical-align:middle}
-</style>
-<table class="tg">
-<thead>
-  <tr>
-    <th class="tg-tbl0">Register</th>
-    <th class="tg-tbl0">Offset</th>
-    <th class="tg-tbl0">Bits 31-24</th>
-    <th class="tg-tbl0">Bits 23-16</th>
-    <th class="tg-tbl0">Bits 15-8</th>
-    <th class="tg-tbl0">Bits 7-0</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td class="tg-rcf9">0x0</td>
-    <td class="tg-rcf9">0x0</td>
-    <td class="tg-rcf9" colspan="2">Device ID</td>
-    <td class="tg-rcf9" colspan="2">Vendor ID</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x1</td>
-    <td class="tg-rcf9">0x4</td>
-    <td class="tg-rcf9" colspan="2">Status</td>
-    <td class="tg-rcf9" colspan="2">Command</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x2</td>
-    <td class="tg-rcf9">0x8</td>
-    <td class="tg-rcf9">Class code</td>
-    <td class="tg-rcf9">Subclass</td>
-    <td class="tg-rcf9">Prog IF</td>
-    <td class="tg-rcf9">Revision ID</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x3</td>
-    <td class="tg-rcf9">0xC</td>
-    <td class="tg-rcf9">BIST</td>
-    <td class="tg-rcf9">Header type</td>
-    <td class="tg-rcf9">Latency Timer</td>
-    <td class="tg-rcf9">Cache Line Size</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x4</td>
-    <td class="tg-rcf9">0x10</td>
-    <td class="tg-rcf9" colspan="4">Base address #0 (BAR0)</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x5</td>
-    <td class="tg-rcf9">0x14</td>
-    <td class="tg-rcf9" colspan="4">Base address #1 (BAR1)</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x6</td>
-    <td class="tg-rcf9">0x18</td>
-    <td class="tg-rcf9">Secondary Latency Timer</td>
-    <td class="tg-rcf9">Subordinate Bus Number</td>
-    <td class="tg-rcf9">Secondary Bus Number</td>
-    <td class="tg-rcf9">Primary Bus Number</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x7</td>
-    <td class="tg-rcf9">0x1C</td>
-    <td class="tg-rcf9" colspan="2">Secondary Status</td>
-    <td class="tg-rcf9">I/O Limit</td>
-    <td class="tg-rcf9">I/O Base</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x8</td>
-    <td class="tg-rcf9">0x20</td>
-    <td class="tg-rcf9" colspan="2">Memory Limit</td>
-    <td class="tg-rcf9" colspan="2">Memory Base</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x9</td>
-    <td class="tg-rcf9">0x24</td>
-    <td class="tg-rcf9" colspan="2">Prefetchable Memory Limit</td>
-    <td class="tg-rcf9" colspan="2">Prefetchable Memory Base</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xA</td>
-    <td class="tg-rcf9">0x28</td>
-    <td class="tg-rcf9" colspan="4">Prefetchable Base Upper 32 Bits</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xB</td>
-    <td class="tg-rcf9">0x2C</td>
-    <td class="tg-rcf9" colspan="4">Prefetchable Limit Upper 32 Bits</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xC</td>
-    <td class="tg-rcf9">0x30</td>
-    <td class="tg-rcf9" colspan="2">I/O Limit Upper 16 Bits</td>
-    <td class="tg-rcf9" colspan="2">I/O Base Upper 16 Bits</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xD</td>
-    <td class="tg-rcf9">0x34</td>
-    <td class="tg-rcf9" colspan="3">Reserved</td>
-    <td class="tg-rcf9">Capability Pointer</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xE</td>
-    <td class="tg-rcf9">0x38</td>
-    <td class="tg-rcf9" colspan="4">Expansion ROM base address</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xF</td>
-    <td class="tg-rcf9">0x3C</td>
-    <td class="tg-rcf9" colspan="2">Bridge Control</td>
-    <td class="tg-rcf9">Interrupt PIN</td>
-    <td class="tg-rcf9">Interrupt Line</td>
-  </tr>
-</tbody>
-</table>
-
-<pre><code>BAR0
-Memory-mapped I/O (MMIO) registers
-BAR1
-Device memory windows.
-BAR2/3
-Complementary space of BAR1.
-BAR5
-I/O port.
-BAR6
-PCI ROM.
-</code></pre>
-<h1 id="Commands"><a href="#Commands" class="headerlink" title="Commands"></a>Commands</h1><p>lspci</p>
-<p><a target="_blank" rel="noopener" href="https://diego.assencio.com/?index=649b7a71b35fc7ad41e03b6d0e825f07">Interpreting the output of lspci</a></p>
-<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://insujang.github.io/2017-04-03/pci-express-i/o-system/">PCI Express I&#x2F;O System</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.pcmag.com/encyclopedia/term/pci-express">PCI Express</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.trentonsystems.com/blog/what-is-pcie">What is PCIe</a></li>
-<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/30190050/what-is-the-base-address-register-bar-in-pcie">What is the Base Address Register (BAR) in PCIe?</a></li>
-<li><a target="_blank" rel="noopener" href="https://utcc.utoronto.ca/~cks/space/blog/linux/PCIeLspciBusAddresses">PCIe bus addresses, lspci, and working out your PCIe bus topology</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/blog/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="page-number current">2</span><a class="page-number" href="/blog/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/6/">6</a><a class="extend next" rel="next" href="/blog/page/3/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+    <a class="extend prev" rel="prev" href="/blog/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="page-number current">2</span><a class="page-number" href="/blog/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/7/">7</a><a class="extend next" rel="next" href="/blog/page/3/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -1872,7 +1598,7 @@ PCI ROM.
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">59</span>
+          <span class="site-state-item-count">63</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1885,7 +1611,7 @@ PCI ROM.
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">35</span>
+        <span class="site-state-item-count">36</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -1930,7 +1656,7 @@ PCI ROM.
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2024</span>
+  <span itemprop="copyrightYear">2025</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

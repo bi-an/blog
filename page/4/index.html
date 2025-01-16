@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh_CN">
 <head>
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
@@ -24,7 +24,7 @@
 <meta property="og:title" content="江南人物的博客">
 <meta property="og:url" content="https://bi-an.github.io/blog/page/4/index.html">
 <meta property="og:site_name" content="江南人物的博客">
-<meta property="og:locale" content="en_US">
+<meta property="og:locale" content="zh_CN">
 <meta property="article:author" content="bi-an">
 <meta name="twitter:card" content="summary">
 
@@ -37,7 +37,7 @@
     sidebar: "",
     isHome : true,
     isPost : false,
-    lang   : 'en'
+    lang   : 'zh_CN'
   };
 </script>
 
@@ -192,8 +192,8 @@
       
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/Cpp-Defects/">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/gdb%E5%85%A5%E9%97%A8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -207,7 +207,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2024/01/23/cplusplus/Cpp-Defects/" class="post-title-link" itemprop="url">Cpp Defects</a>
+            <a href="/blog/2024/01/23/cplusplus/gdb%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">gdb 入门</a>
         </h2>
 
         <div class="post-meta">
@@ -217,14 +217,801 @@
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2024-01-23 21:33:51" itemprop="dateCreated datePublished" datetime="2024-01-23T21:33:51+08:00">2024-01-23</time>
+              <time title="Created: 2024-01-23 21:44:37" itemprop="dateCreated datePublished" datetime="2024-01-23T21:44:37+00:00">2024-01-23</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-15 20:48:26" itemprop="dateModified" datetime="2024-08-15T20:48:26+08:00">2024-08-15</time>
+                <time title="Modified: 2025-01-16 15:02:09" itemprop="dateModified" datetime="2025-01-16T15:02:09+00:00">2025-01-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="gdb实现原理"><a href="#gdb实现原理" class="headerlink" title="gdb实现原理"></a>gdb实现原理</h2><p>参考<a target="_blank" rel="noopener" href="https://www.zhihu.com/people/bi-an-60-46">链接</a>。</p>
+<h2 id="gdb命令"><a href="#gdb命令" class="headerlink" title="gdb命令"></a>gdb命令</h2><ul>
+<li><p><code>thread apply [threadno] [all] args</code> - 将命令传递给一个或多个线程，参见<a target="_blank" rel="noopener" href="https://developer.apple.com/library/archive/documentation/DeveloperTools/gdb/gdb/gdb_5.html">链接</a>。<br>比如，<code>thread apply all continue</code>表示将<code>continue</code>命令传递给所有线程，也就是让所有线程都继续运行。</p>
+</li>
+<li><p><code>rbreak</code> - Set a breakpoint for all functions matching REGEXP. 参考<a target="_blank" rel="noopener" href="https://blog.csdn.net/zdl1016/article/details/8708077">链接</a>。</p>
+<p>  e.g. <code>rbreak file.C:.*</code> - 给file.C的所有函数加上断点。</p>
+</li>
+<li><p><code>info</code></p>
+<ul>
+<li><code>info inferior</code> - 可以查看当前调试的进程的PID。另外一种方法是在gdb命令行中直接调用C函数：<code>print (int)getpid()</code>。参考：<a target="_blank" rel="noopener" href="https://www.qiniu.com/qfans/qnso-36704270">链接</a>。</li>
+<li><code>info source</code> - 当前调试的源文件路径。</li>
+<li><code>info proc</code> - <a target="_blank" rel="noopener" href="https://sourceware.org/gdb/onlinedocs/gdb/Process-Information.html">当前进程信息</a>。<ul>
+<li><code>info proc files</code> - 当前进程打开的文件（和文件描述符）。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><code>attach</code> - 连接到正在运行的进程。与<code>gdb -p</code>效果相同。</p>
+</li>
+<li><p><code>detach</code> - 取消连接的进程。</p>
+</li>
+<li><p><code>handle &lt;signal&gt; print pass nostop</code> - 捕获信号（比如<code>SIGSEGV</code>）并且忽略它。<code>handle &lt;signal nostop</code>。</p>
+</li>
+<li><p><code>set</code> - 修改变量的值，比如<code>set x=10</code>（或<code>set var x=10</code>）将变量<code>x</code>的值改为<code>10</code>。参考<a target="_blank" rel="noopener" href="https://blog.csdn.net/yasi_xi/article/details/12784507">博客</a>。</p>
+</li>
+<li><p><code>show directories</code></p>
+</li>
+<li><p><code>print</code> - gdb默认设置打印字符串的长度为200；更改打印最大长度：<code>set print elements &lt;number-of-elements&gt;</code>，<code>0</code>表示unlimited.</p>
+</li>
+<li><p><code>ptype &lt;variable name&gt;</code> - 打印变量类型。</p>
+</li>
+<li><p><code>finish</code> - 从函数中返回，并打印函数返回值（即使函数的return语句很复杂，也可以获取返回值）。</p>
+</li>
+</ul>
+<h2 id="环境变量"><a href="#环境变量" class="headerlink" title="环境变量"></a>环境变量</h2><p>见<a target="_blank" rel="noopener" href="https://www.irya.unam.mx/computo/sites/manuales/fce12/debugger/cl/commandref/gdb_mode/cmd_set_environm.htm">链接</a></p>
+<h2 id="断点"><a href="#断点" class="headerlink" title="断点"></a>断点</h2><p>添加断点：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">break file:line_no</span><br></pre></td></tr></table></figure>
+
+<p>查看断点：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">info break</span><br></pre></td></tr></table></figure>
+
+<p>删除第2个断点：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">delete 2</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="条件断点"><a href="#条件断点" class="headerlink" title="条件断点"></a>条件断点</h3><p>参考：<a target="_blank" rel="noopener" href="http://c.biancheng.net/view/8255.html">博客</a>、<a target="_blank" rel="noopener" href="https://ftp.gnu.org/old-gnu/Manuals/gdb/html_node/gdb_28.html">文档</a>。</p>
+<p><code>break ... if cond</code></p>
+<h3 id="观察断点"><a href="#观察断点" class="headerlink" title="观察断点"></a>观察断点</h3><h3 id="捕捉断点"><a href="#捕捉断点" class="headerlink" title="捕捉断点"></a>捕捉断点</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">try...catch</span><br></pre></td></tr></table></figure>
+
+<h3 id="打印长度的限制"><a href="#打印长度的限制" class="headerlink" title="打印长度的限制"></a>打印长度的限制</h3><ul>
+<li>Value sizes - 参考：<a target="_blank" rel="noopener" href="https://sourceware.org/gdb/onlinedocs/gdb/Value-Sizes.html">文档</a></li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">set</span> max-value-size bytes</span><br><span class="line"><span class="built_in">set</span> max-value-size unlimited</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>打印字符长度限制</p>
+<p>gdb默认设置打印字符串的长度为200；更改打印最大长度：<code>set print elements</code></p>
+</li>
+</ul>
+<h2 id="coredump"><a href="#coredump" class="headerlink" title="coredump"></a>coredump</h2><p>gdb命令：<code>gcore</code>。</p>
+<p><a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man5/core.5.html">Reference</a></p>
+<h2 id="WSL无法使用gdb"><a href="#WSL无法使用gdb" class="headerlink" title="WSL无法使用gdb"></a>WSL无法使用gdb</h2><p>WSL指Windows虚拟机。</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/microsoft/WSL/issues/8516">解决方法</a>：</p>
+<p>安装<a target="_blank" rel="noopener" href="https://launchpad.net/~ubuntu-support-team/+archive/ubuntu/gdb">PPA的daily build版本</a></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo add-apt-repository ppa:ubuntu-support-team/gdb</span><br><span class="line">sudo apt update</span><br><span class="line">sudo apt install gdb</span><br></pre></td></tr></table></figure>
+
+<h2 id="gdb-attach-权限报错"><a href="#gdb-attach-权限报错" class="headerlink" title="gdb attach 权限报错"></a>gdb attach 权限报错</h2><p>This is due to kernel hardening in Linux; you can disable this behavior by <code>echo 0 &gt; /proc/sys/kernel/yama/ptrace_scope</code> or by modifying it in <code>/etc/sysctl.d/10-ptrace.conf</code>.</p>
+<p><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/19215177/how-to-solve-ptrace-operation-not-permitted-when-trying-to-attach-gdb-to-a-pro">How to solve “ptrace operation not permitted” when trying to attach GDB to a process?</a></p>
+<h2 id="gdb-debug-forks"><a href="#gdb-debug-forks" class="headerlink" title="gdb debug forks"></a>gdb debug forks</h2><p><a target="_blank" rel="noopener" href="https://www-zeuthen.desy.de/unix/unixguide/infohtml/gdb/Forks.html">Reference</a></p>
+<p>By default, when a program forks, gdb will continue to debug the parent process and the child process will run unimpeded.</p>
+<p>If you want to follow the child process instead of the parent process, use the command set <code>follow-fork-mode</code>.</p>
+<p><code>set follow-fork-mode mode</code><br>Set the debugger response to a program call of fork or vfork. A call to fork or vfork creates a new process. The mode argument can be:<br><code>parent</code><br>The original process is debugged after a fork. The child process runs unimpeded. This is the default.<br><code>child</code><br>The new process is debugged after a fork. The parent process runs unimpeded.</p>
+<p><code>show follow-fork-mode</code><br>Display the current debugger response to a fork or vfork call.<br>On Linux, if you want to debug both the parent and child processes, use the command set detach-on-fork.</p>
+<p><code>set detach-on-fork mode</code><br>Tells gdb whether to detach one of the processes after a fork, or retain debugger control over them both.<br><code>on</code><br>The child process (or parent process, depending on the value of follow-fork-mode) will be detached and allowed to run independently. This is the default.<br><code>off</code><br>Both processes will be held under the control of gdb. One process (child or parent, depending on the value of follow-fork-mode) is debugged as usual, while the other is held suspended.</p>
+<p><code>show detach-on-fork</code><br>Show whether detach-on-fork mode is on&#x2F;off.</p>
+<p>If you issue a run command to gdb after an exec call executes, the new target restarts. To restart the parent process, use the file command with the parent executable name as its argument. By default, after an exec call executes, gdb discards the symbols of the previous executable image. You can change this behaviour with the set follow-exec-mode command.</p>
+<p>set follow-exec-mode mode<br>Set debugger response to a program call of exec. An exec call replaces the program image of a process.<br>follow-exec-mode can be:</p>
+<p><code>new</code><br>gdb creates a new inferior and rebinds the process to this new inferior. The program the process was running before the exec call can be restarted afterwards by restarting the original inferior.<br>For example:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">(gdb) info inferiors</span><br><span class="line">(gdb) info inferior</span><br><span class="line">  Id   Description   Executable</span><br><span class="line">* 1    &lt;null&gt;        prog1</span><br><span class="line">(gdb) run</span><br><span class="line">process 12020 is executing new program: prog2</span><br><span class="line">Program exited normally.</span><br><span class="line">(gdb) info inferiors</span><br><span class="line">  Id   Description   Executable</span><br><span class="line">* 2    &lt;null&gt;        prog2</span><br><span class="line">  1    &lt;null&gt;        prog1</span><br></pre></td></tr></table></figure>
+
+<p><code>same</code><br>gdb keeps the process bound to the same inferior. The new executable image replaces the previous executable loaded in the inferior. Restarting the inferior after the exec call, with e.g., the run command, restarts the executable the process was running after the exec call. This is the default mode.<br>For example:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">(gdb) info inferiors</span><br><span class="line">  Id   Description   Executable</span><br><span class="line">* 1    &lt;null&gt;        prog1</span><br><span class="line">(gdb) run</span><br><span class="line">process 12020 is executing new program: prog2</span><br><span class="line">Program exited normally.</span><br><span class="line">(gdb) info inferiors</span><br><span class="line">  Id   Description   Executable</span><br><span class="line">* 1    &lt;null&gt;        prog2</span><br></pre></td></tr></table></figure>
+
+<h2 id="Setting-Catchpoints"><a href="#Setting-Catchpoints" class="headerlink" title="Setting Catchpoints"></a>Setting Catchpoints</h2><p><a target="_blank" rel="noopener" href="https://www-zeuthen.desy.de/unix/unixguide/infohtml/gdb/Set-Catchpoints.html#Set-Catchpoints">Reference</a></p>
+<h2 id="gdb-redirect-to-a-log-file"><a href="#gdb-redirect-to-a-log-file" class="headerlink" title="gdb redirect to a log file"></a>gdb redirect to a log file</h2><p>You need to enable logging:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">(gdb) set logging on</span><br><span class="line">Now GDB will log to ./gdb.txt. You can tell it which file to use:</span><br><span class="line"></span><br><span class="line">(gdb) set logging file my_god_object.log</span><br><span class="line">And you can examine the current logging configuration:</span><br><span class="line"></span><br><span class="line">(gdb) show logging</span><br></pre></td></tr></table></figure>
+
+<p><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/5941158/gdb-print-to-file-instead-of-stdout">Refercence</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/gcc%E5%85%A5%E9%97%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/cplusplus/gcc%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">gcc 入门</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 21:44:11" itemprop="dateCreated datePublished" datetime="2024-01-23T21:44:11+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-01-16 15:02:09" itemprop="dateModified" datetime="2025-01-16T15:02:09+00:00">2025-01-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="递归处理顺序"><a href="#递归处理顺序" class="headerlink" title="递归处理顺序"></a>递归处理顺序</h2><p>gcc 的输入文件和库是从左往右处理的。也就是说，以下命令是错误的：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -L. -la main.cc</span><br></pre></td></tr></table></figure>
+
+<p>链接器处理到某个目标文件（如 main.cc 编译后的目标代码）时，如果遇到未解析的符号（比如 f() ），<br>它会从接下来的库中查找这些符号。因此顺序非常重要。</p>
+<p>这里，-L. -la 选项在 main.cc 之前，链接器会首先尝试从 liba.so 中查找引用的符号，<br>但是，因为此时 main.cc 还未被处理，所以链接器还不知道有对 liba.so 中的函数 f() 的引用。<br>到了 main.cc ，链接器解析出引用，但它不会回头再去 liba.so 中查找，导致报错：”undefined reference to f()”。</p>
+<p>正确的命令如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc main.cc -L. -la</span><br></pre></td></tr></table></figure>
+
+<p>注意：liba.so 的指定必须去掉 lib 和 .so ，也就是说不允许直接指定“库文件名”，而是只能指定“库名”。<br>如果想直接指定库文件名，那么应该把 liba.so 当成输入文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc main.cc ./liba.so</span><br></pre></td></tr></table></figure>
+
+<h2 id="属性语法（Attribute-Syntax）"><a href="#属性语法（Attribute-Syntax）" class="headerlink" title="属性语法（Attribute Syntax）"></a>属性语法（Attribute Syntax）</h2><p>参考：<a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/gcc-3.2/gcc/Attribute-Syntax.html#Attribute%20Syntax">官方文档</a>。</p>
+<h3 id="函数属性（Function-Attributes）"><a href="#函数属性（Function-Attributes）" class="headerlink" title="函数属性（Function Attributes）"></a>函数属性（Function Attributes）</h3><p>参考：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/11621043/how-should-i-properly-use-attribute-format-printf-x-y-inside-a-class">stackoverflow</a></li>
+<li><a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/gcc-3.2/gcc/Function-Attributes.html">gcc官方文档：Function Attributes</a></li>
+</ul>
+<p>属性列举：</p>
+<ul>
+<li><p><code>format (archetype, string-index, first-to-check)</code></p>
+<p>  format 属性，指定函数采用 printf、scanf、strftime 或 strfmon 风格的参数，<br>  这些参数应根据格式字符串（format string）进行类型检查（type-checked）。<br>  类型检查发生在编译期。</p>
+<p>  举例：</p>
+  <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">extern</span> <span class="type">int</span></span></span><br><span class="line"><span class="function"><span class="title">my_printf</span> <span class="params">(<span class="type">void</span> *my_object, <span class="type">const</span> <span class="type">char</span> *my_format, ...)</span></span></span><br><span class="line"><span class="function">    __<span class="title">attribute__</span> <span class="params">((format (printf, <span class="number">2</span>, <span class="number">3</span>)))</span></span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>archetype</code>决定format string应该如何解释。<br>可选为<code>printf</code>、<code>scanf</code>、<code>strftime</code>或<code>strfmon</code>（也可以使用<code>__printf__</code>、<code>__scanf__</code>、<code>__strftime__</code>或<code>__strfmon__</code>）。</li>
+<li><code>string-index</code>指定哪个参数是format string（从1开始）。</li>
+<li><code>first-to-check</code>指定format string对应的第一个参数的序号。<br>对于那些无法检查参数的函数（比如<code>vprintf</code>），该参数指定为<code>0</code>。在这种情况下，编译器仅检查format string的一致性。对于<code>strftime</code>格式，该参数必须为<code>0</code>。</li>
+</ul>
+</li>
+</ul>
+<h2 id="选项"><a href="#选项" class="headerlink" title="选项"></a>选项</h2><ul>
+<li><code>-save-temps</code>: 可以保留所有中间文件，例如预编译文件、汇编文件、目标文件等。</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/core-dump/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/cplusplus/core-dump/" class="post-title-link" itemprop="url">core dump</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 21:42:51" itemprop="dateCreated datePublished" datetime="2024-01-23T21:42:51+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-01-16 15:02:09" itemprop="dateModified" datetime="2025-01-16T15:02:09+00:00">2025-01-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="ulimit"><a href="#ulimit" class="headerlink" title="ulimit"></a><code>ulimit</code></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#查看配置</span></span><br><span class="line"><span class="built_in">ulimit</span> -a</span><br><span class="line"><span class="comment">#设置core file size</span></span><br><span class="line"><span class="built_in">ulimit</span> -c unlimited</span><br></pre></td></tr></table></figure>
+
+<p><code>ulimit</code>只对当前终端有效。</p>
+<p>以下两种方法对所有用户和终端有效：</p>
+<ol>
+<li>在<code>/etc/security/limits.conf</code>中设置（redhat衍生系linux）。</li>
+<li>或注释掉<code>/etc/profile</code>中的这一行： <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># No core files by default</span></span><br><span class="line"><span class="built_in">ulimit</span> -S -c 0 &gt; /dev/null 2&gt;&amp;1</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="core-pattern"><a href="#core-pattern" class="headerlink" title="core_pattern"></a>core_pattern</h2><h3 id="core-pattern解释"><a href="#core-pattern解释" class="headerlink" title="core_pattern解释"></a>core_pattern解释</h3><p>见<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2065912/core-dumped-but-core-file-is-not-in-the-current-directory">链接</a>。</p>
+<p>Read <a target="_blank" rel="noopener" href="http://www.kernel.org/doc/Documentation/sysctl/kernel.txt">&#x2F;usr&#x2F;src&#x2F;linux&#x2F;Documentation&#x2F;sysctl&#x2F;kernel.txt</a>.</p>
+<pre><code>core_pattern is used to specify a core dumpfile pattern name.
+</code></pre>
+<p>在系统启动时，<a target="_blank" rel="noopener" href="https://wiki.ubuntu.com/Apport">Apport</a>（crash reporting service）会生成配置文件<code>/proc/sys/kernel/core_pattern</code>。参考<a target="_blank" rel="noopener" href="https://askubuntu.com/questions/420410/how-to-permanently-edit-the-core-pattern-file">这里</a>。</p>
+<p>Apport uses <code>/proc/sys/kernel/core_pattern</code> to directly pipe the core dump into <code>apport</code>:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cat</span> /proc/sys/kernel/core_pattern</span><br><span class="line">|/usr/share/apport/apport %p %s %c</span><br><span class="line">$ </span><br></pre></td></tr></table></figure>
+
+<p>Note that even if <code>ulimit</code> is set to disabled core files (by specyfing a core file size of zero using <code>ulimit -c 0</code>), <code>apport</code> will still capture the crash.</p>
+<p>For intercepting Python crashes it installs a <code>/etc/python*/sitecustomize.py</code> to call apport on unhandled exceptions.</p>
+<p>其中，<code>/usr/share/apport/apport</code>是一个python脚本。</p>
+<p>以下是core_pattern文件的参数说明（参考Linux Manual Page：<code>man core</code>）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">%c - Core file size soft resource limit of crashing process (since Linux 2.6.24).</span><br><span class="line">%p - insert pid into filename 添加pid</span><br><span class="line">%u - insert current uid into filename 添加当前uid</span><br><span class="line">%g - insert current gid into filename 添加当前gid</span><br><span class="line">%s - insert signal that caused the coredump into the filename 添加导致产生core的信号</span><br><span class="line">%t - insert UNIX time that the coredump occurred into filename 添加core文件生成时的unix时间</span><br><span class="line">%h - insert hostname where the coredump happened into filename 添加主机名</span><br><span class="line">%e - insert coredumping executable name into filename 添加命令名</span><br><span class="line"></span><br><span class="line">If the first character of the pattern is a &#x27;|&#x27;, the kernel will treat the rest of the pattern as a command to run. The core dump will be written to the standard input of that program instead of to a file.</span><br></pre></td></tr></table></figure>
+
+<p>Apport的拦截组件默认是关闭的：</p>
+<p>Apport itself is running at all times because it collects crash data for whoopsie (see <a target="_blank" rel="noopener" href="https://wiki.ubuntu.com/ErrorTracker">ErrorTracker</a>). However, the crash interception component is still disabled. To enable it permanently, do:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo nano /etc/apport/crashdb.conf</span><br></pre></td></tr></table></figure>
+
+<p>… and add a hash symbol # in the beginning of the following line:</p>
+<pre><code>&#39;problem_types&#39;: [&#39;Bug&#39;, &#39;Package&#39;],
+</code></pre>
+<p>To disable crash reporting just remove the hash symbol.</p>
+<h3 id="设置core-pattern"><a href="#设置core-pattern" class="headerlink" title="设置core_pattern"></a>设置core_pattern</h3><p>见<a target="_blank" rel="noopener" href="https://www.cnblogs.com/xiaodoujiaohome/p/6222895.html">链接</a>。</p>
+<ol>
+<li><p>&#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;core_uses_pid可以控制产生的core文件的文件名中是否添加pid作为扩展，如果添加则文件内容为1，否则为0；</p>
+</li>
+<li><p>&#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;core_pattern可以设置格式化的core文件保存位置或文件名：</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cat</span> /proc/sys/kernel/core_pattern</span><br><span class="line">|/usr/share/apport/apport %p %s %c</span><br><span class="line">$ <span class="built_in">echo</span> <span class="string">&quot;/corefile/core-%e-%p-%t&quot;</span> &gt; /proc/sys/kernel/core_pattern</span><br></pre></td></tr></table></figure>
+
+
+<p> 你可以用下列方式来完成：</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#查看所有sysctl所有变量的值。</span></span><br><span class="line">sysctl -a</span><br><span class="line"><span class="comment">#设置变量kernel.core_pattern为如下值。</span></span><br><span class="line">sudo sysctl -w kernel.core_pattern=/tmp/core-%e.%p.%h.%t</span><br></pre></td></tr></table></figure>
+
+<p> 这些操作一旦计算机重启，则会丢失，如果你想持久化这些操作，可以在 &#x2F;etc&#x2F;sysctl.conf文件中增加：</p>
+ <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kernel.core_pattern=/tmp/core%p</span><br></pre></td></tr></table></figure>
+
+<p> 加好后，如果你想不重启看看效果的话，则用下面的命令：</p>
+ <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sysctl -p /etc/sysctl.conf</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="相关命令行工具"><a href="#相关命令行工具" class="headerlink" title="相关命令行工具"></a>相关命令行工具</h2><p>参考资料：</p>
+<p>Linux Manual Page: <a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man5/core.5.html"><code>man core</code></a></p>
+<pre><code>SEE ALSO
+    bash(1),  coredumpctl(1),  gdb(1),  getrlimit(2), mmap(2), prctl(2), sigaction(2), elf(5), proc(5), pthreads(7), signal(7), systemd-coredump(8)
+</code></pre>
+<h2 id="Segment-Fault排查"><a href="#Segment-Fault排查" class="headerlink" title="Segment Fault排查"></a>Segment Fault排查</h2><p>参考<a target="_blank" rel="noopener" href="https://www.wtango.com/%E6%AE%B5%E9%94%99%E8%AF%AFsegmentation-fault%E4%BA%A7%E7%94%9F%E7%9A%84%E5%8E%9F%E5%9B%A0%E4%BB%A5%E5%8F%8A%E8%B0%83%E8%AF%95%E6%96%B9%E6%B3%95/">链接</a>。</p>
+<ol>
+<li><p>dmesg + nm + addr2line</p>
+<p>addr2line只能找出executable的行号；如果是shared libraries，请使用gdb。参考<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2549214/interpreting-segfault-messages">这里</a>。</p>
+<p>dmesg输出的含义：</p>
+<p>ip: 表示instruction pointer.</p>
+</li>
+<li><p>fprintf</p>
+</li>
+<li><p>gdb</p>
+</li>
+<li><p>signal(SIGSEGV,handler)</p>
+</li>
+<li><p>valgrind<br>参考：<br> <a target="_blank" rel="noopener" href="https://jvns.ca/blog/2018/04/28/debugging-a-segfault-on-linux/">博客</a><br> <a target="_blank" rel="noopener" href="https://valgrind.org/docs/manual/ms-manual.html">文档</a><br> <a target="_blank" rel="noopener" href="https://courses.cs.washington.edu/courses/cse326/05wi/valgrind-doc/ms_main.html">可以使用PostScript查看图形化结果</a></p>
+</li>
+<li><p>heaptrack</p>
+<p> 见<a target="_blank" rel="noopener" href="https://github.com/KDE/heaptrack">github仓库</a></p>
+</li>
+<li><p>Jemalloc</p>
+<p> 见<a target="_blank" rel="noopener" href="https://jemalloc.net/">官网</a></p>
+</li>
+</ol>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/cplusplus/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/" class="post-title-link" itemprop="url">编译原理</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 21:36:08" itemprop="dateCreated datePublished" datetime="2024-01-23T21:36:08+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-01-16 15:02:09" itemprop="dateModified" datetime="2025-01-16T15:02:09+00:00">2025-01-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="编译主要步骤"><a href="#编译主要步骤" class="headerlink" title="编译主要步骤"></a>编译主要步骤</h2><p>参考<a target="_blank" rel="noopener" href="https://blog.csdn.net/chen1415886044/article/details/104537547">博客</a></p>
+<ol>
+<li>预处理</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -E test.c -o test.i</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li><p>编译</p>
+<p> 编译是将高级语言（例如C、C++、Jave等）代码转换成机器码的过程。<br> 编译可以分成多个阶段，包括词法分析、语法分析、语义分析、优化和代码生成。<br> 编译器首先将源代码转换一种中间表示（通常是汇编代码或字节码），然后再将其转换为目标机器的机器代码。<br> 经过编译的代码通常是二进制的，可以直接在目标机器上执行。</p>
+</li>
+</ol>
+<p>先生成汇编代码：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -S test.i -o test.s</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li><p>汇编</p>
+<p> 将汇编代码转成机器码。</p>
+</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -c test.s -o test.o</span><br></pre></td></tr></table></figure>
+
+<ol start="4">
+<li><p>链接</p>
+<p> 该目标文件与其他目标文件、库文件、启动文件等链接起来生成可执行文件。</p>
+</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc test.o -o <span class="built_in">test</span></span><br></pre></td></tr></table></figure>
+
+<p>Note: 可以使用 <code>-save-temps</code> 选项以保留编译过程中的所有中间文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -save-temps test.c</span><br></pre></td></tr></table></figure>
+
+<h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><h2 id="C-名称修饰"><a href="#C-名称修饰" class="headerlink" title="C++名称修饰"></a>C++名称修饰</h2><p><code>Name mangling (C++ only)</code>: 名称修饰，也称为名称重整、名称改编。参见链接<a target="_blank" rel="noopener" href="https://www.ibm.com/docs/en/i/7.2?topic=linkage-name-mangling-c-only">1</a>、<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E5%90%8D%E5%AD%97%E4%BF%AE%E9%A5%B0">2</a>。</p>
+<h3 id="环境变量"><a href="#环境变量" class="headerlink" title="环境变量"></a>环境变量</h3><p>参考：<code>man ld.so</code></p>
+<pre><code>PATH
+LD_LIBRARY_PATH
+LD_PRELOAD
+</code></pre>
+<h3 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h3><h3 id="命令"><a href="#命令" class="headerlink" title="命令"></a>命令</h3><p>参考：<code>man ld.so</code>, <code>man vdso</code>, <code>man elf</code>, <a target="_blank" rel="noopener" href="https://linux.die.net/man/1/scanelf">scanelf</a></p>
+<pre><code>ld(1), ldd(1), pldd(1), sprof(1), dlopen(3),getauxval(3), elf(5), capabilities(7),
+rtld-audit(7), ldconfig(8), sln(8), vdso(7), as(1), elfedit(1), gdb(1), nm(1),
+objcopy(1), objdump(1), patchelf(1), readelf(1), size(1), strings(1), strip(1),
+execve(2), dl_iterate_phdr(3), core(5), ld.so(8)
+</code></pre>
+<p>ldconfig</p>
+<pre><code>配置动态连接器（dynamic linker）的运行时绑定（dynamic bindings）。
+如果你刚刚安装好共享库，可能需要运行ldconfig：
+    sudo ldconfig
+通常需要超级用户来运行ldconfig，因为可能对需要某些root用户所有的目录和文件有写入权限。
+lddconfig 为从以下目录找到的共享库创建必要的 links 和 cache ：
+    command line指定的目录；
+    /etc/ld.so.conf文件中指定的目录；
+    受信任的目录: /lib, /lib64, /usr/lib, /usr/lib64 。
+该 cache 被运行时连接器（run-time linker） ld.so 或 ld-linux.so 使用。
+
+ldconfig 尝试基于该库连接的 C 库来推断 ELF 库（比如 libc5 或 libc6/glibc）的类型。
+
+一些现有的库没有包含足够的信息来推断其类型。
+因此， /etc/ld.so.conf 文件格式允许指定期望的类型。
+这只在这些 ELF 库不能被解决的情况下使用。
+
+ldconfig 期望的符号链接有某种特定的形式，比如：
+
+    libfoo.so -&gt; libfoo.so.1 -&gt; libfoo.so.1.12
+
+其中，中间的文件 libfoo.so.1 是库的 SONAME 。
+
+如果不遵循这种格式可能会导致升级后的兼容性问题。
+</code></pre>
+<p>ldd</p>
+<pre><code>描述：
+    ldd调用标准动态连接器（见 ld.so(8)），并且将环境变量 LD_TRACE_LODADED_OBJECTS 为 1 。
+    这会让动态连接器检查程序的动态依赖，并且寻找（根据 ld.so(8) 描述的规则）
+    和加载满足这些依赖的目标。对于每一条依赖，
+    ldd 显示匹配的目标的位置和其载入处的16进制地址。
+    （linux-vdso和ld-linux共享依赖是特殊的；见vdso(7)和ld.so(8)）
+
+安全性：
+    注意，在某些情况下，一些版本的ldd可能会尝试通过直接运行程序（可能导致程序中的ELF解释器
+    或程序本身的运行）来获取依赖信息。
+
+    因此，永远不要在不受信任的可执行文件上使用ldd，因为会导致随意代码的运行。更安全替代方法为：
+        $ objdump -p /path/to/program | grep NEEDED
+    注意，这种替代方法只会显示该可执行文件的直接依赖，而ldd显示该可执行文件的整个依赖树。
+
+解释ldd的输出:
+$ ldd -v libibsupport_real.so 
+./libibsupport_real.so: /usr/lib64/libibverbs.so.1: version `IBVERBS_1.8&#39; not found (required by ./libibsupport_real.so)
+    linux-vdso.so.1 =&gt;  (0x00002ad3e49e3000)
+    libibverbs.so.1 =&gt; /usr/lib64/libibverbs.so.1 (0x00002ad3e589b000)
+    ...
+
+    Version information:
+    ./libibsupport_real.so:
+            libgcc_s.so.1 (GCC_3.0) =&gt; /usr/lib64/libgcc_s.so.1
+            libibverbs.so.1 (IBVERBS_1.8) =&gt; not found
+            libibverbs.so.1 (IBVERBS_1.1) =&gt; /usr/lib64/libibverbs.so.1
+            ...
+    /usr/lib64/libnl-3.so.200:
+                libm.so.6 (GLIBC_2.2.5) =&gt; /usr/lib64/libm.so.6
+                ...
+在&quot;Version information&quot;中，&quot;libgcc_s.so.1 (GCC_3.0) =&gt; /usr/lib64/libgcc_s.so.1&quot;表示：
+    &quot;libgcc_s.so.1&quot;指定一个shared library的名字（libgcc_s.so.1是GCC runtime library的一部分），该shared library为&quot;./libibsupport_real.so&quot;所依赖；
+    &quot;(GCC_3.0)&quot;表明&quot;libgcc_s.so.1&quot;需要3.0版本及以上的GNU Compiler Collection (GCC)；
+    &quot;=&gt;&quot;指出满足依赖的shared library；
+    &quot;/usr/lib64/libgcc_s.so.1&quot;是满足要求的shared library的路径。
+</code></pre>
+<p>  <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/34428037/how-to-interpret-the-output-of-the-ldd-program">ldd output说明</a></p>
+<p>sprof</p>
+<p>参考：<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/881074/how-to-use-sprof">stackoverflows</a></p>
+<p>objdump</p>
+<pre><code>[-p|--private-headers]
+[-x|--all-headers]
+</code></pre>
+<p>readelf</p>
+<pre><code>[-d|--dynamic]
+</code></pre>
+<h3 id="文件"><a href="#文件" class="headerlink" title="文件"></a>文件</h3><pre><code>/lib/ld.so
+    Run-time linker/loader.
+/etc/ld.so.conf
+    File containing a list of directories, one per line, in which to search for libraries.
+/etc/ld.so.cache
+    File containing an ordered list of libraries found in the directories specified in /etc/ld.so.conf, as well as those found in the trusted directories.
+
+The trusted directories:
+    /lib
+    /lib64
+    /usr/lib
+    /usr/lib64
+</code></pre>
+<p>ld.so</p>
+<pre><code>名字
+    ld.so, ld-linux.so - 动态连接/加载器。
+
+简介
+    动态连接器可以被间接运行或直接运行。
+    间接运行：
+        运行某些动态连接程序或共享库。在这种情况下，不能向动态连接器传递命令行选项；并且在ELF情况下，存储在程序的.interp section中的动态连接器被执行。
+    直接运行：
+        /lib/ld-linux.so.* [OPTIONS] [PRAGRAM [ARGUMENTS]]
+
+描述
+    ld.so 和 ld-linux.so* 寻找和加载程序所需的共享对象（共享库），准备程序的运行，然后运行它。
+
+    如果在编译期没有向 ld(1) 指定 -static 选项，则Linux二进制文件需要动态连接（在运行时连接）。
+</code></pre>
+<h3 id="SONAME"><a href="#SONAME" class="headerlink" title="SONAME"></a>SONAME</h3><p>参考：<code>man ldconfig</code><br>参考：<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Soname">SONAME Wiki</a></p>
+<blockquote>
+<p>GNU linker使用 -hname 或 -soname&#x3D;name 来指定该库的library name field。<br>在内部，linker会创建一个 DT_SONAME field并且用 name 来填充它。</p>
+</blockquote>
+<ol>
+<li>指定SONAME：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#Use ld:</span></span><br><span class="line">$ ld -shared -soname libexample.so.1 -o libexample.so.1.2.3 file1.o file2.o</span><br><span class="line"><span class="comment">#Use gcc or g++:</span></span><br><span class="line">$ gcc -shared -Wl,-soname,libexample.so.1 -o libexample.so.1.2.3 file1.o file2.o</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>安装时创建软链接：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ln</span> -s libexample.so.1.2.3 libexample.so.1</span><br><span class="line"><span class="built_in">ln</span> -s libexample.so.1 libexample.so</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>查看SONAME：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#Use objdump</span></span><br><span class="line">$ objdump -p libexample.so.1.3 | grep SONAME</span><br><span class="line">  SONAME               libexample.so.1</span><br><span class="line"><span class="comment">#Use readelf</span></span><br><span class="line">$ readelf -d libexample.so | grep SONAME</span><br><span class="line"> 0x000000000000000e (SONAME)             Library soname: [libexample.so.1]</span><br></pre></td></tr></table></figure>
+
+<h3 id="符号版本控制（symbol-versioning）"><a href="#符号版本控制（symbol-versioning）" class="headerlink" title="符号版本控制（symbol versioning）"></a>符号版本控制（symbol versioning）</h3><h4 id="定制函数版本："><a href="#定制函数版本：" class="headerlink" title="定制函数版本："></a>定制函数版本：</h4><ol>
+<li>example.c中定义函数<code>my_printf</code>：</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">my_printf</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* format)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%s&quot;</span>, format);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>version_script.txt中定义函数的版本为<code>VERSION_1</code>：</li>
+</ol>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">VERSION_1 &#123;</span><br><span class="line"> global:</span><br><span class="line">   my_printf;</span><br><span class="line"> local:</span><br><span class="line">   *;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>编译时指定<code>version_script.txt</code>为version-script：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -shared -Wl,--version-script=version_script.txt -o libexample.so example.o</span><br></pre></td></tr></table></figure>
+
+<p>其中，<code>-Wl,</code>引出连接器选项。</p>
+<ol start="4">
+<li>查看：<ol>
+<li>使用<code>readelf -sW libexample.so</code>查看函数<code>my_printf</code>的版本号（”VERSION_1”）：</li>
+</ol>
+</li>
+</ol>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Symbol table &#x27;.dynsym&#x27; contains 8 entries:</span><br><span class="line">   Num:    Value          Size Type    Bind   Vis      Ndx Name</span><br><span class="line">     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND </span><br><span class="line">     1: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_deregisterTMCloneTable</span><br><span class="line">     2: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND printf@GLIBC_2.2.5 (3)</span><br><span class="line">     3: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND __gmon_start__</span><br><span class="line">     4: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_registerTMCloneTable</span><br><span class="line">     5: 0000000000000000     0 FUNC    WEAK   DEFAULT  UND __cxa_finalize@GLIBC_2.2.5 (3)</span><br><span class="line">     6: 0000000000001105    39 FUNC    GLOBAL DEFAULT   13 my_printf@@VERSION_1</span><br><span class="line">     7: 0000000000000000     0 OBJECT  GLOBAL DEFAULT  ABS VERSION_1</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>使用<code>objdump -T libexample.so</code></li>
+<li>使用<code>nm -D libexample.so</code></li>
+</ol>
+<h4 id="实现同一个函数有多个版本"><a href="#实现同一个函数有多个版本" class="headerlink" title="实现同一个函数有多个版本"></a>实现同一个函数有多个版本</h4><ol>
+<li>编写源代码</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;foo version 1.0\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo_v2</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;foo_v2 version 2.0\n&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>编写版本脚本</li>
+</ol>
+<p>例如，version_script.map文件如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">VERS_1.0 &#123;</span><br><span class="line">    global: <span class="comment"># global表示符号全局可见；默认为局部（也可能通过local显式声明为局部），不会被导出</span></span><br><span class="line">        foo;</span><br><span class="line">&#125; VERS_1.1;</span><br><span class="line"></span><br><span class="line">VERS_1.1 &#123;</span><br><span class="line">    global:</span><br><span class="line">        foo_v2;</span><br><span class="line">    foo; <span class="comment"># VER_1.1继承自VER_1.0</span></span><br><span class="line">         <span class="comment"># 1. foo在VER_1.0中已经声明为了global，不需要再次声明global</span></span><br><span class="line">         <span class="comment"># 2. 当然可以再次显式声明为global，但是这不是推荐的做法</span></span><br><span class="line">         <span class="comment"># 3. 假设foo在VER_1.0中不是global，此处声明为global，</span></span><br><span class="line">         <span class="comment"># 会将原本不是global的foo变得全局可见</span></span><br><span class="line">         <span class="comment"># 4. 我们其实无需再次导出foo，因为除非我们显式隐藏（使用local关键字），foo就在</span></span><br><span class="line">         <span class="comment"># VER_1.1是和VER_1.0中的可见性保持一致</span></span><br><span class="line">         <span class="comment"># 5. 如果希望在VER_1.1中的foo与VER_1.0有不同的行为，那么需要再次将其导出</span></span><br><span class="line">&#125; VERS_2.0;</span><br><span class="line"></span><br><span class="line">VERS_2.0 &#123;</span><br><span class="line">    global:</span><br><span class="line">        foo_v2</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>VER_1.1继承了VER_1.0的全部符号，同时VER_1.1可以增加或修改符号。</p>
+<p>VER_1.0：第一个版本，导出foo符号；<br>VER_1.1：第二个版本，引入foo_v2，并重新导出foo；</p>
+<h4 id="程序依赖的库版本"><a href="#程序依赖的库版本" class="headerlink" title="程序依赖的库版本"></a>程序依赖的库版本</h4><p>有如下简单代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// file: main.cc</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>正常编译：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ main.cc -o a.out</span><br></pre></td></tr></table></figure>
+
+<p>查看符号：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">strings a.out</span><br></pre></td></tr></table></figure>
+
+<p>你会发现其中有一些版本信息：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">GLIBC_2.2.5</span><br><span class="line">GLIBC_2.34</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<p>这是因为编译器和链接器生成库或可执行文件时，会根据系统上安装的glibc版本（因为库和可执行文件依赖glibc），<br>为库或可执行文件的函数符号附加上特定的版本信息。<br>为了保证向下兼容，glibc通过符号控制保留了多个版本的符号，支持老版本的软件能在较新的系统上运行。<br>例如，如果某个函数在glibc2.2.5中引入，它可以继续保留在之后的版本中，但符号标记为GLIBC_2.2.5。</p>
+<h3 id="ELF"><a href="#ELF" class="headerlink" title="ELF"></a>ELF</h3><pre><code>ELF - Executable and Linking Format.
+ELF描述了normal executable files、relocatable object files、core files和shared objects的格式。
+</code></pre>
+<p>参考：<code>man elf</code>, <a target="_blank" rel="noopener" href="http://chuquan.me/2018/05/21/elf-introduce/">博客:elf介绍</a>。</p>
+<h3 id="链接名"><a href="#链接名" class="headerlink" title="链接名"></a>链接名</h3><p>参考：<a target="_blank" rel="noopener" href="https://littlebee1024.github.io/learning_book/booknotes/cxydzwxy/link/dynamic/#_16">程序员的自我修养</a>, <code>man ld</code></p>
+<p>GCC的提供了不同的方法指定链接的共享库：</p>
+<ul>
+<li><p><code>l&lt;link_name&gt;</code>参数</p>
+<p>  指定需要链接的共享库lib<link_name>.so</p>
+</li>
+<li><p><code>l:&lt;filename&gt;</code>参数</p>
+<p>  通过文件名指定共享库，参考LD手册</p>
+</li>
+<li><p>全路径指定</p>
+</li>
+<li><p><code>Wl,-static</code>参数</p>
+<p>  指定查找静态库，通过-Wl,-Bdynamic恢复成动态库查找</p>
+</li>
+</ul>
+<h3 id="链接器选项"><a href="#链接器选项" class="headerlink" title="链接器选项"></a>链接器选项</h3><p>参考：<code>man ld</code></p>
+<pre><code>ld - The GNU linker
+</code></pre>
+<p>选项：</p>
+<pre><code>-rpath=dir
+    添加一个目录到运行时库搜寻路径中。
+</code></pre>
+<p>gcc通过 <code>-Wl</code> 前缀指定链接器选项，例如：</p>
+<pre><code> gcc -Wl,--start-group foo.o bar.o -Wl,--end-group
+ gcc -Wl,-rpath,&#39;$ORIGIN/../lib&#39;
+</code></pre>
+<h3 id="Tips"><a href="#Tips" class="headerlink" title="Tips"></a>Tips</h3><ol>
+<li><a target="_blank" rel="noopener" href="https://unix.stackexchange.com/questions/120015/how-to-find-out-the-dynamic-libraries-executables-loads-when-run">How to find out the dynamic libraries are loaded when running an executable?</a></li>
+</ol>
+<p>Answer:</p>
+<ul>
+<li><code>ldd /path/to/program</code></li>
+<li><code>objdump -p /path/to/program | grep NEEDED</code></li>
+<li><code>lddtree</code> (from <code>pax-utils</code>) or <code>readelf -d /bin/ls | grep &#39;NEEDED&#39;</code></li>
+<li><code>lsof -p PID | grep mem</code></li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ pidof nginx</span><br><span class="line">6920 6919</span><br><span class="line"></span><br><span class="line">$ lsof -p 6919 | grep mem</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>strace -e trace=open myprogram</code></li>
+</ul>
+<p><code>ldd</code> and <code>lsof</code> show the libraries loaded either directly or at a given moment. They do not account for libraries loaded via <code>dlopen</code> (or discarded by <code>dlclose</code>). You can get a better picture of this using <code>strace</code>.</p>
+<ul>
+<li><code>pmap &lt;pid&gt; -p</code></li>
+</ul>
+<h3 id="Notice"><a href="#Notice" class="headerlink" title="Notice"></a>Notice</h3><ol>
+<li><p>生成so时，链接器不会寻找其so依赖；executable会寻找so的依赖关系。换句话说，即使so生成过程不报错，但是executable生成时可能会报错。</p>
+</li>
+<li><p>生成so时，如果引用了其他 so ，只要 include 其他 so 的头文件，引用头文件中的符号时，就能编译通过。但是这样生成的 so 没有加上对应符号的依赖。<br>此时用 readelf -s 查看对应的符号，其 type 为 NOTYPE 。</p>
+ <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ readelf -sW libb.so</span><br><span class="line"></span><br><span class="line">Symbol table &#x27;.dynsym&#x27; contains 14 entries:</span><br><span class="line">Num:    Value          Size Type    Bind   Vis      Ndx Name</span><br><span class="line"> 6: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT  UND _Z1fv</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>如果加上对应 -la 选项，就会从 liba.so 中寻找依赖的符号，如果找到，则添加进入 so 的依赖项中。当运行时则会加载 liba.so ，否则运行时不会加载。<br>用 readelf -s 查看对应的符号，其 type 不再时 NOTYPE ，而是 FUNC （如果该符号是一个函数的话）。</p>
+ <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">6: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND _Z1fv</span><br></pre></td></tr></table></figure>
+
+<p>如果没有找到符号，或者说 liba.so 中根本没有实现这个函数，那么其 type 依然是 NOTYPE ，此时也不会报错。<br>注意：如果只是 include 头文件，也就说只有某个符号的声明，并没有其定义或引用它，那么 so 中不会生成其信息。</p>
+</li>
+</ol>
+<h2 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h2><h3 id="运行时错误：”-path-to-a-out-usr-lib-x86-64-linux-gnu-libstdc-so-6-version-GLIBCXX-3-4-30’-not-found-required-by-path-to-libxxx-so-”"><a href="#运行时错误：”-path-to-a-out-usr-lib-x86-64-linux-gnu-libstdc-so-6-version-GLIBCXX-3-4-30’-not-found-required-by-path-to-libxxx-so-”" class="headerlink" title="运行时错误：”&#x2F;path&#x2F;to&#x2F;a.out: &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;libstdc++.so.6: version &#96;GLIBCXX_3.4.30’ not found (required by &#x2F;path&#x2F;to&#x2F;libxxx.so)”"></a>运行时错误：”&#x2F;path&#x2F;to&#x2F;a.out: &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;libstdc++.so.6: version &#96;GLIBCXX_3.4.30’ not found (required by &#x2F;path&#x2F;to&#x2F;libxxx.so)”</h3><p>解释：<code>libxxx.so</code> 引用了一个 <code>GLIBCXX_3.4.30</code> 的符号（可能是全局变量或函数），但是在系统的 <code>/usr/lib/x86_64-linux-gnu/libstdc++.so.6</code> 中没有这个版本的符号。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ strings /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep <span class="string">&#x27;GLIBCXX_3.4.&#x27;</span></span><br><span class="line">GLIBCXX_3.4.1</span><br><span class="line">...</span><br><span class="line">GLIBCXX_3.4.27</span><br><span class="line">GLIBCXX_3.4.28</span><br><span class="line"><span class="comment"># 没有 GLIBCXX_3.4.30</span></span><br><span class="line"></span><br><span class="line">$ strings /path/to/libxxx.so | grep <span class="string">&#x27;GLIBCXX_3.4.30&#x27;</span> | c++filt</span><br><span class="line">GLIBCXX_3.4.30</span><br><span class="line">std::condition_variable::<span class="built_in">wait</span>(std::unique_lock&lt;std::mutex&gt;&amp;)@@GLIBCXX_3.4.30</span><br></pre></td></tr></table></figure>
+
+<p>这往往是因为原始的版本中，<code>libxxx.so</code> 是在一台机器中编译的，此时将该机器的 <code>GLIBCXX_3.4.30</code> 符号编译到其中了。但是运行时的机器是另一台，该机器上<br>不存在 <code>GLIBCXX_3.4.30</code> 版本，所以运行时报错。</p>
+<p>或者，因为环境变量的配置错误，编译时和运行时引用的 <code>libstdc++.so.6</code> 不是同一个，这也会导致运行时可能找不到编译时的 <code>GLIBCXX_3.4.30</code> 版本。</p>
+<p>可以在源文件中使用指定的版本（使用运行时的版本，比如 <code>GLIBCXX_3.4.11</code> ）：</p>
+<ol>
+<li>查找版本：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ objdump -T /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep condition_variable | c++filt</span><br><span class="line">00000000000d52d0 g    DF .text  000000000000000c  GLIBCXX_3.4.30 std::condition_variable::<span class="built_in">wait</span>(std::unique_lock&lt;std::mutex&gt;&amp;)</span><br><span class="line">00000000000ac730 g    DF .text  000000000000001c (GLIBCXX_3.4.11) std::condition_variable::<span class="built_in">wait</span>(std::unique_lock&lt;std::mutex&gt;&amp;)</span><br><span class="line"></span><br><span class="line">$ objdump -T /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep condition_variable</span><br><span class="line">00000000000d52d0 g    DF .text  000000000000000c  GLIBCXX_3.4.30 _ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE</span><br><span class="line">00000000000ac730 g    DF .text  000000000000001c (GLIBCXX_3.4.11) _ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE</span><br></pre></td></tr></table></figure>
+
+<p>可以确定符号为 <code>_ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE</code> ，版本为 <code>GLIBCXX_3.4.11</code> 。</p>
+<p>在源文件中指定版本</p>
+<figure class="highlight cpp"><figcaption><span>symver</span><a href="/blog/downloads/code/symver.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** 指定特定版本的符号 START */</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __cplusplus</span></span><br><span class="line"><span class="keyword">extern</span> <span class="string">&quot;C&quot;</span> {</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">/** __cplusplus */</span></span></span><br><span class="line"></span><br><span class="line">__asm__ (<span class="string">&quot;.symver _ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE, _ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE@GLIBCXX_3.4.11&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __cplusplus</span></span><br><span class="line">}</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">/** __cplusplus */</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/** 指定特定版本的符号 END */</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 之后就可以使用 std::condition_variable::wait(std::unique_lock&lt;std::mutex&gt;&amp;) 就是 GLIBCXX_3.4.11 的</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;condition_variable&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;mutex&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"> </span><br><span class="line">std::mutex m;</span><br><span class="line">std::condition_variable cv;</span><br><span class="line">std::string data;</span><br><span class="line"><span class="type">bool</span> ready = <span class="literal">false</span>;</span><br><span class="line"><span class="type">bool</span> processed = <span class="literal">false</span>;</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">worker_thread</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="comment">// wait until main() sends data</span></span><br><span class="line">    <span class="function">std::unique_lock <span class="title">lk</span><span class="params">(m)</span></span>;</span><br><span class="line">    cv.<span class="built_in">wait</span>(lk, []{ <span class="keyword">return</span> ready; });</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// after the wait, we own the lock</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Worker thread is processing data\n&quot;</span>;</span><br><span class="line">    data += <span class="string">&quot; after processing&quot;</span>;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// send data back to main()</span></span><br><span class="line">    processed = <span class="literal">true</span>;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Worker thread signals data processing completed\n&quot;</span>;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// manual unlocking is done before notifying, to avoid waking up</span></span><br><span class="line">    <span class="comment">// the waiting thread only to block again (see notify_one for details)</span></span><br><span class="line">    lk.<span class="built_in">unlock</span>();</span><br><span class="line">    cv.<span class="built_in">notify_one</span>();</span><br><span class="line">}</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="function">std::thread <span class="title">worker</span><span class="params">(worker_thread)</span></span>;</span><br><span class="line"> </span><br><span class="line">    data = <span class="string">&quot;Example data&quot;</span>;</span><br><span class="line">    <span class="comment">// send data to the worker thread</span></span><br><span class="line">    {</span><br><span class="line">        <span class="function">std::lock_guard <span class="title">lk</span><span class="params">(m)</span></span>;</span><br><span class="line">        ready = <span class="literal">true</span>;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;main() signals data ready for processing\n&quot;</span>;</span><br><span class="line">    }</span><br><span class="line">    cv.<span class="built_in">notify_one</span>();</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// wait for the worker</span></span><br><span class="line">    {</span><br><span class="line">        <span class="function">std::unique_lock <span class="title">lk</span><span class="params">(m)</span></span>;</span><br><span class="line">        cv.<span class="built_in">wait</span>(lk, []{ <span class="keyword">return</span> processed; });</span><br><span class="line">    }</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Back in main(), data = &quot;</span> &lt;&lt; data &lt;&lt; <span class="string">&#x27;\n&#x27;</span>;</span><br><span class="line"> </span><br><span class="line">    worker.<span class="built_in">join</span>();</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p>编译：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ symver.cpp</span><br></pre></td></tr></table></figure>
+
+<p>验证符号版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ strings a.out | grep condition_variable | c++filt</span><br><span class="line">std::condition_variable::<span class="built_in">wait</span>(std::unique_lock&lt;std::mutex&gt;&amp;)</span><br><span class="line">std::condition_variable::<span class="built_in">wait</span>(std::unique_lock&lt;std::mutex&gt;&amp;)@GLIBCXX_3.4.11</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/C++%E7%BC%BA%E9%99%B7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/cplusplus/C++%E7%BC%BA%E9%99%B7/" class="post-title-link" itemprop="url">C++ 缺陷</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 21:33:51" itemprop="dateCreated datePublished" datetime="2024-01-23T21:33:51+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-01-16 15:02:09" itemprop="dateModified" datetime="2025-01-16T15:02:09+00:00">2025-01-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -270,8 +1057,8 @@
       
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/Cpp-Debug-Tools/">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/C++%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -285,7 +1072,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2024/01/23/cplusplus/Cpp-Debug-Tools/" class="post-title-link" itemprop="url">Cpp Debug Tools</a>
+            <a href="/blog/2024/01/23/cplusplus/C++%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/" class="post-title-link" itemprop="url">C++ 调试工具</a>
         </h2>
 
         <div class="post-meta">
@@ -295,14 +1082,14 @@
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2024-01-23 21:27:05" itemprop="dateCreated datePublished" datetime="2024-01-23T21:27:05+08:00">2024-01-23</time>
+              <time title="Created: 2024-01-23 21:27:05" itemprop="dateCreated datePublished" datetime="2024-01-23T21:27:05+00:00">2024-01-23</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-15 20:48:26" itemprop="dateModified" datetime="2024-08-15T20:48:26+08:00">2024-08-15</time>
+                <time title="Modified: 2025-01-16 15:02:09" itemprop="dateModified" datetime="2025-01-16T15:02:09+00:00">2025-01-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -400,7 +1187,7 @@ Refer to [here](https://stackoverflow.com/questions/15760447/what-is-the-meaning
       
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/personal_site/Mkdocs-Configuration/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -425,14 +1212,14 @@ Refer to [here](https://stackoverflow.com/questions/15760447/what-is-the-meaning
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2024-01-23 21:13:02" itemprop="dateCreated datePublished" datetime="2024-01-23T21:13:02+08:00">2024-01-23</time>
+              <time title="Created: 2024-01-23 21:13:02" itemprop="dateCreated datePublished" datetime="2024-01-23T21:13:02+00:00">2024-01-23</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-15 20:48:26" itemprop="dateModified" datetime="2024-08-15T20:48:26+08:00">2024-08-15</time>
+                <time title="Modified: 2025-01-16 15:02:09" itemprop="dateModified" datetime="2025-01-16T15:02:09+00:00">2025-01-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -527,7 +1314,7 @@ Refer to [here](https://stackoverflow.com/questions/15760447/what-is-the-meaning
       
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/linux/File-System/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -552,14 +1339,14 @@ Refer to [here](https://stackoverflow.com/questions/15760447/what-is-the-meaning
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2024-01-23 20:01:02" itemprop="dateCreated datePublished" datetime="2024-01-23T20:01:02+08:00">2024-01-23</time>
+              <time title="Created: 2024-01-23 20:01:02" itemprop="dateCreated datePublished" datetime="2024-01-23T20:01:02+00:00">2024-01-23</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-15 20:48:26" itemprop="dateModified" datetime="2024-08-15T20:48:26+08:00">2024-08-15</time>
+                <time title="Modified: 2025-01-16 15:02:09" itemprop="dateModified" datetime="2025-01-16T15:02:09+00:00">2025-01-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -727,7 +1514,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
       
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/21/net/RPC/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -752,14 +1539,14 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2024-01-21 10:01:18" itemprop="dateCreated datePublished" datetime="2024-01-21T10:01:18+08:00">2024-01-21</time>
+              <time title="Created: 2024-01-21 10:01:18" itemprop="dateCreated datePublished" datetime="2024-01-21T10:01:18+00:00">2024-01-21</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-15 20:48:26" itemprop="dateModified" datetime="2024-08-15T20:48:26+08:00">2024-08-15</time>
+                <time title="Modified: 2025-01-16 15:02:09" itemprop="dateModified" datetime="2025-01-16T15:02:09+00:00">2025-01-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -804,7 +1591,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
       
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/15/thread/Dead-Lock/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -829,14 +1616,14 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2024-01-15 14:11:30" itemprop="dateCreated datePublished" datetime="2024-01-15T14:11:30+08:00">2024-01-15</time>
+              <time title="Created: 2024-01-15 14:11:30" itemprop="dateCreated datePublished" datetime="2024-01-15T14:11:30+00:00">2024-01-15</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-15 20:48:26" itemprop="dateModified" datetime="2024-08-15T20:48:26+08:00">2024-08-15</time>
+                <time title="Modified: 2025-01-16 15:02:09" itemprop="dateModified" datetime="2025-01-16T15:02:09+00:00">2025-01-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -875,415 +1662,10 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/14/misc/Reentrant-Function/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/14/misc/Reentrant-Function/" class="post-title-link" itemprop="url">Reentrant Function</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-14 17:44:16" itemprop="dateCreated datePublished" datetime="2024-01-14T17:44:16+08:00">2024-01-14</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-15 20:48:26" itemprop="dateModified" datetime="2024-08-15T20:48:26+08:00">2024-08-15</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Concept"><a href="#Concept" class="headerlink" title="Concept"></a>Concept</h2><p><strong>可重入函数</strong>：如果一个函数在执行过程中被中断服务程序打断，执行中断服务程序之后恢复执行，还能不妨碍之前的执行，就称该函数是<strong>可重入的</strong>。</p>
-<p>可重入函数一般用于<strong>硬件中断处理</strong>或<strong>递归</strong>等应用程序中。</p>
-<p><strong>可重入程序&#x2F;可重入子例程</strong>：在多个处理器上能被安全地多次并发调用。</p>
-<p><strong>与线程安全的区别</strong>：可重入函数的概念在多任务操作系统出现之前就存在了，所以该概念仅仅针对的是单线程执行过程。<br>一个函数可以是线程安全但非可重入的，例如，该函数每次都使用互斥量来包裹。但是，如果该函数用于中断服务程序，那么，它可能在等待第一次执行过程释放互斥量时陷入饥饿。<strong>TODO：陷入饥饿为什么就不是可重入了？</strong></p>
-<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://www.geeksforgeeks.org/reentrant-function/">Reentrant Function</a></li>
-<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Reentrancy_(computing)">Reentrancy</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/09/net/Network-Discovery/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/09/net/Network-Discovery/" class="post-title-link" itemprop="url">Network discovery</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-09 16:15:17" itemprop="dateCreated datePublished" datetime="2024-01-09T16:15:17+08:00">2024-01-09</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-15 20:48:26" itemprop="dateModified" datetime="2024-08-15T20:48:26+08:00">2024-08-15</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Network/" itemprop="url" rel="index"><span itemprop="name">Network</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Get-IP-from-the-host-name"><a href="#Get-IP-from-the-host-name" class="headerlink" title="Get IP from the host name"></a>Get IP from the host name</h2><p>Key function: <code>getaddrinfo</code>.</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> _POSIX_C_SOURCE 200112L</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/socket.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;netdb.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;errno.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;strings.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;arpa/inet.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">addrinfo</span> hints;</span><br><span class="line">    <span class="built_in">bzero</span>(&amp;hints, <span class="keyword">sizeof</span> hints);</span><br><span class="line">    <span class="comment">// hints.ai_family = AF_INET;</span></span><br><span class="line">    hints.ai_socktype = SOCK_STREAM;</span><br><span class="line">    hints.ai_protocol = IPPROTO_TCP;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">addrinfo</span> *res = <span class="number">0</span>;</span><br><span class="line">    <span class="comment">// The following 3 hostnames are legal.</span></span><br><span class="line">    <span class="type">int</span> rc = <span class="built_in">getaddrinfo</span>(<span class="string">&quot;www.baidu.com&quot;</span>, <span class="literal">NULL</span>, &amp;hints, &amp;res);</span><br><span class="line">    <span class="comment">// int rc = getaddrinfo(&quot;localhost&quot;, NULL, &amp;hints, &amp;res);</span></span><br><span class="line">    <span class="comment">// int rc = getaddrinfo(&quot;PC-XXX&quot;, NULL, &amp;hints, &amp;res); // PC-XXX is a hostname</span></span><br><span class="line">    <span class="keyword">if</span> (rc != <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">perror</span>(<span class="string">&quot;getaddrinfo failed&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">struct</span> addrinfo* res_i = res; res_i != <span class="literal">NULL</span>; res_i = res_i-&gt;ai_next) &#123;</span><br><span class="line">        <span class="keyword">if</span> (res_i-&gt;ai_addr) &#123;</span><br><span class="line">            <span class="keyword">if</span> (res_i-&gt;ai_addr-&gt;sa_family == AF_INET) &#123;</span><br><span class="line">                <span class="type">char</span> ip4[INET_ADDRSTRLEN];</span><br><span class="line">                <span class="built_in">inet_ntop</span>(AF_INET, &amp;(((<span class="keyword">struct</span> sockaddr_in*)(res_i-&gt;ai_addr))-&gt;sin_addr), ip4, INET_ADDRSTRLEN);</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">&quot;IP: %s\n&quot;</span>, ip4);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="type">char</span> ip6[INET6_ADDRSTRLEN];</span><br><span class="line">                <span class="built_in">inet_ntop</span>(AF_INET6, &amp;(((<span class="keyword">struct</span> sockaddr_in6*)(res_i-&gt;ai_addr))-&gt;sin6_addr), ip6, INET_ADDRSTRLEN);</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">&quot;IP: %s\n&quot;</span>, ip6);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/07/cplusplus/preprocessing/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/07/cplusplus/preprocessing/" class="post-title-link" itemprop="url">Preprocessing</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-07 16:40:10" itemprop="dateCreated datePublished" datetime="2024-01-07T16:40:10+08:00">2024-01-07</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-15 20:48:26" itemprop="dateModified" datetime="2024-08-15T20:48:26+08:00">2024-08-15</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="预定义宏"><a href="#预定义宏" class="headerlink" title="预定义宏"></a>预定义宏</h2><p><code>#if defined(__linux)</code><br><code>#ifdef LINUX2</code></p>
-<h2 id="C标准预定义宏"><a href="#C标准预定义宏" class="headerlink" title="C标准预定义宏"></a>C标准预定义宏</h2><ul>
-<li><code>__LINE__</code></li>
-<li><code>__func__</code></li>
-<li><code>__FILE__</code></li>
-<li><code>NDEBUG</code>：参考<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2290509/debug-vs-ndebug">_DEBUG和NDEBUG的区别</a>，其中，<code>_DEBUG</code>是Visual Studio定义的，<code>NDEBUG</code>是C&#x2F;C++标准。</li>
-</ul>
-<h2 id="GNU-C预定义宏"><a href="#GNU-C预定义宏" class="headerlink" title="GNU C预定义宏"></a>GNU C预定义宏</h2><p><a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html">官方文档</a></p>
-<ul>
-<li><p><code>__COUNTER__</code>: 扩展为从<code>0</code>开始的连续整数值，每次在源码中出现，则加<code>1</code>。不同源文件的<code>__COUNTER__</code>互不影响。</p>
-<p>可以用来生成唯一的命名。<br>参考<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/652815/has-anyone-ever-had-a-use-for-the-counter-pre-processor-macro">链接</a>。</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> CONCAT_IMPL(x,y) x##y</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CONCAT(x,y) CONCAT_IMPL(x,y)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> VAR(name) CONCAT(name,__COUNTER__)</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">VAR</span><span class="params">(myvar)</span></span>; <span class="comment">// 展开为 int myvar0;</span></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">VAR</span><span class="params">(myvar)</span></span>; <span class="comment">// 展开为 int myvar1;</span></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">VAR</span><span class="params">(myvar)</span></span>; <span class="comment">// 展开为 int myvar2;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p><code>program_invocation_name</code>：参考<a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man3/program_invocation_name.3.html">man page</a></p>
-</li>
-<li></li>
-</ul>
-<h2 id="pragma"><a href="#pragma" class="headerlink" title="#pragma"></a>#pragma</h2><h3 id="pragma-weak"><a href="#pragma-weak" class="headerlink" title="#pragma weak"></a>#pragma weak</h3><h4 id="Synopsis"><a href="#Synopsis" class="headerlink" title="Synopsis"></a>Synopsis</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">pragma</span> weak function-name1 [= function-name2]</span></span><br></pre></td></tr></table></figure>
-
-<p><code>#pragma weak</code> means that even if the definition of the symbol is not found, no error will be reported.</p>
-<h4 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// It is not an error for symbol to never be defined at all.</span></span><br><span class="line"><span class="comment">// Without this line, the address of &quot;foo&quot; will always evaluate to &quot;true&quot;,</span></span><br><span class="line"><span class="comment">// so the linker will report an &quot;undefined reference to &#x27;foo&#x27;&quot; error.</span></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> weak foo</span></span><br><span class="line"><span class="comment">// The declaration is needed.</span></span><br><span class="line"><span class="comment">/* extern */</span> <span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (foo)</span><br><span class="line">        <span class="built_in">foo</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>Reference: <a target="_blank" rel="noopener" href="https://alberand.com/weak-directive.html">1</a>、<a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/gcc-4.5.4/gcc/Weak-Pragmas.html">2</a>、<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E19059-01/wrkshp50/805-4955/auto6/index.html">3</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/03/personal_site/Personal-Site/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/03/personal_site/Personal-Site/" class="post-title-link" itemprop="url">Set up your personal site</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-03 16:41:38" itemprop="dateCreated datePublished" datetime="2024-01-03T16:41:38+08:00">2024-01-03</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-08-15 20:48:26" itemprop="dateModified" datetime="2024-08-15T20:48:26+08:00">2024-08-15</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Host-site"><a href="#Host-site" class="headerlink" title="Host site"></a>Host site</h2><p>有两个托管个人站点的网站：<code>Github pages</code>和<code>reathedocs</code>.</p>
-<h3 id="Github-Pages"><a href="#Github-Pages" class="headerlink" title="Github Pages"></a>Github Pages</h3><p>使用<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages">github pages</a>可以搭建个人主页。</p>
-<p>github pages简介：<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages">官方链接</a>。</p>
-<p>github pages使用了<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/CNAME_record">CNAME record</a>技术，参考：<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/39301250">链接1</a>、<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/26609475">链接2</a>、<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/about-custom-domains-and-github-pages#using-a-subdomain-for-your-github-pages-site">Custom domains in Github Pages</a>。</p>
-<p>注：<a target="_blank" rel="noopener" href="https://readthedocs.org/">Read the Docs</a>也是一个很好的搭建个人主页的网站。</p>
-<h4 id="Github-Pages-站点类型"><a href="#Github-Pages-站点类型" class="headerlink" title="Github Pages 站点类型"></a>Github Pages 站点类型</h4><p>有3种类型的 Github Pages 站点（sites）：project, user 和 organization 。</p>
-<p>Project sites 连接到 github 上特定 project ，比如 Javascript library 或 recipe collection。user 或 organization sites 连接到 github.com 的特定账户。</p>
-<p>发布 user site ，你必须创建一个你的个人账户下的一个名为 <code>&lt;username&gt;.github.io</code> 的 repository 。发布 organization site ，你必须创建一个组织所有的名为 <code>&lt;organization&gt;.github.io</code> 的 repository 。除非你使用 custom domain ，否则 user 和 organization sites 将位于 <code>http(s)://&lt;username&gt;.github.io</code> 或 <code>http(s)://&lt;organization&gt;.github.io</code> 。</p>
-<p>project site 的源文件存储在作为 project 的相同的 repository 中。除非使用 custom domain ， 否则 project sites 将位于 <code>http(s)://&lt;username&gt;.github.io/&lt;repository&gt;</code> 或 <code>http(s)://&lt;organization&gt;.github.io/&lt;repository&gt;</code> 。</p>
-<p>有关如何自定义影响您网站的域名的更多信息，参见”<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/about-custom-domains-and-github-pages">About custom domains and GitHub Pages</a>“。</p>
-<p>每个 github 账户允许创建 1 个 user 或 organization 站点。无论是被组织还是个人所有，project 站点的个数不限制。</p>
-<h4 id="GitHub-Pages-访问方法"><a href="#GitHub-Pages-访问方法" class="headerlink" title="GitHub Pages 访问方法"></a>GitHub Pages 访问方法</h4><p>参考<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site#next-steps">官方文档</a>。</p>
-<p>例如，你的project站点配置的发布源是<code>gh-pages</code>分支，然后在<code>gh-pages</code>分支上创建了一个<code>about/contact-us.md</code>文件，你将可以在<code>https://&lt;user&gt;.github.io/&lt;repository&gt;/about/contact-us.html</code>访问它。</p>
-<p>你也可以使用<code>Jekyll</code>等静态站点生成器来给你的github page配置一个主题。</p>
-<h4 id="站点发布常见问题的解决方法"><a href="#站点发布常见问题的解决方法" class="headerlink" title="站点发布常见问题的解决方法"></a>站点发布常见问题的解决方法</h4><ul>
-<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/72851548/permission-denied-to-github-actionsbot">Permission denied to github-actions[bot]</a></li>
-</ul>
-<h4 id="Github-workflows"><a href="#Github-workflows" class="headerlink" title="Github workflows"></a>Github workflows</h4><p>参考<a target="_blank" rel="noopener" href="https://docs.github.com/zh/actions/using-workflows/workflow-syntax-for-github-actions">官方文档</a>。</p>
-<h4 id="Github个人访问令牌"><a href="#Github个人访问令牌" class="headerlink" title="Github个人访问令牌"></a>Github个人访问令牌</h4><p><a target="_blank" rel="noopener" href="https://docs.github.com/zh/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens">Github个人访问令牌</a></p>
-<h3 id="readthedocs"><a href="#readthedocs" class="headerlink" title="readthedocs"></a>readthedocs</h3><p>Similar to the github pages.</p>
-<p><a target="_blank" rel="noopener" href="https://docs.readthedocs.io/en/stable/tutorial/">Tutorial</a></p>
-<h2 id="配置前准备"><a href="#配置前准备" class="headerlink" title="配置前准备"></a>配置前准备</h2><h3 id="Markdown编辑器"><a href="#Markdown编辑器" class="headerlink" title="Markdown编辑器"></a>Markdown编辑器</h3><p>推荐的<a target="_blank" rel="noopener" href="https://www.zhihu.com/tardis/zm/art/103348449?source_id=1003">markdown编辑器</a>：</p>
-<ul>
-<li>VSCode：免费。VSCode原生支持Markdown，安装一些插件可以帮助更快地编写markdown文件。</li>
-<li>Typora：现在已经开始收费。</li>
-</ul>
-<p>VSCode markdown插件：</p>
-<ul>
-<li>Mardown All in One: 提供快捷键，帮助更快的编写markdown文件。</li>
-<li>Markdown+Math：提供数学公式支持。</li>
-<li>Markdown Preview Enhanced: 将原生markdown预览的黑色背景改成白色。</li>
-<li>Markdown Preview Github Styling：提供Github风格的预览。</li>
-</ul>
-<p><a target="_blank" rel="noopener" href="https://www.tablesgenerator.com/markdown_tables">在线表格生成器</a>：可以生成Markdown、Text、HTML、LaTex、MediaWiki格式的表格。</p>
-<h3 id="轻量级虚拟机WSL"><a href="#轻量级虚拟机WSL" class="headerlink" title="轻量级虚拟机WSL"></a>轻量级虚拟机WSL</h3><p>WSL，<a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/wsl/install">Windows Subsystem for Linux</a>，是Windows提供的轻量级Linux虚拟机。</p>
-<p>安装教程：见<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/170210673">链接</a>。</p>
-<h4 id="WSL默认没有启用systemctl："><a href="#WSL默认没有启用systemctl：" class="headerlink" title="WSL默认没有启用systemctl："></a>WSL默认没有启用systemctl：</h4><p>启用systemctl的方法：<a target="_blank" rel="noopener" href="https://askubuntu.com/questions/1379425/system-has-not-been-booted-with-systemd-as-init-system-pid-1-cant-operate">链接</a>。</p>
-<p>替代方法：不需要启动systemctl，因为会比较占用资源，启动也会变慢。可以使用service命令替代。</p>
-<h4 id="WSL默认没有安装openssl-server："><a href="#WSL默认没有安装openssl-server：" class="headerlink" title="WSL默认没有安装openssl-server："></a>WSL默认没有安装openssl-server：</h4><p>使用ssh连接到服务器时，需要服务器运行着sshd程序，否则连接不上，会出现”<a target="_blank" rel="noopener" href="https://www.makeuseof.com/fix-ssh-connection-refused-error-linux/">Connection refused</a>“错误。</p>
-<p>参考<a target="_blank" rel="noopener" href="https://askubuntu.com/questions/1339980/enable-ssh-in-wsl-system">链接</a>。</p>
-<p>查看openssh-server有没有安装：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dpkg --list | grep ssh</span><br></pre></td></tr></table></figure>
-
-<p>注：如果安装了openssh-server，执行which sshd可以看到路径。</p>
-<p>WSL默认没有安装openssh-server，安装方法：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install openssh-server</span><br></pre></td></tr></table></figure>
-
-<p>启动ssh：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo service ssh start</span><br></pre></td></tr></table></figure>
-
-<h4 id="通过https登录到github"><a href="#通过https登录到github" class="headerlink" title="通过https登录到github"></a>通过https登录到github</h4><p><code>git push</code>不再支持输入用户名和密码，当提示输入密码时，需要输入personal access token.</p>
-<p>步骤1：在github上<a target="_blank" rel="noopener" href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic">创建personal access token</a>；</p>
-<p>步骤2：<a target="_blank" rel="noopener" href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#using-a-personal-access-token-on-the-command-line">在命令行上使用personal access token</a>；</p>
-<p>步骤3：为了避免每次都需要输入personal access token，可以将其<a target="_blank" rel="noopener" href="https://docs.github.com/en/get-started/getting-started-with-git/caching-your-github-credentials-in-git">缓存在git client上</a>：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gh auth login</span><br></pre></td></tr></table></figure>
-
-<p>注：使用<code>gh</code>命令需要先安装GitHub CLI：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install gh</span><br></pre></td></tr></table></figure>
-
-<h3 id="WSL常见问题"><a href="#WSL常见问题" class="headerlink" title="WSL常见问题"></a>WSL常见问题</h3><ul>
-<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/73673804/npm-show-npm-elf-not-found-error-in-wsl">npm show “NPM ELF : not found error” in WSL</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.reddit.com/r/bashonubuntuonwindows/comments/8teo9i/is_there_a_way_to_open_a_file_in_a_browser_from/">WSL打开html的方法</a></li>
-</ul>
-<p>在WSL的Linux下，在.bashrc中加入：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="function"><span class="title">browser</span></span>() &#123;</span><br><span class="line">    explorer.exe $(wslpath -w $(<span class="built_in">realpath</span> <span class="variable">$1</span>))</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">export</span> -f browser</span><br></pre></td></tr></table></figure>
-
-<p>打开html：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">browser index.html</span><br></pre></td></tr></table></figure>
-
-
-<h2 id="静态站点生成器"><a href="#静态站点生成器" class="headerlink" title="静态站点生成器"></a>静态站点生成器</h2><p>以下几种<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages">静态站点生成器</a>都可以用来搭建个人主页。如果使用除JekyII外的工具，则需要配置<a target="_blank" rel="noopener" href="https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions">Github Actions</a>以构建和发布你的站点。</p>
-<h3 id="mkdocs"><a href="#mkdocs" class="headerlink" title="mkdocs"></a>mkdocs</h3><p><a target="_blank" rel="noopener" href="https://www.mkdocs.org/">mkdocs</a>是一个快速的静态网页生成器。</p>
-<p><code>mkdocs.yml</code> 文件是 MkDocs 文档生成器的配置文件，其格式说明参见<a href="mkdocs.yml.md">这里</a>。</p>
-<h3 id="JekyII"><a href="#JekyII" class="headerlink" title="JekyII"></a>JekyII</h3><p>Jekyll 是一个静态站点生成器，内置对 GitHub Pages 的支持和简化的构建进程。</p>
-<p>参见 <a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll/about-github-pages-and-jekyll">About GitHub Pages and Jekyll</a> 。</p>
-<h3 id="Hexo"><a href="#Hexo" class="headerlink" title="Hexo"></a>Hexo</h3><ul>
-<li><a target="_blank" rel="noopener" href="https://hexo.io/docs/">Hexo博客框架</a></li>
-<li><a target="_blank" rel="noopener" href="https://hexo.io/zh-cn/docs/">Hexo中文文档</a></li>
-<li><a target="_blank" rel="noopener" href="https://malekbenz.com/blog/2016/09/10/Create-Host-Blog-for-free-with-Hexo-Github">Create and host your blog for free with hexo &amp; Github</a></li>
-</ul>
-<h3 id="Sphinx"><a href="#Sphinx" class="headerlink" title="Sphinx"></a>Sphinx</h3><p><a target="_blank" rel="noopener" href="https://www.sphinx-doc.org/en/master/usage/installation.html">Install Sphinx</a><br><a target="_blank" rel="noopener" href="https://sphinx-intro-tutorial.readthedocs.io/en/latest/docs_hosting.html">Hosting the documentation</a></p>
-<h3 id="python"><a href="#python" class="headerlink" title="python"></a>python</h3><p>python建立个人站点</p>
-<pre><code>python -m http.server
-</code></pre>
-<h2 id="Syntax"><a href="#Syntax" class="headerlink" title="Syntax"></a>Syntax</h2><h3 id="Markdown"><a href="#Markdown" class="headerlink" title="Markdown"></a>Markdown</h3><ul>
-<li><a target="_blank" rel="noopener" href="https://daringfireball.net/projects/markdown">Markdown Documentation</a></li>
-<li><a target="_blank" rel="noopener" href="https://squidfunk.github.io/mkdocs-material/reference/diagrams/">Diagrams Reference</a></li>
-</ul>
-<h3 id="reStructuredText"><a href="#reStructuredText" class="headerlink" title="reStructuredText"></a>reStructuredText</h3><p><code>.rst</code></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/blog/page/3/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/3/">3</a><span class="page-number current">4</span><a class="page-number" href="/blog/page/5/">5</a><a class="page-number" href="/blog/page/6/">6</a><a class="extend next" rel="next" href="/blog/page/5/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+    <a class="extend prev" rel="prev" href="/blog/page/3/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/3/">3</a><span class="page-number current">4</span><a class="page-number" href="/blog/page/5/">5</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/7/">7</a><a class="extend next" rel="next" href="/blog/page/5/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -1351,7 +1733,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">59</span>
+          <span class="site-state-item-count">63</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1364,7 +1746,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">35</span>
+        <span class="site-state-item-count">36</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -1409,7 +1791,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2024</span>
+  <span itemprop="copyrightYear">2025</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
