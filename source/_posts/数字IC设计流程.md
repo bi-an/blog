@@ -98,6 +98,23 @@ DFT 对芯片来说不是必需的，一些低成本的芯片没有插入 DFT �
 
 EDA 公司：电子设计自动化（Electronic Design Automation）公司，粗略来说，数字设计常用 Synopsys ，模拟设计常用 Cadence ， Mentor 在一些细分领域有优势。
 
+| 数字/模块 | 数字流程 | 常用软件 | 其他软件 |
+|------------|----------|----------|----------|
+| 数字       | RTL 编写 | Vim/Gvim | 普通文本编辑器 |
+| 数字       | 仿真     | VCS (Synopsys) | Insicive (Cadence) |
+| 数字       | 看波形   | Verdi (Synopsys) | DVE (Synopsys) |
+| 数字       | 设计检查 | Spyglass (Synopsys) | Simvision (Cadence) |
+| 数字       | 综合     | DC (Synopsys) | ModelSim (Mentor) |
+| 数字       | 时序仿真 | PT (Synopsys) | nLint (Cadence) |
+| 数字       | 自动布局布线 | ICC2 (Synopsys) | Genus (Cadence) |
+| 数字       | 设计版图形式验证 | Formality (Synopsys) | Tempus (Cadence) |
+| 数字       | 提取寄生参数 | StarRC (Synopsys) |  |
+| 模拟       | 原理图/版图/仿真等 | Virtuoso (Cadence) | Calibre (Mentor) |
+| 模拟       | 寄生提取/DRC/LVS | Calibre (Mentor) |  |
+
+仿真加速器： **Palladium** (Cadence) 、 **ZeBu** (Synopsys) 。
+
+
 ### 数字IC设计工具
 
 RTL 仿真工具：有 Synopsys 的 VCS ，Cadence 的 Incisive （也叫 irun ）。这些工具可以胜任前仿、后仿、UVM 架构（Universal Verification Methodology，通用验证方法学）的仿真。Cadence 的 irun 与模拟设计工具 Virtuoso 工具中集成的 AMS 仿真工具相结合，支持数字模拟电路混合仿真。
@@ -127,6 +144,41 @@ SignOff 工具：即对整个设计的时序、功耗评估。 Synopsys 的 Prim
 SignOff 工具：Mentor 的 Calibre 可以用来提取寄生参数、进行 DRC 和 LVS 检查。
 
 
+### 职位、分工与工具
+
+| 大职位   | 细分职位 | 功能 | 常用工具 |
+|--------|---------|------|---------|
+| 数字   | 数字 IC 设计 | 设计芯片中的数字电路 | Vim, VCS, Verdi, Spyglass, DC 等 |
+| 数字   | 数字 IC 验证 | 验证芯片中的数字电路功能 | VCS, Verdi 等 |
+| 数字   | 数字 IC 后端 | 将抽象电路转换为版图 | ICC2, Innovus, Calibre, PT 等 |
+| 数字   | 其他职位, 如 SignOff, DFT 等 | 负责在数字电路中插入 DFT、对最终的版图进行时序、面积、功耗的检查等 | DC, PT, Formality 等 |
+| 模拟   | 模拟 IC 设计 | 设计芯片中的模拟电路 | Virtuoso 等 |
+| 模拟   | 模拟版图 | 将电路原理图做成版图 | Virtuoso, Calibre 等 |
+| 软件   | 嵌入式软件工程师 | (1) 参与芯片开发/验证 (2) 参与 SDK (3) 参与芯片应用方案 | Keil, SourceInsight, Visual Studio 等 |
+| 软件方案 | 测试工程师 | (1) 对芯片设计性能的测试 (2) 芯片量产测试 | 兼用软件和硬件工具 |
+| 硬方案   | 应用工程师 | 做电路板，为芯片找到合适的应用场景 | Pads, Altium Designer, Cadence 等 |
+
+
+```
+管理
+├── 研发
+│   ├── 数字IC设计
+│   ├── 数字IC验证
+│   └── 数字后端
+│   └── 模拟IC设计
+│       └── 模拟版图
+├── 测试
+│   ├── 研发类测试
+│   │   ├── 方案测试
+│   │   └── 量产测试
+│   └── 客户测试
+├── 销售
+└── 方案
+    ├── 硬件方案
+    └── 软件方案
+```
+
+
 ### EDA 与 Foundry 的关系
 
 普通软件公司无力开发 EDA 软件。因为 EDA 厂商需要和 Foundry 厂商紧密合作，才能获得有关的生产细节数据，从而帮助用户进行更加准确的仿真、寄生参数的提取、规则的检查。不同的 EDA 工具抽取的寄生参数可能不同，原因可能是不同的工具获得的工艺数据不同。
@@ -150,4 +202,6 @@ register，这是对功能强调的名称，其物理实体很多，比如触发
 
 ### 设计的边界
 
-综合的对象是设计(Design)，而不是芯片。
+<a href='https://postimg.cc/JDSBLFx3' target='_blank'><img src='https://i.postimg.cc/JDSBLFx3/20250116211433.jpg' border='0' alt='20250116211433'/></a>
+
+[20250116211433.jpg](https://postimg.cc/JDSBLFx3)
