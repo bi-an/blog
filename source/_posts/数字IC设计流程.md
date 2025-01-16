@@ -105,6 +105,8 @@ DFT 对芯片来说不是必需的，一些低成本的芯片没有插入 DFT �
 
 <a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/MKfPd9z4/20250116222905.jpg" alt="20250116222905"/></a>
 
+- 封装: 芯片外面的塑料壳子称为芯片的封装，大体分为两种：插针式（引脚如针）、表贴式（引脚扁平）。
+
 ## IC设计工具
 
 EDA 公司：电子设计自动化（Electronic Design Automation）公司，粗略来说，数字设计常用 Synopsys ，模拟设计常用 Cadence ， Mentor 在一些细分领域有优势。
