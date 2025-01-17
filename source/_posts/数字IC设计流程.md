@@ -94,7 +94,7 @@ DFT 对芯片来说不是必需的，一些低成本的芯片没有插入 DFT �
 版图布局规划（FloorPlan）：将芯片整体规划，以及内部数字、模拟电路的位置、面积、形状等特征的规划。
 
 <figure style="text-align:center;">
-<a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/WpHYGBcg/20250116222241.jpg" alt="20250116222241"/></a>
+<a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/WpHYGBcg/20250116222241.jpg" alt="20250116222241" width="50%"/></a>
 <figcaption>FloorPlan示例</figcaption>
 </figure>
 
@@ -103,7 +103,7 @@ DFT 对芯片来说不是必需的，一些低成本的芯片没有插入 DFT �
 
 一个完整的引脚设计如图：
 
-<a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/MKfPd9z4/20250116222905.jpg" alt="20250116222905"/></a>
+<a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/MKfPd9z4/20250116222905.jpg" alt="20250116222905" width="50%"/></a>
 
 - 封装: 芯片外面的塑料壳子称为芯片的封装，大体分为两种：插针式（引脚如针）、表贴式（引脚扁平）。
 
@@ -215,7 +215,7 @@ register，这是对功能强调的名称，其物理实体很多，比如触发
 
 ### 设计(Design)的边界
 
-<a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/gjQMGZHN/20250116211433.jpg" alt="20250116211433"/></a>
+<a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/gjQMGZHN/20250116211433.jpg" alt="20250116211433" width="50%"/></a>
 
 - Pad：芯片（封装）之外的引脚。
 - 元器件：指芯片内的组合逻辑门电路及时序逻辑门电路。这些标准的元器件也被称为标准单元(Standard Cell)。
