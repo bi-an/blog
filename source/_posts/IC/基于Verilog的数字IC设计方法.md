@@ -24,13 +24,13 @@ tags: IC
 
 <figure style="text-align:center;">
 <figcaption>10种数字逻辑器件和Verilog表示</figcaption>
-TODO
+<img src='https://i.postimg.cc/sxPYdvKZ/20250117214703.jpg' border='0' alt='20250117214703' width="100%"/>
 </figure>
 
 真正的元器件库中有很多复杂的元器件，如图所示：
 
 <figure style="text-align:center;">
-TODO
+<img src="https://i.postimg.cc/6QSLdsyT/20250117214659.jpg" alt="20250117214659" width="50%"/>
 <figcaption>复杂元器件示例</figcaption>
 </figure>
 
@@ -39,7 +39,14 @@ TODO
 数字IC设计又称为数字逻辑设计，因为其本身就是逻辑的，只有0和1两种逻辑。
 
 - 组合逻辑：电平输入和电平输出。元器件结构简单，但问题是如果输入含有毛刺，输出就有毛刺。
+
+><img src='https://i.postimg.cc/C1s5wkTY/20250117215056.jpg' border='0' alt='20250117215056' width="50%"/>
+
+<img src='https://i.postimg.cc/NMH8DNHD/20250117214654.jpg' border='0' alt='20250117214654' width="50%"/>
+
 - 时序逻辑：以时钟为驱动源。一个触发器，在时钟的驱动（边沿触发）下，将 D 输入端的信号送到 Q 端输出。
+
+<img src='https://i.postimg.cc/BbfTVx50/20250117214649.jpg' border='0' alt='20250117214649' width="100%"/>
 
 触发器也可以叫寄存器(register, reg)，因为如果没有时钟驱动，那么Q端会保持原有状态不变，也就寄存了上一次触发时的D端信息。而组合逻辑，输出端是无法寄存信息的。
 
