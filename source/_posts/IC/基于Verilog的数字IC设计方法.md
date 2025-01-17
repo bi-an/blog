@@ -126,3 +126,158 @@ Verilog的语法规律：
 
 需要特别澄清的是语句`negedge rst_n`，但是经过仿真和与模拟工程师确认，复位信号对寄存器的作用不是通过信号沿来驱动的，而是通过电平来驱动，也就是 `0` 信号具有绝对控制权，只要 `rst_n` 为 `0` ，那么立即复位。
 
+## 非阻塞赋值和阻塞赋值的区别
+
+非阻塞赋值的意思是该句表达不会阻塞后续表达的执行。如下例中，`X <＝ 0`的执行，不会阻碍到`Y <＝ 0`的执行，它们是同时发生的：
+
+```verilog
+always @(posedge clk or negedge rst_n)
+begin
+    if (!rst_n)
+    begin
+        X <= 0;
+        Y <= 0;
+    end
+    else
+    begin
+        X <= A;
+        Y <= B;
+    end
+end
+```
+
+而阻塞赋值，意思是如果前一句不执行，后一句就无法执行，前一句会阻塞后一句。对于可综合的Verilog来讲，其实并不会阻塞。在下例中， `always` 块的目的是创造 `z` 和 `k` 两个信号。 `k ＝ 3 * z` 和 `z ＝ a & b` 是两个不同的电路， `k ＝ 3 * z` 电路不会被 `z ＝ a & b` 阻塞。
+
+```verilog
+always @(*)
+begin
+    z = a & b;  // 与门
+    k = 3 * z;  // 乘法器
+end
+```
+
+本例对应的原理图如图所示：
+
+<img src='https://i.postimg.cc/MTs1Dhsh/20250117224729.jpg' border='0' alt='20250117224729' width="50%"/>
+
+可见，对于电路描述来讲，语法只是表示一种连接关系，并没有执行先后顺序的说法，但如果本例使用非阻塞赋值，语法检查会报错，因此，这是一种惯用方法。阻塞赋值在Verilog中真正体现阻塞，是在仿真使用的不可综合语法中，到第3章再做解释。
+
+
+## 组合逻辑的表达式
+
+对于一个组合逻辑电路，应该在什么情况下用assign，在什么情况下用always呢？
+
+比较简单的逻辑适合使用assign方式，较为复杂的逻辑应使用always块。下例给出了一个适合用always块的较复杂例子：
+
+```verilog
+always @(*)
+begin
+    if (s1)
+        a = 1;
+    else if (s2)
+        a = 2;
+    else if (s3)
+        a = 3;
+    else
+        a = 0;
+end
+```
+
+同样的功能若改用assign，则为下例所示。很明显，用always块表达意思更加清晰。
+
+```verilog
+assign a = s1 ? 1 : (s2 ? 2 : (s3 ? 3 : 0));
+```
+
+前面解释了敏感列表中的 `*` 在组合逻辑 `always` 块中的作用。如果读者使用过一些老IP，则可能还会看到下例所示的表达，这种表达已随着综合器的进步渐渐被淘汰了，不建议初学者使用。
+
+```verilog
+always @(s1 or s2 or s3)
+begin
+    if (s1)
+        a = 1;
+    else if (s2)
+        a = 2;
+    else if (s3)
+        a = 3;
+    else
+        a = 0;
+end
+```
+
+## 组合逻辑中的选择器
+
+二选一 MUX 如何表达？
+
+<img src='https://i.postimg.cc/L6vnwrjX/20250117225844.jpg' border='0' alt='20250117225844' width="50%"/>
+
+```verilog
+// 第 1 种表达， assign 完整表达
+assign z = (s == 1) ? b : a;
+
+// 第 2 种表达， assign 简化表达
+assign z = s ? b : a;
+
+// 第 3 种表达， always 块表达
+always @(*)
+begin
+    if (s)
+        z = b;
+    else
+        z = a;
+end
+```
+
+多选一MUX，又该如何表示呢？
+
+因为使用assign表示显然会过于复杂，所以需要用always块表示。表示方法有两种，注意两种表达综合出来的电路是不同的。
+
+其一如下例所示。
+
+```verilog
+always @(*)
+begin
+    if (s == 0)
+        z = a;
+    else if (s == 1)
+        z = b;
+    else if (s == 2)
+        z = c;
+    else if (s == 3)
+        z = d;
+    else if (s == 4)
+        z = e;
+    else if (s == 5)
+        z = f;
+    else
+        z = a; // 默认值
+end
+```
+
+综合出来的电路如图所示：
+
+<img src='https://i.postimg.cc/x84BbfW8/20250117230859.jpg' border='0' alt='20250117230859'/>
+
+可见，使用if表述的选择关系，综合的电路是一层一层逐渐展开的，写在if最前面的语句，掌握着最终的选择权，因而优先级最高，再往后优先级逐层下降，而使用case表述的MUX，每个选择都是并列的，优先级相同，见下文。
+
+其二如下例所示。
+
+```verilog
+always @(*)
+begin
+    case (s)
+        0: z = a;
+        1: z = b;
+        2: z = c;
+        3: z = d;
+        4: z = e;
+        5: z = f;
+        default: z = a; // 默认值
+end
+```
+
+所综合的电路如图所示：
+
+<img src='https://i.postimg.cc/PrfqW20k/20250117230221.jpg' border='0' alt='20250117230221' width="50%"/>
+
+使用if表述，有可能出现隐藏逻辑，即设计者没有考虑到，但实际会被综合出来的逻辑门。隐藏逻辑是设计的隐患，设计者在写代码时应该清楚其逻辑含义，尽量避免出现隐藏逻辑。为了避免设计中出现隐藏逻辑，在实际项目中往往会提倡使用case语句来表达。
