@@ -202,5 +202,11 @@ And you can examine the current logging configuration:
 (gdb) show logging
 ```
 
+记录输入的命令：
+
+```
+(gdb) set trace-commands on
+```
+
 [Refercence](https://stackoverflow.com/questions/5941158/gdb-print-to-file-instead-of-stdout)
 
