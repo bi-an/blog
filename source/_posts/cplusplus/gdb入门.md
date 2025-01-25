@@ -122,12 +122,13 @@ By default, when a program forks, gdb will continue to debug the parent process 
 If you want to follow the child process instead of the parent process, use the command set `follow-fork-mode`.
 
 `set follow-fork-mode mode`
-Set the debugger response to a program call of fork or vfork. A call to fork or vfork creates a new process. The mode argument can be:
+Set the debugger response to a program call of `fork` or `vfork`. A call to fork or vfork creates a new process. The mode argument can be:
 `parent`
 The original process is debugged after a fork. The child process runs unimpeded. This is the default.
 `child`
 The new process is debugged after a fork. The parent process runs unimpeded.
-
+`ask`
+gdb 会提示让你选择 `parent` 还是 `child` 。
 
 `show follow-fork-mode`
 Display the current debugger response to a fork or vfork call.
