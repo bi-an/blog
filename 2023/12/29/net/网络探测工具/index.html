@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="安装sudo apt install net-tools  手册man 7 socket - socket options man 7 tcp - tcp options  文件系统&#x2F;proc&#x2F;sys&#x2F;net&#x2F;ipv4&#x2F;ip_local_port_range  概念网关（Gateway）网关（Gateway）是一个网络节点，它充当其他网络之间的访问点或网关。网关通常用于连接不同的网络，并且可以在不">
+<meta property="og:type" content="article">
+<meta property="og:title" content="网络检测工具">
+<meta property="og:url" content="https://bi-an.github.io/blog/2023/12/29/net/%E7%BD%91%E7%BB%9C%E6%8E%A2%E6%B5%8B%E5%B7%A5%E5%85%B7/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="安装sudo apt install net-tools  手册man 7 socket - socket options man 7 tcp - tcp options  文件系统&#x2F;proc&#x2F;sys&#x2F;net&#x2F;ipv4&#x2F;ip_local_port_range  概念网关（Gateway）网关（Gateway）是一个网络节点，它充当其他网络之间的访问点或网关。网关通常用于连接不同的网络，并且可以在不">
+<meta property="og:locale">
+<meta property="article:published_time" content="2023-12-29T09:55:00.000Z">
+<meta property="article:modified_time" content="2025-03-13T16:53:57.946Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="tcp&#x2F;ip">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2023/12/29/net/%E7%BD%91%E7%BB%9C%E6%8E%A2%E6%B5%8B%E5%B7%A5%E5%85%B7/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>网络检测工具 | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-resource">
+
+    <a href="/blog/resources/" rel="section"><i class="fa fa-paperclip fa-fw"></i>Resource</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/12/29/net/%E7%BD%91%E7%BB%9C%E6%8E%A2%E6%B5%8B%E5%B7%A5%E5%85%B7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          网络检测工具
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2023-12-29 09:55:00" itemprop="dateCreated datePublished" datetime="2023-12-29T09:55:00+00:00">2023-12-29</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-03-13 16:53:57" itemprop="dateModified" datetime="2025-03-13T16:53:57+00:00">2025-03-13</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Network/" itemprop="url" rel="index"><span itemprop="name">Network</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><pre><code>sudo apt install net-tools
+</code></pre>
+<h2 id="手册"><a href="#手册" class="headerlink" title="手册"></a>手册</h2><pre><code>man 7 socket - socket options
+man 7 tcp - tcp options
+</code></pre>
+<h2 id="文件系统"><a href="#文件系统" class="headerlink" title="文件系统"></a>文件系统</h2><pre><code>/proc/sys/net/ipv4/ip_local_port_range
+</code></pre>
+<h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><h3 id="网关（Gateway）"><a href="#网关（Gateway）" class="headerlink" title="网关（Gateway）"></a>网关（Gateway）</h3><p>网关（Gateway）是一个网络节点，它充当其他网络之间的访问点或网关。网关通常用于连接不同的网络，并且可以在不同的协议之间进行转换。网关设备可以是路由器、服务器或其他网络设备。当本地网络中的设备需要与外部网络通信时，它们会将数据包发送到网关，网关再将数据包转发到目标网络。</p>
+<p>举例： 假设你的本地网络使用的IP地址范围是192.168.1.0&#x2F;24，而你的网关IP地址是192.168.1.1。当你的计算机需要访问外部网络（例如互联网）时，它会将数据包发送到网关（192.168.1.1），然后由网关将数据包转发到目标网络。</p>
+<p>在Linux系统中，你可以使用<code>ip route</code>命令查看默认网关。例如：</p>
+<p>在这个例子中，<code>default via 192.168.1.1 dev eth0</code>表示默认网关是<code>192.168.1.1</code>，你的计算机通过网络接口<code>eth0</code>与网关连接。</p>
+<h3 id="子网（CIDR表示法）"><a href="#子网（CIDR表示法）" class="headerlink" title="子网（CIDR表示法）"></a>子网（CIDR表示法）</h3><p>CIDR（Classless Inter-Domain Routing，无类别域间路由）是一种用于分配IP地址和路由的标准，使用斜杠（&#x2F;）后跟一个数字来表示子网掩码的位数。</p>
+<p>在CIDR表示法中，<code>192.168.1.0/24</code>表示一个子网，其中<code>/24</code>表示子网掩码为255.255.255.0。这意味着子网中有256个IP地址（从0到255），但其中两个地址是保留的：</p>
+<ol>
+<li><strong>网络地址</strong>：<code>192.168.1.0</code>，用于标识子网本身。</li>
+<li><strong>广播地址</strong>：<code>192.168.1.255</code>，用于向子网中的所有设备发送广播消息。</li>
+</ol>
+<p>因此，有效的主机IP地址范围是从<code>192.168.1.1</code>到<code>192.168.1.254</code>，共254个可用的IP地址。</p>
+<h3 id="Link-local-Adress"><a href="#Link-local-Adress" class="headerlink" title="Link-local Adress"></a>Link-local Adress</h3><p>The link-local address range refers to IP addresses that are used for communication within a single network segment or link. These addresses are not routable, meaning they are not intended to be used for communication beyond the local network segment.</p>
+<p>For IPv4, the link-local address range is 169.254.0.0&#x2F;16. This range is automatically assigned to network interfaces when no other IP address is available (e.g., when DHCP fails). Devices on the same local network can communicate with each other using these addresses without requiring a router.</p>
+<p>For IPv6, the link-local address range is fe80::&#x2F;10. These addresses are automatically configured on all IPv6-enabled interfaces and are used for local network communication.</p>
+<p>The IP address range 169.254.0.0&#x2F;16 is regarded as link-local because it is reserved for link-local addresses by the Internet Assigned Numbers Authority (IANA). These addresses are used for communication within a single network segment or link and are not routable beyond that segment.</p>
+<p>Characteristics of Link-Local Addresses:</p>
+<ul>
+<li>Automatic Assignment: Devices automatically assign themselves an IP address from the 169.254.0.0&#x2F;16 range if they cannot obtain an IP address through DHCP.</li>
+<li>Non-Routable: These addresses are not meant to be routed across different network segments. They are only valid within the local network.</li>
+<li>Zero Configuration: Link-local addresses allow devices to communicate without manual configuration or a DHCP server.</li>
+</ul>
+<p>Example:<br>When a device fails to get an IP address from a DHCP server, it might assign itself an address like 169.254.1.2. Other devices on the same local network segment will also have addresses in the 169.254.0.0&#x2F;16 range, allowing them to communicate directly.</p>
+<h2 id="命令"><a href="#命令" class="headerlink" title="命令"></a>命令</h2><h3 id="ip"><a href="#ip" class="headerlink" title="ip"></a>ip</h3><p>NAME</p>
+<pre><code>ip - show / manipulate routing, devices, policy routing and tunnels.
+</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ ip route get 8.8.8.8</span><br><span class="line">8.8.8.8 via 192.168.1.1 dev eth0 src 192.168.1.100 uid 1000</span><br><span class="line">    cache</span><br></pre></td></tr></table></figure>
+
+<p>说明：</p>
+<ul>
+<li><code>8.8.8.8</code>: The destination IP address for which the route is being queried.</li>
+<li><code>via 192.168.1.1</code>: The gateway IP address through which the destination can be reached.</li>
+<li><code>dev eth0</code>: The network interface (e.g., <code>eth0</code>) used to reach the destination.</li>
+<li><code>src 192.168.1.100</code>: The source IP address used for sending packets to the destination.</li>
+<li><code>uid 1000</code>: The user ID of the process that issued the command.</li>
+<li><code>cache</code>: Indicates that the route information is cached.</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ ip route show</span><br><span class="line">default via 192.168.1.1 dev eth0 </span><br><span class="line">192.168.1.0/24 dev eth0 proto kernel scope <span class="built_in">link</span> src 192.168.1.100</span><br><span class="line">169.254.0.0/16 dev idrac proto kernel scope <span class="built_in">link</span> src 169.254.1.2</span><br></pre></td></tr></table></figure>
+
+<p>说明：该命令用于显示路由表：</p>
+<ul>
+<li><code>default via 192.168.1.1 dev eth0</code>: The default route, packets to any destination not in the routing table will be sent to <code>192.168.1.1</code> via the <code>eth0</code> interface.</li>
+<li><code>192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.100</code>: A route for the <code>192.168.1.0/24</code> network (destination network), directly reachable via the <code>eth0</code> interface, with the source IP <code>192.168.1.100</code>.</li>
+<li><code>192.168.1.0/24</code>: Destination network.</li>
+<li><code>dev eth0</code>: Interface <code>eth0</code>.</li>
+<li><code>proto kernel</code>: Added by the kernel.</li>
+<li><code>scope link</code>: Directly reachable.</li>
+<li><code>src 192.168.1.100</code>: Source IP address.</li>
+<li><code>169.254.0.0/16</code>: Link-local address range.</li>
+</ul>
+<h3 id="netstat-ss"><a href="#netstat-ss" class="headerlink" title="netstat &#x2F; ss"></a>netstat &#x2F; ss</h3><p>NAME</p>
+<pre><code>ss - another to investigate sockets.
+</code></pre>
+<p>Reference</p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/45920111">查看进程占用的端口</a></p>
+<p>COMMANDS</p>
+<pre><code>ss -lnpt
+</code></pre>
+<p>OPTIONS</p>
+<pre><code>-n, --numberic
+
+-l, --listening
+
+-t, --tcp
+    Note: Only established (non-listening) connections.
+
+-a, --all
+    Display both listening and non-linstening (for TCP this means established connections) sockets.
+
+-u, --udp
+
+-p, --process
+</code></pre>
+<h3 id="lsof"><a href="#lsof" class="headerlink" title="lsof"></a>lsof</h3><p>Options:</p>
+<pre><code>-n inhibits the conversion of network numbers to host names for network files.
+
+-P inhibits the conversion of port numbers to port names for network files.
+
+-i specifies the Internet addresses
+
+    multiple addresses (up to a limit of 100) may be specified with multiple options.
+
+    An Internet address is specified in the form (Items in square brackets are optional.):
+
+    [46][protocol][@hostname|hostaddr][:service|port]
+
+    where:
+    46 specifies the IP version, IPv4 or IPv6
+        that applies to the following address.
+        &#39;6&#39; may be be specified only if the UNIX
+        dialect supports IPv6.  If neither &#39;4&#39; nor
+        &#39;6&#39; is specified, the following address
+        applies to all IP versions.
+    protocol is a protocol name - TCP, UDP
+    hostname is an Internet host name.  Unless a
+        specific IP version is specified, open
+        network files associated with host names
+        of all versions will be selected.
+    hostaddr is a numeric Internet IPv4 address in
+        dot form; or an IPv6 numeric address in
+        colon form, enclosed in brackets, if the
+        UNIX dialect supports IPv6.  When an IP
+        version is selected, only its numeric
+        addresses may be specified.
+    service is an /etc/services name - e.g., smtp -
+        or a list of them.
+    port is a port number, or a list of them.
+
+-s list file size
+
+-s p:s  exclude(^)|select protocol (p = TCP|UDP) states by name(s).
+</code></pre>
+<p>Examples:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">lsof -i:&lt;port&gt;</span><br><span class="line">lsof -i -P -n | grep LISTEN</span><br><span class="line">lsof -nP -iTCP -sTCP:LISTEN</span><br></pre></td></tr></table></figure>
+
+<h3 id="nc-netcat-nmap"><a href="#nc-netcat-nmap" class="headerlink" title="nc&#x2F;netcat&#x2F;nmap"></a>nc&#x2F;netcat&#x2F;nmap</h3><h3 id="socket"><a href="#socket" class="headerlink" title="socket"></a>socket</h3><p>Create a TCP or a UNIX domain socket and connect to stdin&#x2F;out.</p>
+<p>Installation:</p>
+<pre><code>sudo apt-get install socket
+</code></pre>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/tcp-ip/" rel="tag"># tcp/ip</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2023/12/23/english/Written-in-Blood/" rel="prev" title="Written in Blood">
+      <i class="fa fa-chevron-left"></i> Written in Blood
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2023/12/29/personal_site/npm/" rel="next" title="npm">
+      npm <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85"><span class="nav-number">1.</span> <span class="nav-text">安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%8B%E5%86%8C"><span class="nav-number">2.</span> <span class="nav-text">手册</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F"><span class="nav-number">3.</span> <span class="nav-text">文件系统</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E5%BF%B5"><span class="nav-number">4.</span> <span class="nav-text">概念</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BD%91%E5%85%B3%EF%BC%88Gateway%EF%BC%89"><span class="nav-number">4.1.</span> <span class="nav-text">网关（Gateway）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%90%E7%BD%91%EF%BC%88CIDR%E8%A1%A8%E7%A4%BA%E6%B3%95%EF%BC%89"><span class="nav-number">4.2.</span> <span class="nav-text">子网（CIDR表示法）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Link-local-Adress"><span class="nav-number">4.3.</span> <span class="nav-text">Link-local Adress</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4"><span class="nav-number">5.</span> <span class="nav-text">命令</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ip"><span class="nav-number">5.1.</span> <span class="nav-text">ip</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#netstat-ss"><span class="nav-number">5.2.</span> <span class="nav-text">netstat &#x2F; ss</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#lsof"><span class="nav-number">5.3.</span> <span class="nav-text">lsof</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#nc-netcat-nmap"><span class="nav-number">5.4.</span> <span class="nav-text">nc&#x2F;netcat&#x2F;nmap</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#socket"><span class="nav-number">5.5.</span> <span class="nav-text">socket</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">65</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">36</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://bi-an.github.io/" title="http:&#x2F;&#x2F;bi-an.github.io">bi-an's Page</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
