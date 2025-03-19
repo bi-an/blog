@@ -232,3 +232,12 @@ taskA 和 taskB 是在隔离区域内生成的任务。
 taskA 生成了两个子任务 Subtask A1 和 Subtask A2。
 taskB 生成了两个子任务 Subtask B1 和 Subtask B2。
 假设线程A执行了 taskA，线程B执行了 taskB。在隔离区域内，线程A和线程B可以执行彼此生成的子任务。例如，线程A可以执行 Subtask B1 或 Subtask B2，而线程B可以执行 Subtask A1 或 Subtask A2，只要这些子任务属于同一个隔离区域。
+
+
+## 5. 推荐阅读
+
+### 5.1. 书籍
+
+1. Intel Building Blocks 编程指南. James Reinders.
+2. Patterns for Parallel Pragramming. Timothy Mattson 等.
+3. 设计模式：Design Patterns of Reusable Object-Oriented Software (Addison Wesley). Gamma, Helm, Johnson 和 Vlissides.
