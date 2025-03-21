@@ -216,10 +216,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2025-03-19 16:31:02 / Modified: 09:50:29" itemprop="dateCreated datePublished" datetime="2025-03-19T16:31:02+00:00">2025-03-19</time>
+              <time title="Created: 2025-03-19 16:31:02" itemprop="dateCreated datePublished" datetime="2025-03-19T16:31:02+00:00">2025-03-19</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-03-21 08:19:49" itemprop="dateModified" datetime="2025-03-21T08:19:49+00:00">2025-03-21</time>
+              </span>
 
           
 
@@ -236,55 +242,54 @@
 <p>原子性：原子变量的修改是原子的，即每次修改都是一个不可分割的操作。这意味着在任何时刻，只有一个线程能够成功地修改原子变量，而不会出现竞争条件。</p>
 <p>同步机制：原子变量使用硬件级别的同步机制（如锁、比较并交换操作等）来确保修改的原子性。这些机制确保线程在修改原子变量时不会干扰其他线程的操作。</p>
 <p>内存可见性：原子变量的修改会确保内存可见性，即一个线程对原子变量的修改会立即对其他线程可见。这意味着其他线程可以看到最新的修改结果，而不会读取到过时的数据。</p>
-<p>举个例子，假设我们有一个原子变量 std::atomic<int> counter，两个线程同时执行 counter++ 操作：</p>
-<p>#include <atomic><br>#include <thread><br>#include <iostream></p>
-<p>std::atomic<int> counter(0);</p>
-<p>void increment() {<br>    for (int i &#x3D; 0; i &lt; 1000; ++i) {<br>        counter++;<br>    }<br>}</p>
-<p>int main() {<br>    std::thread t1(increment);<br>    std::thread t2(increment);</p>
-<pre><code>t1.join();
-t2.join();
+<p>举个例子，假设我们有一个原子变量 <code>std::atomic&lt;int&gt; counter</code>，两个线程同时执行 <code>counter++</code> 操作：</p>
+<figure class="highlight cpp"><figcaption><span>atomic1.cpp</span><a href="/blog/downloads/code/atomic/atomic1.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function">std::atomic&lt;<span class="type">int</span>&gt; <span class="title">counter</span><span class="params">(<span class="number">0</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">increment</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000</span>; ++i) {</span><br><span class="line">        counter++;</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="function">std::thread <span class="title">t1</span><span class="params">(increment)</span></span>;</span><br><span class="line">    <span class="function">std::thread <span class="title">t2</span><span class="params">(increment)</span></span>;</span><br><span class="line"></span><br><span class="line">    t1.<span class="built_in">join</span>();</span><br><span class="line">    t2.<span class="built_in">join</span>();</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Final counter value: &quot;</span> &lt;&lt; counter &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
 
-std::cout &lt;&lt; &quot;Final counter value: &quot; &lt;&lt; counter &lt;&lt; std::endl;
-return 0;
-</code></pre>
-<p>}<br>在这个例子中：</p>
-<p>两个线程 t1 和 t2 同时执行 increment 函数，尝试修改原子变量 counter。<br>原子性 确保每次 counter++ 操作都是不可分割的，避免竞争条件。<br>同步机制 确保两个线程不会同时修改 counter，而是一个线程成功修改后，另一个线程才能继续修改。<br>内存可见性 确保 counter 的最新值对两个线程都是可见的。</p>
+<p>在这个例子中：</p>
+<p>两个线程 t1 和 t2 同时执行 increment 函数，尝试修改原子变量 counter。<br>原子性 确保每次 <code>counter++</code> 操作都是不可分割的，避免竞争条件。<br>同步机制 确保两个线程不会同时修改 counter，而是一个线程成功修改后，另一个线程才能继续修改。<br>内存可见性 确保 counter 的最新值对两个线程都是可见的。</p>
 <h2 id="实现机制"><a href="#实现机制" class="headerlink" title="实现机制"></a>实现机制</h2><p>让我们深入探讨一下两个线程同时修改原子变量时的底层机制。</p>
 <ol>
-<li><p>原子操作的硬件支持<br>原子操作通常由硬件指令支持，这些指令确保操作的原子性。例如，x86架构提供了 LOCK 前缀，用于确保指令在多处理器环境中的原子性。常见的原子指令包括 LOCK XADD（原子加法）和 LOCK CMPXCHG（原子比较并交换）。</p>
+<li><p>原子操作的硬件支持<br>原子操作通常由硬件指令支持，这些指令确保操作的原子性。例如，x86架构提供了 <code>LOCK</code> 前缀，用于确保指令在多处理器环境中的原子性。常见的原子指令包括 <code>LOCK XADD</code>（原子加法）和 <code>LOCK CMPXCHG</code>（原子比较并交换）。</p>
 </li>
-<li><p>缓存一致性协议<br>多核处理器使用缓存一致性协议（如MESI协议）来确保各个处理器缓存中的数据一致性。当一个处理器修改原子变量时，缓存一致性协议会确保其他处理器的缓存中对应的数据无效或更新。</p>
+<li><p>缓存一致性协议<br>多核处理器使用缓存一致性协议（如<code>MESI</code>协议）来确保各个处理器缓存中的数据一致性。当一个处理器修改原子变量时，缓存一致性协议会确保其他处理器的缓存中对应的数据无效或更新。</p>
 </li>
-<li><p>内存屏障<br>内存屏障（Memory Barrier）是一种指令，用于防止编译器和处理器对内存操作进行重排序。原子操作通常会使用内存屏障来确保操作的顺序性和可见性。例如，std::atomic 在实现时会使用内存屏障来确保操作的正确性。</p>
+<li><p>内存屏障<br>内存屏障（Memory Barrier）是一种指令，用于防止编译器和处理器对内存操作进行重排序。原子操作通常会使用内存屏障来确保操作的顺序性和可见性。例如，<code>std::atomic</code> 在实现时会使用内存屏障来确保操作的正确性。</p>
 </li>
 <li><p>比较并交换（CAS）<br>比较并交换（Compare-And-Swap, CAS）是一种常用的原子操作，它通过比较变量的当前值和预期值，如果相等则更新变量的值。CAS操作是无锁编程的基础，用于实现许多并发数据结构。</p>
 </li>
 <li><p>伪代码示例<br>以下是一个伪代码示例，展示了CAS操作的工作原理：</p>
 </li>
 </ol>
-<p>bool compare_and_swap(int* ptr, int old_value, int new_value) {<br>    if (*ptr &#x3D;&#x3D; old_value) {<br>        *ptr &#x3D; new_value;<br>        return true;<br>    }<br>    return false;<br>}<br>在多线程环境中，CAS操作可以确保只有一个线程成功修改变量的值，而其他线程会失败并重试。</p>
+<figure class="highlight cpp"><figcaption><span>cas_mock.cpp</span><a href="/blog/downloads/code/atomic/cas_mock.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">compare_and_swap</span><span class="params">(<span class="type">int</span>* ptr, <span class="type">int</span> old_value, <span class="type">int</span> new_value)</span> </span>{</span><br><span class="line">    <span class="keyword">if</span> (*ptr == old_value) {</span><br><span class="line">        *ptr = new_value;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p>在多线程环境中，CAS操作可以确保只有一个线程成功修改变量的值，而其他线程会失败并重试。</p>
 <ol start="6">
 <li>实际应用<br>在实际应用中，原子变量的操作可能如下所示：</li>
 </ol>
-<p>#include <atomic><br>#include <thread><br>#include <iostream></p>
-<p>std::atomic<int> counter(0);</p>
-<p>void increment() {<br>    for (int i &#x3D; 0; i &lt; 1000; ++i) {<br>        int expected &#x3D; counter.load();<br>        while (!counter.compare_exchange_weak(expected, expected + 1)) {<br>            &#x2F;&#x2F; 重试，直到成功<br>        }<br>    }<br>}</p>
-<p>int main() {<br>    std::thread t1(increment);<br>    std::thread t2(increment);</p>
-<pre><code>t1.join();
-t2.join();
+<figure class="highlight cpp"><figcaption><span>atomic2.cpp</span><a href="/blog/downloads/code/atomic/atomic2.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function">std::atomic&lt;<span class="type">int</span>&gt; <span class="title">counter</span><span class="params">(<span class="number">0</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">increment</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000</span>; ++i) {</span><br><span class="line">        <span class="type">int</span> expected = counter.<span class="built_in">load</span>();</span><br><span class="line">        <span class="keyword">while</span> (!counter.<span class="built_in">compare_exchange_weak</span>(expected, expected + <span class="number">1</span>)) {</span><br><span class="line">            <span class="comment">// 重试，直到成功</span></span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="function">std::thread <span class="title">t1</span><span class="params">(increment)</span></span>;</span><br><span class="line">    <span class="function">std::thread <span class="title">t2</span><span class="params">(increment)</span></span>;</span><br><span class="line"></span><br><span class="line">    t1.<span class="built_in">join</span>();</span><br><span class="line">    t2.<span class="built_in">join</span>();</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Final counter value: &quot;</span> &lt;&lt; counter &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
 
-std::cout &lt;&lt; &quot;Final counter value: &quot; &lt;&lt; counter &lt;&lt; std::endl;
-return 0;
-</code></pre>
-<p>}<br>在这个例子中，compare_exchange_weak 使用CAS操作来确保 counter 的原子性修改。每次修改失败时，线程会重试，直到成功。</p>
+<p>在这个例子中，compare_exchange_weak 使用CAS操作来确保 counter 的原子性修改。每次修改失败时，线程会重试，直到成功。</p>
 <h3 id="缓存一致性协议"><a href="#缓存一致性协议" class="headerlink" title="缓存一致性协议"></a>缓存一致性协议</h3><p>缓存一致性协议是确保多核处理器中各个缓存之间数据一致性的机制。最常见的缓存一致性协议是MESI协议。让我们详细解释一下。</p>
-<p>MESI协议<br>MESI协议是由四种状态组成的缓存一致性协议，每个缓存行（Cache Line）可以处于以下四种状态之一：</p>
-<p>Modified（修改）：缓存行中的数据已被修改，与主内存中的数据不一致，且该数据仅存在于当前缓存中。<br>Exclusive（独占）：缓存行中的数据与主内存中的数据一致，且该数据仅存在于当前缓存中。<br>Shared（共享）：缓存行中的数据与主内存中的数据一致，且该数据可能存在于多个缓存中。<br>Invalid（无效）：缓存行中的数据无效。<br>状态转换<br>缓存行的状态会根据不同的操作进行转换。以下是一些常见的状态转换：</p>
-<p>从主内存读取数据：如果一个缓存行处于Invalid状态，当一个处理器读取该数据时，缓存行会变为Shared或Exclusive状态。<br>修改数据：如果一个缓存行处于Shared或Exclusive状态，当一个处理器修改该数据时，缓存行会变为Modified状态，并通知其他缓存将该缓存行置为Invalid状态。<br>写回数据：如果一个缓存行处于Modified状态，当该缓存行被替换时，数据会被写回主内存，缓存行变为Invalid状态。<br>工作原理<br>假设有三个处理器A、B和C，它们各自有自己的缓存。主内存中有一个变量x，初始值为0。</p>
+<p><strong>MESI协议</strong></p>
+<p>MESI协议是由四种状态组成的缓存一致性协议，每个缓存行（Cache Line）可以处于以下四种状态之一：</p>
+<ul>
+<li>Modified（修改）：缓存行中的数据已被修改，与主内存中的数据不一致，且该数据仅存在于当前缓存中。</li>
+<li>Exclusive（独占）：缓存行中的数据与主内存中的数据一致，且该数据仅存在于当前缓存中。</li>
+<li>Shared（共享）：缓存行中的数据与主内存中的数据一致，且该数据可能存在于多个缓存中。</li>
+<li>Invalid（无效）：缓存行中的数据无效。</li>
+</ul>
+<p><strong>状态转换</strong></p>
+<p>缓存行的状态会根据不同的操作进行转换。以下是一些常见的状态转换：</p>
+<p>从主内存读取数据：如果一个缓存行处于Invalid状态，当一个处理器读取该数据时，缓存行会变为Shared或Exclusive状态。<br>修改数据：如果一个缓存行处于Shared或Exclusive状态，当一个处理器修改该数据时，缓存行会变为Modified状态，并通知其他缓存将该缓存行置为Invalid状态。<br>写回数据：如果一个缓存行处于Modified状态，当该缓存行被替换时，数据会被写回主内存，缓存行变为Invalid状态。</p>
+<p><strong>工作原理</strong></p>
+<p>假设有三个处理器A、B和C，它们各自有自己的缓存。主内存中有一个变量x，初始值为0。</p>
 <p>读取数据：</p>
 <p>处理器A从主内存读取x，缓存行状态变为Exclusive。<br>处理器B从主内存读取x，处理器A检测到冲突，将缓存行状态变为Shared，处理器B的缓存行状态也变为Shared。<br>修改数据：</p>
-<p>处理器A修改x，缓存行状态变为Modified，并通知处理器B将其缓存行状态变为Invalid。<br>处理器B尝试读取x时，检测到缓存行无效，从主内存重新读取数据。<br>写回数据：</p>
-<p>处理器A将修改后的数据写回主内存，缓存行状态变为Invalid。<br>优化和问题<br>缓存一致性协议通过总线嗅探（Bus Snooping）和状态机机制来实现数据的一致性，但也会引入一些性能问题，如总线带宽压力和处理器等待时间。为了解决这些问题，现代处理器引入了存储缓冲区（Store Buffer）和写回策略（Write Back）等优化技术。</p>
+<p>处理器A修改x，缓存行状态变为Modified，并通知处理器B将其缓存行状态变为Invalid。<br>处理器B尝试读取x时，检测到缓存行无效，从主内存重新读取数据。</p>
+<p>写回数据：</p>
+<p>处理器A将修改后的数据写回主内存，缓存行状态变为Invalid。</p>
+<p><strong>优化和问题</strong></p>
+<p>缓存一致性协议通过总线嗅探（Bus Snooping）和状态机机制来实现数据的一致性，但也会引入一些性能问题，如总线带宽压力和处理器等待时间。为了解决这些问题，现代处理器引入了存储缓冲区（Store Buffer）和写回策略（Write Back）等优化技术。</p>
 <h3 id="CAS"><a href="#CAS" class="headerlink" title="CAS"></a>CAS</h3><p>比较并交换（Compare-And-Swap, CAS）操作在并发编程中有许多好处：</p>
 <ol>
 <li><p>无锁编程<br>CAS操作是无锁编程的基础，它允许多个线程在不使用锁的情况下安全地修改共享数据。无锁编程可以减少锁的开销，避免死锁，提高系统的并发性能。</p>
@@ -298,89 +303,44 @@ return 0;
 <li><p>实现复杂的并发数据结构<br>CAS操作可以用于实现复杂的并发数据结构，如无锁队列、无锁栈等。这些数据结构能够在高并发环境中提供高效的操作，而不会引入锁的开销。</p>
 </li>
 </ol>
-<p>示例代码<br>以下是一个使用CAS操作实现无锁计数器的示例：</p>
-<p>#include <atomic><br>#include <thread><br>#include <iostream></p>
-<p>std::atomic<int> counter(0);</p>
-<p>void increment() {<br>    for (int i &#x3D; 0; i &lt; 1000; ++i) {<br>        int expected &#x3D; counter.load();<br>        while (!counter.compare_exchange_weak(expected, expected + 1)) {<br>            &#x2F;&#x2F; 重试，直到成功<br>        }<br>    }<br>}</p>
-<p>int main() {<br>    std::thread t1(increment);<br>    std::thread t2(increment);</p>
-<pre><code>t1.join();
-t2.join();
+<p>以下是一个使用CAS操作实现无锁计数器的示例：</p>
+<figure class="highlight cpp"><figcaption><span>cas_counter.cpp</span><a href="/blog/downloads/code/atomic/cas_counter.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function">std::atomic&lt;<span class="type">int</span>&gt; <span class="title">counter</span><span class="params">(<span class="number">0</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">increment</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000</span>; ++i) {</span><br><span class="line">        <span class="type">int</span> expected = counter.<span class="built_in">load</span>();</span><br><span class="line">        <span class="keyword">while</span> (!counter.<span class="built_in">compare_exchange_weak</span>(expected, expected + <span class="number">1</span>)) {</span><br><span class="line">            <span class="comment">// 重试，直到成功</span></span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="function">std::thread <span class="title">t1</span><span class="params">(increment)</span></span>;</span><br><span class="line">    <span class="function">std::thread <span class="title">t2</span><span class="params">(increment)</span></span>;</span><br><span class="line"></span><br><span class="line">    t1.<span class="built_in">join</span>();</span><br><span class="line">    t2.<span class="built_in">join</span>();</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Final counter value: &quot;</span> &lt;&lt; counter &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
 
-std::cout &lt;&lt; &quot;Final counter value: &quot; &lt;&lt; counter &lt;&lt; std::endl;
-return 0;
-</code></pre>
-<p>}<br>在这个例子中，compare_exchange_weak 使用CAS操作来确保 counter 的原子性修改。每次修改失败时，线程会重试，直到成功。</p>
+<p>在这个例子中，compare_exchange_weak 使用CAS操作来确保 counter 的原子性修改。每次修改失败时，线程会重试，直到成功。</p>
 <h4 id="compare-exchange-weak-和-fetch-add"><a href="#compare-exchange-weak-和-fetch-add" class="headerlink" title="compare_exchange_weak 和 fetch_add"></a>compare_exchange_weak 和 fetch_add</h4><p>compare_exchange_weak 和 fetch_add 是两种不同的原子操作，它们在功能和使用场景上有明显的区别。让我们详细解释一下它们的区别以及如何选择。</p>
-<p>compare_exchange_weak<br>功能：</p>
-<p>compare_exchange_weak 是一种CAS（Compare-And-Swap）操作，用于比较原子变量的当前值与预期值，如果相等，则将新值存储到变量中，并返回 true；如果不相等，则返回 false 并更新预期值。<br>该操作允许偶尔的失败（即使当前值与预期值相等，也可能返回 false），这在一些循环算法中是可以接受的。<br>使用场景：</p>
-<p>适用于需要在循环中反复尝试更新变量的场景，例如实现无锁数据结构（如无锁队列、栈等）。<br>在高并发环境中，compare_exchange_weak 通常比 compare_exchange_strong 性能更高，因为它允许偶尔的失败，从而减少了总线锁定的开销.<br>fetch_add<br>功能：</p>
-<p>fetch_add 是一种原子加法操作，它将给定的值加到原子变量的当前值中，并返回变量的旧值。<br>该操作是原子的，确保在多线程环境中不会出现竞争条件。<br>使用场景：</p>
-<p>适用于简单的计数器或累加器场景，例如统计访问次数、累加总和等。<br>在需要对变量进行简单的加法操作时，fetch_add 是一个高效的选择2.<br>如何选择<br>选择 compare_exchange_weak 还是 fetch_add 取决于具体的使用场景和需求：</p>
+<h5 id="compare-exchange-weak"><a href="#compare-exchange-weak" class="headerlink" title="compare_exchange_weak"></a>compare_exchange_weak</h5><p>功能：</p>
+<p>compare_exchange_weak 是一种CAS（Compare-And-Swap）操作，用于比较原子变量的当前值与预期值，如果相等，则将新值存储到变量中，并返回 true；如果不相等，则返回 false 并更新预期值。<br>该操作允许偶尔的失败（即使当前值与预期值相等，也可能返回 false），这在一些循环算法中是可以接受的。</p>
+<p>使用场景：</p>
+<p>适用于需要在循环中反复尝试更新变量的场景，例如实现无锁数据结构（如无锁队列、栈等）。<br>在高并发环境中，compare_exchange_weak 通常比 compare_exchange_strong 性能更高，因为它允许偶尔的失败，从而减少了总线锁定的开销.</p>
+<h5 id="fetch-add"><a href="#fetch-add" class="headerlink" title="fetch_add"></a>fetch_add</h5><p>功能：</p>
+<p>fetch_add 是一种原子加法操作，它将给定的值加到原子变量的当前值中，并返回变量的旧值。<br>该操作是原子的，确保在多线程环境中不会出现竞争条件。</p>
+<p>使用场景：</p>
+<p>适用于简单的计数器或累加器场景，例如统计访问次数、累加总和等。<br>在需要对变量进行简单的加法操作时，fetch_add 是一个高效的选择2.</p>
+<h5 id="如何选择"><a href="#如何选择" class="headerlink" title="如何选择"></a>如何选择</h5><p>选择 compare_exchange_weak 还是 fetch_add 取决于具体的使用场景和需求：</p>
 <p>如果需要实现复杂的无锁数据结构（如无锁队列、栈等），并且需要反复尝试更新变量，选择 compare_exchange_weak。<br>如果需要对变量进行简单的加法操作（如计数器、累加器），选择 fetch_add。<br>示例代码<br>以下是使用 compare_exchange_weak 和 fetch_add 的示例代码：</p>
 <p>compare_exchange_weak 示例：</p>
-<p>#include <atomic><br>#include <thread><br>#include <iostream></p>
-<p>std::atomic<int> counter(0);</p>
-<p>void increment() {<br>    for (int i &#x3D; 0; i &lt; 1000; ++i) {<br>        int expected &#x3D; counter.load();<br>        while (!counter.compare_exchange_weak(expected, expected + 1)) {<br>            &#x2F;&#x2F; 重试，直到成功<br>        }<br>    }<br>}</p>
-<p>int main() {<br>    std::thread t1(increment);<br>    std::thread t2(increment);</p>
-<pre><code>t1.join();
-t2.join();
+<figure class="highlight cpp"><figcaption><span>compare_exchange_weak_eg.cpp</span><a href="/blog/downloads/code/atomic/compare_exchange_weak_eg.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function">std::atomic&lt;<span class="type">int</span>&gt; <span class="title">counter</span><span class="params">(<span class="number">0</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">increment</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000</span>; ++i) {</span><br><span class="line">        <span class="type">int</span> expected = counter.<span class="built_in">load</span>();</span><br><span class="line">        <span class="keyword">while</span> (!counter.<span class="built_in">compare_exchange_weak</span>(expected, expected + <span class="number">1</span>)) {</span><br><span class="line">            <span class="comment">// 重试，直到成功</span></span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="function">std::thread <span class="title">t1</span><span class="params">(increment)</span></span>;</span><br><span class="line">    <span class="function">std::thread <span class="title">t2</span><span class="params">(increment)</span></span>;</span><br><span class="line"></span><br><span class="line">    t1.<span class="built_in">join</span>();</span><br><span class="line">    t2.<span class="built_in">join</span>();</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Final counter value: &quot;</span> &lt;&lt; counter &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
 
-std::cout &lt;&lt; &quot;Final counter value: &quot; &lt;&lt; counter &lt;&lt; std::endl;
-return 0;
-</code></pre>
-<p>}<br>fetch_add 示例：</p>
-<p>#include <atomic><br>#include <thread><br>#include <iostream></p>
-<p>std::atomic<int> counter(0);</p>
-<p>void increment() {<br>    for (int i &#x3D; 0; i &lt; 1000; ++i) {<br>        counter.fetch_add(1);<br>    }<br>}</p>
-<p>int main() {<br>    std::thread t1(increment);<br>    std::thread t2(increment);</p>
-<pre><code>t1.join();
-t2.join();
+<p>fetch_add 示例：</p>
+<figure class="highlight cpp"><figcaption><span>fetch_add_eg.cpp</span><a href="/blog/downloads/code/atomic/fetch_add_eg.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function">std::atomic&lt;<span class="type">int</span>&gt; <span class="title">counter</span><span class="params">(<span class="number">0</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">increment</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000</span>; ++i) {</span><br><span class="line">        counter.<span class="built_in">fetch_add</span>(<span class="number">1</span>);</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="function">std::thread <span class="title">t1</span><span class="params">(increment)</span></span>;</span><br><span class="line">    <span class="function">std::thread <span class="title">t2</span><span class="params">(increment)</span></span>;</span><br><span class="line"></span><br><span class="line">    t1.<span class="built_in">join</span>();</span><br><span class="line">    t2.<span class="built_in">join</span>();</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Final counter value: &quot;</span> &lt;&lt; counter &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
 
-std::cout &lt;&lt; &quot;Final counter value: &quot; &lt;&lt; counter &lt;&lt; std::endl;
-return 0;
-</code></pre>
-<p>}</p>
+
 <p>如果我们只需要简单地递增计数器，并且没有其他条件限制，fetch_add 确实是一个更直接和高效的选择。fetch_add 能够确保每次递增操作都是原子的，避免了竞争条件。</p>
 <p>然而，在某些特定场景下，compare_exchange_weak 可能更为合适。例如，当我们需要基于特定条件进行更新时，compare_exchange_weak 可以确保只有在满足条件时才进行更新操作。</p>
 <p>示例：基于条件的更新<br>假设我们有一个计数器，需要在满足特定条件时进行递增操作：</p>
-<p>#include <atomic><br>#include <thread><br>#include <iostream></p>
-<p>std::atomic<int> counter(0);</p>
-<p>void conditional_increment() {<br>    for (int i &#x3D; 0; i &lt; 1000; ++i) {<br>        int expected &#x3D; counter.load();<br>        while (expected &lt; 500 &amp;&amp; !counter.compare_exchange_weak(expected, expected + 1)) {<br>            &#x2F;&#x2F; 重试，直到成功或条件不满足<br>        }<br>    }<br>}</p>
-<p>int main() {<br>    std::thread t1(conditional_increment);<br>    std::thread t2(conditional_increment);</p>
-<pre><code>t1.join();
-t2.join();
+<figure class="highlight cpp"><figcaption><span>cas_case.cpp</span><a href="/blog/downloads/code/atomic/cas_case.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function">std::atomic&lt;<span class="type">int</span>&gt; <span class="title">counter</span><span class="params">(<span class="number">0</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">conditional_increment</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000</span>; ++i) {</span><br><span class="line">        <span class="type">int</span> expected = counter.<span class="built_in">load</span>();</span><br><span class="line">        <span class="keyword">while</span> (expected &lt; <span class="number">500</span> &amp;&amp; !counter.<span class="built_in">compare_exchange_weak</span>(expected, expected + <span class="number">1</span>)) {</span><br><span class="line">            <span class="comment">// 重试，直到成功或条件不满足</span></span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="function">std::thread <span class="title">t1</span><span class="params">(conditional_increment)</span></span>;</span><br><span class="line">    <span class="function">std::thread <span class="title">t2</span><span class="params">(conditional_increment)</span></span>;</span><br><span class="line"></span><br><span class="line">    t1.<span class="built_in">join</span>();</span><br><span class="line">    t2.<span class="built_in">join</span>();</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Final counter value: &quot;</span> &lt;&lt; counter &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
 
-std::cout &lt;&lt; &quot;Final counter value: &quot; &lt;&lt; counter &lt;&lt; std::endl;
-return 0;
-</code></pre>
-<p>}<br>在这个例子中，只有当 counter 的值小于500时，才会进行递增操作。compare_exchange_weak 确保条件更新的原子性和安全性。</p>
+<p>在这个例子中，只有当 counter 的值小于500时，才会进行递增操作。compare_exchange_weak 确保条件更新的原子性和安全性。</p>
 <p>使用 fetch_add 的场景<br>如果我们不需要基于条件进行更新，只是简单地递增计数器，那么 fetch_add 是一个更好的选择：</p>
-<p>#include <atomic><br>#include <thread><br>#include <iostream></p>
-<p>std::atomic<int> counter(0);</p>
-<p>void increment() {<br>    for (int i &#x3D; 0; i &lt; 1000; ++i) {<br>        counter.fetch_add(1);<br>    }<br>}</p>
-<p>int main() {<br>    std::thread t1(increment);<br>    std::thread t2(increment);</p>
-<pre><code>t1.join();
-t2.join();
+<figure class="highlight cpp"><figcaption><span>fetch_add_case.cpp</span><a href="/blog/downloads/code/atomic/fetch_add_case.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function">std::atomic&lt;<span class="type">int</span>&gt; <span class="title">counter</span><span class="params">(<span class="number">0</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">increment</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000</span>; ++i) {</span><br><span class="line">        counter.<span class="built_in">fetch_add</span>(<span class="number">1</span>);</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="function">std::thread <span class="title">t1</span><span class="params">(increment)</span></span>;</span><br><span class="line">    <span class="function">std::thread <span class="title">t2</span><span class="params">(increment)</span></span>;</span><br><span class="line"></span><br><span class="line">    t1.<span class="built_in">join</span>();</span><br><span class="line">    t2.<span class="built_in">join</span>();</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Final counter value: &quot;</span> &lt;&lt; counter &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
 
-std::cout &lt;&lt; &quot;Final counter value: &quot; &lt;&lt; counter &lt;&lt; std::endl;
-return 0;
-</code></pre>
-<p>}<br>在这个例子中，fetch_add 确保每次递增操作都是原子的，避免了竞争条件。</p>
+<p>在这个例子中，fetch_add 确保每次递增操作都是原子的，避免了竞争条件。</p>
 <p>总结来说，如果你的操作只是简单的递增，fetch_add 是更高效的选择；如果需要基于条件进行更新，compare_exchange_weak 则更为合适。</p>
 <h4 id="ABA"><a href="#ABA" class="headerlink" title="ABA"></a>ABA</h4><p>ABA问题在并发编程中是一个常见的问题，尤其是在使用CAS（Compare-And-Swap）操作时。ABA问题的本质是一个变量的值在两次比较之间发生了变化，但最终值又回到了原始值，导致CAS操作无法检测到这种变化。为了避免ABA问题，可以使用带有版本号或标记的原子引用，例如 AtomicStampedReference。</p>
 <p>示例：使用 AtomicStampedReference 避免ABA问题<br>以下是一个使用 AtomicStampedReference 避免ABA问题的示例：</p>
-<p>#include <atomic><br>#include <thread><br>#include <iostream><br>#include <vector></p>
-<p>std::atomic<int> counter(0);<br>std::atomic<int> stamp(0);</p>
-<p>void conditional_increment() {<br>    for (int i &#x3D; 0; i &lt; 1000; ++i) {<br>        int expected &#x3D; counter.load();<br>        int expected_stamp &#x3D; stamp.load();<br>        while (expected &lt; 500 &amp;&amp; !counter.compare_exchange_weak(expected, expected + 1) &amp;&amp; !stamp.compare_exchange_weak(expected_stamp, expected_stamp + 1)) {<br>            &#x2F;&#x2F; 重试，直到成功或条件不满足<br>        }<br>    }<br>}</p>
-<p>int main() {<br>    std::thread t1(conditional_increment);<br>    std::thread t2(conditional_increment);</p>
-<pre><code>t1.join();
-t2.join();
+<figure class="highlight cpp"><figcaption><span>atomic_stamped_reference.cpp</span><a href="/blog/downloads/code/atomic/atomic_stamped_reference.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function">std::atomic&lt;<span class="type">int</span>&gt; <span class="title">counter</span><span class="params">(<span class="number">0</span>)</span></span>;</span><br><span class="line"><span class="function">std::atomic&lt;<span class="type">int</span>&gt; <span class="title">stamp</span><span class="params">(<span class="number">0</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">conditional_increment</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000</span>; ++i) {</span><br><span class="line">        <span class="type">int</span> expected = counter.<span class="built_in">load</span>();</span><br><span class="line">        <span class="type">int</span> expected_stamp = stamp.<span class="built_in">load</span>();</span><br><span class="line">        <span class="keyword">while</span> (expected &lt; <span class="number">500</span> &amp;&amp; !counter.<span class="built_in">compare_exchange_weak</span>(expected, expected + <span class="number">1</span>) &amp;&amp; !stamp.<span class="built_in">compare_exchange_weak</span>(expected_stamp, expected_stamp + <span class="number">1</span>)) {</span><br><span class="line">            <span class="comment">// 重试，直到成功或条件不满足</span></span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="function">std::thread <span class="title">t1</span><span class="params">(conditional_increment)</span></span>;</span><br><span class="line">    <span class="function">std::thread <span class="title">t2</span><span class="params">(conditional_increment)</span></span>;</span><br><span class="line"></span><br><span class="line">    t1.<span class="built_in">join</span>();</span><br><span class="line">    t2.<span class="built_in">join</span>();</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Final counter value: &quot;</span> &lt;&lt; counter &lt;&lt; std::endl;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Final stamp value: &quot;</span> &lt;&lt; stamp &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
 
-std::cout &lt;&lt; &quot;Final counter value: &quot; &lt;&lt; counter &lt;&lt; std::endl;
-std::cout &lt;&lt; &quot;Final stamp value: &quot; &lt;&lt; stamp &lt;&lt; std::endl;
-return 0;
-</code></pre>
-<p>}<br>在这个例子中，我们使用了一个额外的 stamp 变量来记录每次更新的版本号。每次更新 counter 时，同时更新 stamp。这样，即使 counter 的值回到了原始值，stamp 的值也会不同，从而避免了ABA问题。</p>
+<p>在这个例子中，我们使用了一个额外的 stamp 变量来记录每次更新的版本号。每次更新 counter 时，同时更新 stamp。这样，即使 counter 的值回到了原始值，stamp 的值也会不同，从而避免了ABA问题。</p>
 <p>解释<br>版本号：每次更新 counter 时，同时更新 stamp，确保每次更新都有一个唯一的版本号。<br>CAS操作：使用 compare_exchange_weak 确保 counter 和 stamp 的更新是原子的。<br>重试机制：如果CAS操作失败，线程会重试，直到成功或条件不满足。<br>这种方法通过引入版本号或标记，确保即使变量的值回到了原始值，版本号也会不同，从而避免了ABA问题。</p>
 <p>ABA问题不仅存在于CAS操作中，还可能在其他并发编程场景中出现。以下是一些可能出现ABA问题的情景：</p>
 <ol>
@@ -393,44 +353,14 @@ return 0;
 </ol>
 <p>解决方案<br>为了避免ABA问题，可以使用以下解决方案：</p>
 <p>版本号或标记：使用版本号或标记来记录每次更新的状态。例如，使用 AtomicStampedReference 来确保每次更新都有一个唯一的版本号。<br>时间戳：使用时间戳来记录每次更新的时间，确保每次更新都有一个唯一的时间标记。<br>逻辑时钟：使用逻辑时钟来记录每次更新的顺序，确保每次更新都有一个唯一的顺序标记。<br>示例：使用 AtomicStampedReference 避免ABA问题<br>以下是一个使用 AtomicStampedReference 避免ABA问题的示例：</p>
-<p>import java.util.concurrent.atomic.AtomicStampedReference;</p>
-<p>public class ABAExample {<br>    private static AtomicStampedReference<Integer> atomicStampedRef &#x3D; new AtomicStampedReference&lt;&gt;(0, 0);</p>
-<pre><code>public static void main(String[] args) &#123;
-    Thread t1 = new Thread(() -&gt; &#123;
-        int stamp = atomicStampedRef.getStamp();
-        Integer value = atomicStampedRef.getReference();
-        System.out.println(&quot;Thread 1 initial value: &quot; + value + &quot;, stamp: &quot; + stamp);
-        atomicStampedRef.compareAndSet(value, value + 1, stamp, stamp + 1);
-        System.out.println(&quot;Thread 1 updated value: &quot; + atomicStampedRef.getReference() + &quot;, stamp: &quot; + atomicStampedRef.getStamp());
-    &#125;);
+<figure class="highlight java"><figcaption><span>atomic_stamped_reference.java</span><a href="/blog/downloads/code/atomic/atomic_stamped_reference.java">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.util.concurrent.atomic.AtomicStampedReference;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ABAExample</span> {</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> AtomicStampedReference&lt;Integer&gt; atomicStampedRef = <span class="keyword">new</span> <span class="title class_">AtomicStampedReference</span>&lt;&gt;(<span class="number">0</span>, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> {</span><br><span class="line">        <span class="type">Thread</span> <span class="variable">t1</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Thread</span>(() -&gt; {</span><br><span class="line">            <span class="type">int</span> <span class="variable">stamp</span> <span class="operator">=</span> atomicStampedRef.getStamp();</span><br><span class="line">            <span class="type">Integer</span> <span class="variable">value</span> <span class="operator">=</span> atomicStampedRef.getReference();</span><br><span class="line">            System.out.println(<span class="string">&quot;Thread 1 initial value: &quot;</span> + value + <span class="string">&quot;, stamp: &quot;</span> + stamp);</span><br><span class="line">            atomicStampedRef.compareAndSet(value, value + <span class="number">1</span>, stamp, stamp + <span class="number">1</span>);</span><br><span class="line">            System.out.println(<span class="string">&quot;Thread 1 updated value: &quot;</span> + atomicStampedRef.getReference() + <span class="string">&quot;, stamp: &quot;</span> + atomicStampedRef.getStamp());</span><br><span class="line">        });</span><br><span class="line"></span><br><span class="line">        <span class="type">Thread</span> <span class="variable">t2</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Thread</span>(() -&gt; {</span><br><span class="line">            <span class="type">int</span> <span class="variable">stamp</span> <span class="operator">=</span> atomicStampedRef.getStamp();</span><br><span class="line">            <span class="type">Integer</span> <span class="variable">value</span> <span class="operator">=</span> atomicStampedRef.getReference();</span><br><span class="line">            System.out.println(<span class="string">&quot;Thread 2 initial value: &quot;</span> + value + <span class="string">&quot;, stamp: &quot;</span> + stamp);</span><br><span class="line">            atomicStampedRef.compareAndSet(value, value + <span class="number">1</span>, stamp, stamp + <span class="number">1</span>);</span><br><span class="line">            System.out.println(<span class="string">&quot;Thread 2 updated value: &quot;</span> + atomicStampedRef.getReference() + <span class="string">&quot;, stamp: &quot;</span> + atomicStampedRef.getStamp());</span><br><span class="line">        });</span><br><span class="line"></span><br><span class="line">        t1.start();</span><br><span class="line">        t2.start();</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
 
-    Thread t2 = new Thread(() -&gt; &#123;
-        int stamp = atomicStampedRef.getStamp();
-        Integer value = atomicStampedRef.getReference();
-        System.out.println(&quot;Thread 2 initial value: &quot; + value + &quot;, stamp: &quot; + stamp);
-        atomicStampedRef.compareAndSet(value, value + 1, stamp, stamp + 1);
-        System.out.println(&quot;Thread 2 updated value: &quot; + atomicStampedRef.getReference() + &quot;, stamp: &quot; + atomicStampedRef.getStamp());
-    &#125;);
-
-    t1.start();
-    t2.start();
-&#125;
-</code></pre>
-<p>}<br>在这个例子中，AtomicStampedReference 使用版本号来避免ABA问题，确保每次更新都有一个唯一的版本号。</p>
+<p>在这个例子中，AtomicStampedReference 使用版本号来避免ABA问题，确保每次更新都有一个唯一的版本号。</p>
 <p>C++ 标准库中没有直接等同于 Java 的 AtomicStampedReference 的类，但你可以通过组合 std::atomic 和自定义结构体来实现类似的功能。以下是一个示例，展示如何在 C++ 中实现带有版本号的原子引用，以避免 ABA 问题：</p>
-<p>示例：实现带有版本号的原子引用<br>#include <atomic><br>#include <iostream><br>#include <thread></p>
-<p>struct StampedValue {<br>    int value;<br>    int stamp;<br>};</p>
-<p>std::atomic<StampedValue> atomicStampedValue{StampedValue{0, 0}};</p>
-<p>void increment() {<br>    for (int i &#x3D; 0; i &lt; 1000; ++i) {<br>        StampedValue expected &#x3D; atomicStampedValue.load();<br>        StampedValue newValue;<br>        do {<br>            newValue &#x3D; {expected.value + 1, expected.stamp + 1};<br>        } while (!atomicStampedValue.compare_exchange_weak(expected, newValue));<br>    }<br>}</p>
-<p>int main() {<br>    std::thread t1(increment);<br>    std::thread t2(increment);</p>
-<pre><code>t1.join();
-t2.join();
+<p>示例：实现带有版本号的原子引用</p>
+<figure class="highlight cpp"><figcaption><span>cas_with_version.cpp</span><a href="/blog/downloads/code/atomic/cas_with_version.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">StampedValue</span> {</span><br><span class="line">    <span class="type">int</span> value;</span><br><span class="line">    <span class="type">int</span> stamp;</span><br><span class="line">};</span><br><span class="line"></span><br><span class="line">std::atomic&lt;StampedValue&gt; atomicStampedValue{StampedValue{<span class="number">0</span>, <span class="number">0</span>}};</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">increment</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000</span>; ++i) {</span><br><span class="line">        StampedValue expected = atomicStampedValue.<span class="built_in">load</span>();</span><br><span class="line">        StampedValue newValue;</span><br><span class="line">        <span class="keyword">do</span> {</span><br><span class="line">            newValue = {expected.value + <span class="number">1</span>, expected.stamp + <span class="number">1</span>};</span><br><span class="line">        } <span class="keyword">while</span> (!atomicStampedValue.<span class="built_in">compare_exchange_weak</span>(expected, newValue));</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="function">std::thread <span class="title">t1</span><span class="params">(increment)</span></span>;</span><br><span class="line">    <span class="function">std::thread <span class="title">t2</span><span class="params">(increment)</span></span>;</span><br><span class="line"></span><br><span class="line">    t1.<span class="built_in">join</span>();</span><br><span class="line">    t2.<span class="built_in">join</span>();</span><br><span class="line"></span><br><span class="line">    StampedValue finalValue = atomicStampedValue.<span class="built_in">load</span>();</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Final value: &quot;</span> &lt;&lt; finalValue.value &lt;&lt; <span class="string">&quot;, Final stamp: &quot;</span> &lt;&lt; finalValue.stamp &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
 
-StampedValue finalValue = atomicStampedValue.load();
-std::cout &lt;&lt; &quot;Final value: &quot; &lt;&lt; finalValue.value &lt;&lt; &quot;, Final stamp: &quot; &lt;&lt; finalValue.stamp &lt;&lt; std::endl;
-return 0;
-</code></pre>
-<p>}<br>解释<br>StampedValue 结构体：包含一个值和一个版本号（或时间戳）。<br>std::atomic：使用 std::atomic 包装 StampedValue 结构体，以确保原子性操作。<br>compare_exchange_weak：在更新值和版本号时使用 CAS 操作，确保操作的原子性和避免 ABA 问题。<br>使用场景<br>这种方法适用于需要避免 ABA 问题的场景，例如无锁队列、无锁栈等复杂并发数据结构。</p>
+<p>解释<br>StampedValue 结构体：包含一个值和一个版本号（或时间戳）。<br>std::atomic：使用 std::atomic 包装 StampedValue 结构体，以确保原子性操作。<br>compare_exchange_weak：在更新值和版本号时使用 CAS 操作，确保操作的原子性和避免 ABA 问题。<br>使用场景<br>这种方法适用于需要避免 ABA 问题的场景，例如无锁队列、无锁栈等复杂并发数据结构。</p>
 <h4 id="compare-exchange-weak-和-compare-exchange-strong"><a href="#compare-exchange-weak-和-compare-exchange-strong" class="headerlink" title="compare_exchange_weak 和 compare_exchange_strong"></a>compare_exchange_weak 和 compare_exchange_strong</h4><p>区别<br>可靠性：</p>
 <p>compare_exchange_weak：允许偶尔失败，即使当前值与期望值相等，也可能返回 false。这种设计是为了提高性能，适用于循环中的自旋锁等场景。<br>compare_exchange_strong：保证操作成功，如果当前值与期望值相等，则一定返回 true。适用于需要确保操作成功的场景。<br>性能：</p>
 <p>compare_exchange_weak：通常比 compare_exchange_strong 性能更高，因为它允许偶尔失败。<br>compare_exchange_strong：在某些平台上性能可能较低，因为它需要确保操作成功。<br>适用场景<br>compare_exchange_weak：</p>
@@ -451,7 +381,9 @@ return 0;
 <p>在某些平台上，CAS 操作可能被实现为单次 LL&#x2F;SC（Load-Linked&#x2F;Store-Conditional）尝试。这种实现允许 CAS 操作偶尔失败，以提高性能</p>
 <p>为什么compare_exchange_strong不被用于实现自旋锁？<br>Copilot said:<br>Copilot<br>compare_exchange_strong 通常不用于实现自旋锁，主要原因在于其性能和设计目的：</p>
 <p>性能<br>compare_exchange_strong 保证操作成功，如果当前值与预期值相等，则一定返回 true1。这种保证需要更多的硬件资源和时间来完成操作，可能导致性能下降1。<br>compare_exchange_weak 允许偶尔失败，即使当前值与预期值相等，也可能返回 false1。这种设计减少了硬件资源的消耗，提高了性能1。<br>设计目的<br>自旋锁 的设计目的是在短时间内频繁尝试获取锁，而不是长时间等待。因此，自旋锁更适合使用 compare_exchange_weak，因为它可以在失败时快速重试1。<br>compare_exchange_strong 更适合需要确保操作成功的场景，如线程同步1。在这些场景中，操作的成功率比性能更重要。<br>代码示例<br>以下是一个使用 compare_exchange_weak 实现自旋锁的示例：</p>
-<p>class SpinLock {<br>private:<br>    std::atomic<bool> flag &#x3D; {false};<br>public:<br>    void lock() {<br>        bool expected &#x3D; false;<br>        while (!flag.compare_exchange_weak(expected, true, std::memory_order_acquire)) {<br>            expected &#x3D; false;<br>        }<br>    }<br>    void unlock() {<br>        flag.store(false, std::memory_order_release);<br>    }<br>};<br>在这个示例中，compare_exchange_weak 被用来实现自旋锁，因为它在失败时可以快速重试，从而提高性能</p>
+<figure class="highlight cpp"><figcaption><span>cas_spin_lock.cpp</span><a href="/blog/downloads/code/atomic/cas_spin_lock.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SpinLock</span> {</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::atomic&lt;<span class="type">bool</span>&gt; flag = {<span class="literal">false</span>};</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">lock</span><span class="params">()</span> </span>{</span><br><span class="line">        <span class="type">bool</span> expected = <span class="literal">false</span>;</span><br><span class="line">        <span class="keyword">while</span> (!flag.<span class="built_in">compare_exchange_weak</span>(expected, <span class="literal">true</span>, std::memory_order_acquire)) {</span><br><span class="line">            expected = <span class="literal">false</span>;</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">unlock</span><span class="params">()</span> </span>{</span><br><span class="line">        flag.<span class="built_in">store</span>(<span class="literal">false</span>, std::memory_order_release);</span><br><span class="line">    }</span><br><span class="line">};</span><br></pre></td></tr></table></figure>
+
+<p>在这个示例中，compare_exchange_weak 被用来实现自旋锁，因为它在失败时可以快速重试，从而提高性能</p>
 <h3 id="内存屏障"><a href="#内存屏障" class="headerlink" title="内存屏障"></a>内存屏障</h3><p>内存屏障（Memory Barrier），也被称为内存栅栏（Memory Fence）或内存围栏（Memory Fence），是一种硬件或软件的同步机制，用于在并发系统中保持内存操作的顺序性123。这是多核和多线程环境中至关重要的，因为现代处理器会对指令进行重排序以提高执行效率123。</p>
 <p>内存屏障的作用<br>防止指令重排序：</p>
 <p>编译器和处理器可能会对指令进行重排序，以优化性能12。内存屏障确保特定的内存操作在屏障之前完成，而不会被重排序到屏障之后12。<br>保证内存可见性：</p>
@@ -459,10 +391,9 @@ return 0;
 <p>确保在屏障之前的所有加载操作完成后，才开始执行屏障之后的加载操作12。<br>存储屏障（Store Barrier）：</p>
 <p>确保在屏障之前的所有存储操作完成后，才开始执行屏障之后的存储操作12。<br>全屏障（Full Barrier）：</p>
 <p>结合了加载屏障和存储屏障的功能，确保在屏障之前的所有加载和存储操作完成后，才开始执行屏障之后的加载和存储操作12。<br>代码示例<br>以下是一个简单的代码示例，展示了如何使用内存屏障：</p>
-<p>#include <atomic></p>
-<p>std::atomic<int> a{0};<br>std::atomic<int> b{0};</p>
-<p>void thread1() {<br>    a.store(1, std::memory_order_relaxed);<br>    std::atomic_thread_fence(std::memory_order_seq_cst);  &#x2F;&#x2F; 全屏障<br>    b.store(1, std::memory_order_relaxed);<br>}</p>
-<p>void thread2() {<br>    while (b.load(std::memory_order_relaxed) &#x3D;&#x3D; 0);<br>    std::atomic_thread_fence(std::memory_order_seq_cst);  &#x2F;&#x2F; 全屏障<br>    assert(a.load(std::memory_order_relaxed) &#x3D;&#x3D; 1);<br>}<br>在这个示例中，std::atomic_thread_fence 用于插入内存屏障，确保在屏障之前的存储操作完成后，才开始执行屏障之后的存储操作</p>
+<figure class="highlight cpp"><figcaption><span>memory_barrier.cpp</span><a href="/blog/downloads/code/atomic/memory_barrier.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"></span><br><span class="line">std::atomic&lt;<span class="type">int</span>&gt; a{<span class="number">0</span>};</span><br><span class="line">std::atomic&lt;<span class="type">int</span>&gt; b{<span class="number">0</span>};</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">thread1</span><span class="params">()</span> </span>{</span><br><span class="line">    a.<span class="built_in">store</span>(<span class="number">1</span>, std::memory_order_relaxed);</span><br><span class="line">    std::<span class="built_in">atomic_thread_fence</span>(std::memory_order_seq_cst);  <span class="comment">// 全屏障</span></span><br><span class="line">    b.<span class="built_in">store</span>(<span class="number">1</span>, std::memory_order_relaxed);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">thread2</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">while</span> (b.<span class="built_in">load</span>(std::memory_order_relaxed) == <span class="number">0</span>);</span><br><span class="line">    std::<span class="built_in">atomic_thread_fence</span>(std::memory_order_seq_cst);  <span class="comment">// 全屏障</span></span><br><span class="line">    <span class="built_in">assert</span>(a.<span class="built_in">load</span>(std::memory_order_relaxed) == <span class="number">1</span>);</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p>在这个示例中，std::atomic_thread_fence 用于插入内存屏障，确保在屏障之前的存储操作完成后，才开始执行屏障之后的存储操作</p>
 <h4 id="内存序"><a href="#内存序" class="headerlink" title="内存序"></a>内存序</h4><p>内存序（Memory Order）描述了在多线程环境中，内存操作的顺序和可见性。它决定了一个线程对内存的修改何时以及如何对其他线程可见。C++11 引入了六种内存序，以便程序员在并发编程中根据需求选择合适的同步机制123。</p>
 <p>六种内存序<br>memory_order_relaxed：</p>
 <p>只保证当前操作的原子性，不考虑线程间的同步12。适用于不需要同步的场景，如计数器的增加12。<br>memory_order_consume：</p>
@@ -471,11 +402,9 @@ return 0;
 <p>确保在此操作之前的所有读写操作不会被重排序到此操作之后12。常用于释放锁的操作12。<br>memory_order_acq_rel：</p>
 <p>结合了 acquire 和 release 的语义，确保在此操作之前的写操作不会被重排序到此操作之后，同时在此操作之后的读操作不会被重排序到此操作之前12。适用于读-修改-写操作12。<br>memory_order_seq_cst：</p>
 <p>顺序一致性，确保所有线程看到的内存操作顺序一致12。这是最严格的内存序，适用于需要强一致性的场景12。<br>代码示例<br>以下是一个简单的代码示例，展示了如何使用不同的内存序：</p>
-<p>#include <atomic><br>#include <thread><br>#include <cassert></p>
-<p>std::atomic<int> data{0};<br>std::atomic<bool> ready{false};</p>
-<p>void producer() {<br>    data.store(42, std::memory_order_relaxed);<br>    ready.store(true, std::memory_order_release);<br>}</p>
-<p>void consumer() {<br>    while (!ready.load(std::memory_order_acquire));<br>    assert(data.load(std::memory_order_relaxed) &#x3D;&#x3D; 42);<br>}</p>
-<p>int main() {<br>    std::thread t1(producer);<br>    std::thread t2(consumer);<br>    t1.join();<br>    t2.join();<br>    return 0;<br>}<br>在这个示例中，producer 线程使用 memory_order_release 来发布数据，而 consumer 线程使用 memory_order_acquire 来确保读取到的数据是最新的</p>
+<figure class="highlight cpp"><figcaption><span>memory_order.cpp</span><a href="/blog/downloads/code/atomic/memory_order.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cassert&gt;</span></span></span><br><span class="line"></span><br><span class="line">std::atomic&lt;<span class="type">int</span>&gt; data{<span class="number">0</span>};</span><br><span class="line">std::atomic&lt;<span class="type">bool</span>&gt; ready{<span class="literal">false</span>};</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">producer</span><span class="params">()</span> </span>{</span><br><span class="line">    data.<span class="built_in">store</span>(<span class="number">42</span>, std::memory_order_relaxed);</span><br><span class="line">    ready.<span class="built_in">store</span>(<span class="literal">true</span>, std::memory_order_release);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">consumer</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">while</span> (!ready.<span class="built_in">load</span>(std::memory_order_acquire));</span><br><span class="line">    <span class="built_in">assert</span>(data.<span class="built_in">load</span>(std::memory_order_relaxed) == <span class="number">42</span>);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="function">std::thread <span class="title">t1</span><span class="params">(producer)</span></span>;</span><br><span class="line">    <span class="function">std::thread <span class="title">t2</span><span class="params">(consumer)</span></span>;</span><br><span class="line">    t1.<span class="built_in">join</span>();</span><br><span class="line">    t2.<span class="built_in">join</span>();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p>在这个示例中，producer 线程使用 memory_order_release 来发布数据，而 consumer 线程使用 memory_order_acquire 来确保读取到的数据是最新的</p>
 <p>TODO</p>
 
       
@@ -527,7 +456,7 @@ return 0;
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-03-19 09:50:29" itemprop="dateModified" datetime="2025-03-19T09:50:29+00:00">2025-03-19</time>
+                <time title="Modified: 2025-03-21 08:19:49" itemprop="dateModified" datetime="2025-03-21T08:19:49+00:00">2025-03-21</time>
               </span>
 
           
@@ -595,7 +524,7 @@ return 0;
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-03-19 09:50:29" itemprop="dateModified" datetime="2025-03-19T09:50:29+00:00">2025-03-19</time>
+                <time title="Modified: 2025-03-21 08:19:49" itemprop="dateModified" datetime="2025-03-21T08:19:49+00:00">2025-03-21</time>
               </span>
 
           
@@ -789,7 +718,7 @@ return 0;
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-03-19 09:50:29" itemprop="dateModified" datetime="2025-03-19T09:50:29+00:00">2025-03-19</time>
+                <time title="Modified: 2025-03-21 08:19:49" itemprop="dateModified" datetime="2025-03-21T08:19:49+00:00">2025-03-21</time>
               </span>
 
           
@@ -1115,7 +1044,7 @@ return 0;
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-03-19 09:50:29" itemprop="dateModified" datetime="2025-03-19T09:50:29+00:00">2025-03-19</time>
+                <time title="Modified: 2025-03-21 08:19:49" itemprop="dateModified" datetime="2025-03-21T08:19:49+00:00">2025-03-21</time>
               </span>
 
           
@@ -1184,7 +1113,7 @@ return 0;
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-03-19 09:50:29" itemprop="dateModified" datetime="2025-03-19T09:50:29+00:00">2025-03-19</time>
+                <time title="Modified: 2025-03-21 08:19:49" itemprop="dateModified" datetime="2025-03-21T08:19:49+00:00">2025-03-21</time>
               </span>
 
           
@@ -1252,7 +1181,7 @@ return 0;
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-03-19 09:50:29" itemprop="dateModified" datetime="2025-03-19T09:50:29+00:00">2025-03-19</time>
+                <time title="Modified: 2025-03-21 08:19:49" itemprop="dateModified" datetime="2025-03-21T08:19:49+00:00">2025-03-21</time>
               </span>
 
           
@@ -1347,7 +1276,7 @@ return 0;
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-03-19 09:50:29" itemprop="dateModified" datetime="2025-03-19T09:50:29+00:00">2025-03-19</time>
+                <time title="Modified: 2025-03-21 08:19:49" itemprop="dateModified" datetime="2025-03-21T08:19:49+00:00">2025-03-21</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1430,7 +1359,7 @@ return 0;
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-03-19 09:50:29" itemprop="dateModified" datetime="2025-03-19T09:50:29+00:00">2025-03-19</time>
+                <time title="Modified: 2025-03-21 08:19:49" itemprop="dateModified" datetime="2025-03-21T08:19:49+00:00">2025-03-21</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1518,7 +1447,7 @@ return 0;
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-03-19 09:50:29" itemprop="dateModified" datetime="2025-03-19T09:50:29+00:00">2025-03-19</time>
+                <time title="Modified: 2025-03-21 08:19:49" itemprop="dateModified" datetime="2025-03-21T08:19:49+00:00">2025-03-21</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
