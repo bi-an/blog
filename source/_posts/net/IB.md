@@ -5,6 +5,34 @@ tags: IB
 date: 2023-12-06 09:41:56
 ---
 
+## 函数
+
+### `ibv_fork_init`
+
+文档 [ibv_fork_init](https://docs.nvidia.com/networking/display/rdmaawareprogrammingv17/ibv_fork_init)
+
+**模板**: `int ibv_fork_init(void)`
+
+**输入参数**: 无
+
+**输出参数**: 无
+
+**返回值**: `0` on success, `-1` on error. If the call fails, errno will be set to indicate the reason for the failure.
+
+**描述**: `ibv_fork_init` 初始化 libverbs 的数据结构来安全地处理 `fork()` 并避免数据损坏，不论 `fork()` 是被显式调用还是隐式调用（比如在 `system()` 中被调用）。
+如果所有的父进程总是阻塞直至所有的子进程结束或使用 `exec()` 改变地址空间，那么 `ibv_fork_init` 可以不被调用。
+
+该函数在支持 `madvise` 的 `MADV_DONTFORK` 标记的 Linux 内核（2.6.17或更高）上可以工作。
+
+设置环境变量 `RDMAV_FORK_SAFE` 或 `IBV_FORK_SAFE` 环境变量为任意值，有着与 `ibv_fork_init` 相同的效果。
+
+设置 `RDMAV_HUGEPAGES_SAFE` 为任意值，以告诉库需要检查内核为内存域（memory regions）使用的底层内存页的大小。如果应用程序直接或通过库（如 libhugtlbfs ）间接使用大内存页（博主注：即大于4KB）时，该环境变量是必须的。（博主注：`ibv_fork_init` 将检查 `RDMAV_HUGEPAGES_SAFE` ）
+
+调用 `ibv_fork_init` 将降低性能，因为每个内存注册都将有一个额外的系统调用和分配附加的内存以追踪内存域（memory regions）。
+确切的性能损失取决于工作负载，通常不会很大。
+
+设置 `RDMAV_HUGEPAGES_SAFE` 会为所有的内存注册增加更多的开销。
+
 ## 文档
 
 [Documentation: RDMA Aware Networks Programming User Manual v1.6](https://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=346D319BA2A9F06B8C49B2C0AAFD28D9?doi=10.1.1.668.4459&rep=rep1&type=pdf)
