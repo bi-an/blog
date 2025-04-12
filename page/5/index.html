@@ -224,7 +224,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-03-21 08:19:49" itemprop="dateModified" datetime="2025-03-21T08:19:49+00:00">2025-03-21</time>
+                <time title="Modified: 2025-04-12 09:45:51" itemprop="dateModified" datetime="2025-04-12T09:45:51+00:00">2025-04-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -424,7 +424,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-03-21 08:19:49" itemprop="dateModified" datetime="2025-03-21T08:19:49+00:00">2025-03-21</time>
+                <time title="Modified: 2025-04-12 09:45:51" itemprop="dateModified" datetime="2025-04-12T09:45:51+00:00">2025-04-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -501,7 +501,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-03-21 08:19:49" itemprop="dateModified" datetime="2025-03-21T08:19:49+00:00">2025-03-21</time>
+                <time title="Modified: 2025-04-12 09:45:51" itemprop="dateModified" datetime="2025-04-12T09:45:51+00:00">2025-04-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -544,7 +544,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/14/misc/Reentrant-Function/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/14/misc/%E5%8F%AF%E9%87%8D%E5%85%A5/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -558,7 +558,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2024/01/14/misc/Reentrant-Function/" class="post-title-link" itemprop="url">Reentrant Function</a>
+            <a href="/blog/2024/01/14/misc/%E5%8F%AF%E9%87%8D%E5%85%A5/" class="post-title-link" itemprop="url">可重入</a>
         </h2>
 
         <div class="post-meta">
@@ -575,7 +575,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-03-21 08:19:49" itemprop="dateModified" datetime="2025-03-21T08:19:49+00:00">2025-03-21</time>
+                <time title="Modified: 2025-04-12 09:45:51" itemprop="dateModified" datetime="2025-04-12T09:45:51+00:00">2025-04-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -598,10 +598,41 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="Concept"><a href="#Concept" class="headerlink" title="Concept"></a>Concept</h2><p><strong>可重入函数</strong>：如果一个函数在执行过程中被中断服务程序打断，执行中断服务程序之后恢复执行，还能不妨碍之前的执行，就称该函数是<strong>可重入的</strong>。</p>
+          <h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p><strong>可重入函数</strong>：如果一个函数在执行过程中被中断服务程序打断，执行中断服务程序之后恢复执行，还能不妨碍之前的执行，就称该函数是<strong>可重入的</strong>。</p>
 <p>可重入函数一般用于<strong>硬件中断处理</strong>或<strong>递归</strong>等应用程序中。</p>
 <p><strong>可重入程序&#x2F;可重入子例程</strong>：在多个处理器上能被安全地多次并发调用。</p>
 <p><strong>与线程安全的区别</strong>：可重入函数的概念在多任务操作系统出现之前就存在了，所以该概念仅仅针对的是单线程执行过程。<br>一个函数可以是线程安全但非可重入的，例如，该函数每次都使用互斥量来包裹。但是，如果该函数用于中断服务程序，那么，它可能在等待第一次执行过程释放互斥量时陷入饥饿。<strong>TODO：陷入饥饿为什么就不是可重入了？</strong></p>
+<p>要实现可重入性，函数通常需要满足以下条件：</p>
+<ul>
+<li>不使用静态或全局变量：这些变量在多次调用之间共享，可能导致数据竞争。</li>
+<li>不依赖于不可重入的函数：例如，标准库中的某些函数可能不是可重入的。</li>
+<li>不使用动态内存分配：动态内存分配可能会导致竞争条件。</li>
+<li>不使用信号处理：信号处理可能会中断函数的执行。</li>
+</ul>
+<p>可重入性在多线程编程和中断处理程序中尤为重要，因为它确保了函数在并发环境下的安全性。</p>
+<h3 id="可重入-VS-线程安全"><a href="#可重入-VS-线程安全" class="headerlink" title="可重入 VS 线程安全"></a>可重入 VS 线程安全</h3><p>可重入性和线程安全虽然都涉及到并发编程，但它们有不同的侧重点：</p>
+<p>可重入性：</p>
+<p>定义：一个函数可以在被中断后安全地再次调用，而不会影响其执行结果。<br>条件：不使用静态或全局变量、不依赖不可重入的函数、不使用动态内存分配、不使用信号处理。<br>应用场景：主要用于中断处理程序和嵌入式系统。<br>线程安全：</p>
+<p>定义：一个函数或代码块在多线程环境下可以安全地并发执行，而不会导致竞争条件或数据不一致。<br>条件：通常需要使用同步机制（如互斥锁、信号量）来保护共享资源。<br>应用场景：主要用于多线程编程。<br>总结来说，可重入性关注的是函数在被中断后能否安全地再次调用，而线程安全关注的是在多线程环境下能否安全地并发执行。可重入函数不一定是线程安全的，线程安全的函数也不一定是可重入的。</p>
+<ol>
+<li>可重入函数不一定是线程安全的</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> counter = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">reentrantFunction</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> localCounter = counter;</span><br><span class="line">    localCounter++;</span><br><span class="line">    counter = localCounter;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">reentrantFunction</span>();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Counter: %d\n&quot;</span>, counter);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>解释：</p>
+<p>reentrantFunction 是可重入的，因为它满足以下条件：</p>
+<p>不使用静态或全局变量：虽然 counter 是一个全局变量，但 reentrantFunction 中的操作都是基于局部变量 localCounter，并且没有依赖于函数外部的状态。<br>不依赖不可重入的函数：reentrantFunction 中没有调用任何不可重入的函数。<br>不使用动态内存分配：函数中没有使用 malloc 或其他动态内存分配函数。<br>不使用信号处理：函数中没有涉及信号处理。<br>因此，reentrantFunction 可以在被中断后安全地再次调用，而不会影响其执行结果。</p>
+<p>然而，正因为它使用了全局变量 counter，在多线程环境下可能会导致竞争条件，所以它不是线程安全的。</p>
+<ol start="2">
+<li>线程安全的函数不一定是可重入的</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">pthread_mutex_t</span> lock = PTHREAD_MUTEX_INITIALIZER;</span><br><span class="line"><span class="type">int</span> counter = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span>* <span class="title">threadSafeFunction</span><span class="params">(<span class="type">void</span>* arg)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">pthread_mutex_lock</span>(&amp;lock);</span><br><span class="line">    counter++;</span><br><span class="line">    <span class="built_in">pthread_mutex_unlock</span>(&amp;lock);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">pthread_t</span> thread1, thread2;</span><br><span class="line">    <span class="built_in">pthread_create</span>(&amp;thread1, <span class="literal">NULL</span>, threadSafeFunction, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_create</span>(&amp;thread2, <span class="literal">NULL</span>, threadSafeFunction, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_join</span>(thread1, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_join</span>(thread2, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Counter: %d\n&quot;</span>, counter);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>解释：</p>
+<p>这个函数 threadSafeFunction 是线程安全的，因为它使用了互斥锁来保护对 counter 的访问。<br>然而，它不是可重入的，因为它使用了互斥锁，互斥锁在中断处理程序中可能会导致死锁：</p>
+<p>互斥锁的使用：互斥锁用于确保线程安全，但它们在中断处理程序中可能会导致死锁。如果一个线程在持有锁时被中断，然后中断处理程序尝试再次调用该函数并试图获取同一个锁，就会发生死锁。</p>
+<p>依赖于锁的状态：函数的执行依赖于锁的状态。如果锁已经被其他线程持有，函数就无法继续执行，必须等待锁释放。这种依赖性使得函数在中断后无法安全地再次调用。</p>
+<p>不可重入的行为：由于锁的存在，函数在中断后重新进入时可能无法正确处理锁的状态，从而导致不可预期的行为。</p>
 <h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
 <li><a target="_blank" rel="noopener" href="https://www.geeksforgeeks.org/reentrant-function/">Reentrant Function</a></li>
 <li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Reentrancy_(computing)">Reentrancy</a></li>
@@ -656,7 +687,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-03-21 08:19:49" itemprop="dateModified" datetime="2025-03-21T08:19:49+00:00">2025-03-21</time>
+                <time title="Modified: 2025-04-12 09:45:51" itemprop="dateModified" datetime="2025-04-12T09:45:51+00:00">2025-04-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -731,7 +762,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-03-21 08:19:49" itemprop="dateModified" datetime="2025-03-21T08:19:49+00:00">2025-03-21</time>
+                <time title="Modified: 2025-04-12 09:45:51" itemprop="dateModified" datetime="2025-04-12T09:45:51+00:00">2025-04-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -827,7 +858,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-03-21 08:19:49" itemprop="dateModified" datetime="2025-03-21T08:19:49+00:00">2025-03-21</time>
+                <time title="Modified: 2025-04-12 09:45:51" itemprop="dateModified" datetime="2025-04-12T09:45:51+00:00">2025-04-12</time>
               </span>
 
           
@@ -1024,7 +1055,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-03-21 08:19:49" itemprop="dateModified" datetime="2025-03-21T08:19:49+00:00">2025-03-21</time>
+                <time title="Modified: 2025-04-12 09:45:51" itemprop="dateModified" datetime="2025-04-12T09:45:51+00:00">2025-04-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1124,7 +1155,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-03-21 08:19:49" itemprop="dateModified" datetime="2025-03-21T08:19:49+00:00">2025-03-21</time>
+                <time title="Modified: 2025-04-12 09:45:51" itemprop="dateModified" datetime="2025-04-12T09:45:51+00:00">2025-04-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1200,7 +1231,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-03-21 08:19:49" itemprop="dateModified" datetime="2025-03-21T08:19:49+00:00">2025-03-21</time>
+                <time title="Modified: 2025-04-12 09:45:51" itemprop="dateModified" datetime="2025-04-12T09:45:51+00:00">2025-04-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
