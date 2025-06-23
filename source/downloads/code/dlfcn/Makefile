@@ -1,11 +1,14 @@
-all: fake_dlfcn testlib main
+CXX = g++
+CXXFLAGS = -fPIC -Wall -Wextra
+LDFLAGS = -shared
 
-fake_dlfcn:
-	g++ -std=c++17 -shared -fPIC fake_dlfcn.cpp -o libfake_dlfcn.so
+all: main libhello.so
 
-testlib:
-	g++ -std=c++17 -fPIC -shared -o libtestlib.so testlib.cpp
+main: main.cpp
+	$(CXX) main.cpp -o main -ldl
 
-main:
-	g++ -std=c++17 -o main main.cpp
+libhello.so: hello.cpp
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) hello.cpp -o libhello.so
 
+clean:
+	rm -f main libhello.
