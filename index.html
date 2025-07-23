@@ -193,7 +193,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/07/18/net/bsub/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/07/23/cplusplus/shell%E8%AF%AF%E5%AF%BC%E6%80%A7%E9%94%99%E8%AF%AFNo-such-file-or-directory/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -207,7 +207,171 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2025/07/18/net/bsub/" class="post-title-link" itemprop="url">Untitled</a>
+            <a href="/blog/2025/07/23/cplusplus/shell%E8%AF%AF%E5%AF%BC%E6%80%A7%E9%94%99%E8%AF%AFNo-such-file-or-directory/" class="post-title-link" itemprop="url">shell 误导性错误 No such file or directory</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2025-07-23 19:26:26 / Modified: 13:06:32" itemprop="dateCreated datePublished" datetime="2025-07-23T19:26:26+00:00">2025-07-23</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="📝-现象描述"><a href="#📝-现象描述" class="headerlink" title="📝 现象描述"></a>📝 现象描述</h2><p>当你运行一个 ELF 可执行文件（比如一个 32-bit 的程序），而它依赖的 loader 或共享库找不到 时，Shell 会提示：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bash: ./a.out: No such file or directory</span><br></pre></td></tr></table></figure>
+
+<p>但其实，这个“文件”确实存在，问题出在它 依赖的 loader 文件或库文件找不到，进而导致 execve() 系统调用失败。</p>
+<p>我们从 内核执行路径 角度来解析这背后的原理。</p>
+<h2 id="🧠Linux-内部逻辑解析"><a href="#🧠Linux-内部逻辑解析" class="headerlink" title="🧠Linux 内部逻辑解析"></a>🧠Linux 内部逻辑解析</h2><ol>
+<li>Shell 运行程序的过程</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./my_app</span><br></pre></td></tr></table></figure>
+
+<p>Shell 实际做的是调用 execve() 系统调用：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">execve(<span class="string">&quot;./my_app&quot;</span>, argv, envp);</span><br></pre></td></tr></table></figure>
+
+<p>这是 Linux 加载并运行一个程序的唯一入口。</p>
+<ol start="2">
+<li>execve() 做了什么？</li>
+</ol>
+<p>内核执行 execve() 时，它会：</p>
+<p>🔹 Step 1: 打开并读取 ELF 头（文件的前几个字节）<br>从而判断这是一个 ELF 可执行文件、脚本，还是其他格式。</p>
+<p>🔹 Step 2: 检查 ELF 的架构位数、ABI、动态链接需求<br>对于动态链接程序，它会在 ELF 头中读取如下字段：</p>
+<ul>
+<li>e_ident[EI_CLASS]: 32-bit 或 64-bit</li>
+<li>e_interpreter: 这是最关键的！</li>
+</ul>
+<ol start="3">
+<li>e_interpreter 是什么？</li>
+</ol>
+<p>这是 ELF 文件里定义的 “程序解释器路径”（interpreter path）。即这个程序运行时，系统需要先加载谁来帮它加载剩下的动态库。</p>
+<p>可以通过 <code>readelf -l my_app</code> 查看：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ readelf -l ./my_app | grep interpreter</span><br><span class="line"></span><br><span class="line">[Requesting program interpreter: /lib/ld-linux.so.2]</span><br></pre></td></tr></table></figure>
+
+<p>比如：<code>/lib/ld-linux.so.2</code> 是 32-bit 程序使用的 loader。</p>
+<ol start="4">
+<li>如果这个 loader 不存在，会发生什么？</li>
+</ol>
+<ul>
+<li>execve() 尝试打开 ELF 指定的解释器（&#x2F;lib&#x2F;ld-linux.so.2）</li>
+<li>如果该文件不存在，open() 失败</li>
+<li>整个 execve() 调用失败</li>
+<li>错误代码是 ENOENT（2），代表：</li>
+</ul>
+<blockquote>
+<p>“No such file or directory”</p>
+</blockquote>
+<p>但这并不是说 你运行的那个文件 .&#x2F;my_app 不存在，而是 它依赖的解释器不在系统中，导致整个执行失败。</p>
+<h2 id="🤯-为什么这么误导？"><a href="#🤯-为什么这么误导？" class="headerlink" title="🤯 为什么这么误导？"></a>🤯 为什么这么误导？</h2><p>因为 shell（bash&#x2F;zsh）调用 execve() 失败后，只看到了 errno &#x3D; ENOENT，它默认解释为：</p>
+<blockquote>
+<p>“你指定的那个文件路径不存在”</p>
+</blockquote>
+<p>而不是更深层次的：</p>
+<blockquote>
+<p>“文件存在，但它需要的 loader 不存在”</p>
+</blockquote>
+<p>这是 shell 的 历史遗留行为，没有细分 errno 背后语义。</p>
+<h2 id="🧪-举个实际例子"><a href="#🧪-举个实际例子" class="headerlink" title="🧪 举个实际例子"></a>🧪 举个实际例子</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$ file ./a.out</span><br><span class="line">./a.out: ELF 32-bit LSB executable, Intel 80386, ...</span><br><span class="line"></span><br><span class="line">$ readelf -l ./a.out | grep interpreter</span><br><span class="line">[Requesting program interpreter: /lib/ld-linux.so.2]</span><br><span class="line"></span><br><span class="line">$ <span class="built_in">ls</span> /lib/ld-linux.so.2</span><br><span class="line"><span class="built_in">ls</span>: cannot access <span class="string">&#x27;/lib/ld-linux.so.2&#x27;</span>: No such file or directory</span><br><span class="line"></span><br><span class="line">$ ./a.out</span><br><span class="line">bash: ./a.out: No such file or directory  ❌</span><br></pre></td></tr></table></figure>
+
+<p>实际上是 缺少解释器 <code>/lib/ld-linux.so.2</code>，而不是 a.out 本身。</p>
+<h2 id="✅-总结"><a href="#✅-总结" class="headerlink" title="✅ 总结"></a>✅ 总结</h2><table>
+<thead>
+<tr>
+<th>层级</th>
+<th>行为</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>用户</td>
+<td>输入 <code>./prog</code></td>
+</tr>
+<tr>
+<td>Shell</td>
+<td>调用 <code>execve(&quot;./prog&quot;, ...)</code></td>
+</tr>
+<tr>
+<td>内核</td>
+<td>解析 ELF，发现 <code>interpreter</code> 是 <code>/lib/ld-linux.so.2</code></td>
+</tr>
+<tr>
+<td>内核</td>
+<td>找不到解释器，返回 <code>ENOENT</code></td>
+</tr>
+<tr>
+<td>Shell</td>
+<td>报 <code>No such file or directory</code> ❌（误导性）</td>
+</tr>
+</tbody></table>
+<h2 id="🛠️-Bonus：编译-32-bit-程序"><a href="#🛠️-Bonus：编译-32-bit-程序" class="headerlink" title="🛠️ Bonus：编译 32-bit 程序"></a>🛠️ Bonus：编译 32-bit 程序</h2><ol>
+<li>编写一个简单的 C 程序</li>
+</ol>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// hello.c</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Hello from 32-bit program!\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>编译成 32 bit 程序</li>
+</ol>
+<p>需要先安装 32-bit 编译支持：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install gcc-multilib</span><br></pre></td></tr></table></figure>
+
+<p>然后编译：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -m32 hello.c -o hello32</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>验证是否是 32-bit ELF 可执行文件</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">file hello32</span><br></pre></td></tr></table></figure>
+
+<p>输出应类似：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hello32: ELF 32-bit LSB executable, Intel 80386, ...</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/07/23/net/bsub/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/07/23/net/bsub/" class="post-title-link" itemprop="url">Untitled</a>
         </h2>
 
         <div class="post-meta">
@@ -217,7 +381,7 @@
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2025-07-18 02:03:04" itemprop="dateCreated datePublished" datetime="2025-07-18T02:03:04+00:00">2025-07-18</time>
+              <time title="Created: 2025-07-23 13:06:32" itemprop="dateCreated datePublished" datetime="2025-07-23T13:06:32+00:00">2025-07-23</time>
             </span>
 
           
@@ -281,7 +445,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-18 02:03:04" itemprop="dateModified" datetime="2025-07-18T02:03:04+00:00">2025-07-18</time>
+                <time title="Modified: 2025-07-23 13:06:32" itemprop="dateModified" datetime="2025-07-23T13:06:32+00:00">2025-07-23</time>
               </span>
 
           
@@ -295,10 +459,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <figure class="highlight cpp"><figcaption><span>Makefile</span><a href="/blog/downloads/code/dlfcn/Makefile">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">all: fake_dlfcn testlib main</span><br><span class="line"></span><br><span class="line">fake_dlfcn:</span><br><span class="line">	g++ -std=c++<span class="number">17</span> -shared -fPIC fake_dlfcn.cpp -o libfake_dlfcn.so</span><br><span class="line"></span><br><span class="line">testlib:</span><br><span class="line">	g++ -std=c++<span class="number">17</span> -fPIC -shared -o libtestlib.so testlib.cpp</span><br><span class="line"></span><br><span class="line">main:</span><br><span class="line">	g++ -std=c++<span class="number">17</span> -o main main.cpp</span><br></pre></td></tr></table></figure>
-<figure class="highlight cpp"><figcaption><span>fake_dlfcn.cpp</span><a href="/blog/downloads/code/dlfcn/fake_dlfcn.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;elf.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstring&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fstream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;memory&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sstream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> TAG_NAME <span class="string">&quot;test2:fake_dlfcn&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __arm__</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;android/log.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> log_info(fmt, args...) __android_log_print(ANDROID_LOG_INFO, TAG_NAME, fmt, ##args)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> log_err(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG_NAME, fmt, ##args)</span></span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> log_info(fmt, ...) std::cout &lt;&lt; <span class="string">&quot;[INFO] &quot;</span> &lt;&lt; fmt &lt;&lt; <span class="string">&quot;\n&quot;</span>, ##__VA_ARGS__</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> log_err(fmt, ...) std::cerr &lt;&lt; <span class="string">&quot;[ERROR] &quot;</span> &lt;&lt; fmt &lt;&lt; <span class="string">&quot;\n&quot;</span>, ##__VA_ARGS__</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> LOG_DBG</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> log_dbg log_info</span></span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> log_dbg(...)</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __arm__</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> Elf_Ehdr Elf32_Ehdr</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> Elf_Shdr Elf32_Shdr</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> Elf_Sym Elf32_Sym</span></span><br><span class="line"><span class="meta">#<span class="keyword">elif</span> defined(__aarch64__) || defined(__x86_64__)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> Elf_Ehdr Elf64_Ehdr</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> Elf_Shdr Elf64_Shdr</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> Elf_Sym Elf64_Sym</span></span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">error</span> <span class="string">&quot;Arch unknown, please port me&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">Context</span> {</span><br><span class="line">    <span class="type">void</span> *load_addr = <span class="literal">nullptr</span>;</span><br><span class="line">    std::unique_ptr&lt;<span class="type">char</span>[]&gt; dynstr;</span><br><span class="line">    std::unique_ptr&lt;Elf_Sym[]&gt; dynsym;</span><br><span class="line">    <span class="type">int</span> nsyms = <span class="number">0</span>;</span><br><span class="line">    <span class="type">off_t</span> bias = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    ~<span class="built_in">Context</span>() {</span><br><span class="line">        <span class="built_in">log_dbg</span>(<span class="string">&quot;Context destroyed&quot;</span>);</span><br><span class="line">    }</span><br><span class="line">};</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">fake_dlclose</span><span class="params">(<span class="type">void</span> *handle)</span> </span>{</span><br><span class="line">    <span class="keyword">if</span> (handle) {</span><br><span class="line">        <span class="keyword">delete</span> <span class="built_in">static_cast</span>&lt;Context *&gt;(handle);</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> *<span class="title">fake_dlopen</span><span class="params">(<span class="type">const</span> <span class="type">char</span> *libpath, <span class="type">int</span> flags)</span> </span>{</span><br><span class="line">    <span class="function">std::ifstream <span class="title">maps</span><span class="params">(<span class="string">&quot;/proc/self/maps&quot;</span>)</span></span>;</span><br><span class="line">    <span class="keyword">if</span> (!maps.<span class="built_in">is_open</span>()) {</span><br><span class="line">        <span class="built_in">log_err</span>(<span class="string">&quot;Failed to open /proc/self/maps&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    std::string line;</span><br><span class="line">    std::string found_line;</span><br><span class="line">    <span class="keyword">while</span> (std::<span class="built_in">getline</span>(maps, line)) {</span><br><span class="line">        <span class="keyword">if</span> (line.<span class="built_in">find</span>(<span class="string">&quot;r-xp&quot;</span>) != std::string::npos &amp;&amp; line.<span class="built_in">find</span>(libpath) != std::string::npos) {</span><br><span class="line">            found_line = line;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (found_line.<span class="built_in">empty</span>()) {</span><br><span class="line">        <span class="built_in">log_err</span>(<span class="string">&quot;%s not found in my userspace&quot;</span>, libpath);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="type">off_t</span> load_addr = <span class="number">0</span>;</span><br><span class="line">    <span class="function">std::istringstream <span class="title">iss</span><span class="params">(found_line)</span></span>;</span><br><span class="line">    iss &gt;&gt; std::hex &gt;&gt; load_addr;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">log_info</span>(<span class="string">&quot;%s loaded in Android at 0x%08lx&quot;</span>, libpath, load_addr);</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> fd = <span class="built_in">open</span>(libpath, O_RDONLY);</span><br><span class="line">    <span class="keyword">if</span> (fd &lt; <span class="number">0</span>) {</span><br><span class="line">        <span class="built_in">log_err</span>(<span class="string">&quot;Failed to open %s&quot;</span>, libpath);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="type">off_t</span> size = <span class="built_in">lseek</span>(fd, <span class="number">0</span>, SEEK_END);</span><br><span class="line">    <span class="keyword">if</span> (size &lt;= <span class="number">0</span>) {</span><br><span class="line">        <span class="built_in">log_err</span>(<span class="string">&quot;lseek() failed for %s&quot;</span>, libpath);</span><br><span class="line">        <span class="built_in">close</span>(fd);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> elf = <span class="built_in">static_cast</span>&lt;Elf_Ehdr *&gt;(<span class="built_in">mmap</span>(<span class="literal">nullptr</span>, size, PROT_READ, MAP_SHARED, fd, <span class="number">0</span>));</span><br><span class="line">    <span class="built_in">close</span>(fd);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (elf == MAP_FAILED) {</span><br><span class="line">        <span class="built_in">log_err</span>(<span class="string">&quot;mmap() failed for %s&quot;</span>, libpath);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> ctx = std::<span class="built_in">make_unique</span>&lt;Context&gt;();</span><br><span class="line">    ctx-&gt;load_addr = <span class="built_in">reinterpret_cast</span>&lt;<span class="type">void</span> *&gt;(load_addr);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> shoff = <span class="built_in">reinterpret_cast</span>&lt;<span class="type">char</span> *&gt;(elf) + elf-&gt;e_shoff;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> k = <span class="number">0</span>; k &lt; elf-&gt;e_shnum; ++k, shoff += elf-&gt;e_shentsize) {</span><br><span class="line">        <span class="keyword">auto</span> sh = <span class="built_in">reinterpret_cast</span>&lt;Elf_Shdr *&gt;(shoff);</span><br><span class="line">        <span class="built_in">log_dbg</span>(<span class="string">&quot;%s: k=%d shdr=%p type=%x&quot;</span>, __func__, k, sh, sh-&gt;sh_type);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">switch</span> (sh-&gt;sh_type) {</span><br><span class="line">            <span class="keyword">case</span> SHT_DYNSYM:</span><br><span class="line">                <span class="keyword">if</span> (ctx-&gt;dynsym) {</span><br><span class="line">                    <span class="built_in">log_err</span>(<span class="string">&quot;%s: duplicate DYNSYM sections&quot;</span>, libpath);</span><br><span class="line">                    <span class="built_in">munmap</span>(elf, size);</span><br><span class="line">                    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">                }</span><br><span class="line">                ctx-&gt;dynsym = std::<span class="built_in">make_unique</span>&lt;Elf_Sym[]&gt;(sh-&gt;sh_size / <span class="built_in">sizeof</span>(Elf_Sym));</span><br><span class="line">                std::<span class="built_in">memcpy</span>(ctx-&gt;dynsym.<span class="built_in">get</span>(), <span class="built_in">reinterpret_cast</span>&lt;<span class="type">char</span> *&gt;(elf) + sh-&gt;sh_offset, sh-&gt;sh_size);</span><br><span class="line">                ctx-&gt;nsyms = sh-&gt;sh_size / <span class="built_in">sizeof</span>(Elf_Sym);</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">case</span> SHT_STRTAB:</span><br><span class="line">                <span class="keyword">if</span> (ctx-&gt;dynstr) <span class="keyword">break</span>;</span><br><span class="line">                ctx-&gt;dynstr = std::<span class="built_in">make_unique</span>&lt;<span class="type">char</span>[]&gt;(sh-&gt;sh_size);</span><br><span class="line">                std::<span class="built_in">memcpy</span>(ctx-&gt;dynstr.<span class="built_in">get</span>(), <span class="built_in">reinterpret_cast</span>&lt;<span class="type">char</span> *&gt;(elf) + sh-&gt;sh_offset, sh-&gt;sh_size);</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">case</span> SHT_PROGBITS:</span><br><span class="line">                <span class="keyword">if</span> (!ctx-&gt;dynstr || !ctx-&gt;dynsym) <span class="keyword">break</span>;</span><br><span class="line">                ctx-&gt;bias = <span class="built_in">static_cast</span>&lt;<span class="type">off_t</span>&gt;(sh-&gt;sh_addr) - <span class="built_in">static_cast</span>&lt;<span class="type">off_t</span>&gt;(sh-&gt;sh_offset);</span><br><span class="line">                k = elf-&gt;e_shnum;  <span class="comment">// exit loop</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="built_in">munmap</span>(elf, size);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!ctx-&gt;dynstr || !ctx-&gt;dynsym) {</span><br><span class="line">        <span class="built_in">log_err</span>(<span class="string">&quot;Dynamic sections not found in %s&quot;</span>, libpath);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="built_in">log_dbg</span>(<span class="string">&quot;%s: ok, dynsym = %p, dynstr = %p&quot;</span>, libpath, ctx-&gt;dynsym.<span class="built_in">get</span>(), ctx-&gt;dynstr.<span class="built_in">get</span>());</span><br><span class="line">    <span class="keyword">return</span> ctx.<span class="built_in">release</span>();</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> *<span class="title">fake_dlsym</span><span class="params">(<span class="type">void</span> *handle, <span class="type">const</span> <span class="type">char</span> *name)</span> </span>{</span><br><span class="line">    <span class="keyword">auto</span> ctx = <span class="built_in">static_cast</span>&lt;Context *&gt;(handle);</span><br><span class="line">    <span class="keyword">auto</span> sym = ctx-&gt;dynsym.<span class="built_in">get</span>();</span><br><span class="line">    <span class="keyword">auto</span> strings = ctx-&gt;dynstr.<span class="built_in">get</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> k = <span class="number">0</span>; k &lt; ctx-&gt;nsyms; ++k, ++sym) {</span><br><span class="line">        <span class="keyword">if</span> (std::<span class="built_in">strcmp</span>(strings + sym-&gt;st_name, name) == <span class="number">0</span>) {</span><br><span class="line">            <span class="type">void</span> *ret = <span class="built_in">static_cast</span>&lt;<span class="type">char</span> *&gt;(ctx-&gt;load_addr) + sym-&gt;st_value - ctx-&gt;bias;</span><br><span class="line">            <span class="built_in">log_info</span>(<span class="string">&quot;%s found at %p&quot;</span>, name, ret);</span><br><span class="line">            <span class="keyword">return</span> ret;</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-<figure class="highlight cpp"><figcaption><span>main.cpp</span><a href="/blog/downloads/code/dlfcn/main.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;fake_dlfcn.cpp&quot;</span>  <span class="comment">// 确保路径正确，或者将其改为头文件引用</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// #include &lt;dlfcn.h&gt;</span></span><br><span class="line"><span class="comment">// #include &lt;iostream&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// void preloadLibrary(const char *libraryPath) {</span></span><br><span class="line"><span class="comment">//     void *handle = dlopen(libraryPath, RTLD_LAZY);</span></span><br><span class="line"><span class="comment">//     if (!handle) {</span></span><br><span class="line"><span class="comment">//         std::cerr &lt;&lt; &quot;Failed to preload library: &quot; &lt;&lt; libraryPath &lt;&lt; std::endl;</span></span><br><span class="line"><span class="comment">//         std::cerr &lt;&lt; &quot;Error: &quot; &lt;&lt; dlerror() &lt;&lt; std::endl;</span></span><br><span class="line"><span class="comment">//         return;</span></span><br><span class="line"><span class="comment">//     }</span></span><br><span class="line"><span class="comment">//     std::cout &lt;&lt; &quot;Library preloaded successfully: &quot; &lt;&lt; libraryPath &lt;&lt; std::endl;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//     // 注意：不要调用 dlclose(handle)，否则会卸载库并从 /proc/self/maps 中移除</span></span><br><span class="line"><span class="comment">// }</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> *<span class="title">mapLibrary</span><span class="params">(<span class="type">const</span> <span class="type">char</span> *libraryPath)</span> </span>{</span><br><span class="line">    <span class="type">int</span> fd = <span class="built_in">open</span>(libraryPath, O_RDONLY);</span><br><span class="line">    <span class="keyword">if</span> (fd &lt; <span class="number">0</span>) {</span><br><span class="line">        std::cerr &lt;&lt; <span class="string">&quot;Failed to open library: &quot;</span> &lt;&lt; libraryPath &lt;&lt; std::endl;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="type">off_t</span> size = <span class="built_in">lseek</span>(fd, <span class="number">0</span>, SEEK_END);</span><br><span class="line">    <span class="keyword">if</span> (size &lt;= <span class="number">0</span>) {</span><br><span class="line">        std::cerr &lt;&lt; <span class="string">&quot;Failed to get library size: &quot;</span> &lt;&lt; libraryPath &lt;&lt; std::endl;</span><br><span class="line">        <span class="built_in">close</span>(fd);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="type">void</span> *mapped = <span class="built_in">mmap</span>(<span class="literal">nullptr</span>, size, PROT_READ | PROT_EXEC, MAP_PRIVATE, fd, <span class="number">0</span>);</span><br><span class="line">    <span class="built_in">close</span>(fd);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (mapped == MAP_FAILED) {</span><br><span class="line">        std::cerr &lt;&lt; <span class="string">&quot;Failed to map library: &quot;</span> &lt;&lt; libraryPath &lt;&lt; std::endl;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Library mapped successfully: &quot;</span> &lt;&lt; libraryPath &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">return</span> mapped;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span> *libraryPath = <span class="string">&quot;./libtestlib.so&quot;</span>;    <span class="comment">// 替换为实际的共享库路径</span></span><br><span class="line">    <span class="type">const</span> <span class="type">char</span> *symbolName = <span class="string">&quot;your_function_name&quot;</span>;  <span class="comment">// 替换为实际的符号名称</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 提前导入so到/proc中</span></span><br><span class="line">    <span class="type">void</span> *mappedLibrary = <span class="built_in">mapLibrary</span>(libraryPath);</span><br><span class="line">    <span class="keyword">if</span> (!mappedLibrary) {</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;  <span class="comment">// 映射失败</span></span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 加载共享库</span></span><br><span class="line">    <span class="type">void</span> *handle = <span class="built_in">fake_dlopen</span>(libraryPath, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (!handle) {</span><br><span class="line">        std::cerr &lt;&lt; <span class="string">&quot;Failed to load library: &quot;</span> &lt;&lt; libraryPath &lt;&lt; std::endl;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Library loaded successfully: &quot;</span> &lt;&lt; libraryPath &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 查找符号</span></span><br><span class="line">    <span class="type">void</span> *symbol = <span class="built_in">fake_dlsym</span>(handle, symbolName);</span><br><span class="line">    <span class="keyword">if</span> (!symbol) {</span><br><span class="line">        std::cerr &lt;&lt; <span class="string">&quot;Failed to find symbol: &quot;</span> &lt;&lt; symbolName &lt;&lt; std::endl;</span><br><span class="line">        <span class="built_in">fake_dlclose</span>(handle);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Symbol found: &quot;</span> &lt;&lt; symbolName &lt;&lt; <span class="string">&quot; at address &quot;</span> &lt;&lt; symbol &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调用符号（假设符号是一个函数）</span></span><br><span class="line">    <span class="keyword">using</span> FunctionType = <span class="built_in">void</span> (*)();  <span class="comment">// 根据符号的实际类型修改</span></span><br><span class="line">    <span class="keyword">auto</span> function = <span class="built_in">reinterpret_cast</span>&lt;FunctionType&gt;(symbol);</span><br><span class="line">    <span class="built_in">function</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 关闭共享库</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">fake_dlclose</span>(handle) == <span class="number">0</span>) {</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Library closed successfully.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    } <span class="keyword">else</span> {</span><br><span class="line">        std::cerr &lt;&lt; <span class="string">&quot;Failed to close library.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-<figure class="highlight cpp"><figcaption><span>testlib.cpp</span><a href="/blog/downloads/code/dlfcn/testlib.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">extern</span> <span class="string">&quot;C&quot;</span> {</span><br><span class="line"></span><br><span class="line"><span class="comment">// 一个简单的函数，供 main.cpp 测试</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">your_function_name</span><span class="params">()</span> </span>{</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Hello from your_function_name in the shared library!&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+          <figure class="highlight cpp"><figcaption><span>Makefile</span><a href="/blog/downloads/code/dlfcn/Makefile">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">CXX = g++</span><br><span class="line">CXXFLAGS = -fPIC -Wall -Wextra</span><br><span class="line">LDFLAGS = -shared</span><br><span class="line"></span><br><span class="line">all: main libhello.so</span><br><span class="line"></span><br><span class="line">main: main.cpp</span><br><span class="line">	$(CXX) main.cpp -o main -ldl</span><br><span class="line"></span><br><span class="line">libhello.so: hello.cpp</span><br><span class="line">	$(CXX) $(CXXFLAGS) $(LDFLAGS) hello.cpp -o libhello.so</span><br><span class="line"></span><br><span class="line">clean:</span><br><span class="line">	rm -f main libhello.</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight cpp"><figcaption><span>main.cpp</span><a href="/blog/downloads/code/dlfcn/main.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;dlfcn.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*HelloFunc)</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="comment">// 打开共享库</span></span><br><span class="line">    <span class="type">void</span>* handle = <span class="built_in">dlopen</span>(<span class="string">&quot;./libhello.so&quot;</span>, RTLD_LAZY);</span><br><span class="line">    <span class="keyword">if</span> (!handle) {</span><br><span class="line">        std::cerr &lt;&lt; <span class="string">&quot;dlopen failed: &quot;</span> &lt;&lt; <span class="built_in">dlerror</span>() &lt;&lt; std::endl;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 清除之前的错误</span></span><br><span class="line">    <span class="built_in">dlerror</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取函数指针</span></span><br><span class="line">    HelloFunc hello = (HelloFunc)<span class="built_in">dlsym</span>(handle, <span class="string">&quot;hello&quot;</span>);</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>* dlsym_error = <span class="built_in">dlerror</span>();</span><br><span class="line">    <span class="keyword">if</span> (dlsym_error) {</span><br><span class="line">        std::cerr &lt;&lt; <span class="string">&quot;dlsym failed: &quot;</span> &lt;&lt; dlsym_error &lt;&lt; std::endl;</span><br><span class="line">        <span class="built_in">dlclose</span>(handle);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 打印函数地址</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Address of hello function: &quot;</span> &lt;&lt; <span class="built_in">reinterpret_cast</span>&lt;<span class="type">void</span>*&gt;(hello) &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调用函数</span></span><br><span class="line">    <span class="built_in">hello</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 关闭共享库</span></span><br><span class="line">    <span class="built_in">dlclose</span>(handle);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
       
     </div>
 
@@ -348,7 +512,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-18 02:03:04" itemprop="dateModified" datetime="2025-07-18T02:03:04+00:00">2025-07-18</time>
+                <time title="Modified: 2025-07-23 13:06:32" itemprop="dateModified" datetime="2025-07-23T13:06:32+00:00">2025-07-23</time>
               </span>
 
           
@@ -580,7 +744,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-18 02:03:04" itemprop="dateModified" datetime="2025-07-18T02:03:04+00:00">2025-07-18</time>
+                <time title="Modified: 2025-07-23 13:06:32" itemprop="dateModified" datetime="2025-07-23T13:06:32+00:00">2025-07-23</time>
               </span>
 
           
@@ -679,7 +843,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-18 02:03:04" itemprop="dateModified" datetime="2025-07-18T02:03:04+00:00">2025-07-18</time>
+                <time title="Modified: 2025-07-23 13:06:32" itemprop="dateModified" datetime="2025-07-23T13:06:32+00:00">2025-07-23</time>
               </span>
 
           
@@ -976,7 +1140,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-18 02:03:04" itemprop="dateModified" datetime="2025-07-18T02:03:04+00:00">2025-07-18</time>
+                <time title="Modified: 2025-07-23 13:06:32" itemprop="dateModified" datetime="2025-07-23T13:06:32+00:00">2025-07-23</time>
               </span>
 
           
@@ -1302,7 +1466,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-18 02:03:04" itemprop="dateModified" datetime="2025-07-18T02:03:04+00:00">2025-07-18</time>
+                <time title="Modified: 2025-07-23 13:06:32" itemprop="dateModified" datetime="2025-07-23T13:06:32+00:00">2025-07-23</time>
               </span>
 
           
@@ -1316,11 +1480,82 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="让-VMWare-的-Linux-虚拟机共享-Windows-主机的-VPN"><a href="#让-VMWare-的-Linux-虚拟机共享-Windows-主机的-VPN" class="headerlink" title="让 VMWare 的 Linux 虚拟机共享 Windows 主机的 VPN"></a>让 VMWare 的 Linux 虚拟机共享 Windows 主机的 VPN</h2><p>方案 2：NAT 模式 + Windows 网络共享<br>另一种方式是保持 VMware 使用 NAT 模式，并通过 Windows 主机的网络共享功能，将 VPN 流量共享给虚拟机。</p>
+          <h2 id="VMWare-的-Linux-虚拟机共享-Windows-主机的-VPN"><a href="#VMWare-的-Linux-虚拟机共享-Windows-主机的-VPN" class="headerlink" title="VMWare 的 Linux 虚拟机共享 Windows 主机的 VPN"></a>VMWare 的 Linux 虚拟机共享 Windows 主机的 VPN</h2><p>方案 2：NAT 模式 + Windows 网络共享<br>另一种方式是保持 VMware 使用 NAT 模式，并通过 Windows 主机的网络共享功能，将 VPN 流量共享给虚拟机。</p>
 <p>步骤：<br>在 Windows 上启用网络共享：</p>
 <p>确保 Clash 在 Windows 主机上运行，并已连接到 VPN。<br>打开 控制面板 &gt; 网络和共享中心 &gt; 更改适配器设置。<br>右键点击你的 VPN 连接（通常是一个以 Ethernet 开头的适配器），选择 属性。<br>在 共享 标签页，勾选 允许其他网络用户通过此计算机的 Internet 连接连接。<br>选择虚拟机使用的网络适配器（例如 VMware 的 VMnet8 适配器），然后点击确定。<br>配置虚拟机网络为 NAT：</p>
 <p>在 VMware 中，确保虚拟机的网络适配器设置为 NAT（这通常是默认设置）。<br>在 NAT 模式下，虚拟机会通过 Windows 主机访问网络，但流量会被路由到共享的网络适配器。<br>验证虚拟机是否可以通过 VPN 访问网络：</p>
 <p>启动虚拟机，测试网络连接。<br>如果虚拟机连接成功并通过 VPN 访问互联网，那么配置就完成了。</p>
+<h2 id="WSL1-通过主机的-clash-客户端访问网络"><a href="#WSL1-通过主机的-clash-客户端访问网络" class="headerlink" title="WSL1 通过主机的 clash 客户端访问网络"></a>WSL1 通过主机的 clash 客户端访问网络</h2><h3 id="方法一：配置环境变量（适用于普通网络请求）"><a href="#方法一：配置环境变量（适用于普通网络请求）" class="headerlink" title="方法一：配置环境变量（适用于普通网络请求）"></a>方法一：配置环境变量（适用于普通网络请求）</h3><p>适合 curl、wget、apt、pip、git 等命令行工具走代理。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;export http_proxy=http://127.0.0.1:7890&#x27;</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;export https_proxy=http://127.0.0.1:7890&#x27;</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;export all_proxy=socks5://127.0.0.1:7890&#x27;</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">source</span> ~/.bashrc</span><br></pre></td></tr></table></figure>
+
+<p>验证代理是否有效：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl cip.cc</span><br></pre></td></tr></table></figure>
+
+<p>这个网站会返回你的公网 IP。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl https://www.google.com</span><br></pre></td></tr></table></figure>
+
+<p>应该会返回网页。</p>
+<p><strong>临时开启：</strong></p>
+<p>如果你只想暂时走代理一次，不想改 .bashrc，你可以直接这样运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http_proxy=http://127.0.0.1:7890 https_proxy=http://127.0.0.1:7890 curl https://www.google.com</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="方法二：使用-proxychains-全局转发（适用于所有程序，包括二进制）"><a href="#方法二：使用-proxychains-全局转发（适用于所有程序，包括二进制）" class="headerlink" title="方法二：使用 proxychains 全局转发（适用于所有程序，包括二进制）"></a>方法二：使用 proxychains 全局转发（适用于所有程序，包括二进制）</h3><p>安装 proxychains，让任意程序走 Clash 的代理。</p>
+<ol>
+<li>安装 proxychains</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install proxychains -y</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>编辑配置 &#x2F;etc&#x2F;proxychains.conf</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /etc/proxychains.conf</span><br></pre></td></tr></table></figure>
+
+<p>在文件末尾加一行或修改为：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">socks5</span>  <span class="number">127.0.0.1</span> <span class="number">7890</span></span><br></pre></td></tr></table></figure>
+
+<p>注意：不要改成 http，要用 socks5。</p>
+<p>使用 proxychains（只代理你想代理的程序）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains curl https://www.google.com</span><br></pre></td></tr></table></figure>
+
+<p>优点：</p>
+<ul>
+<li>精准控制哪些程序走代理。</li>
+<li>不影响系统其他设置。</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>每次都要手动加 proxychains。</li>
+</ul>
+<h3 id="方法三：为单独的程序配置代理"><a href="#方法三：为单独的程序配置代理" class="headerlink" title="方法三：为单独的程序配置代理"></a>方法三：为单独的程序配置代理</h3><ol>
+<li>配置 git 使用代理</li>
+</ol>
+<p>执行以下命令设置全局代理（只设置一次即可）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git config --global http.proxy http://127.0.0.1:7890</span><br><span class="line">git config --global https.proxy http://127.0.0.1:7890</span><br></pre></td></tr></table></figure>
+
+<p>若你之后想关闭 git 代理，可运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git config --global --<span class="built_in">unset</span> http.proxy</span><br><span class="line">git config --global --<span class="built_in">unset</span> https.proxy</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>配置 pip 使用代理</li>
+</ol>
+<p>在主目录创建 pip 配置文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> -p ~/.config/pip</span><br><span class="line">vim ~/.config/pip/pip.conf</span><br></pre></td></tr></table></figure>
+
+<p>添加内容：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[global]</span></span><br><span class="line"><span class="attr">proxy</span> = http://<span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">7890</span></span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>配置 apt 使用代理</li>
+</ol>
+<p>编辑 apt 的配置文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo <span class="built_in">mkdir</span> -p /etc/apt/apt.conf.d</span><br><span class="line">sudo nano /etc/apt/apt.conf.d/99proxy</span><br></pre></td></tr></table></figure>
+
+<p>粘贴以下内容（假设 HTTP 代理端口是 7890）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Acquire::http::Proxy <span class="string">&quot;http://127.0.0.1:7890&quot;</span>;</span><br><span class="line">Acquire::https::Proxy <span class="string">&quot;http://127.0.0.1:7890&quot;</span>;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="方法四：配置-iptables-redsocks（实现真正的全局转发）"><a href="#方法四：配置-iptables-redsocks（实现真正的全局转发）" class="headerlink" title="方法四：配置 iptables + redsocks（实现真正的全局转发）"></a>方法四：配置 iptables + redsocks（实现真正的全局转发）</h3><p>适合高级用户，WSL2 使用 TUN 模式实现系统级全局代理。这比较复杂，建议在需要所有流量强制走代理时使用。TODO</p>
 
       
     </div>
@@ -1371,7 +1606,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-18 02:03:04" itemprop="dateModified" datetime="2025-07-18T02:03:04+00:00">2025-07-18</time>
+                <time title="Modified: 2025-07-23 13:06:32" itemprop="dateModified" datetime="2025-07-23T13:06:32+00:00">2025-07-23</time>
               </span>
 
           
@@ -1439,7 +1674,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-18 02:03:04" itemprop="dateModified" datetime="2025-07-18T02:03:04+00:00">2025-07-18</time>
+                <time title="Modified: 2025-07-23 13:06:32" itemprop="dateModified" datetime="2025-07-23T13:06:32+00:00">2025-07-23</time>
               </span>
 
           
@@ -1484,89 +1719,6 @@
 <figure class="highlight cpp"><figcaption><span>SharedPtr.hpp</span><a href="/blog/downloads/code/SharedPtr.hpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;_Lock_policy _Lp = __default_lock_policy&gt;</span><br><span class="line">    <span class="keyword">class</span> _Sp_counted_base</span><br><span class="line">    : <span class="keyword">public</span> _Mutex_base&lt;_Lp&gt;</span><br><span class="line">    {</span><br><span class="line">      <span class="type">void</span></span><br><span class="line">      _M_add_ref_copy()</span><br><span class="line">      { __gnu_cxx::__atomic_add_dispatch(&amp;_M_use_count, <span class="number">1</span>); }</span><br><span class="line"></span><br><span class="line">      <span class="type">void</span></span><br><span class="line">      _M_release() <span class="keyword">noexcept</span></span><br><span class="line">      {</span><br><span class="line">        <span class="comment">// Be race-detector-friendly.  For more info see bits/c++config.</span></span><br><span class="line">        _GLIBCXX_SYNCHRONIZATION_HAPPENS_BEFORE(&amp;_M_use_count);</span><br><span class="line">	<span class="keyword">if</span> (__gnu_cxx::__exchange_and_add_dispatch(&amp;_M_use_count, <span class="number">-1</span>) == <span class="number">1</span>)</span><br><span class="line">	  {</span><br><span class="line">            _GLIBCXX_SYNCHRONIZATION_HAPPENS_AFTER(&amp;_M_use_count);</span><br><span class="line">	    _M_dispose();</span><br><span class="line">	    <span class="comment">// There must be a memory barrier between dispose() and destroy()</span></span><br><span class="line">	    <span class="comment">// to ensure that the effects of dispose() are observed in the</span></span><br><span class="line">	    <span class="comment">// thread that runs destroy().</span></span><br><span class="line">	    <span class="comment">// See http://gcc.gnu.org/ml/libstdc++/2005-11/msg00136.html</span></span><br><span class="line">	    <span class="keyword">if</span> (_Mutex_base&lt;_Lp&gt;::_S_need_barriers)</span><br><span class="line">	      {</span><br><span class="line">		__atomic_thread_fence (__ATOMIC_ACQ_REL);</span><br><span class="line">	      }</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Be race-detector-friendly.  For more info see bits/c++config.</span></span><br><span class="line">            _GLIBCXX_SYNCHRONIZATION_HAPPENS_BEFORE(&amp;_M_weak_count);</span><br><span class="line">	    <span class="keyword">if</span> (__gnu_cxx::__exchange_and_add_dispatch(&amp;_M_weak_count,</span><br><span class="line">						       <span class="number">-1</span>) == <span class="number">1</span>)</span><br><span class="line">              {</span><br><span class="line">                _GLIBCXX_SYNCHRONIZATION_HAPPENS_AFTER(&amp;_M_weak_count);</span><br><span class="line">	        _M_destroy();</span><br><span class="line">              }</span><br><span class="line">	  }</span><br><span class="line">      }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">      _Sp_counted_base(_Sp_counted_base <span class="type">const</span>&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">      _Sp_counted_base&amp; <span class="keyword">operator</span>=(_Sp_counted_base <span class="type">const</span>&amp;) = <span class="keyword">delete</span>;</span><br><span class="line"></span><br><span class="line">      <span class="comment">// using _Atomic_word = int;</span></span><br><span class="line">      _Atomic_word  _M_use_count;     <span class="comment">// #shared</span></span><br><span class="line">      _Atomic_word  _M_weak_count;    <span class="comment">// #weak + (#shared != 0)</span></span><br><span class="line">    };</span><br><span class="line"></span><br><span class="line">  <span class="keyword">template</span>&lt;_Lock_policy _Lp&gt;</span><br><span class="line">    <span class="keyword">class</span> <span class="title class_">__shared_count</span></span><br><span class="line">    {</span><br><span class="line">      _Sp_counted_base&lt;_Lp&gt;*  _M_pi; <span class="comment">// 引用计数的指针</span></span><br><span class="line"></span><br><span class="line">      __shared_count(<span class="type">const</span> __shared_count&amp; __r) <span class="keyword">noexcept</span></span><br><span class="line">      : _M_pi(__r._M_pi)</span><br><span class="line">      {</span><br><span class="line">	<span class="keyword">if</span> (_M_pi != <span class="literal">nullptr</span>)</span><br><span class="line">	  _M_pi-&gt;_M_add_ref_copy(); <span class="comment">// <span class="doctag">TODO:</span> 有没有可能此时的 _M_pi 所引对象已经被释放了呢</span></span><br><span class="line">      }</span><br><span class="line"></span><br><span class="line">      ~__shared_count() <span class="keyword">noexcept</span></span><br><span class="line">      {</span><br><span class="line">	<span class="keyword">if</span> (_M_pi != <span class="literal">nullptr</span>)</span><br><span class="line">	  _M_pi-&gt;_M_release(); <span class="comment">// 没有直接 delete _M_pi，</span></span><br><span class="line">                           <span class="comment">// 而是使用 _M_pi 的成员函数来释放它。</span></span><br><span class="line">      }</span><br><span class="line"></span><br><span class="line">      __shared_count&amp;</span><br><span class="line">      <span class="keyword">operator</span>=(<span class="type">const</span> __shared_count&amp; __r) <span class="keyword">noexcept</span></span><br><span class="line">      {</span><br><span class="line">	_Sp_counted_base&lt;_Lp&gt;* __tmp = __r._M_pi;</span><br><span class="line">	<span class="keyword">if</span> (__tmp != _M_pi)</span><br><span class="line">	  {</span><br><span class="line">	    <span class="keyword">if</span> (__tmp != <span class="literal">nullptr</span>)</span><br><span class="line">	      __tmp-&gt;_M_add_ref_copy();</span><br><span class="line">	    <span class="keyword">if</span> (_M_pi != <span class="literal">nullptr</span>)</span><br><span class="line">	      _M_pi-&gt;_M_release(); <span class="comment">// 没有直接 delete _M_pi，</span></span><br><span class="line">                               <span class="comment">// 而是使用 _M_pi 的成员函数来释放它。</span></span><br><span class="line">	    _M_pi = __tmp;</span><br><span class="line">	  }</span><br><span class="line">	<span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">      }</span><br><span class="line">    };</span><br></pre></td></tr></table></figure>
 
 <h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/libstdc++/manual/ext_concurrency.html">https://gcc.gnu.org/onlinedocs/libstdc++/manual/ext_concurrency.html</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/17/cplusplus/C++%E7%9A%84bool%E5%92%8Cint/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/09/17/cplusplus/C++%E7%9A%84bool%E5%92%8Cint/" class="post-title-link" itemprop="url">C++ 的 bool 和 int</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-09-17 21:19:50" itemprop="dateCreated datePublished" datetime="2024-09-17T21:19:50+00:00">2024-09-17</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-18 02:03:04" itemprop="dateModified" datetime="2025-07-18T02:03:04+00:00">2025-07-18</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>在测试leetcode的 <a target="_blank" rel="noopener" href="https://leetcode.cn/problems/bus-routes/description/">815.公交路线</a> 一题时，发现一个现象，当我使用<code>vector&lt;vector&lt;bool&gt;&gt;</code>作为图的邻接矩阵的类型时，运行速度比使用<code>vector&lt;vector&lt;int&gt;&gt;</code>慢了近1倍。使用<code>bool</code>运行速度为600ms左右，使用<code>int</code>时运行速度为300ms左右。</p>
-<p>以下是ChatGPT的回答：</p>
-<p>在C++中，bool类型并不一定比int类型慢，但在某些情况下，它们的性能表现可能有所不同。以下是一些与性能差异相关的考虑：</p>
-<ol>
-<li>内存大小<br>bool类型在标准中只需要表示 true（非0）和 false（0），通常占用1个字节（8位），而 int 通常占用4个字节（32位）。因此，bool类型可以节省内存，在某些情况下会带来缓存效率的提升，尤其是在处理大量布尔值时（例如布尔数组）。</li>
-<li>对齐和内存访问<br>在某些架构上，处理单字节的bool类型时，可能会有额外的开销，因为处理器通常优化对齐访问。如果内存没有正确对齐，处理器可能需要额外的操作来处理非对齐的字节，导致性能下降。相比之下，int的对齐通常与系统的内存总线对齐更好（如32位或64位系统上），因此读取和写入可能更高效。</li>
-<li>指令集和操作<br>现代处理器在处理布尔值时通常会将其扩展为完整的寄存器大小（例如32位或64位）。因此，虽然bool类型的存储可能更小，但在实际操作中，处理器可能将它提升为int或更大的类型来执行逻辑操作。处理布尔值可能涉及隐式类型转换，这在某些极端情况下可能带来开销。</li>
-<li>寄存器使用<br>int 类型可以直接映射到处理器寄存器中进行操作，而 bool 类型的操作有时可能会涉及额外的逻辑运算（如掩码操作）以确保布尔值的正确性。</li>
-<li>编译器优化<br>现代编译器在优化时会考虑到bool与int的差异，并尽量优化代码，因此在大多数应用场景下，你不会感受到显著的性能差异。但在一些特定的场合（如大规模数组、频繁内存访问等），bool类型的使用确实可能带来性能影响，尤其是在处理器需要对齐或执行额外的操作时。<br>总结<br>bool类型通常并不会比int慢，实际的性能差异取决于平台、内存对齐、编译器优化以及应用场景。在大多数情况下，差异是微不足道的，但在对性能非常敏感的程序中，这种差异可能会显现。</li>
-</ol>
 
       
     </div>
@@ -1653,7 +1805,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">68</span>
+          <span class="site-state-item-count">69</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

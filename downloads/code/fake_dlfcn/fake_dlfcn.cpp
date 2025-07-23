@@ -17,8 +17,17 @@
 #define log_info(fmt, args...) __android_log_print(ANDROID_LOG_INFO, TAG_NAME, fmt, ##args)
 #define log_err(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG_NAME, fmt, ##args)
 #else
-#define log_info(fmt, ...) std::cout << "[INFO] " << fmt << "\n", ##__VA_ARGS__
-#define log_err(fmt, ...) std::cerr << "[ERROR] " << fmt << "\n", ##__VA_ARGS__
+#define log_info(fmt, ...) do { \
+    std::stringstream ss; \
+    ss << "[INFO] " << std::format(fmt, ##__VA_ARGS__) << "\n"; \
+    std::cout << ss.str(); \
+} while (0)
+
+#define log_err(fmt, ...) do { \
+    std::stringstream ss; \
+    ss << "[ERROR] " << std::format(fmt, ##__VA_ARGS__) << "\n"; \
+    std::cerr << ss.str(); \
+} while (0)
 #endif
 
 #ifdef LOG_DBG
@@ -67,7 +76,9 @@ void *fake_dlopen(const char *libpath, int flags) {
 
     std::string line;
     std::string found_line;
+    log_err("/proc/self/maps:\n");
     while (std::getline(maps, line)) {
+        log_err("%s\n", line.c_str());
         if (line.find("r-xp") != std::string::npos && line.find(libpath) != std::string::npos) {
             found_line = line;
             break;

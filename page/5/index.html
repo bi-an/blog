@@ -193,6 +193,84 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/C++%E7%BC%BA%E9%99%B7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/cplusplus/C++%E7%BC%BA%E9%99%B7/" class="post-title-link" itemprop="url">C++ 缺陷</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 21:33:51" itemprop="dateCreated datePublished" datetime="2024-01-23T21:33:51+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-07-23 13:06:32" itemprop="dateModified" datetime="2025-07-23T13:06:32+00:00">2025-07-23</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="basic-string-M-construct-null-not-valid"><a href="#basic-string-M-construct-null-not-valid" class="headerlink" title="basic_string::_M_construct null not valid"></a>basic_string::_M_construct null not valid</h2><p>C++有一个缺陷，请看以下代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//cpp defeat: basic_string::_M_construct null not valid</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(string s)</span> </span>&#123;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;fun&quot;</span> &lt;&lt; endl;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">fun</span>(<span class="number">0</span>); <span class="comment">// Run-time error: basic_string::_M_construct null not valid</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中，<code>fun(0)</code>的<code>0</code>会被视为<code>const char*</code>类型，也就是<code>nullptr</code>，所以在编译期可以通过。<br>但是运行期会触发<code>string</code>对象的构造错误“basic_string::_M_construct null not valid”。</p>
+<p>隐蔽一点的代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">char</span> * <span class="title">get_a_string</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Attention: Alaways take care that a parameter to a string should not be NULL!</span></span><br><span class="line">    <span class="built_in">fun</span>(<span class="built_in">get_a_string</span>()); <span class="comment">// Run-time error: basic_string::_M_construct null not valid</span></span><br><span class="line">    <span class="comment">// Better code</span></span><br><span class="line">    <span class="type">char</span> * str = <span class="built_in">get_a_string</span>();</span><br><span class="line">    <span class="built_in">fun</span>(str != <span class="literal">NULL</span>? str : <span class="string">&quot;&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/C++%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +302,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-18 02:03:04" itemprop="dateModified" datetime="2025-07-18T02:03:04+00:00">2025-07-18</time>
+                <time title="Modified: 2025-07-23 13:06:32" itemprop="dateModified" datetime="2025-07-23T13:06:32+00:00">2025-07-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -354,7 +432,7 @@ Refer to [here](https://stackoverflow.com/questions/15760447/what-is-the-meaning
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-18 02:03:04" itemprop="dateModified" datetime="2025-07-18T02:03:04+00:00">2025-07-18</time>
+                <time title="Modified: 2025-07-23 13:06:32" itemprop="dateModified" datetime="2025-07-23T13:06:32+00:00">2025-07-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -481,7 +559,7 @@ Refer to [here](https://stackoverflow.com/questions/15760447/what-is-the-meaning
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-18 02:03:04" itemprop="dateModified" datetime="2025-07-18T02:03:04+00:00">2025-07-18</time>
+                <time title="Modified: 2025-07-23 13:06:32" itemprop="dateModified" datetime="2025-07-23T13:06:32+00:00">2025-07-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -681,7 +759,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-18 02:03:04" itemprop="dateModified" datetime="2025-07-18T02:03:04+00:00">2025-07-18</time>
+                <time title="Modified: 2025-07-23 13:06:32" itemprop="dateModified" datetime="2025-07-23T13:06:32+00:00">2025-07-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -758,7 +836,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-18 02:03:04" itemprop="dateModified" datetime="2025-07-18T02:03:04+00:00">2025-07-18</time>
+                <time title="Modified: 2025-07-23 13:06:32" itemprop="dateModified" datetime="2025-07-23T13:06:32+00:00">2025-07-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -832,7 +910,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-18 02:03:04" itemprop="dateModified" datetime="2025-07-18T02:03:04+00:00">2025-07-18</time>
+                <time title="Modified: 2025-07-23 13:06:32" itemprop="dateModified" datetime="2025-07-23T13:06:32+00:00">2025-07-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -944,7 +1022,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-18 02:03:04" itemprop="dateModified" datetime="2025-07-18T02:03:04+00:00">2025-07-18</time>
+                <time title="Modified: 2025-07-23 13:06:32" itemprop="dateModified" datetime="2025-07-23T13:06:32+00:00">2025-07-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1019,7 +1097,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-18 02:03:04" itemprop="dateModified" datetime="2025-07-18T02:03:04+00:00">2025-07-18</time>
+                <time title="Modified: 2025-07-23 13:06:32" itemprop="dateModified" datetime="2025-07-23T13:06:32+00:00">2025-07-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1115,7 +1193,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-18 02:03:04" itemprop="dateModified" datetime="2025-07-18T02:03:04+00:00">2025-07-18</time>
+                <time title="Modified: 2025-07-23 13:06:32" itemprop="dateModified" datetime="2025-07-23T13:06:32+00:00">2025-07-23</time>
               </span>
 
           
@@ -1277,106 +1355,6 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/03/personal_site/Markdown-Syntax/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/03/personal_site/Markdown-Syntax/" class="post-title-link" itemprop="url">Markdown Syntax</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-03 16:40:05" itemprop="dateCreated datePublished" datetime="2024-01-03T16:40:05+00:00">2024-01-03</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-18 02:03:04" itemprop="dateModified" datetime="2025-07-18T02:03:04+00:00">2025-07-18</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Tools/" itemprop="url" rel="index"><span itemprop="name">Tools</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Mermaid"><a href="#Mermaid" class="headerlink" title="Mermaid"></a>Mermaid</h2><p><a target="_blank" rel="noopener" href="https://mermaid.js.org/syntax/flowchart.html">Flowchart</a></p>
-<h2 id="Tips"><a href="#Tips" class="headerlink" title="Tips"></a>Tips</h2><h3 id="转义反引号"><a href="#转义反引号" class="headerlink" title="转义反引号"></a>转义反引号</h3><p>参考<a target="_blank" rel="noopener" href="https://www.growingwiththeweb.com/2015/06/escaping-backtick-in-markdown.html">链接</a>。</p>
-<ol>
-<li>在code block之外，使用”&quot;转义即可：</li>
-</ol>
-<pre>\`</pre>
-
-<ol start="2">
-<li>用将反引号放入双反引号中，即</li>
-</ol>
-<pre>`` ` ``</pre>
-
-<ol start="3">
-<li>在代码块开始前缩进4个空格，即</li>
-</ol>
-<pre>    `</pre>
-
-<ol start="4">
-<li>使用fenced代码块：</li>
-</ol>
-<pre>```<br>`<br>```</pre>
-
-
-<h2 id="References"><a href="#References" class="headerlink" title="References"></a>References</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://www.jetbrains.com/help/hub/markdown-syntax.html">JetBrains: Markdown Syntax</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.markdownguide.org/extended-syntax/">Markdown Guide: Extended Syntax</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1448,7 +1426,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">68</span>
+          <span class="site-state-item-count">69</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
