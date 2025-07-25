@@ -21,16 +21,26 @@ tags: gdb
 * `info`
   - `info inferior` - 可以查看当前调试的进程的PID。另外一种方法是在gdb命令行中直接调用C函数：`print (int)getpid()`。参考：[链接](https://www.qiniu.com/qfans/qnso-36704270)。
   - `info source` - 当前调试的源文件路径。
+  - `info sources <pattern>` - 查询源文件路径
   - `info proc` - [当前进程信息](https://sourceware.org/gdb/onlinedocs/gdb/Process-Information.html)。
     - `info proc files` - 当前进程打开的文件（和文件描述符）。
+    - `info args` - 查看函数参数
+    - `info locals` - 查看局部变量。
+* `show` 
+  * `show environment` 查看全局变量
+  * `set environment <var>=<value>` 设置环境变量
 * `attach` - 连接到正在运行的进程。与`gdb -p`效果相同。
 * `detach` - 取消连接的进程。
 * `handle <signal> print pass nostop` - 捕获信号（比如`SIGSEGV`）并且忽略它。`handle <signal nostop`。
+  * `pass` 表示 gdb 会将捕获到的信号发回给被调试的进程。
 * `set` - 修改变量的值，比如`set x=10`（或`set var x=10`）将变量`x`的值改为`10`。参考[博客](https://blog.csdn.net/yasi_xi/article/details/12784507)。
 * `show directories`
 * `print` - gdb默认设置打印字符串的长度为200；更改打印最大长度：`set print elements <number-of-elements>`，`0`表示unlimited.
+          - 打印数组: `print arr[0]@3` ，其中 `@3` 表示打印 3 个元素。
+          - 以十六进制打印：`p/x <var>`
 * `ptype <variable name>` - 打印变量类型。
 * `finish` - 从函数中返回，并打印函数返回值（即使函数的return语句很复杂，也可以获取返回值）。
+* `frame <n>` - 跳转到某个栈f帧。
 
 ## 环境变量
 
@@ -202,6 +212,8 @@ And you can examine the current logging configuration:
 
 (gdb) show logging
 ```
+
+更新：新版本 gdb 采用 `set logging enabled on` 。
 
 记录输入的命令：
 
