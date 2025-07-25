@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# 该脚本会自动将 hostname 提交到延迟最小、最空闲的队列
+# 处理后的命令为 bsub -q <queue> -m <host> <args>
+
 # 用法提示
 # 例如：$0 myhostname -Is bash
 if [ $# -lt 2 ]; then
