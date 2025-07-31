@@ -193,6 +193,535 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/%E6%89%93%E5%8D%B0%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%A0%86%E6%A0%88/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/cplusplus/%E6%89%93%E5%8D%B0%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%A0%86%E6%A0%88/" class="post-title-link" itemprop="url">打印进程堆栈</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 22:33:09" itemprop="dateCreated datePublished" datetime="2024-01-23T22:33:09+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-07-31 09:52:07" itemprop="dateModified" datetime="2025-07-31T09:52:07+00:00">2025-07-31</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h2><p><a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Backtraces.html">glic Functions</a></p>
+<pre><code>backtrace
+backtrace_symbols
+backtrace_symbols_fd
+</code></pre>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;execinfo.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print_trace</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">static</span> <span class="type">const</span> <span class="type">int</span> SIZE = <span class="number">10</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">void</span>* buffer[SIZE];</span><br><span class="line">    <span class="type">char</span>** strings;</span><br><span class="line">    <span class="type">int</span> size, i;</span><br><span class="line"></span><br><span class="line">    size = <span class="built_in">backtrace</span>(buffer, SIZE);</span><br><span class="line">    strings = <span class="built_in">backtrace_symbols</span>(buffer, size);</span><br><span class="line">    <span class="keyword">if</span> (strings != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Obtained %d stack frames.\n&quot;</span>, size);</span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; size; ++i)</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>, strings[i]);</span><br><span class="line">        <span class="built_in">free</span>(strings);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="第三方库"><a href="#第三方库" class="headerlink" title="第三方库"></a>第三方库</h2><p>breakpad: <a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_45609638/article/details/125090204">https://blog.csdn.net/weixin_45609638/article/details/125090204</a></p>
+<p><a target="_blank" rel="noopener" href="https://juejin.cn/post/6899070041074073614">https://juejin.cn/post/6899070041074073614</a></p>
+<p><a target="_blank" rel="noopener" href="https://juejin.cn/post/7130820896213712927">https://juejin.cn/post/7130820896213712927</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/linux/Build-Linux-Kernel-Module/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/linux/Build-Linux-Kernel-Module/" class="post-title-link" itemprop="url">Build Linux Kernel Module</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 22:24:57" itemprop="dateCreated datePublished" datetime="2024-01-23T22:24:57+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-07-31 09:52:07" itemprop="dateModified" datetime="2025-07-31T09:52:07+00:00">2025-07-31</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="内核编译"><a href="#内核编译" class="headerlink" title="内核编译"></a>内核编译</h2><p>obj-m: <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/57839941/what-is-the-meaning-of-obj-m-in-linux-device-driver-makefile">链接</a></p>
+<p>make modules: <a target="_blank" rel="noopener" href="https://askubuntu.com/questions/1363530/what-does-make-and-make-modules-do-when-compiling-building-the-kernel">链接</a></p>
+<h2 id="编译内核模块"><a href="#编译内核模块" class="headerlink" title="编译内核模块"></a>编译内核模块</h2><p><a target="_blank" rel="noopener" href="https://tldp.org/LDP/lkmpg/2.6/html/x181.html">文档</a></p>
+<p>Makefile:</p>
+<pre><code>obj-m += hello-1.o
+
+all:
+    make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+
+clean:
+    make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+</code></pre>
+<p><code>make -C</code> changes to a new directory where the new makefiles will be run.</p>
+<p><code>M=$(PWD)</code> defines a variable <code>M</code> which the child makefiles can use.</p>
+<h2 id="命令"><a href="#命令" class="headerlink" title="命令"></a>命令</h2><ul>
+<li><code>insmod</code>: 插入一个模块（.ko）到kernel中。</li>
+<li><code>rmmod</code>: 从内核中删除一个模块。</li>
+<li><code>modprobe</code>: 从内核中增删模块。<code>modprobe</code>从<code>/lib/modules/`uname -r`</code>中搜索所有的模块和其他文件，除了<code>/etc/modprobe.d</code>目录中的可选配置文件（参见<code>modprobe.d(5)</code>）。</li>
+<li><code>lsmod</code>: 显示当前加载的内核模块的状态（即对<code>/proc/modules</code>内容的格式化）。</li>
+<li><code>modinfo</code>: 从命令行指定的内核模块中提取信息，如果没有给出模块名称，那么会搜索<code>/lib/modules/version</code>目录，就像<code>modprobe</code>加载模块时一样。</li>
+<li><code>depmod</code>: 生成<code>modules.dep</code>和映射文件。</li>
+<li><code>dmesg</code>: 打印或控制内核ring buffer（存储kernel message）。</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/misc/PCIE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/misc/PCIE/" class="post-title-link" itemprop="url">Introducation to PCIE</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 22:04:18" itemprop="dateCreated datePublished" datetime="2024-01-23T22:04:18+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-07-31 09:52:07" itemprop="dateModified" datetime="2025-07-31T09:52:07+00:00">2025-07-31</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Misc/" itemprop="url" rel="index"><span itemprop="name">Misc</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="词汇表（Glossary）"><a href="#词汇表（Glossary）" class="headerlink" title="词汇表（Glossary）"></a>词汇表（Glossary）</h1><ul>
+<li>BAR: base address register.</li>
+<li>PCI configuration space.</li>
+<li>sba: system bus address.</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://wiki.osdev.org/PCI">PCI</a></p>
+<p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/PCI_configuration_space">PCI configurtation space</a></p>
+<pre><code>PCI设备有一组被称为configuratin space的寄存器，并且PCI Express引入了Extended configuration space。configuration space寄存器被映射到memory locations。
+驱动设备和诊断软件必须要有权限访问configuration space，操作系统通常使用APIs来授权访问设备configuration space。
+</code></pre>
+<p>PCI configuration space有两种类型的Header（64 bytes）：</p>
+<h2 id="Header-Type-0x0"><a href="#Header-Type-0x0" class="headerlink" title="Header Type 0x0"></a>Header Type 0x0</h2><style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-rcf9{background-color:#F9F9F9;text-align:left;vertical-align:middle}
+.tg .tg-tbl0{background-color:#F9F9F9;font-weight:bold;text-align:center;vertical-align:middle}
+</style>
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-tbl0">Register</th>
+    <th class="tg-tbl0">Offset</th>
+    <th class="tg-tbl0">Bits 31-24</th>
+    <th class="tg-tbl0">Bits 23-16</th>
+    <th class="tg-tbl0">Bits 15-8</th>
+    <th class="tg-tbl0">Bits 7-0</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-rcf9">0x0</td>
+    <td class="tg-rcf9">0x0</td>
+    <td class="tg-rcf9" colspan="2">Device ID</td>
+    <td class="tg-rcf9" colspan="2">Vendor ID</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x1</td>
+    <td class="tg-rcf9">0x4</td>
+    <td class="tg-rcf9" colspan="2">Status</td>
+    <td class="tg-rcf9" colspan="2">Command</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x2</td>
+    <td class="tg-rcf9">0x8</td>
+    <td class="tg-rcf9">Class code</td>
+    <td class="tg-rcf9">Subclass</td>
+    <td class="tg-rcf9">Prog IF</td>
+    <td class="tg-rcf9">Revision ID</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x3</td>
+    <td class="tg-rcf9">0xC</td>
+    <td class="tg-rcf9">BIST</td>
+    <td class="tg-rcf9">Header type</td>
+    <td class="tg-rcf9">Latency Timer</td>
+    <td class="tg-rcf9">Cache Line Size</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x4</td>
+    <td class="tg-rcf9">0x10</td>
+    <td class="tg-rcf9" colspan="4">Base address #0 (BAR0)</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x5</td>
+    <td class="tg-rcf9">0x14</td>
+    <td class="tg-rcf9" colspan="4">Base address #1 (BAR1)</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x6</td>
+    <td class="tg-rcf9">0x18</td>
+    <td class="tg-rcf9">Secondary Latency Timer</td>
+    <td class="tg-rcf9">Subordinate Bus Number</td>
+    <td class="tg-rcf9">Secondary Bus Number</td>
+    <td class="tg-rcf9">Primary Bus Number</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x7</td>
+    <td class="tg-rcf9">0x1C</td>
+    <td class="tg-rcf9" colspan="2">Secondary Status</td>
+    <td class="tg-rcf9">I/O Limit</td>
+    <td class="tg-rcf9">I/O Base</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x8</td>
+    <td class="tg-rcf9">0x20</td>
+    <td class="tg-rcf9" colspan="2">Memory Limit</td>
+    <td class="tg-rcf9" colspan="2">Memory Base</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x9</td>
+    <td class="tg-rcf9">0x24</td>
+    <td class="tg-rcf9" colspan="2">Prefetchable Memory Limit</td>
+    <td class="tg-rcf9" colspan="2">Prefetchable Memory Base</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xA</td>
+    <td class="tg-rcf9">0x28</td>
+    <td class="tg-rcf9" colspan="4">Prefetchable Base Upper 32 Bits</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xB</td>
+    <td class="tg-rcf9">0x2C</td>
+    <td class="tg-rcf9" colspan="4">Prefetchable Limit Upper 32 Bits</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xC</td>
+    <td class="tg-rcf9">0x30</td>
+    <td class="tg-rcf9" colspan="2">I/O Limit Upper 16 Bits</td>
+    <td class="tg-rcf9" colspan="2">I/O Base Upper 16 Bits</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xD</td>
+    <td class="tg-rcf9">0x34</td>
+    <td class="tg-rcf9" colspan="3">Reserved</td>
+    <td class="tg-rcf9">Capability Pointer</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xE</td>
+    <td class="tg-rcf9">0x38</td>
+    <td class="tg-rcf9" colspan="4">Expansion ROM base address</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xF</td>
+    <td class="tg-rcf9">0x3C</td>
+    <td class="tg-rcf9" colspan="2">Bridge Control</td>
+    <td class="tg-rcf9">Interrupt PIN</td>
+    <td class="tg-rcf9">Interrupt Line</td>
+  </tr>
+</tbody>
+</table>
+
+<h2 id="Header-Type-0x1"><a href="#Header-Type-0x1" class="headerlink" title="Header Type 0x1"></a>Header Type 0x1</h2><style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-rcf9{background-color:#F9F9F9;text-align:left;vertical-align:middle}
+.tg .tg-tbl0{background-color:#F9F9F9;font-weight:bold;text-align:center;vertical-align:middle}
+</style>
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-tbl0">Register</th>
+    <th class="tg-tbl0">Offset</th>
+    <th class="tg-tbl0">Bits 31-24</th>
+    <th class="tg-tbl0">Bits 23-16</th>
+    <th class="tg-tbl0">Bits 15-8</th>
+    <th class="tg-tbl0">Bits 7-0</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-rcf9">0x0</td>
+    <td class="tg-rcf9">0x0</td>
+    <td class="tg-rcf9" colspan="2">Device ID</td>
+    <td class="tg-rcf9" colspan="2">Vendor ID</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x1</td>
+    <td class="tg-rcf9">0x4</td>
+    <td class="tg-rcf9" colspan="2">Status</td>
+    <td class="tg-rcf9" colspan="2">Command</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x2</td>
+    <td class="tg-rcf9">0x8</td>
+    <td class="tg-rcf9">Class code</td>
+    <td class="tg-rcf9">Subclass</td>
+    <td class="tg-rcf9">Prog IF</td>
+    <td class="tg-rcf9">Revision ID</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x3</td>
+    <td class="tg-rcf9">0xC</td>
+    <td class="tg-rcf9">BIST</td>
+    <td class="tg-rcf9">Header type</td>
+    <td class="tg-rcf9">Latency Timer</td>
+    <td class="tg-rcf9">Cache Line Size</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x4</td>
+    <td class="tg-rcf9">0x10</td>
+    <td class="tg-rcf9" colspan="4">Base address #0 (BAR0)</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x5</td>
+    <td class="tg-rcf9">0x14</td>
+    <td class="tg-rcf9" colspan="4">Base address #1 (BAR1)</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x6</td>
+    <td class="tg-rcf9">0x18</td>
+    <td class="tg-rcf9">Secondary Latency Timer</td>
+    <td class="tg-rcf9">Subordinate Bus Number</td>
+    <td class="tg-rcf9">Secondary Bus Number</td>
+    <td class="tg-rcf9">Primary Bus Number</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x7</td>
+    <td class="tg-rcf9">0x1C</td>
+    <td class="tg-rcf9" colspan="2">Secondary Status</td>
+    <td class="tg-rcf9">I/O Limit</td>
+    <td class="tg-rcf9">I/O Base</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x8</td>
+    <td class="tg-rcf9">0x20</td>
+    <td class="tg-rcf9" colspan="2">Memory Limit</td>
+    <td class="tg-rcf9" colspan="2">Memory Base</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x9</td>
+    <td class="tg-rcf9">0x24</td>
+    <td class="tg-rcf9" colspan="2">Prefetchable Memory Limit</td>
+    <td class="tg-rcf9" colspan="2">Prefetchable Memory Base</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xA</td>
+    <td class="tg-rcf9">0x28</td>
+    <td class="tg-rcf9" colspan="4">Prefetchable Base Upper 32 Bits</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xB</td>
+    <td class="tg-rcf9">0x2C</td>
+    <td class="tg-rcf9" colspan="4">Prefetchable Limit Upper 32 Bits</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xC</td>
+    <td class="tg-rcf9">0x30</td>
+    <td class="tg-rcf9" colspan="2">I/O Limit Upper 16 Bits</td>
+    <td class="tg-rcf9" colspan="2">I/O Base Upper 16 Bits</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xD</td>
+    <td class="tg-rcf9">0x34</td>
+    <td class="tg-rcf9" colspan="3">Reserved</td>
+    <td class="tg-rcf9">Capability Pointer</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xE</td>
+    <td class="tg-rcf9">0x38</td>
+    <td class="tg-rcf9" colspan="4">Expansion ROM base address</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xF</td>
+    <td class="tg-rcf9">0x3C</td>
+    <td class="tg-rcf9" colspan="2">Bridge Control</td>
+    <td class="tg-rcf9">Interrupt PIN</td>
+    <td class="tg-rcf9">Interrupt Line</td>
+  </tr>
+</tbody>
+</table>
+
+<pre><code>BAR0
+Memory-mapped I/O (MMIO) registers
+BAR1
+Device memory windows.
+BAR2/3
+Complementary space of BAR1.
+BAR5
+I/O port.
+BAR6
+PCI ROM.
+</code></pre>
+<h1 id="Commands"><a href="#Commands" class="headerlink" title="Commands"></a>Commands</h1><p>lspci</p>
+<p><a target="_blank" rel="noopener" href="https://diego.assencio.com/?index=649b7a71b35fc7ad41e03b6d0e825f07">Interpreting the output of lspci</a></p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://insujang.github.io/2017-04-03/pci-express-i/o-system/">PCI Express I&#x2F;O System</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.pcmag.com/encyclopedia/term/pci-express">PCI Express</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.trentonsystems.com/blog/what-is-pcie">What is PCIe</a></li>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/30190050/what-is-the-base-address-register-bar-in-pcie">What is the Base Address Register (BAR) in PCIe?</a></li>
+<li><a target="_blank" rel="noopener" href="https://utcc.utoronto.ca/~cks/space/blog/linux/PCIeLspciBusAddresses">PCIe bus addresses, lspci, and working out your PCIe bus topology</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/misc/LDAP/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +753,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-25 06:53:43" itemprop="dateModified" datetime="2025-07-25T06:53:43+00:00">2025-07-25</time>
+                <time title="Modified: 2025-07-31 09:52:07" itemprop="dateModified" datetime="2025-07-31T09:52:07+00:00">2025-07-31</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -299,7 +828,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-25 06:53:43" itemprop="dateModified" datetime="2025-07-25T06:53:43+00:00">2025-07-25</time>
+                <time title="Modified: 2025-07-31 09:52:07" itemprop="dateModified" datetime="2025-07-31T09:52:07+00:00">2025-07-31</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -383,7 +912,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-25 06:53:43" itemprop="dateModified" datetime="2025-07-25T06:53:43+00:00">2025-07-25</time>
+                <time title="Modified: 2025-07-31 09:52:07" itemprop="dateModified" datetime="2025-07-31T09:52:07+00:00">2025-07-31</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -458,7 +987,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-25 06:53:43" itemprop="dateModified" datetime="2025-07-25T06:53:43+00:00">2025-07-25</time>
+                <time title="Modified: 2025-07-31 09:52:07" itemprop="dateModified" datetime="2025-07-31T09:52:07+00:00">2025-07-31</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -540,7 +1069,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-25 06:53:43" itemprop="dateModified" datetime="2025-07-25T06:53:43+00:00">2025-07-25</time>
+                <time title="Modified: 2025-07-31 09:52:07" itemprop="dateModified" datetime="2025-07-31T09:52:07+00:00">2025-07-31</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -617,7 +1146,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-25 06:53:43" itemprop="dateModified" datetime="2025-07-25T06:53:43+00:00">2025-07-25</time>
+                <time title="Modified: 2025-07-31 09:52:07" itemprop="dateModified" datetime="2025-07-31T09:52:07+00:00">2025-07-31</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -697,7 +1226,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-25 06:53:43" itemprop="dateModified" datetime="2025-07-25T06:53:43+00:00">2025-07-25</time>
+                <time title="Modified: 2025-07-31 09:52:07" itemprop="dateModified" datetime="2025-07-31T09:52:07+00:00">2025-07-31</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -841,675 +1370,10 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/gcc%E5%85%A5%E9%97%A8/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/cplusplus/gcc%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">gcc 入门</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 21:44:11" itemprop="dateCreated datePublished" datetime="2024-01-23T21:44:11+00:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-25 06:53:43" itemprop="dateModified" datetime="2025-07-25T06:53:43+00:00">2025-07-25</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="递归处理顺序"><a href="#递归处理顺序" class="headerlink" title="递归处理顺序"></a>递归处理顺序</h2><p>gcc 的输入文件和库是从左往右处理的。也就是说，以下命令是错误的：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -L. -la main.cc</span><br></pre></td></tr></table></figure>
-
-<p>链接器处理到某个目标文件（如 main.cc 编译后的目标代码）时，如果遇到未解析的符号（比如 f() ），<br>它会从接下来的库中查找这些符号。因此顺序非常重要。</p>
-<p>这里，-L. -la 选项在 main.cc 之前，链接器会首先尝试从 liba.so 中查找引用的符号，<br>但是，因为此时 main.cc 还未被处理，所以链接器还不知道有对 liba.so 中的函数 f() 的引用。<br>到了 main.cc ，链接器解析出引用，但它不会回头再去 liba.so 中查找，导致报错：”undefined reference to f()”。</p>
-<p>正确的命令如下：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc main.cc -L. -la</span><br></pre></td></tr></table></figure>
-
-<p>注意：liba.so 的指定必须去掉 lib 和 .so ，也就是说不允许直接指定“库文件名”，而是只能指定“库名”。<br>如果想直接指定库文件名，那么应该把 liba.so 当成输入文件：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc main.cc ./liba.so</span><br></pre></td></tr></table></figure>
-
-<h2 id="属性语法（Attribute-Syntax）"><a href="#属性语法（Attribute-Syntax）" class="headerlink" title="属性语法（Attribute Syntax）"></a>属性语法（Attribute Syntax）</h2><p>参考：<a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/gcc-3.2/gcc/Attribute-Syntax.html#Attribute%20Syntax">官方文档</a>。</p>
-<h3 id="函数属性（Function-Attributes）"><a href="#函数属性（Function-Attributes）" class="headerlink" title="函数属性（Function Attributes）"></a>函数属性（Function Attributes）</h3><p>参考：</p>
-<ul>
-<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/11621043/how-should-i-properly-use-attribute-format-printf-x-y-inside-a-class">stackoverflow</a></li>
-<li><a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/gcc-3.2/gcc/Function-Attributes.html">gcc官方文档：Function Attributes</a></li>
-</ul>
-<p>属性列举：</p>
-<ul>
-<li><p><code>format (archetype, string-index, first-to-check)</code></p>
-<p>  format 属性，指定函数采用 printf、scanf、strftime 或 strfmon 风格的参数，<br>  这些参数应根据格式字符串（format string）进行类型检查（type-checked）。<br>  类型检查发生在编译期。</p>
-<p>  举例：</p>
-  <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">extern</span> <span class="type">int</span></span></span><br><span class="line"><span class="function"><span class="title">my_printf</span> <span class="params">(<span class="type">void</span> *my_object, <span class="type">const</span> <span class="type">char</span> *my_format, ...)</span></span></span><br><span class="line"><span class="function">    __<span class="title">attribute__</span> <span class="params">((format (printf, <span class="number">2</span>, <span class="number">3</span>)))</span></span>;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><code>archetype</code>决定format string应该如何解释。<br>可选为<code>printf</code>、<code>scanf</code>、<code>strftime</code>或<code>strfmon</code>（也可以使用<code>__printf__</code>、<code>__scanf__</code>、<code>__strftime__</code>或<code>__strfmon__</code>）。</li>
-<li><code>string-index</code>指定哪个参数是format string（从1开始）。</li>
-<li><code>first-to-check</code>指定format string对应的第一个参数的序号。<br>对于那些无法检查参数的函数（比如<code>vprintf</code>），该参数指定为<code>0</code>。在这种情况下，编译器仅检查format string的一致性。对于<code>strftime</code>格式，该参数必须为<code>0</code>。</li>
-</ul>
-</li>
-</ul>
-<h2 id="选项"><a href="#选项" class="headerlink" title="选项"></a>选项</h2><ul>
-<li><code>-save-temps</code>: 可以保留所有中间文件，例如预编译文件、汇编文件、目标文件等。</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/core-dump/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/cplusplus/core-dump/" class="post-title-link" itemprop="url">core dump</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 21:42:51" itemprop="dateCreated datePublished" datetime="2024-01-23T21:42:51+00:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-25 06:53:43" itemprop="dateModified" datetime="2025-07-25T06:53:43+00:00">2025-07-25</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="ulimit"><a href="#ulimit" class="headerlink" title="ulimit"></a><code>ulimit</code></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#查看配置</span></span><br><span class="line"><span class="built_in">ulimit</span> -a</span><br><span class="line"><span class="comment">#设置core file size</span></span><br><span class="line"><span class="built_in">ulimit</span> -c unlimited</span><br></pre></td></tr></table></figure>
-
-<p><code>ulimit</code>只对当前终端有效。</p>
-<p>以下两种方法对所有用户和终端有效：</p>
-<ol>
-<li>在<code>/etc/security/limits.conf</code>中设置（redhat衍生系linux）。</li>
-<li>或注释掉<code>/etc/profile</code>中的这一行： <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># No core files by default</span></span><br><span class="line"><span class="built_in">ulimit</span> -S -c 0 &gt; /dev/null 2&gt;&amp;1</span><br></pre></td></tr></table></figure></li>
-</ol>
-<h2 id="core-pattern"><a href="#core-pattern" class="headerlink" title="core_pattern"></a>core_pattern</h2><h3 id="core-pattern解释"><a href="#core-pattern解释" class="headerlink" title="core_pattern解释"></a>core_pattern解释</h3><p>见<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2065912/core-dumped-but-core-file-is-not-in-the-current-directory">链接</a>。</p>
-<p>Read <a target="_blank" rel="noopener" href="http://www.kernel.org/doc/Documentation/sysctl/kernel.txt">&#x2F;usr&#x2F;src&#x2F;linux&#x2F;Documentation&#x2F;sysctl&#x2F;kernel.txt</a>.</p>
-<pre><code>core_pattern is used to specify a core dumpfile pattern name.
-</code></pre>
-<p>在系统启动时，<a target="_blank" rel="noopener" href="https://wiki.ubuntu.com/Apport">Apport</a>（crash reporting service）会生成配置文件<code>/proc/sys/kernel/core_pattern</code>。参考<a target="_blank" rel="noopener" href="https://askubuntu.com/questions/420410/how-to-permanently-edit-the-core-pattern-file">这里</a>。</p>
-<p>Apport uses <code>/proc/sys/kernel/core_pattern</code> to directly pipe the core dump into <code>apport</code>:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cat</span> /proc/sys/kernel/core_pattern</span><br><span class="line">|/usr/share/apport/apport %p %s %c</span><br><span class="line">$ </span><br></pre></td></tr></table></figure>
-
-<p>Note that even if <code>ulimit</code> is set to disabled core files (by specyfing a core file size of zero using <code>ulimit -c 0</code>), <code>apport</code> will still capture the crash.</p>
-<p>For intercepting Python crashes it installs a <code>/etc/python*/sitecustomize.py</code> to call apport on unhandled exceptions.</p>
-<p>其中，<code>/usr/share/apport/apport</code>是一个python脚本。</p>
-<p>以下是core_pattern文件的参数说明（参考Linux Manual Page：<code>man core</code>）：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">%c - Core file size soft resource limit of crashing process (since Linux 2.6.24).</span><br><span class="line">%p - insert pid into filename 添加pid</span><br><span class="line">%u - insert current uid into filename 添加当前uid</span><br><span class="line">%g - insert current gid into filename 添加当前gid</span><br><span class="line">%s - insert signal that caused the coredump into the filename 添加导致产生core的信号</span><br><span class="line">%t - insert UNIX time that the coredump occurred into filename 添加core文件生成时的unix时间</span><br><span class="line">%h - insert hostname where the coredump happened into filename 添加主机名</span><br><span class="line">%e - insert coredumping executable name into filename 添加命令名</span><br><span class="line"></span><br><span class="line">If the first character of the pattern is a &#x27;|&#x27;, the kernel will treat the rest of the pattern as a command to run. The core dump will be written to the standard input of that program instead of to a file.</span><br></pre></td></tr></table></figure>
-
-<p>Apport的拦截组件默认是关闭的：</p>
-<p>Apport itself is running at all times because it collects crash data for whoopsie (see <a target="_blank" rel="noopener" href="https://wiki.ubuntu.com/ErrorTracker">ErrorTracker</a>). However, the crash interception component is still disabled. To enable it permanently, do:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo nano /etc/apport/crashdb.conf</span><br></pre></td></tr></table></figure>
-
-<p>… and add a hash symbol # in the beginning of the following line:</p>
-<pre><code>&#39;problem_types&#39;: [&#39;Bug&#39;, &#39;Package&#39;],
-</code></pre>
-<p>To disable crash reporting just remove the hash symbol.</p>
-<h3 id="设置core-pattern"><a href="#设置core-pattern" class="headerlink" title="设置core_pattern"></a>设置core_pattern</h3><p>见<a target="_blank" rel="noopener" href="https://www.cnblogs.com/xiaodoujiaohome/p/6222895.html">链接</a>。</p>
-<ol>
-<li><p>&#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;core_uses_pid可以控制产生的core文件的文件名中是否添加pid作为扩展，如果添加则文件内容为1，否则为0；</p>
-</li>
-<li><p>&#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;core_pattern可以设置格式化的core文件保存位置或文件名：</p>
- <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cat</span> /proc/sys/kernel/core_pattern</span><br><span class="line">|/usr/share/apport/apport %p %s %c</span><br><span class="line">$ <span class="built_in">echo</span> <span class="string">&quot;/corefile/core-%e-%p-%t&quot;</span> &gt; /proc/sys/kernel/core_pattern</span><br></pre></td></tr></table></figure>
-
-
-<p> 你可以用下列方式来完成：</p>
- <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#查看所有sysctl所有变量的值。</span></span><br><span class="line">sysctl -a</span><br><span class="line"><span class="comment">#设置变量kernel.core_pattern为如下值。</span></span><br><span class="line">sudo sysctl -w kernel.core_pattern=/tmp/core-%e.%p.%h.%t</span><br></pre></td></tr></table></figure>
-
-<p> 这些操作一旦计算机重启，则会丢失，如果你想持久化这些操作，可以在 &#x2F;etc&#x2F;sysctl.conf文件中增加：</p>
- <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kernel.core_pattern=/tmp/core%p</span><br></pre></td></tr></table></figure>
-
-<p> 加好后，如果你想不重启看看效果的话，则用下面的命令：</p>
- <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sysctl -p /etc/sysctl.conf</span><br></pre></td></tr></table></figure></li>
-</ol>
-<h2 id="相关命令行工具"><a href="#相关命令行工具" class="headerlink" title="相关命令行工具"></a>相关命令行工具</h2><p>参考资料：</p>
-<p>Linux Manual Page: <a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man5/core.5.html"><code>man core</code></a></p>
-<pre><code>SEE ALSO
-    bash(1),  coredumpctl(1),  gdb(1),  getrlimit(2), mmap(2), prctl(2), sigaction(2), elf(5), proc(5), pthreads(7), signal(7), systemd-coredump(8)
-</code></pre>
-<h2 id="Segment-Fault排查"><a href="#Segment-Fault排查" class="headerlink" title="Segment Fault排查"></a>Segment Fault排查</h2><p>参考<a target="_blank" rel="noopener" href="https://www.wtango.com/%E6%AE%B5%E9%94%99%E8%AF%AFsegmentation-fault%E4%BA%A7%E7%94%9F%E7%9A%84%E5%8E%9F%E5%9B%A0%E4%BB%A5%E5%8F%8A%E8%B0%83%E8%AF%95%E6%96%B9%E6%B3%95/">链接</a>。</p>
-<ol>
-<li><p>dmesg + nm + addr2line</p>
-<p>addr2line只能找出executable的行号；如果是shared libraries，请使用gdb。参考<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2549214/interpreting-segfault-messages">这里</a>。</p>
-<p>dmesg输出的含义：</p>
-<p>ip: 表示instruction pointer.</p>
-</li>
-<li><p>fprintf</p>
-</li>
-<li><p>gdb</p>
-</li>
-<li><p>signal(SIGSEGV,handler)</p>
-</li>
-<li><p>valgrind<br>参考：<br> <a target="_blank" rel="noopener" href="https://jvns.ca/blog/2018/04/28/debugging-a-segfault-on-linux/">博客</a><br> <a target="_blank" rel="noopener" href="https://valgrind.org/docs/manual/ms-manual.html">文档</a><br> <a target="_blank" rel="noopener" href="https://courses.cs.washington.edu/courses/cse326/05wi/valgrind-doc/ms_main.html">可以使用PostScript查看图形化结果</a></p>
-</li>
-<li><p>heaptrack</p>
-<p> 见<a target="_blank" rel="noopener" href="https://github.com/KDE/heaptrack">github仓库</a></p>
-</li>
-<li><p>Jemalloc</p>
-<p> 见<a target="_blank" rel="noopener" href="https://jemalloc.net/">官网</a></p>
-</li>
-</ol>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/%E7%BC%96%E8%AF%91%E5%92%8C%E9%93%BE%E6%8E%A5/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/cplusplus/%E7%BC%96%E8%AF%91%E5%92%8C%E9%93%BE%E6%8E%A5/" class="post-title-link" itemprop="url">编译和链接</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 21:36:08" itemprop="dateCreated datePublished" datetime="2024-01-23T21:36:08+00:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-25 06:53:43" itemprop="dateModified" datetime="2025-07-25T06:53:43+00:00">2025-07-25</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="编译主要步骤"><a href="#编译主要步骤" class="headerlink" title="编译主要步骤"></a>编译主要步骤</h2><p>参考<a target="_blank" rel="noopener" href="https://blog.csdn.net/chen1415886044/article/details/104537547">博客</a></p>
-<ol>
-<li>预处理</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -E test.c -o test.i</span><br></pre></td></tr></table></figure>
-
-<ol start="2">
-<li><p>编译</p>
-<p> 编译是将高级语言（例如C、C++、Jave等）代码转换成机器码的过程。<br> 编译可以分成多个阶段，包括词法分析、语法分析、语义分析、优化和代码生成。<br> 编译器首先将源代码转换一种中间表示（通常是汇编代码或字节码），然后再将其转换为目标机器的机器代码。<br> 经过编译的代码通常是二进制的，可以直接在目标机器上执行。</p>
-</li>
-</ol>
-<p>先生成汇编代码：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -S test.i -o test.s</span><br></pre></td></tr></table></figure>
-
-<ol start="3">
-<li><p>汇编</p>
-<p> 将汇编代码转成机器码。</p>
-</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -c test.s -o test.o</span><br></pre></td></tr></table></figure>
-
-<ol start="4">
-<li><p>链接</p>
-<p> 该目标文件与其他目标文件、库文件、启动文件等链接起来生成可执行文件。</p>
-</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc test.o -o <span class="built_in">test</span></span><br></pre></td></tr></table></figure>
-
-<p>Note: 可以使用 <code>-save-temps</code> 选项以保留编译过程中的所有中间文件：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -save-temps test.c</span><br></pre></td></tr></table></figure>
-
-<h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><h2 id="C-名称修饰"><a href="#C-名称修饰" class="headerlink" title="C++名称修饰"></a>C++名称修饰</h2><p><code>Name mangling (C++ only)</code>: 名称修饰，也称为名称重整、名称改编。参见链接<a target="_blank" rel="noopener" href="https://www.ibm.com/docs/en/i/7.2?topic=linkage-name-mangling-c-only">1</a>、<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E5%90%8D%E5%AD%97%E4%BF%AE%E9%A5%B0">2</a>。</p>
-<h3 id="环境变量"><a href="#环境变量" class="headerlink" title="环境变量"></a>环境变量</h3><p>参考：<code>man ld.so</code></p>
-<pre><code>PATH
-LD_LIBRARY_PATH
-LD_PRELOAD  在程序运行时，强制优先加载指定的共享库，即使系统中已有其他版本。常用于调试、性能分析、函数拦截（hook）等。
-            只在运行时生效。
-            优先级高于 rpath、LD_LIBRARY_PATH 等。
-            可以用来“注入”库，修改程序行为。
-</code></pre>
-<h3 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h3><h3 id="命令"><a href="#命令" class="headerlink" title="命令"></a>命令</h3><p>参考：<code>man ld.so</code>, <code>man vdso</code>, <code>man elf</code>, <a target="_blank" rel="noopener" href="https://linux.die.net/man/1/scanelf">scanelf</a></p>
-<pre><code>ld(1), ldd(1), pldd(1), sprof(1), dlopen(3),getauxval(3), elf(5), capabilities(7),
-rtld-audit(7), ldconfig(8), sln(8), vdso(7), as(1), elfedit(1), gdb(1), nm(1),
-objcopy(1), objdump(1), patchelf(1), readelf(1), size(1), strings(1), strip(1),
-execve(2), dl_iterate_phdr(3), core(5), ld.so(8)
-</code></pre>
-<p>ldconfig</p>
-<pre><code>配置动态连接器（dynamic linker）的运行时绑定（dynamic bindings）。
-如果你刚刚安装好共享库，可能需要运行ldconfig：
-    sudo ldconfig
-通常需要超级用户来运行ldconfig，因为可能对需要某些root用户所有的目录和文件有写入权限。
-lddconfig 为从以下目录找到的共享库创建必要的 links 和 cache ：
-    command line指定的目录；
-    /etc/ld.so.conf文件中指定的目录；
-    受信任的目录: /lib, /lib64, /usr/lib, /usr/lib64 。
-该 cache 被运行时连接器（run-time linker） ld.so 或 ld-linux.so 使用。
-
-ldconfig 尝试基于该库连接的 C 库来推断 ELF 库（比如 libc5 或 libc6/glibc）的类型。
-
-一些现有的库没有包含足够的信息来推断其类型。
-因此， /etc/ld.so.conf 文件格式允许指定期望的类型。
-这只在这些 ELF 库不能被解决的情况下使用。
-
-ldconfig 期望的符号链接有某种特定的形式，比如：
-
-    libfoo.so -&gt; libfoo.so.1 -&gt; libfoo.so.1.12
-
-其中，中间的文件 libfoo.so.1 是库的 SONAME 。
-
-如果不遵循这种格式可能会导致升级后的兼容性问题。
-</code></pre>
-<p>ldd</p>
-<pre><code>描述：
-    ldd调用标准动态连接器（见 ld.so(8)），并且将环境变量 LD_TRACE_LODADED_OBJECTS 为 1 。
-    这会让动态连接器检查程序的动态依赖，并且寻找（根据 ld.so(8) 描述的规则）
-    和加载满足这些依赖的目标。对于每一条依赖，
-    ldd 显示匹配的目标的位置和其载入处的16进制地址。
-    （linux-vdso和ld-linux共享依赖是特殊的；见vdso(7)和ld.so(8)）
-
-安全性：
-    注意，在某些情况下，一些版本的ldd可能会尝试通过直接运行程序（可能导致程序中的ELF解释器
-    或程序本身的运行）来获取依赖信息。
-
-    因此，永远不要在不受信任的可执行文件上使用ldd，因为会导致随意代码的运行。更安全替代方法为：
-        $ objdump -p /path/to/program | grep NEEDED
-    注意，这种替代方法只会显示该可执行文件的直接依赖，而ldd显示该可执行文件的整个依赖树。
-
-解释ldd的输出:
-$ ldd -v libibsupport_real.so 
-./libibsupport_real.so: /usr/lib64/libibverbs.so.1: version `IBVERBS_1.8&#39; not found (required by ./libibsupport_real.so)
-    linux-vdso.so.1 =&gt;  (0x00002ad3e49e3000)
-    libibverbs.so.1 =&gt; /usr/lib64/libibverbs.so.1 (0x00002ad3e589b000)
-    ...
-
-    Version information:
-    ./libibsupport_real.so:
-            libgcc_s.so.1 (GCC_3.0) =&gt; /usr/lib64/libgcc_s.so.1
-            libibverbs.so.1 (IBVERBS_1.8) =&gt; not found
-            libibverbs.so.1 (IBVERBS_1.1) =&gt; /usr/lib64/libibverbs.so.1
-            ...
-    /usr/lib64/libnl-3.so.200:
-                libm.so.6 (GLIBC_2.2.5) =&gt; /usr/lib64/libm.so.6
-                ...
-在&quot;Version information&quot;中，&quot;libgcc_s.so.1 (GCC_3.0) =&gt; /usr/lib64/libgcc_s.so.1&quot;表示：
-    &quot;libgcc_s.so.1&quot;指定一个shared library的名字（libgcc_s.so.1是GCC runtime library的一部分），该shared library为&quot;./libibsupport_real.so&quot;所依赖；
-    &quot;(GCC_3.0)&quot;表明&quot;libgcc_s.so.1&quot;需要3.0版本及以上的GNU Compiler Collection (GCC)；
-    &quot;=&gt;&quot;指出满足依赖的shared library；
-    &quot;/usr/lib64/libgcc_s.so.1&quot;是满足要求的shared library的路径。
-</code></pre>
-<p>  <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/34428037/how-to-interpret-the-output-of-the-ldd-program">ldd output说明</a></p>
-<p>sprof</p>
-<p>参考：<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/881074/how-to-use-sprof">stackoverflows</a></p>
-<p>objdump</p>
-<pre><code>[-p|--private-headers]
-[-x|--all-headers]
-</code></pre>
-<p>readelf</p>
-<pre><code>[-d|--dynamic]
-</code></pre>
-<h3 id="文件"><a href="#文件" class="headerlink" title="文件"></a>文件</h3><pre><code>/lib/ld.so
-    Run-time linker/loader.
-/etc/ld.so.conf
-    File containing a list of directories, one per line, in which to search for libraries.
-/etc/ld.so.cache
-    File containing an ordered list of libraries found in the directories specified in /etc/ld.so.conf, as well as those found in the trusted directories.
-
-The trusted directories:
-    /lib
-    /lib64
-    /usr/lib
-    /usr/lib64
-</code></pre>
-<p>ld.so</p>
-<pre><code>名字
-    ld.so, ld-linux.so - 动态连接/加载器。
-
-简介
-    动态连接器可以被间接运行或直接运行。
-    间接运行：
-        运行某些动态连接程序或共享库。在这种情况下，不能向动态连接器传递命令行选项；并且在ELF情况下，存储在程序的.interp section中的动态连接器被执行。
-    直接运行：
-        /lib/ld-linux.so.* [OPTIONS] [PRAGRAM [ARGUMENTS]]
-
-描述
-    ld.so 和 ld-linux.so* 寻找和加载程序所需的共享对象（共享库），准备程序的运行，然后运行它。
-
-    如果在编译期没有向 ld(1) 指定 -static 选项，则Linux二进制文件需要动态连接（在运行时连接）。
-</code></pre>
-<h3 id="SONAME"><a href="#SONAME" class="headerlink" title="SONAME"></a>SONAME</h3><p>参考：<code>man ldconfig</code><br>参考：<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Soname">SONAME Wiki</a></p>
-<blockquote>
-<p>GNU linker使用 -hname 或 -soname&#x3D;name 来指定该库的library name field。<br>在内部，linker会创建一个 DT_SONAME field并且用 name 来填充它。</p>
-</blockquote>
-<ol>
-<li>指定SONAME：</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#Use ld:</span></span><br><span class="line">$ ld -shared -soname libexample.so.1 -o libexample.so.1.2.3 file1.o file2.o</span><br><span class="line"><span class="comment">#Use gcc or g++:</span></span><br><span class="line">$ gcc -shared -Wl,-soname,libexample.so.1 -o libexample.so.1.2.3 file1.o file2.o</span><br></pre></td></tr></table></figure>
-
-<ol start="2">
-<li>安装时创建软链接：</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ln</span> -s libexample.so.1.2.3 libexample.so.1</span><br><span class="line"><span class="built_in">ln</span> -s libexample.so.1 libexample.so</span><br></pre></td></tr></table></figure>
-
-<ol start="3">
-<li>查看SONAME：</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#Use objdump</span></span><br><span class="line">$ objdump -p libexample.so.1.3 | grep SONAME</span><br><span class="line">  SONAME               libexample.so.1</span><br><span class="line"><span class="comment">#Use readelf</span></span><br><span class="line">$ readelf -d libexample.so | grep SONAME</span><br><span class="line"> 0x000000000000000e (SONAME)             Library soname: [libexample.so.1]</span><br></pre></td></tr></table></figure>
-
-<h3 id="符号版本控制（symbol-versioning）"><a href="#符号版本控制（symbol-versioning）" class="headerlink" title="符号版本控制（symbol versioning）"></a>符号版本控制（symbol versioning）</h3><h4 id="定制函数版本："><a href="#定制函数版本：" class="headerlink" title="定制函数版本："></a>定制函数版本：</h4><ol>
-<li>example.c中定义函数<code>my_printf</code>：</li>
-</ol>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">my_printf</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* format)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%s&quot;</span>, format);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ol start="2">
-<li>version_script.txt中定义函数的版本为<code>VERSION_1</code>：</li>
-</ol>
-<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">VERSION_1 &#123;</span><br><span class="line"> global:</span><br><span class="line">   my_printf;</span><br><span class="line"> local:</span><br><span class="line">   *;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<ol start="3">
-<li>编译时指定<code>version_script.txt</code>为version-script：</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -shared -Wl,--version-script=version_script.txt -o libexample.so example.o</span><br></pre></td></tr></table></figure>
-
-<p>其中，<code>-Wl,</code>引出连接器选项。</p>
-<ol start="4">
-<li>查看：<ol>
-<li>使用<code>readelf -sW libexample.so</code>查看函数<code>my_printf</code>的版本号（”VERSION_1”）：</li>
-</ol>
-</li>
-</ol>
-<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Symbol table &#x27;.dynsym&#x27; contains 8 entries:</span><br><span class="line">   Num:    Value          Size Type    Bind   Vis      Ndx Name</span><br><span class="line">     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND </span><br><span class="line">     1: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_deregisterTMCloneTable</span><br><span class="line">     2: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND printf@GLIBC_2.2.5 (3)</span><br><span class="line">     3: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND __gmon_start__</span><br><span class="line">     4: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_registerTMCloneTable</span><br><span class="line">     5: 0000000000000000     0 FUNC    WEAK   DEFAULT  UND __cxa_finalize@GLIBC_2.2.5 (3)</span><br><span class="line">     6: 0000000000001105    39 FUNC    GLOBAL DEFAULT   13 my_printf@@VERSION_1</span><br><span class="line">     7: 0000000000000000     0 OBJECT  GLOBAL DEFAULT  ABS VERSION_1</span><br></pre></td></tr></table></figure>
-
-<ol start="2">
-<li>使用<code>objdump -T libexample.so</code></li>
-<li>使用<code>nm -D libexample.so</code></li>
-</ol>
-<h4 id="实现同一个函数有多个版本"><a href="#实现同一个函数有多个版本" class="headerlink" title="实现同一个函数有多个版本"></a>实现同一个函数有多个版本</h4><ol>
-<li>编写源代码</li>
-</ol>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;foo version 1.0\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo_v2</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;foo_v2 version 2.0\n&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ol start="2">
-<li>编写版本脚本</li>
-</ol>
-<p>例如，version_script.map文件如下：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">VERS_1.0 &#123;</span><br><span class="line">    global: <span class="comment"># global表示符号全局可见；默认为局部（也可能通过local显式声明为局部），不会被导出</span></span><br><span class="line">        foo;</span><br><span class="line">&#125; VERS_1.1;</span><br><span class="line"></span><br><span class="line">VERS_1.1 &#123;</span><br><span class="line">    global:</span><br><span class="line">        foo_v2;</span><br><span class="line">    foo; <span class="comment"># VER_1.1继承自VER_1.0</span></span><br><span class="line">         <span class="comment"># 1. foo在VER_1.0中已经声明为了global，不需要再次声明global</span></span><br><span class="line">         <span class="comment"># 2. 当然可以再次显式声明为global，但是这不是推荐的做法</span></span><br><span class="line">         <span class="comment"># 3. 假设foo在VER_1.0中不是global，此处声明为global，</span></span><br><span class="line">         <span class="comment"># 会将原本不是global的foo变得全局可见</span></span><br><span class="line">         <span class="comment"># 4. 我们其实无需再次导出foo，因为除非我们显式隐藏（使用local关键字），foo就在</span></span><br><span class="line">         <span class="comment"># VER_1.1是和VER_1.0中的可见性保持一致</span></span><br><span class="line">         <span class="comment"># 5. 如果希望在VER_1.1中的foo与VER_1.0有不同的行为，那么需要再次将其导出</span></span><br><span class="line">&#125; VERS_2.0;</span><br><span class="line"></span><br><span class="line">VERS_2.0 &#123;</span><br><span class="line">    global:</span><br><span class="line">        foo_v2</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<p>VER_1.1继承了VER_1.0的全部符号，同时VER_1.1可以增加或修改符号。</p>
-<p>VER_1.0：第一个版本，导出foo符号；<br>VER_1.1：第二个版本，引入foo_v2，并重新导出foo；</p>
-<h4 id="程序依赖的库版本"><a href="#程序依赖的库版本" class="headerlink" title="程序依赖的库版本"></a>程序依赖的库版本</h4><p>有如下简单代码：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// file: main.cc</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>正常编译：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ main.cc -o a.out</span><br></pre></td></tr></table></figure>
-
-<p>查看符号：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">strings a.out</span><br></pre></td></tr></table></figure>
-
-<p>你会发现其中有一些版本信息：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">GLIBC_2.2.5</span><br><span class="line">GLIBC_2.34</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
-
-<p>这是因为编译器和链接器生成库或可执行文件时，会根据系统上安装的glibc版本（因为库和可执行文件依赖glibc），<br>为库或可执行文件的函数符号附加上特定的版本信息。<br>为了保证向下兼容，glibc通过符号控制保留了多个版本的符号，支持老版本的软件能在较新的系统上运行。<br>例如，如果某个函数在glibc2.2.5中引入，它可以继续保留在之后的版本中，但符号标记为GLIBC_2.2.5。</p>
-<h3 id="ELF"><a href="#ELF" class="headerlink" title="ELF"></a>ELF</h3><pre><code>ELF - Executable and Linking Format.
-ELF描述了normal executable files、relocatable object files、core files和shared objects的格式。
-</code></pre>
-<p>参考：<code>man elf</code>, <a target="_blank" rel="noopener" href="http://chuquan.me/2018/05/21/elf-introduce/">博客:elf介绍</a>。</p>
-<h3 id="链接名"><a href="#链接名" class="headerlink" title="链接名"></a>链接名</h3><p>参考：<a target="_blank" rel="noopener" href="https://littlebee1024.github.io/learning_book/booknotes/cxydzwxy/link/dynamic/#_16">程序员的自我修养</a>, <code>man ld</code></p>
-<p>GCC的提供了不同的方法指定链接的共享库：</p>
-<ul>
-<li><p><code>l&lt;link_name&gt;</code>参数</p>
-<p>  指定需要链接的共享库lib<link_name>.so</p>
-</li>
-<li><p><code>l:&lt;filename&gt;</code>参数</p>
-<p>  通过文件名指定共享库，参考LD手册</p>
-</li>
-<li><p>全路径指定</p>
-</li>
-<li><p><code>Wl,-static</code>参数</p>
-<p>  指定查找静态库，通过-Wl,-Bdynamic恢复成动态库查找</p>
-</li>
-</ul>
-<h3 id="链接器选项"><a href="#链接器选项" class="headerlink" title="链接器选项"></a>链接器选项</h3><p>参考：<code>man ld</code></p>
-<pre><code>ld - The GNU linker
-</code></pre>
-<p>选项：</p>
-<pre><code>-rpath=dir
-    添加一个目录到运行时库搜寻路径中。
-</code></pre>
-<p>gcc通过 <code>-Wl</code> 前缀指定链接器选项，例如：</p>
-<pre><code> gcc -Wl,--start-group foo.o bar.o -Wl,--end-group
- gcc -Wl,-rpath,&#39;$ORIGIN/../lib&#39;
-
--rpath-link
-    用于在链接时指定额外的共享库搜索路径。在编译/链接阶段，告诉链接器去哪里找间接依赖的共享库。只影响构建过程，不影响运行时行为。
-    当你链接一个共享库（比如 libfoo.so），而这个库又依赖其他共享库（比如 libbar.so），如果这些依赖库不在标准路径中，链接器可能找不到它们。这时就可以用 -rpath-link 来告诉链接器去哪里找这些“间接依赖”的库。
-</code></pre>
-<table>
-<thead>
-<tr>
-<th>选项</th>
-<th>用途</th>
-<th>生效时间</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>-L</td>
-<td>添加库搜索路径</td>
-<td>链接时</td>
-</tr>
-<tr>
-<td>-rpath-link</td>
-<td>添加间接依赖库的搜索路径</td>
-<td>链接时</td>
-</tr>
-<tr>
-<td>-Wl,-rpath</td>
-<td>将路径写入可执行文件供运行时使用</td>
-<td>运行时</td>
-</tr>
-<tr>
-<td>LD_LIBRARY_PATH</td>
-<td>环境变量，指定运行时库路径</td>
-<td>运行时</td>
-</tr>
-</tbody></table>
-<h3 id="Tips"><a href="#Tips" class="headerlink" title="Tips"></a>Tips</h3><ol>
-<li><a target="_blank" rel="noopener" href="https://unix.stackexchange.com/questions/120015/how-to-find-out-the-dynamic-libraries-executables-loads-when-run">How to find out the dynamic libraries are loaded when running an executable?</a></li>
-</ol>
-<p>Answer:</p>
-<ul>
-<li><code>ldd /path/to/program</code></li>
-<li><code>objdump -p /path/to/program | grep NEEDED</code></li>
-<li><code>lddtree</code> (from <code>pax-utils</code>) or <code>readelf -d /bin/ls | grep &#39;NEEDED&#39;</code></li>
-<li><code>lsof -p PID | grep mem</code></li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ pidof nginx</span><br><span class="line">6920 6919</span><br><span class="line"></span><br><span class="line">$ lsof -p 6919 | grep mem</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><code>strace -e trace=open myprogram</code></li>
-</ul>
-<p><code>ldd</code> and <code>lsof</code> show the libraries loaded either directly or at a given moment. They do not account for libraries loaded via <code>dlopen</code> (or discarded by <code>dlclose</code>). You can get a better picture of this using <code>strace</code>.</p>
-<ul>
-<li><code>pmap &lt;pid&gt; -p</code></li>
-</ul>
-<h3 id="Notice"><a href="#Notice" class="headerlink" title="Notice"></a>Notice</h3><ol>
-<li><p>生成so时，链接器不会寻找其so依赖；executable会寻找so的依赖关系。换句话说，即使so生成过程不报错，但是executable生成时可能会报错。</p>
-</li>
-<li><p>生成so时，如果引用了其他 so ，只要 include 其他 so 的头文件，引用头文件中的符号时，就能编译通过。但是这样生成的 so 没有加上对应符号的依赖。<br>此时用 readelf -s 查看对应的符号，其 type 为 NOTYPE 。</p>
- <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ readelf -sW libb.so</span><br><span class="line"></span><br><span class="line">Symbol table &#x27;.dynsym&#x27; contains 14 entries:</span><br><span class="line">Num:    Value          Size Type    Bind   Vis      Ndx Name</span><br><span class="line"> 6: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT  UND _Z1fv</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>如果加上对应 -la 选项，就会从 liba.so 中寻找依赖的符号，如果找到，则添加进入 so 的依赖项中。当运行时则会加载 liba.so ，否则运行时不会加载。<br>用 readelf -s 查看对应的符号，其 type 不再时 NOTYPE ，而是 FUNC （如果该符号是一个函数的话）。</p>
- <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">6: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND _Z1fv</span><br></pre></td></tr></table></figure>
-
-<p>如果没有找到符号，或者说 liba.so 中根本没有实现这个函数，那么其 type 依然是 NOTYPE ，此时也不会报错。<br>注意：如果只是 include 头文件，也就说只有某个符号的声明，并没有其定义或引用它，那么 so 中不会生成其信息。</p>
-</li>
-</ol>
-<h2 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h2><h3 id="运行时错误：”-path-to-a-out-usr-lib-x86-64-linux-gnu-libstdc-so-6-version-GLIBCXX-3-4-30’-not-found-required-by-path-to-libxxx-so-”"><a href="#运行时错误：”-path-to-a-out-usr-lib-x86-64-linux-gnu-libstdc-so-6-version-GLIBCXX-3-4-30’-not-found-required-by-path-to-libxxx-so-”" class="headerlink" title="运行时错误：”&#x2F;path&#x2F;to&#x2F;a.out: &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;libstdc++.so.6: version &#96;GLIBCXX_3.4.30’ not found (required by &#x2F;path&#x2F;to&#x2F;libxxx.so)”"></a>运行时错误：”&#x2F;path&#x2F;to&#x2F;a.out: &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;libstdc++.so.6: version &#96;GLIBCXX_3.4.30’ not found (required by &#x2F;path&#x2F;to&#x2F;libxxx.so)”</h3><p>解释：<code>libxxx.so</code> 引用了一个 <code>GLIBCXX_3.4.30</code> 的符号（可能是全局变量或函数），但是在系统的 <code>/usr/lib/x86_64-linux-gnu/libstdc++.so.6</code> 中没有这个版本的符号。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ strings /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep <span class="string">&#x27;GLIBCXX_3.4.&#x27;</span></span><br><span class="line">GLIBCXX_3.4.1</span><br><span class="line">...</span><br><span class="line">GLIBCXX_3.4.27</span><br><span class="line">GLIBCXX_3.4.28</span><br><span class="line"><span class="comment"># 没有 GLIBCXX_3.4.30</span></span><br><span class="line"></span><br><span class="line">$ strings /path/to/libxxx.so | grep <span class="string">&#x27;GLIBCXX_3.4.30&#x27;</span> | c++filt</span><br><span class="line">GLIBCXX_3.4.30</span><br><span class="line">std::condition_variable::<span class="built_in">wait</span>(std::unique_lock&lt;std::mutex&gt;&amp;)@@GLIBCXX_3.4.30</span><br></pre></td></tr></table></figure>
-
-<p>这往往是因为原始的版本中，<code>libxxx.so</code> 是在一台机器中编译的，此时将该机器的 <code>GLIBCXX_3.4.30</code> 符号编译到其中了。但是运行时的机器是另一台，该机器上<br>不存在 <code>GLIBCXX_3.4.30</code> 版本，所以运行时报错。</p>
-<p>或者，因为环境变量的配置错误，编译时和运行时引用的 <code>libstdc++.so.6</code> 不是同一个，这也会导致运行时可能找不到编译时的 <code>GLIBCXX_3.4.30</code> 版本。</p>
-<p>可以在源文件中使用指定的版本（使用运行时的版本，比如 <code>GLIBCXX_3.4.11</code> ）：</p>
-<ol>
-<li>查找版本：</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ objdump -T /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep condition_variable | c++filt</span><br><span class="line">00000000000d52d0 g    DF .text  000000000000000c  GLIBCXX_3.4.30 std::condition_variable::<span class="built_in">wait</span>(std::unique_lock&lt;std::mutex&gt;&amp;)</span><br><span class="line">00000000000ac730 g    DF .text  000000000000001c (GLIBCXX_3.4.11) std::condition_variable::<span class="built_in">wait</span>(std::unique_lock&lt;std::mutex&gt;&amp;)</span><br><span class="line"></span><br><span class="line">$ objdump -T /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep condition_variable</span><br><span class="line">00000000000d52d0 g    DF .text  000000000000000c  GLIBCXX_3.4.30 _ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE</span><br><span class="line">00000000000ac730 g    DF .text  000000000000001c (GLIBCXX_3.4.11) _ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE</span><br></pre></td></tr></table></figure>
-
-<p>可以确定符号为 <code>_ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE</code> ，版本为 <code>GLIBCXX_3.4.11</code> 。</p>
-<p>在源文件中指定版本</p>
-<figure class="highlight cpp"><figcaption><span>symver</span><a href="/blog/downloads/code/symver.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** 指定特定版本的符号 START */</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __cplusplus</span></span><br><span class="line"><span class="keyword">extern</span> <span class="string">&quot;C&quot;</span> {</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">/** __cplusplus */</span></span></span><br><span class="line"></span><br><span class="line">__asm__ (<span class="string">&quot;.symver _ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE, _ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE@GLIBCXX_3.4.11&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __cplusplus</span></span><br><span class="line">}</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">/** __cplusplus */</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/** 指定特定版本的符号 END */</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 之后就可以使用 std::condition_variable::wait(std::unique_lock&lt;std::mutex&gt;&amp;) 就是 GLIBCXX_3.4.11 的</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;condition_variable&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;mutex&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"> </span><br><span class="line">std::mutex m;</span><br><span class="line">std::condition_variable cv;</span><br><span class="line">std::string data;</span><br><span class="line"><span class="type">bool</span> ready = <span class="literal">false</span>;</span><br><span class="line"><span class="type">bool</span> processed = <span class="literal">false</span>;</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">worker_thread</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="comment">// wait until main() sends data</span></span><br><span class="line">    <span class="function">std::unique_lock <span class="title">lk</span><span class="params">(m)</span></span>;</span><br><span class="line">    cv.<span class="built_in">wait</span>(lk, []{ <span class="keyword">return</span> ready; });</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// after the wait, we own the lock</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Worker thread is processing data\n&quot;</span>;</span><br><span class="line">    data += <span class="string">&quot; after processing&quot;</span>;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// send data back to main()</span></span><br><span class="line">    processed = <span class="literal">true</span>;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Worker thread signals data processing completed\n&quot;</span>;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// manual unlocking is done before notifying, to avoid waking up</span></span><br><span class="line">    <span class="comment">// the waiting thread only to block again (see notify_one for details)</span></span><br><span class="line">    lk.<span class="built_in">unlock</span>();</span><br><span class="line">    cv.<span class="built_in">notify_one</span>();</span><br><span class="line">}</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="function">std::thread <span class="title">worker</span><span class="params">(worker_thread)</span></span>;</span><br><span class="line"> </span><br><span class="line">    data = <span class="string">&quot;Example data&quot;</span>;</span><br><span class="line">    <span class="comment">// send data to the worker thread</span></span><br><span class="line">    {</span><br><span class="line">        <span class="function">std::lock_guard <span class="title">lk</span><span class="params">(m)</span></span>;</span><br><span class="line">        ready = <span class="literal">true</span>;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;main() signals data ready for processing\n&quot;</span>;</span><br><span class="line">    }</span><br><span class="line">    cv.<span class="built_in">notify_one</span>();</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// wait for the worker</span></span><br><span class="line">    {</span><br><span class="line">        <span class="function">std::unique_lock <span class="title">lk</span><span class="params">(m)</span></span>;</span><br><span class="line">        cv.<span class="built_in">wait</span>(lk, []{ <span class="keyword">return</span> processed; });</span><br><span class="line">    }</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Back in main(), data = &quot;</span> &lt;&lt; data &lt;&lt; <span class="string">&#x27;\n&#x27;</span>;</span><br><span class="line"> </span><br><span class="line">    worker.<span class="built_in">join</span>();</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-<p>编译：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ symver.cpp</span><br></pre></td></tr></table></figure>
-
-<p>验证符号版本：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ strings a.out | grep condition_variable | c++filt</span><br><span class="line">std::condition_variable::<span class="built_in">wait</span>(std::unique_lock&lt;std::mutex&gt;&amp;)</span><br><span class="line">std::condition_variable::<span class="built_in">wait</span>(std::unique_lock&lt;std::mutex&gt;&amp;)@GLIBCXX_3.4.11</span><br></pre></td></tr></table></figure>
-
-<h2 id="手动加载so"><a href="#手动加载so" class="headerlink" title="手动加载so"></a>手动加载so</h2><p>示例代码：</p>
-<figure class="highlight cpp"><figcaption><span>dlopen.cpp</span><a href="/blog/downloads/code/compile/dlopen.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;dlfcn.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*<span class="type">func_t</span>)</span><span class="params">()</span></span>;  <span class="comment">// 定义函数指针类型</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="comment">// 打开 .so 文件</span></span><br><span class="line">    <span class="type">void</span> *handle = <span class="built_in">dlopen</span>(<span class="string">&quot;your_library.so&quot;</span>, RTLD_LAZY);</span><br><span class="line">    <span class="keyword">if</span> (!handle) {</span><br><span class="line">        <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;%s\n&quot;</span>, <span class="built_in">dlerror</span>());</span><br><span class="line">        <span class="built_in">exit</span>(EXIT_FAILURE);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 清除任何现有的错误</span></span><br><span class="line">    <span class="built_in">dlerror</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 读取符号</span></span><br><span class="line">    <span class="comment">// void (*func)(); // 方法一：声明并定义函数指针</span></span><br><span class="line">    <span class="type">func_t</span> func;  <span class="comment">// 方法二：定义函数指针</span></span><br><span class="line">    <span class="comment">// 以下四种方法/写法都可以用于将 dlsym 返回的 void* 赋值给函数指针</span></span><br><span class="line">    <span class="comment">// (1) *(void **) (&amp;func) = dlsym(handle, &quot;your_function&quot;);</span></span><br><span class="line">    <span class="comment">//    解释：取函数指针 func 的地址，将其转为 void**，然后将 dlsym 返回的 void* 赋值给它解引用后的变量（即 func）</span></span><br><span class="line">    <span class="comment">// (2) func = (void (*)())dlsym(handle, &quot;your_function&quot;);</span></span><br><span class="line">    <span class="comment">// (3) func = reinterpret_cast&lt;func_t&gt;(dlsym(handle, &quot;your_function&quot;));</span></span><br><span class="line">    <span class="comment">// (4) 如下</span></span><br><span class="line">    func = (<span class="type">func_t</span>)<span class="built_in">dlsym</span>(handle, <span class="string">&quot;your_function&quot;</span>);</span><br><span class="line">    <span class="type">char</span> *error = <span class="built_in">dlerror</span>();</span><br><span class="line">    <span class="keyword">if</span> (error != <span class="literal">NULL</span>) {</span><br><span class="line">        <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;%s\n&quot;</span>, error);</span><br><span class="line">        <span class="built_in">exit</span>(EXIT_FAILURE);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调用符号</span></span><br><span class="line">    <span class="built_in">func</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 关闭 .so 文件</span></span><br><span class="line">    <span class="built_in">dlclose</span>(handle);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/blog/page/3/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/3/">3</a><span class="page-number current">4</span><a class="page-number" href="/blog/page/5/">5</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/7/">7</a><a class="extend next" rel="next" href="/blog/page/5/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+    <a class="extend prev" rel="prev" href="/blog/page/3/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/3/">3</a><span class="page-number current">4</span><a class="page-number" href="/blog/page/5/">5</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/8/">8</a><a class="extend next" rel="next" href="/blog/page/5/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -1577,7 +1441,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">70</span>
+          <span class="site-state-item-count">73</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
