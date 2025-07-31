@@ -71,3 +71,16 @@ gcc main.cc ./liba.so
 * `-save-temps`: 可以保留所有中间文件，例如预编译文件、汇编文件、目标文件等。
 
 
+## 符号可见性
+
+```cpp
+#pragma GCC visibility push(hidden)
+
+__attribute__((__visibility__("default")))
+```
+
+gcc 编译选项：
+
+```bash
+gcc -fvisibility=hidden ...
+```
