@@ -1,7 +1,7 @@
 ---
 title: shell 误导性错误 No such file or directory
 date: 2025-07-23 19:26:26
-tags:
+tags: c/cpp
 ---
 
 ## 📝 现象描述
