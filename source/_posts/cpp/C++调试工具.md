@@ -5,24 +5,11 @@ categories: c/cpp
 tags: debug
 ---
 
-## Unit testing framework
+## 单元测试框架
 
 [CppTest](https://cpptest.sourceforge.io/tutorial.html)
 
-## Memory check
-
-valgrind
-参考：
-    [博客](https://jvns.ca/blog/2018/04/28/debugging-a-segfault-on-linux/)
-    [文档](https://valgrind.org/docs/manual/ms-manual.html)
-    [可以使用PostScript查看图形化结果](https://courses.cs.washington.edu/courses/cse326/05wi/valgrind-doc/ms_main.html)
-
-[AddressSanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizer)
-
-
-## debug tool
-
-### gdb
+## gdb
 
 ```gdb
 (gdb) breakpoint exit
@@ -44,7 +31,7 @@ Where is the core dumped file:
 grep 'kernel.core_pattern' /etc/sysctl.conf
 ```
 
-### strace
+## strace
 
 Example:
 
