@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="编译主要步骤参考博客  预处理  1gcc -E test.c -o test.i   编译  编译是将高级语言（例如C、C++、Jave等）代码转换成机器码的过程。 编译可以分成多个阶段，包括词法分析、语法分析、语义分析、优化和代码生成。 编译器首先将源代码转换一种中间表示（通常是汇编代码或字节码），然后再将其转换为目标机器的机器代码。 经过编译的代码通常是二进制的，可以直接在目标机器上执行。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="编译和链接">
+<meta property="og:url" content="https://bi-an.github.io/blog/2024/01/23/cpp/%E7%BC%96%E8%AF%91%E5%92%8C%E9%93%BE%E6%8E%A5/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="编译主要步骤参考博客  预处理  1gcc -E test.c -o test.i   编译  编译是将高级语言（例如C、C++、Jave等）代码转换成机器码的过程。 编译可以分成多个阶段，包括词法分析、语法分析、语义分析、优化和代码生成。 编译器首先将源代码转换一种中间表示（通常是汇编代码或字节码），然后再将其转换为目标机器的机器代码。 经过编译的代码通常是二进制的，可以直接在目标机器上执行。">
+<meta property="og:locale">
+<meta property="article:published_time" content="2024-01-23T21:36:08.000Z">
+<meta property="article:modified_time" content="2025-08-01T09:50:32.676Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="compile">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2024/01/23/cpp/%E7%BC%96%E8%AF%91%E5%92%8C%E9%93%BE%E6%8E%A5/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>编译和链接 | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-resource">
+
+    <a href="/blog/resources/" rel="section"><i class="fa fa-paperclip fa-fw"></i>Resource</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/%E7%BC%96%E8%AF%91%E5%92%8C%E9%93%BE%E6%8E%A5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          编译和链接
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 21:36:08" itemprop="dateCreated datePublished" datetime="2024-01-23T21:36:08+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="编译主要步骤"><a href="#编译主要步骤" class="headerlink" title="编译主要步骤"></a>编译主要步骤</h2><p>参考<a target="_blank" rel="noopener" href="https://blog.csdn.net/chen1415886044/article/details/104537547">博客</a></p>
+<ol>
+<li>预处理</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -E test.c -o test.i</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li><p>编译</p>
+<p> 编译是将高级语言（例如C、C++、Jave等）代码转换成机器码的过程。<br> 编译可以分成多个阶段，包括词法分析、语法分析、语义分析、优化和代码生成。<br> 编译器首先将源代码转换一种中间表示（通常是汇编代码或字节码），然后再将其转换为目标机器的机器代码。<br> 经过编译的代码通常是二进制的，可以直接在目标机器上执行。</p>
+</li>
+</ol>
+<p>先生成汇编代码：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -S test.i -o test.s</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li><p>汇编</p>
+<p> 将汇编代码转成机器码。</p>
+</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -c test.s -o test.o</span><br></pre></td></tr></table></figure>
+
+<ol start="4">
+<li><p>链接</p>
+<p> 该目标文件与其他目标文件、库文件、启动文件等链接起来生成可执行文件。</p>
+</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc test.o -o <span class="built_in">test</span></span><br></pre></td></tr></table></figure>
+
+<p>Note: 可以使用 <code>-save-temps</code> 选项以保留编译过程中的所有中间文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -save-temps test.c</span><br></pre></td></tr></table></figure>
+
+<h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><h2 id="C-名称修饰"><a href="#C-名称修饰" class="headerlink" title="C++名称修饰"></a>C++名称修饰</h2><p><code>Name mangling (C++ only)</code>: 名称修饰，也称为名称重整、名称改编。参见链接<a target="_blank" rel="noopener" href="https://www.ibm.com/docs/en/i/7.2?topic=linkage-name-mangling-c-only">1</a>、<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E5%90%8D%E5%AD%97%E4%BF%AE%E9%A5%B0">2</a>。</p>
+<h3 id="环境变量"><a href="#环境变量" class="headerlink" title="环境变量"></a>环境变量</h3><p>参考：<code>man ld.so</code></p>
+<pre><code>PATH
+LD_LIBRARY_PATH
+LD_PRELOAD  在程序运行时，强制优先加载指定的共享库，即使系统中已有其他版本。常用于调试、性能分析、函数拦截（hook）等。
+            只在运行时生效。
+            优先级高于 rpath、LD_LIBRARY_PATH 等。
+            可以用来“注入”库，修改程序行为。
+</code></pre>
+<h3 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h3><h3 id="命令"><a href="#命令" class="headerlink" title="命令"></a>命令</h3><p>参考：<code>man ld.so</code>, <code>man vdso</code>, <code>man elf</code>, <a target="_blank" rel="noopener" href="https://linux.die.net/man/1/scanelf">scanelf</a></p>
+<pre><code>ld(1), ldd(1), pldd(1), sprof(1), dlopen(3),getauxval(3), elf(5), capabilities(7),
+rtld-audit(7), ldconfig(8), sln(8), vdso(7), as(1), elfedit(1), gdb(1), nm(1),
+objcopy(1), objdump(1), patchelf(1), readelf(1), size(1), strings(1), strip(1),
+execve(2), dl_iterate_phdr(3), core(5), ld.so(8)
+</code></pre>
+<p>ldconfig</p>
+<pre><code>配置动态连接器（dynamic linker）的运行时绑定（dynamic bindings）。
+如果你刚刚安装好共享库，可能需要运行ldconfig：
+    sudo ldconfig
+通常需要超级用户来运行ldconfig，因为可能对需要某些root用户所有的目录和文件有写入权限。
+lddconfig 为从以下目录找到的共享库创建必要的 links 和 cache ：
+    command line指定的目录；
+    /etc/ld.so.conf文件中指定的目录；
+    受信任的目录: /lib, /lib64, /usr/lib, /usr/lib64 。
+该 cache 被运行时连接器（run-time linker） ld.so 或 ld-linux.so 使用。
+
+ldconfig 尝试基于该库连接的 C 库来推断 ELF 库（比如 libc5 或 libc6/glibc）的类型。
+
+一些现有的库没有包含足够的信息来推断其类型。
+因此， /etc/ld.so.conf 文件格式允许指定期望的类型。
+这只在这些 ELF 库不能被解决的情况下使用。
+
+ldconfig 期望的符号链接有某种特定的形式，比如：
+
+    libfoo.so -&gt; libfoo.so.1 -&gt; libfoo.so.1.12
+
+其中，中间的文件 libfoo.so.1 是库的 SONAME 。
+
+如果不遵循这种格式可能会导致升级后的兼容性问题。
+</code></pre>
+<p>ldd</p>
+<pre><code>描述：
+    ldd调用标准动态连接器（见 ld.so(8)），并且将环境变量 LD_TRACE_LODADED_OBJECTS 为 1 。
+    这会让动态连接器检查程序的动态依赖，并且寻找（根据 ld.so(8) 描述的规则）
+    和加载满足这些依赖的目标。对于每一条依赖，
+    ldd 显示匹配的目标的位置和其载入处的16进制地址。
+    （linux-vdso和ld-linux共享依赖是特殊的；见vdso(7)和ld.so(8)）
+
+安全性：
+    注意，在某些情况下，一些版本的ldd可能会尝试通过直接运行程序（可能导致程序中的ELF解释器
+    或程序本身的运行）来获取依赖信息。
+
+    因此，永远不要在不受信任的可执行文件上使用ldd，因为会导致随意代码的运行。更安全替代方法为：
+        $ objdump -p /path/to/program | grep NEEDED
+    注意，这种替代方法只会显示该可执行文件的直接依赖，而ldd显示该可执行文件的整个依赖树。
+
+解释ldd的输出:
+$ ldd -v libibsupport_real.so 
+./libibsupport_real.so: /usr/lib64/libibverbs.so.1: version `IBVERBS_1.8&#39; not found (required by ./libibsupport_real.so)
+    linux-vdso.so.1 =&gt;  (0x00002ad3e49e3000)
+    libibverbs.so.1 =&gt; /usr/lib64/libibverbs.so.1 (0x00002ad3e589b000)
+    ...
+
+    Version information:
+    ./libibsupport_real.so:
+            libgcc_s.so.1 (GCC_3.0) =&gt; /usr/lib64/libgcc_s.so.1
+            libibverbs.so.1 (IBVERBS_1.8) =&gt; not found
+            libibverbs.so.1 (IBVERBS_1.1) =&gt; /usr/lib64/libibverbs.so.1
+            ...
+    /usr/lib64/libnl-3.so.200:
+                libm.so.6 (GLIBC_2.2.5) =&gt; /usr/lib64/libm.so.6
+                ...
+在&quot;Version information&quot;中，&quot;libgcc_s.so.1 (GCC_3.0) =&gt; /usr/lib64/libgcc_s.so.1&quot;表示：
+    &quot;libgcc_s.so.1&quot;指定一个shared library的名字（libgcc_s.so.1是GCC runtime library的一部分），该shared library为&quot;./libibsupport_real.so&quot;所依赖；
+    &quot;(GCC_3.0)&quot;表明&quot;libgcc_s.so.1&quot;需要3.0版本及以上的GNU Compiler Collection (GCC)；
+    &quot;=&gt;&quot;指出满足依赖的shared library；
+    &quot;/usr/lib64/libgcc_s.so.1&quot;是满足要求的shared library的路径。
+</code></pre>
+<p>  <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/34428037/how-to-interpret-the-output-of-the-ldd-program">ldd output说明</a></p>
+<p>sprof</p>
+<p>参考：<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/881074/how-to-use-sprof">stackoverflows</a></p>
+<p>objdump</p>
+<pre><code>[-p|--private-headers]
+[-x|--all-headers]
+</code></pre>
+<p>readelf</p>
+<pre><code>[-d|--dynamic]
+</code></pre>
+<h3 id="文件"><a href="#文件" class="headerlink" title="文件"></a>文件</h3><pre><code>/lib/ld.so
+    Run-time linker/loader.
+/etc/ld.so.conf
+    File containing a list of directories, one per line, in which to search for libraries.
+/etc/ld.so.cache
+    File containing an ordered list of libraries found in the directories specified in /etc/ld.so.conf, as well as those found in the trusted directories.
+
+The trusted directories:
+    /lib
+    /lib64
+    /usr/lib
+    /usr/lib64
+</code></pre>
+<p>ld.so</p>
+<pre><code>名字
+    ld.so, ld-linux.so - 动态连接/加载器。
+
+简介
+    动态连接器可以被间接运行或直接运行。
+    间接运行：
+        运行某些动态连接程序或共享库。在这种情况下，不能向动态连接器传递命令行选项；并且在ELF情况下，存储在程序的.interp section中的动态连接器被执行。
+    直接运行：
+        /lib/ld-linux.so.* [OPTIONS] [PRAGRAM [ARGUMENTS]]
+
+描述
+    ld.so 和 ld-linux.so* 寻找和加载程序所需的共享对象（共享库），准备程序的运行，然后运行它。
+
+    如果在编译期没有向 ld(1) 指定 -static 选项，则Linux二进制文件需要动态连接（在运行时连接）。
+</code></pre>
+<h3 id="SONAME"><a href="#SONAME" class="headerlink" title="SONAME"></a>SONAME</h3><p>参考：<code>man ldconfig</code><br>参考：<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Soname">SONAME Wiki</a></p>
+<blockquote>
+<p>GNU linker使用 -hname 或 -soname&#x3D;name 来指定该库的library name field。<br>在内部，linker会创建一个 DT_SONAME field并且用 name 来填充它。</p>
+</blockquote>
+<ol>
+<li>指定SONAME：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#Use ld:</span></span><br><span class="line">$ ld -shared -soname libexample.so.1 -o libexample.so.1.2.3 file1.o file2.o</span><br><span class="line"><span class="comment">#Use gcc or g++:</span></span><br><span class="line">$ gcc -shared -Wl,-soname,libexample.so.1 -o libexample.so.1.2.3 file1.o file2.o</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>安装时创建软链接：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ln</span> -s libexample.so.1.2.3 libexample.so.1</span><br><span class="line"><span class="built_in">ln</span> -s libexample.so.1 libexample.so</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>查看SONAME：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#Use objdump</span></span><br><span class="line">$ objdump -p libexample.so.1.3 | grep SONAME</span><br><span class="line">  SONAME               libexample.so.1</span><br><span class="line"><span class="comment">#Use readelf</span></span><br><span class="line">$ readelf -d libexample.so | grep SONAME</span><br><span class="line"> 0x000000000000000e (SONAME)             Library soname: [libexample.so.1]</span><br></pre></td></tr></table></figure>
+
+<h3 id="符号版本控制（symbol-versioning）"><a href="#符号版本控制（symbol-versioning）" class="headerlink" title="符号版本控制（symbol versioning）"></a>符号版本控制（symbol versioning）</h3><h4 id="定制函数版本："><a href="#定制函数版本：" class="headerlink" title="定制函数版本："></a>定制函数版本：</h4><ol>
+<li>example.c中定义函数<code>my_printf</code>：</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">my_printf</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* format)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%s&quot;</span>, format);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>version_script.txt中定义函数的版本为<code>VERSION_1</code>：</li>
+</ol>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">VERSION_1 &#123;</span><br><span class="line"> global:</span><br><span class="line">   my_printf;</span><br><span class="line"> local:</span><br><span class="line">   *;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>编译时指定<code>version_script.txt</code>为version-script：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -shared -Wl,--version-script=version_script.txt -o libexample.so example.o</span><br></pre></td></tr></table></figure>
+
+<p>其中，<code>-Wl,</code>引出连接器选项。</p>
+<ol start="4">
+<li>查看：<ol>
+<li>使用<code>readelf -sW libexample.so</code>查看函数<code>my_printf</code>的版本号（”VERSION_1”）：</li>
+</ol>
+</li>
+</ol>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Symbol table &#x27;.dynsym&#x27; contains 8 entries:</span><br><span class="line">   Num:    Value          Size Type    Bind   Vis      Ndx Name</span><br><span class="line">     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND </span><br><span class="line">     1: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_deregisterTMCloneTable</span><br><span class="line">     2: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND printf@GLIBC_2.2.5 (3)</span><br><span class="line">     3: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND __gmon_start__</span><br><span class="line">     4: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_registerTMCloneTable</span><br><span class="line">     5: 0000000000000000     0 FUNC    WEAK   DEFAULT  UND __cxa_finalize@GLIBC_2.2.5 (3)</span><br><span class="line">     6: 0000000000001105    39 FUNC    GLOBAL DEFAULT   13 my_printf@@VERSION_1</span><br><span class="line">     7: 0000000000000000     0 OBJECT  GLOBAL DEFAULT  ABS VERSION_1</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>使用<code>objdump -T libexample.so</code></li>
+<li>使用<code>nm -D libexample.so</code></li>
+</ol>
+<h4 id="实现同一个函数有多个版本"><a href="#实现同一个函数有多个版本" class="headerlink" title="实现同一个函数有多个版本"></a>实现同一个函数有多个版本</h4><ol>
+<li>编写源代码</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;foo version 1.0\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo_v2</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;foo_v2 version 2.0\n&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>编写版本脚本</li>
+</ol>
+<p>例如，version_script.map文件如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">VERS_1.0 &#123;</span><br><span class="line">    global: <span class="comment"># global表示符号全局可见；默认为局部（也可能通过local显式声明为局部），不会被导出</span></span><br><span class="line">        foo;</span><br><span class="line">&#125; VERS_1.1;</span><br><span class="line"></span><br><span class="line">VERS_1.1 &#123;</span><br><span class="line">    global:</span><br><span class="line">        foo_v2;</span><br><span class="line">    foo; <span class="comment"># VER_1.1继承自VER_1.0</span></span><br><span class="line">         <span class="comment"># 1. foo在VER_1.0中已经声明为了global，不需要再次声明global</span></span><br><span class="line">         <span class="comment"># 2. 当然可以再次显式声明为global，但是这不是推荐的做法</span></span><br><span class="line">         <span class="comment"># 3. 假设foo在VER_1.0中不是global，此处声明为global，</span></span><br><span class="line">         <span class="comment"># 会将原本不是global的foo变得全局可见</span></span><br><span class="line">         <span class="comment"># 4. 我们其实无需再次导出foo，因为除非我们显式隐藏（使用local关键字），foo就在</span></span><br><span class="line">         <span class="comment"># VER_1.1是和VER_1.0中的可见性保持一致</span></span><br><span class="line">         <span class="comment"># 5. 如果希望在VER_1.1中的foo与VER_1.0有不同的行为，那么需要再次将其导出</span></span><br><span class="line">&#125; VERS_2.0;</span><br><span class="line"></span><br><span class="line">VERS_2.0 &#123;</span><br><span class="line">    global:</span><br><span class="line">        foo_v2</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>VER_1.1继承了VER_1.0的全部符号，同时VER_1.1可以增加或修改符号。</p>
+<p>VER_1.0：第一个版本，导出foo符号；<br>VER_1.1：第二个版本，引入foo_v2，并重新导出foo；</p>
+<h4 id="程序依赖的库版本"><a href="#程序依赖的库版本" class="headerlink" title="程序依赖的库版本"></a>程序依赖的库版本</h4><p>有如下简单代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// file: main.cc</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>正常编译：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ main.cc -o a.out</span><br></pre></td></tr></table></figure>
+
+<p>查看符号：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">strings a.out</span><br></pre></td></tr></table></figure>
+
+<p>你会发现其中有一些版本信息：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">GLIBC_2.2.5</span><br><span class="line">GLIBC_2.34</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<p>这是因为编译器和链接器生成库或可执行文件时，会根据系统上安装的glibc版本（因为库和可执行文件依赖glibc），<br>为库或可执行文件的函数符号附加上特定的版本信息。<br>为了保证向下兼容，glibc通过符号控制保留了多个版本的符号，支持老版本的软件能在较新的系统上运行。<br>例如，如果某个函数在glibc2.2.5中引入，它可以继续保留在之后的版本中，但符号标记为GLIBC_2.2.5。</p>
+<h3 id="ELF"><a href="#ELF" class="headerlink" title="ELF"></a>ELF</h3><pre><code>ELF - Executable and Linking Format.
+ELF描述了normal executable files、relocatable object files、core files和shared objects的格式。
+</code></pre>
+<p>参考：<code>man elf</code>, <a target="_blank" rel="noopener" href="http://chuquan.me/2018/05/21/elf-introduce/">博客:elf介绍</a>。</p>
+<h3 id="链接名"><a href="#链接名" class="headerlink" title="链接名"></a>链接名</h3><p>参考：<a target="_blank" rel="noopener" href="https://littlebee1024.github.io/learning_book/booknotes/cxydzwxy/link/dynamic/#_16">程序员的自我修养</a>, <code>man ld</code></p>
+<p>GCC的提供了不同的方法指定链接的共享库：</p>
+<ul>
+<li><p><code>l&lt;link_name&gt;</code>参数</p>
+<p>  指定需要链接的共享库lib<link_name>.so</p>
+</li>
+<li><p><code>l:&lt;filename&gt;</code>参数</p>
+<p>  通过文件名指定共享库，参考LD手册</p>
+</li>
+<li><p>全路径指定</p>
+</li>
+<li><p><code>Wl,-static</code>参数</p>
+<p>  指定查找静态库，通过-Wl,-Bdynamic恢复成动态库查找</p>
+</li>
+</ul>
+<h3 id="链接器选项"><a href="#链接器选项" class="headerlink" title="链接器选项"></a>链接器选项</h3><p>参考：<code>man ld</code></p>
+<pre><code>ld - The GNU linker
+</code></pre>
+<p>选项：</p>
+<pre><code>-rpath=dir
+    添加一个目录到运行时库搜寻路径中。
+</code></pre>
+<p>gcc通过 <code>-Wl</code> 前缀指定链接器选项，例如：</p>
+<pre><code> gcc -Wl,--start-group foo.o bar.o -Wl,--end-group
+ gcc -Wl,-rpath,&#39;$ORIGIN/../lib&#39;
+
+-rpath-link
+    用于在链接时指定额外的共享库搜索路径。在编译/链接阶段，告诉链接器去哪里找间接依赖的共享库。只影响构建过程，不影响运行时行为。
+    当你链接一个共享库（比如 libfoo.so），而这个库又依赖其他共享库（比如 libbar.so），如果这些依赖库不在标准路径中，链接器可能找不到它们。这时就可以用 -rpath-link 来告诉链接器去哪里找这些“间接依赖”的库。
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>用途</th>
+<th>生效时间</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>-L</td>
+<td>添加库搜索路径</td>
+<td>链接时</td>
+</tr>
+<tr>
+<td>-rpath-link</td>
+<td>添加间接依赖库的搜索路径</td>
+<td>链接时</td>
+</tr>
+<tr>
+<td>-Wl,-rpath</td>
+<td>将路径写入可执行文件供运行时使用</td>
+<td>运行时</td>
+</tr>
+<tr>
+<td>LD_LIBRARY_PATH</td>
+<td>环境变量，指定运行时库路径</td>
+<td>运行时</td>
+</tr>
+</tbody></table>
+<h3 id="Tips"><a href="#Tips" class="headerlink" title="Tips"></a>Tips</h3><ol>
+<li><a target="_blank" rel="noopener" href="https://unix.stackexchange.com/questions/120015/how-to-find-out-the-dynamic-libraries-executables-loads-when-run">How to find out the dynamic libraries are loaded when running an executable?</a></li>
+</ol>
+<p>Answer:</p>
+<ul>
+<li><code>ldd /path/to/program</code></li>
+<li><code>objdump -p /path/to/program | grep NEEDED</code></li>
+<li><code>lddtree</code> (from <code>pax-utils</code>) or <code>readelf -d /bin/ls | grep &#39;NEEDED&#39;</code></li>
+<li><code>lsof -p PID | grep mem</code></li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ pidof nginx</span><br><span class="line">6920 6919</span><br><span class="line"></span><br><span class="line">$ lsof -p 6919 | grep mem</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>strace -e trace=open myprogram</code></li>
+</ul>
+<p><code>ldd</code> and <code>lsof</code> show the libraries loaded either directly or at a given moment. They do not account for libraries loaded via <code>dlopen</code> (or discarded by <code>dlclose</code>). You can get a better picture of this using <code>strace</code>.</p>
+<ul>
+<li><code>pmap &lt;pid&gt; -p</code></li>
+</ul>
+<h3 id="Notice"><a href="#Notice" class="headerlink" title="Notice"></a>Notice</h3><ol>
+<li><p>生成so时，链接器不会寻找其so依赖；executable会寻找so的依赖关系。换句话说，即使so生成过程不报错，但是executable生成时可能会报错。</p>
+</li>
+<li><p>生成so时，如果引用了其他 so ，只要 include 其他 so 的头文件，引用头文件中的符号时，就能编译通过。但是这样生成的 so 没有加上对应符号的依赖。<br>此时用 readelf -s 查看对应的符号，其 type 为 NOTYPE 。</p>
+ <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ readelf -sW libb.so</span><br><span class="line"></span><br><span class="line">Symbol table &#x27;.dynsym&#x27; contains 14 entries:</span><br><span class="line">Num:    Value          Size Type    Bind   Vis      Ndx Name</span><br><span class="line"> 6: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT  UND _Z1fv</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>如果加上对应 -la 选项，就会从 liba.so 中寻找依赖的符号，如果找到，则添加进入 so 的依赖项中。当运行时则会加载 liba.so ，否则运行时不会加载。<br>用 readelf -s 查看对应的符号，其 type 不再时 NOTYPE ，而是 FUNC （如果该符号是一个函数的话）。</p>
+ <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">6: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND _Z1fv</span><br></pre></td></tr></table></figure>
+
+<p>如果没有找到符号，或者说 liba.so 中根本没有实现这个函数，那么其 type 依然是 NOTYPE ，此时也不会报错。<br>注意：如果只是 include 头文件，也就说只有某个符号的声明，并没有其定义或引用它，那么 so 中不会生成其信息。</p>
+</li>
+</ol>
+<h2 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h2><h3 id="运行时错误：”-path-to-a-out-usr-lib-x86-64-linux-gnu-libstdc-so-6-version-GLIBCXX-3-4-30’-not-found-required-by-path-to-libxxx-so-”"><a href="#运行时错误：”-path-to-a-out-usr-lib-x86-64-linux-gnu-libstdc-so-6-version-GLIBCXX-3-4-30’-not-found-required-by-path-to-libxxx-so-”" class="headerlink" title="运行时错误：”&#x2F;path&#x2F;to&#x2F;a.out: &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;libstdc++.so.6: version &#96;GLIBCXX_3.4.30’ not found (required by &#x2F;path&#x2F;to&#x2F;libxxx.so)”"></a>运行时错误：”&#x2F;path&#x2F;to&#x2F;a.out: &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;libstdc++.so.6: version &#96;GLIBCXX_3.4.30’ not found (required by &#x2F;path&#x2F;to&#x2F;libxxx.so)”</h3><p>解释：<code>libxxx.so</code> 引用了一个 <code>GLIBCXX_3.4.30</code> 的符号（可能是全局变量或函数），但是在系统的 <code>/usr/lib/x86_64-linux-gnu/libstdc++.so.6</code> 中没有这个版本的符号。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ strings /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep <span class="string">&#x27;GLIBCXX_3.4.&#x27;</span></span><br><span class="line">GLIBCXX_3.4.1</span><br><span class="line">...</span><br><span class="line">GLIBCXX_3.4.27</span><br><span class="line">GLIBCXX_3.4.28</span><br><span class="line"><span class="comment"># 没有 GLIBCXX_3.4.30</span></span><br><span class="line"></span><br><span class="line">$ strings /path/to/libxxx.so | grep <span class="string">&#x27;GLIBCXX_3.4.30&#x27;</span> | c++filt</span><br><span class="line">GLIBCXX_3.4.30</span><br><span class="line">std::condition_variable::<span class="built_in">wait</span>(std::unique_lock&lt;std::mutex&gt;&amp;)@@GLIBCXX_3.4.30</span><br></pre></td></tr></table></figure>
+
+<p>这往往是因为原始的版本中，<code>libxxx.so</code> 是在一台机器中编译的，此时将该机器的 <code>GLIBCXX_3.4.30</code> 符号编译到其中了。但是运行时的机器是另一台，该机器上<br>不存在 <code>GLIBCXX_3.4.30</code> 版本，所以运行时报错。</p>
+<p>或者，因为环境变量的配置错误，编译时和运行时引用的 <code>libstdc++.so.6</code> 不是同一个，这也会导致运行时可能找不到编译时的 <code>GLIBCXX_3.4.30</code> 版本。</p>
+<p>可以在源文件中使用指定的版本（使用运行时的版本，比如 <code>GLIBCXX_3.4.11</code> ）：</p>
+<ol>
+<li>查找版本：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ objdump -T /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep condition_variable | c++filt</span><br><span class="line">00000000000d52d0 g    DF .text  000000000000000c  GLIBCXX_3.4.30 std::condition_variable::<span class="built_in">wait</span>(std::unique_lock&lt;std::mutex&gt;&amp;)</span><br><span class="line">00000000000ac730 g    DF .text  000000000000001c (GLIBCXX_3.4.11) std::condition_variable::<span class="built_in">wait</span>(std::unique_lock&lt;std::mutex&gt;&amp;)</span><br><span class="line"></span><br><span class="line">$ objdump -T /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep condition_variable</span><br><span class="line">00000000000d52d0 g    DF .text  000000000000000c  GLIBCXX_3.4.30 _ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE</span><br><span class="line">00000000000ac730 g    DF .text  000000000000001c (GLIBCXX_3.4.11) _ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE</span><br></pre></td></tr></table></figure>
+
+<p>可以确定符号为 <code>_ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE</code> ，版本为 <code>GLIBCXX_3.4.11</code> 。</p>
+<p>在源文件中指定版本</p>
+<figure class="highlight cpp"><figcaption><span>symver</span><a href="/blog/downloads/code/symver.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** 指定特定版本的符号 START */</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __cplusplus</span></span><br><span class="line"><span class="keyword">extern</span> <span class="string">&quot;C&quot;</span> {</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">/** __cplusplus */</span></span></span><br><span class="line"></span><br><span class="line">__asm__ (<span class="string">&quot;.symver _ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE, _ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE@GLIBCXX_3.4.11&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __cplusplus</span></span><br><span class="line">}</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">/** __cplusplus */</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/** 指定特定版本的符号 END */</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 之后就可以使用 std::condition_variable::wait(std::unique_lock&lt;std::mutex&gt;&amp;) 就是 GLIBCXX_3.4.11 的</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;condition_variable&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;mutex&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"> </span><br><span class="line">std::mutex m;</span><br><span class="line">std::condition_variable cv;</span><br><span class="line">std::string data;</span><br><span class="line"><span class="type">bool</span> ready = <span class="literal">false</span>;</span><br><span class="line"><span class="type">bool</span> processed = <span class="literal">false</span>;</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">worker_thread</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="comment">// wait until main() sends data</span></span><br><span class="line">    <span class="function">std::unique_lock <span class="title">lk</span><span class="params">(m)</span></span>;</span><br><span class="line">    cv.<span class="built_in">wait</span>(lk, []{ <span class="keyword">return</span> ready; });</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// after the wait, we own the lock</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Worker thread is processing data\n&quot;</span>;</span><br><span class="line">    data += <span class="string">&quot; after processing&quot;</span>;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// send data back to main()</span></span><br><span class="line">    processed = <span class="literal">true</span>;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Worker thread signals data processing completed\n&quot;</span>;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// manual unlocking is done before notifying, to avoid waking up</span></span><br><span class="line">    <span class="comment">// the waiting thread only to block again (see notify_one for details)</span></span><br><span class="line">    lk.<span class="built_in">unlock</span>();</span><br><span class="line">    cv.<span class="built_in">notify_one</span>();</span><br><span class="line">}</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="function">std::thread <span class="title">worker</span><span class="params">(worker_thread)</span></span>;</span><br><span class="line"> </span><br><span class="line">    data = <span class="string">&quot;Example data&quot;</span>;</span><br><span class="line">    <span class="comment">// send data to the worker thread</span></span><br><span class="line">    {</span><br><span class="line">        <span class="function">std::lock_guard <span class="title">lk</span><span class="params">(m)</span></span>;</span><br><span class="line">        ready = <span class="literal">true</span>;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;main() signals data ready for processing\n&quot;</span>;</span><br><span class="line">    }</span><br><span class="line">    cv.<span class="built_in">notify_one</span>();</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// wait for the worker</span></span><br><span class="line">    {</span><br><span class="line">        <span class="function">std::unique_lock <span class="title">lk</span><span class="params">(m)</span></span>;</span><br><span class="line">        cv.<span class="built_in">wait</span>(lk, []{ <span class="keyword">return</span> processed; });</span><br><span class="line">    }</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Back in main(), data = &quot;</span> &lt;&lt; data &lt;&lt; <span class="string">&#x27;\n&#x27;</span>;</span><br><span class="line"> </span><br><span class="line">    worker.<span class="built_in">join</span>();</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p>编译：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ symver.cpp</span><br></pre></td></tr></table></figure>
+
+<p>验证符号版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ strings a.out | grep condition_variable | c++filt</span><br><span class="line">std::condition_variable::<span class="built_in">wait</span>(std::unique_lock&lt;std::mutex&gt;&amp;)</span><br><span class="line">std::condition_variable::<span class="built_in">wait</span>(std::unique_lock&lt;std::mutex&gt;&amp;)@GLIBCXX_3.4.11</span><br></pre></td></tr></table></figure>
+
+<h2 id="手动加载so"><a href="#手动加载so" class="headerlink" title="手动加载so"></a>手动加载so</h2><p>示例代码：</p>
+<figure class="highlight cpp"><figcaption><span>dlopen.cpp</span><a href="/blog/downloads/code/compile/dlopen.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;dlfcn.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*<span class="type">func_t</span>)</span><span class="params">()</span></span>;  <span class="comment">// 定义函数指针类型</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="comment">// 打开 .so 文件</span></span><br><span class="line">    <span class="type">void</span> *handle = <span class="built_in">dlopen</span>(<span class="string">&quot;your_library.so&quot;</span>, RTLD_LAZY);</span><br><span class="line">    <span class="keyword">if</span> (!handle) {</span><br><span class="line">        <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;%s\n&quot;</span>, <span class="built_in">dlerror</span>());</span><br><span class="line">        <span class="built_in">exit</span>(EXIT_FAILURE);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 清除任何现有的错误</span></span><br><span class="line">    <span class="built_in">dlerror</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 读取符号</span></span><br><span class="line">    <span class="comment">// void (*func)(); // 方法一：声明并定义函数指针</span></span><br><span class="line">    <span class="type">func_t</span> func;  <span class="comment">// 方法二：定义函数指针</span></span><br><span class="line">    <span class="comment">// 以下四种方法/写法都可以用于将 dlsym 返回的 void* 赋值给函数指针</span></span><br><span class="line">    <span class="comment">// (1) *(void **) (&amp;func) = dlsym(handle, &quot;your_function&quot;);</span></span><br><span class="line">    <span class="comment">//    解释：取函数指针 func 的地址，将其转为 void**，然后将 dlsym 返回的 void* 赋值给它解引用后的变量（即 func）</span></span><br><span class="line">    <span class="comment">// (2) func = (void (*)())dlsym(handle, &quot;your_function&quot;);</span></span><br><span class="line">    <span class="comment">// (3) func = reinterpret_cast&lt;func_t&gt;(dlsym(handle, &quot;your_function&quot;));</span></span><br><span class="line">    <span class="comment">// (4) 如下</span></span><br><span class="line">    func = (<span class="type">func_t</span>)<span class="built_in">dlsym</span>(handle, <span class="string">&quot;your_function&quot;</span>);</span><br><span class="line">    <span class="type">char</span> *error = <span class="built_in">dlerror</span>();</span><br><span class="line">    <span class="keyword">if</span> (error != <span class="literal">NULL</span>) {</span><br><span class="line">        <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;%s\n&quot;</span>, error);</span><br><span class="line">        <span class="built_in">exit</span>(EXIT_FAILURE);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调用符号</span></span><br><span class="line">    <span class="built_in">func</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 关闭 .so 文件</span></span><br><span class="line">    <span class="built_in">dlclose</span>(handle);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/compile/" rel="tag"># compile</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2024/01/23/cpp/C++%E7%BC%BA%E9%99%B7/" rel="prev" title="C++ 缺陷">
+      <i class="fa fa-chevron-left"></i> C++ 缺陷
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2024/01/23/cpp/core-dump/" rel="next" title="core dump">
+      core dump <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E4%B8%BB%E8%A6%81%E6%AD%A5%E9%AA%A4"><span class="nav-text">编译主要步骤</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%93%BE%E6%8E%A5"><span class="nav-text">链接</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#C-%E5%90%8D%E7%A7%B0%E4%BF%AE%E9%A5%B0"><span class="nav-text">C++名称修饰</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F"><span class="nav-text">环境变量</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%BD%E6%95%B0"><span class="nav-text">函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4"><span class="nav-text">命令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%87%E4%BB%B6"><span class="nav-text">文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SONAME"><span class="nav-text">SONAME</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%A6%E5%8F%B7%E7%89%88%E6%9C%AC%E6%8E%A7%E5%88%B6%EF%BC%88symbol-versioning%EF%BC%89"><span class="nav-text">符号版本控制（symbol versioning）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%9A%E5%88%B6%E5%87%BD%E6%95%B0%E7%89%88%E6%9C%AC%EF%BC%9A"><span class="nav-text">定制函数版本：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E5%90%8C%E4%B8%80%E4%B8%AA%E5%87%BD%E6%95%B0%E6%9C%89%E5%A4%9A%E4%B8%AA%E7%89%88%E6%9C%AC"><span class="nav-text">实现同一个函数有多个版本</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A8%8B%E5%BA%8F%E4%BE%9D%E8%B5%96%E7%9A%84%E5%BA%93%E7%89%88%E6%9C%AC"><span class="nav-text">程序依赖的库版本</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ELF"><span class="nav-text">ELF</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%93%BE%E6%8E%A5%E5%90%8D"><span class="nav-text">链接名</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%93%BE%E6%8E%A5%E5%99%A8%E9%80%89%E9%A1%B9"><span class="nav-text">链接器选项</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Tips"><span class="nav-text">Tips</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Notice"><span class="nav-text">Notice</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B"><span class="nav-text">示例</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E6%97%B6%E9%94%99%E8%AF%AF%EF%BC%9A%E2%80%9D-path-to-a-out-usr-lib-x86-64-linux-gnu-libstdc-so-6-version-GLIBCXX-3-4-30%E2%80%99-not-found-required-by-path-to-libxxx-so-%E2%80%9D"><span class="nav-text">运行时错误：”&#x2F;path&#x2F;to&#x2F;a.out: &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;libstdc++.so.6: version &#96;GLIBCXX_3.4.30’ not found (required by &#x2F;path&#x2F;to&#x2F;libxxx.so)”</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%8B%E5%8A%A8%E5%8A%A0%E8%BD%BDso"><span class="nav-text">手动加载so</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">74</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">37</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://bi-an.github.io/" title="http:&#x2F;&#x2F;bi-an.github.io">bi-an's Page</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

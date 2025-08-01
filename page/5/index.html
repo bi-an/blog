@@ -193,7 +193,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/gcc%E5%85%A5%E9%97%A8/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/gdb%E5%85%A5%E9%97%A8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -207,7 +207,186 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2024/01/23/cplusplus/gcc%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">gcc 入门</a>
+            <a href="/blog/2024/01/23/cpp/gdb%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">gdb 入门</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 21:44:37" itemprop="dateCreated datePublished" datetime="2024-01-23T21:44:37+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="gdb实现原理"><a href="#gdb实现原理" class="headerlink" title="gdb实现原理"></a>gdb实现原理</h2><p>参考<a target="_blank" rel="noopener" href="https://www.zhihu.com/people/bi-an-60-46">链接</a>。</p>
+<h2 id="gdb命令"><a href="#gdb命令" class="headerlink" title="gdb命令"></a>gdb命令</h2><ul>
+<li><p><code>thread apply [threadno] [all] args</code> - 将命令传递给一个或多个线程，参见<a target="_blank" rel="noopener" href="https://developer.apple.com/library/archive/documentation/DeveloperTools/gdb/gdb/gdb_5.html">链接</a>。<br>比如，<code>thread apply all continue</code>表示将<code>continue</code>命令传递给所有线程，也就是让所有线程都继续运行。</p>
+</li>
+<li><p><code>rbreak</code> - Set a breakpoint for all functions matching REGEXP. 参考<a target="_blank" rel="noopener" href="https://blog.csdn.net/zdl1016/article/details/8708077">链接</a>。</p>
+<p>  e.g. <code>rbreak file.C:.*</code> - 给file.C的所有函数加上断点。</p>
+</li>
+<li><p><code>info</code></p>
+<ul>
+<li><code>info inferior</code> - 可以查看当前调试的进程的PID。另外一种方法是在gdb命令行中直接调用C函数：<code>print (int)getpid()</code>。参考：<a target="_blank" rel="noopener" href="https://www.qiniu.com/qfans/qnso-36704270">链接</a>。</li>
+<li><code>info source</code> - 当前调试的源文件路径。</li>
+<li><code>info sources &lt;pattern&gt;</code> - 查询源文件路径</li>
+<li><code>info proc</code> - <a target="_blank" rel="noopener" href="https://sourceware.org/gdb/onlinedocs/gdb/Process-Information.html">当前进程信息</a>。<ul>
+<li><code>info proc files</code> - 当前进程打开的文件（和文件描述符）。</li>
+<li><code>info args</code> - 查看函数参数</li>
+<li><code>info locals</code> - 查看局部变量。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><code>show</code> </p>
+<ul>
+<li><code>show environment</code> 查看全局变量</li>
+<li><code>set environment &lt;var&gt;=&lt;value&gt;</code> 设置环境变量</li>
+</ul>
+</li>
+<li><p><code>attach</code> - 连接到正在运行的进程。与<code>gdb -p</code>效果相同。</p>
+</li>
+<li><p><code>detach</code> - 取消连接的进程。</p>
+</li>
+<li><p><code>handle &lt;signal&gt; print pass nostop</code> - 捕获信号（比如<code>SIGSEGV</code>）并且忽略它。<code>handle &lt;signal nostop</code>。</p>
+<ul>
+<li><code>pass</code> 表示 gdb 会将捕获到的信号发回给被调试的进程。</li>
+</ul>
+</li>
+<li><p><code>set</code> - 修改变量的值，比如<code>set x=10</code>（或<code>set var x=10</code>）将变量<code>x</code>的值改为<code>10</code>。参考<a target="_blank" rel="noopener" href="https://blog.csdn.net/yasi_xi/article/details/12784507">博客</a>。</p>
+</li>
+<li><p><code>show directories</code></p>
+</li>
+<li><p><code>print</code> - gdb默认设置打印字符串的长度为200；更改打印最大长度：<code>set print elements &lt;number-of-elements&gt;</code>，<code>0</code>表示unlimited.<br>    - 打印数组: <code>print arr[0]@3</code> ，其中 <code>@3</code> 表示打印 3 个元素。<br>    - 以十六进制打印：<code>p/x &lt;var&gt;</code></p>
+</li>
+<li><p><code>ptype &lt;variable name&gt;</code> - 打印变量类型。</p>
+</li>
+<li><p><code>finish</code> - 从函数中返回，并打印函数返回值（即使函数的return语句很复杂，也可以获取返回值）。</p>
+</li>
+<li><p><code>frame &lt;n&gt;</code> - 跳转到某个栈f帧。</p>
+</li>
+</ul>
+<h2 id="环境变量"><a href="#环境变量" class="headerlink" title="环境变量"></a>环境变量</h2><p>见<a target="_blank" rel="noopener" href="https://www.irya.unam.mx/computo/sites/manuales/fce12/debugger/cl/commandref/gdb_mode/cmd_set_environm.htm">链接</a></p>
+<h2 id="断点"><a href="#断点" class="headerlink" title="断点"></a>断点</h2><p>添加断点：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">break file:line_no</span><br></pre></td></tr></table></figure>
+
+<p>查看断点：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">info break</span><br></pre></td></tr></table></figure>
+
+<p>删除第2个断点：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">delete 2</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="条件断点"><a href="#条件断点" class="headerlink" title="条件断点"></a>条件断点</h3><p>参考：<a target="_blank" rel="noopener" href="http://c.biancheng.net/view/8255.html">博客</a>、<a target="_blank" rel="noopener" href="https://ftp.gnu.org/old-gnu/Manuals/gdb/html_node/gdb_28.html">文档</a>。</p>
+<p><code>break ... if cond</code></p>
+<h3 id="观察断点"><a href="#观察断点" class="headerlink" title="观察断点"></a>观察断点</h3><h3 id="捕捉断点"><a href="#捕捉断点" class="headerlink" title="捕捉断点"></a>捕捉断点</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">try...catch</span><br></pre></td></tr></table></figure>
+
+<h3 id="打印长度的限制"><a href="#打印长度的限制" class="headerlink" title="打印长度的限制"></a>打印长度的限制</h3><ul>
+<li>Value sizes - 参考：<a target="_blank" rel="noopener" href="https://sourceware.org/gdb/onlinedocs/gdb/Value-Sizes.html">文档</a></li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">set</span> max-value-size bytes</span><br><span class="line"><span class="built_in">set</span> max-value-size unlimited</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>打印字符长度限制</p>
+<p>gdb默认设置打印字符串的长度为200；更改打印最大长度：<code>set print elements</code></p>
+</li>
+</ul>
+<h2 id="coredump"><a href="#coredump" class="headerlink" title="coredump"></a>coredump</h2><p>gdb命令：<code>gcore</code>。</p>
+<p><a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man5/core.5.html">Reference</a></p>
+<h2 id="WSL无法使用gdb"><a href="#WSL无法使用gdb" class="headerlink" title="WSL无法使用gdb"></a>WSL无法使用gdb</h2><p>WSL指Windows虚拟机。</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/microsoft/WSL/issues/8516">解决方法</a>：</p>
+<p>安装<a target="_blank" rel="noopener" href="https://launchpad.net/~ubuntu-support-team/+archive/ubuntu/gdb">PPA的daily build版本</a></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo add-apt-repository ppa:ubuntu-support-team/gdb</span><br><span class="line">sudo apt update</span><br><span class="line">sudo apt install gdb</span><br></pre></td></tr></table></figure>
+
+<h2 id="gdb-attach-权限报错"><a href="#gdb-attach-权限报错" class="headerlink" title="gdb attach 权限报错"></a>gdb attach 权限报错</h2><p>This is due to kernel hardening in Linux; you can disable this behavior by <code>echo 0 &gt; /proc/sys/kernel/yama/ptrace_scope</code> or by modifying it in <code>/etc/sysctl.d/10-ptrace.conf</code>.</p>
+<p><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/19215177/how-to-solve-ptrace-operation-not-permitted-when-trying-to-attach-gdb-to-a-pro">How to solve “ptrace operation not permitted” when trying to attach GDB to a process?</a></p>
+<h2 id="gdb-debug-forks"><a href="#gdb-debug-forks" class="headerlink" title="gdb debug forks"></a>gdb debug forks</h2><p><a target="_blank" rel="noopener" href="https://www-zeuthen.desy.de/unix/unixguide/infohtml/gdb/Forks.html">Reference</a></p>
+<p>By default, when a program forks, gdb will continue to debug the parent process and the child process will run unimpeded.</p>
+<p>If you want to follow the child process instead of the parent process, use the command set <code>follow-fork-mode</code>.</p>
+<p><code>set follow-fork-mode mode</code><br>Set the debugger response to a program call of <code>fork</code> or <code>vfork</code>. A call to fork or vfork creates a new process. The mode argument can be:<br><code>parent</code><br>The original process is debugged after a fork. The child process runs unimpeded. This is the default.<br><code>child</code><br>The new process is debugged after a fork. The parent process runs unimpeded.<br><code>ask</code><br>gdb 会提示让你选择 <code>parent</code> 还是 <code>child</code> 。</p>
+<p><code>show follow-fork-mode</code><br>Display the current debugger response to a fork or vfork call.<br>On Linux, if you want to debug both the parent and child processes, use the command set detach-on-fork.</p>
+<p><code>set detach-on-fork mode</code><br>Tells gdb whether to detach one of the processes after a fork, or retain debugger control over them both.<br><code>on</code><br>The child process (or parent process, depending on the value of follow-fork-mode) will be detached and allowed to run independently. This is the default.<br><code>off</code><br>Both processes will be held under the control of gdb. One process (child or parent, depending on the value of follow-fork-mode) is debugged as usual, while the other is held suspended.</p>
+<p><code>show detach-on-fork</code><br>Show whether detach-on-fork mode is on&#x2F;off.</p>
+<p>If you issue a run command to gdb after an exec call executes, the new target restarts. To restart the parent process, use the file command with the parent executable name as its argument. By default, after an exec call executes, gdb discards the symbols of the previous executable image. You can change this behaviour with the set follow-exec-mode command.</p>
+<p>set follow-exec-mode mode<br>Set debugger response to a program call of exec. An exec call replaces the program image of a process.<br>follow-exec-mode can be:</p>
+<p><code>new</code><br>gdb creates a new inferior and rebinds the process to this new inferior. The program the process was running before the exec call can be restarted afterwards by restarting the original inferior.<br>For example:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">(gdb) info inferiors</span><br><span class="line">(gdb) info inferior</span><br><span class="line">  Id   Description   Executable</span><br><span class="line">* 1    &lt;null&gt;        prog1</span><br><span class="line">(gdb) run</span><br><span class="line">process 12020 is executing new program: prog2</span><br><span class="line">Program exited normally.</span><br><span class="line">(gdb) info inferiors</span><br><span class="line">  Id   Description   Executable</span><br><span class="line">* 2    &lt;null&gt;        prog2</span><br><span class="line">  1    &lt;null&gt;        prog1</span><br></pre></td></tr></table></figure>
+
+<p><code>same</code><br>gdb keeps the process bound to the same inferior. The new executable image replaces the previous executable loaded in the inferior. Restarting the inferior after the exec call, with e.g., the run command, restarts the executable the process was running after the exec call. This is the default mode.<br>For example:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">(gdb) info inferiors</span><br><span class="line">  Id   Description   Executable</span><br><span class="line">* 1    &lt;null&gt;        prog1</span><br><span class="line">(gdb) run</span><br><span class="line">process 12020 is executing new program: prog2</span><br><span class="line">Program exited normally.</span><br><span class="line">(gdb) info inferiors</span><br><span class="line">  Id   Description   Executable</span><br><span class="line">* 1    &lt;null&gt;        prog2</span><br></pre></td></tr></table></figure>
+
+<h2 id="Setting-Catchpoints"><a href="#Setting-Catchpoints" class="headerlink" title="Setting Catchpoints"></a>Setting Catchpoints</h2><p><a target="_blank" rel="noopener" href="https://www-zeuthen.desy.de/unix/unixguide/infohtml/gdb/Set-Catchpoints.html#Set-Catchpoints">Reference</a></p>
+<h2 id="gdb-redirect-to-a-log-file"><a href="#gdb-redirect-to-a-log-file" class="headerlink" title="gdb redirect to a log file"></a>gdb redirect to a log file</h2><p>You need to enable logging:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">(gdb) set logging on</span><br><span class="line">Now GDB will log to ./gdb.txt. You can tell it which file to use:</span><br><span class="line"></span><br><span class="line">(gdb) set logging file my_god_object.log</span><br><span class="line">And you can examine the current logging configuration:</span><br><span class="line"></span><br><span class="line">(gdb) show logging</span><br></pre></td></tr></table></figure>
+
+<p>更新：新版本 gdb 采用 <code>set logging enabled on</code> 。</p>
+<p>记录输入的命令：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) set trace-commands on</span><br></pre></td></tr></table></figure>
+
+<p><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/5941158/gdb-print-to-file-instead-of-stdout">Refercence</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/gcc%E5%85%A5%E9%97%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/cpp/gcc%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">gcc 入门</a>
         </h2>
 
         <div class="post-meta">
@@ -224,7 +403,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-31 12:00:10" itemprop="dateModified" datetime="2025-07-31T12:00:10+00:00">2025-07-31</time>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -303,7 +482,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/core-dump/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/core-dump/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -317,7 +496,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2024/01/23/cplusplus/core-dump/" class="post-title-link" itemprop="url">core dump</a>
+            <a href="/blog/2024/01/23/cpp/core-dump/" class="post-title-link" itemprop="url">core dump</a>
         </h2>
 
         <div class="post-meta">
@@ -334,7 +513,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-31 12:00:10" itemprop="dateModified" datetime="2025-07-31T12:00:10+00:00">2025-07-31</time>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -450,7 +629,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/%E7%BC%96%E8%AF%91%E5%92%8C%E9%93%BE%E6%8E%A5/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/%E7%BC%96%E8%AF%91%E5%92%8C%E9%93%BE%E6%8E%A5/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -464,7 +643,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2024/01/23/cplusplus/%E7%BC%96%E8%AF%91%E5%92%8C%E9%93%BE%E6%8E%A5/" class="post-title-link" itemprop="url">编译和链接</a>
+            <a href="/blog/2024/01/23/cpp/%E7%BC%96%E8%AF%91%E5%92%8C%E9%93%BE%E6%8E%A5/" class="post-title-link" itemprop="url">编译和链接</a>
         </h2>
 
         <div class="post-meta">
@@ -481,7 +660,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-31 12:00:10" itemprop="dateModified" datetime="2025-07-31T12:00:10+00:00">2025-07-31</time>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -861,7 +1040,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/C++%E7%BC%BA%E9%99%B7/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/C++%E7%BC%BA%E9%99%B7/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -875,7 +1054,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2024/01/23/cplusplus/C++%E7%BC%BA%E9%99%B7/" class="post-title-link" itemprop="url">C++ 缺陷</a>
+            <a href="/blog/2024/01/23/cpp/C++%E7%BC%BA%E9%99%B7/" class="post-title-link" itemprop="url">C++ 缺陷</a>
         </h2>
 
         <div class="post-meta">
@@ -892,7 +1071,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-31 12:00:10" itemprop="dateModified" datetime="2025-07-31T12:00:10+00:00">2025-07-31</time>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -939,7 +1118,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cplusplus/C++%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/C++%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -953,7 +1132,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2024/01/23/cplusplus/C++%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/" class="post-title-link" itemprop="url">C++ 调试工具</a>
+            <a href="/blog/2024/01/23/cpp/C++%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/" class="post-title-link" itemprop="url">C++ 调试工具</a>
         </h2>
 
         <div class="post-meta">
@@ -970,7 +1149,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-31 12:00:10" itemprop="dateModified" datetime="2025-07-31T12:00:10+00:00">2025-07-31</time>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -993,10 +1172,8 @@ ELF描述了normal executable files、relocatable object files、core files和sh
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="Unit-testing-framework"><a href="#Unit-testing-framework" class="headerlink" title="Unit testing framework"></a>Unit testing framework</h2><p><a target="_blank" rel="noopener" href="https://cpptest.sourceforge.io/tutorial.html">CppTest</a></p>
-<h2 id="Memory-check"><a href="#Memory-check" class="headerlink" title="Memory check"></a>Memory check</h2><p>valgrind<br>参考：<br>    <a target="_blank" rel="noopener" href="https://jvns.ca/blog/2018/04/28/debugging-a-segfault-on-linux/">博客</a><br>    <a target="_blank" rel="noopener" href="https://valgrind.org/docs/manual/ms-manual.html">文档</a><br>    <a target="_blank" rel="noopener" href="https://courses.cs.washington.edu/courses/cse326/05wi/valgrind-doc/ms_main.html">可以使用PostScript查看图形化结果</a></p>
-<p><a target="_blank" rel="noopener" href="https://github.com/google/sanitizers/wiki/AddressSanitizer">AddressSanitizer</a></p>
-<h2 id="debug-tool"><a href="#debug-tool" class="headerlink" title="debug tool"></a>debug tool</h2><h3 id="gdb"><a href="#gdb" class="headerlink" title="gdb"></a>gdb</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(gdb) breakpoint exit</span><br><span class="line">(gdb) breakpoint _exit</span><br><span class="line">(gdb) breakpoint atexit</span><br><span class="line">(gdb) breakpoint abort</span><br></pre></td></tr></table></figure>
+          <h2 id="单元测试框架"><a href="#单元测试框架" class="headerlink" title="单元测试框架"></a>单元测试框架</h2><p><a target="_blank" rel="noopener" href="https://cpptest.sourceforge.io/tutorial.html">CppTest</a></p>
+<h2 id="gdb"><a href="#gdb" class="headerlink" title="gdb"></a>gdb</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(gdb) breakpoint exit</span><br><span class="line">(gdb) breakpoint _exit</span><br><span class="line">(gdb) breakpoint atexit</span><br><span class="line">(gdb) breakpoint abort</span><br></pre></td></tr></table></figure>
 
 
 <p>Enable coredump: <a target="_blank" rel="noopener" href="https://medium.com/@sourabhedake/core-dumps-how-to-enable-them-73856a437711">how to do</a></p>
@@ -1005,7 +1182,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
 <p>Where is the core dumped file:</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">grep <span class="string">&#x27;kernel.core_pattern&#x27;</span> /etc/sysctl.conf</span><br></pre></td></tr></table></figure>
 
-<h3 id="strace"><a href="#strace" class="headerlink" title="strace"></a>strace</h3><p>Example:</p>
+<h2 id="strace"><a href="#strace" class="headerlink" title="strace"></a>strace</h2><p>Example:</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">strace -f -o strace.log -tt -y -yy -e trace=desc,process,network</span><br></pre></td></tr></table></figure>
 
 <p>Refer to <a target="_blank" rel="noopener" href="https://gist.github.com/graste/929bb122c353bdd90c20">here</a></p>
@@ -1062,7 +1239,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-31 12:00:10" itemprop="dateModified" datetime="2025-07-31T12:00:10+00:00">2025-07-31</time>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1189,7 +1366,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-31 12:00:10" itemprop="dateModified" datetime="2025-07-31T12:00:10+00:00">2025-07-31</time>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1389,7 +1566,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-31 12:00:10" itemprop="dateModified" datetime="2025-07-31T12:00:10+00:00">2025-07-31</time>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1466,7 +1643,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-31 12:00:10" itemprop="dateModified" datetime="2025-07-31T12:00:10+00:00">2025-07-31</time>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1490,118 +1667,6 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
 
       
           <h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><p><a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1161103">关于线程死锁，活锁和饥饿问题</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/14/misc/%E5%8F%AF%E9%87%8D%E5%85%A5/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/14/misc/%E5%8F%AF%E9%87%8D%E5%85%A5/" class="post-title-link" itemprop="url">可重入</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-14 17:44:16" itemprop="dateCreated datePublished" datetime="2024-01-14T17:44:16+00:00">2024-01-14</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-31 12:00:10" itemprop="dateModified" datetime="2025-07-31T12:00:10+00:00">2025-07-31</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p><strong>可重入函数</strong>：如果一个函数在执行过程中被中断服务程序打断，执行中断服务程序之后恢复执行，还能不妨碍之前的执行，就称该函数是<strong>可重入的</strong>。</p>
-<p>可重入函数一般用于<strong>硬件中断处理</strong>或<strong>递归</strong>等应用程序中。</p>
-<p><strong>可重入程序&#x2F;可重入子例程</strong>：在多个处理器上能被安全地多次并发调用。</p>
-<p><strong>与线程安全的区别</strong>：可重入函数的概念在多任务操作系统出现之前就存在了，所以该概念仅仅针对的是单线程执行过程。<br>一个函数可以是线程安全但非可重入的，例如，该函数每次都使用互斥量来包裹。但是，如果该函数用于中断服务程序，那么，它可能在等待第一次执行过程释放互斥量时陷入饥饿。<strong>TODO：陷入饥饿为什么就不是可重入了？</strong></p>
-<p>要实现可重入性，函数通常需要满足以下条件：</p>
-<ul>
-<li>不使用静态或全局变量：这些变量在多次调用之间共享，可能导致数据竞争。</li>
-<li>不依赖于不可重入的函数：例如，标准库中的某些函数可能不是可重入的。</li>
-<li>不使用动态内存分配：动态内存分配可能会导致竞争条件。</li>
-<li>不使用信号处理：信号处理可能会中断函数的执行。</li>
-</ul>
-<p>可重入性在多线程编程和中断处理程序中尤为重要，因为它确保了函数在并发环境下的安全性。</p>
-<h3 id="可重入-VS-线程安全"><a href="#可重入-VS-线程安全" class="headerlink" title="可重入 VS 线程安全"></a>可重入 VS 线程安全</h3><p>可重入性和线程安全虽然都涉及到并发编程，但它们有不同的侧重点：</p>
-<p>可重入性：</p>
-<p>定义：一个函数可以在被中断后安全地再次调用，而不会影响其执行结果。<br>条件：不使用静态或全局变量、不依赖不可重入的函数、不使用动态内存分配、不使用信号处理。<br>应用场景：主要用于中断处理程序和嵌入式系统。<br>线程安全：</p>
-<p>定义：一个函数或代码块在多线程环境下可以安全地并发执行，而不会导致竞争条件或数据不一致。<br>条件：通常需要使用同步机制（如互斥锁、信号量）来保护共享资源。<br>应用场景：主要用于多线程编程。<br>总结来说，可重入性关注的是函数在被中断后能否安全地再次调用，而线程安全关注的是在多线程环境下能否安全地并发执行。可重入函数不一定是线程安全的，线程安全的函数也不一定是可重入的。</p>
-<ol>
-<li>可重入函数不一定是线程安全的</li>
-</ol>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> counter = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">reentrantFunction</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> localCounter = counter;</span><br><span class="line">    localCounter++;</span><br><span class="line">    counter = localCounter;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">reentrantFunction</span>();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Counter: %d\n&quot;</span>, counter);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>解释：</p>
-<p>reentrantFunction 是可重入的，因为它满足以下条件：</p>
-<p>不使用静态或全局变量：虽然 counter 是一个全局变量，但 reentrantFunction 中的操作都是基于局部变量 localCounter，并且没有依赖于函数外部的状态。<br>不依赖不可重入的函数：reentrantFunction 中没有调用任何不可重入的函数。<br>不使用动态内存分配：函数中没有使用 malloc 或其他动态内存分配函数。<br>不使用信号处理：函数中没有涉及信号处理。<br>因此，reentrantFunction 可以在被中断后安全地再次调用，而不会影响其执行结果。</p>
-<p>然而，正因为它使用了全局变量 counter，在多线程环境下可能会导致竞争条件，所以它不是线程安全的。</p>
-<ol start="2">
-<li>线程安全的函数不一定是可重入的</li>
-</ol>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">pthread_mutex_t</span> lock = PTHREAD_MUTEX_INITIALIZER;</span><br><span class="line"><span class="type">int</span> counter = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span>* <span class="title">threadSafeFunction</span><span class="params">(<span class="type">void</span>* arg)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">pthread_mutex_lock</span>(&amp;lock);</span><br><span class="line">    counter++;</span><br><span class="line">    <span class="built_in">pthread_mutex_unlock</span>(&amp;lock);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">pthread_t</span> thread1, thread2;</span><br><span class="line">    <span class="built_in">pthread_create</span>(&amp;thread1, <span class="literal">NULL</span>, threadSafeFunction, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_create</span>(&amp;thread2, <span class="literal">NULL</span>, threadSafeFunction, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_join</span>(thread1, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_join</span>(thread2, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Counter: %d\n&quot;</span>, counter);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>解释：</p>
-<p>这个函数 threadSafeFunction 是线程安全的，因为它使用了互斥锁来保护对 counter 的访问。<br>然而，它不是可重入的，因为它使用了互斥锁，互斥锁在中断处理程序中可能会导致死锁：</p>
-<p>互斥锁的使用：互斥锁用于确保线程安全，但它们在中断处理程序中可能会导致死锁。如果一个线程在持有锁时被中断，然后中断处理程序尝试再次调用该函数并试图获取同一个锁，就会发生死锁。</p>
-<p>依赖于锁的状态：函数的执行依赖于锁的状态。如果锁已经被其他线程持有，函数就无法继续执行，必须等待锁释放。这种依赖性使得函数在中断后无法安全地再次调用。</p>
-<p>不可重入的行为：由于锁的存在，函数在中断后重新进入时可能无法正确处理锁的状态，从而导致不可预期的行为。</p>
-<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://www.geeksforgeeks.org/reentrant-function/">Reentrant Function</a></li>
-<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Reentrancy_(computing)">Reentrancy</a></li>
-</ul>
 
       
     </div>
@@ -1688,7 +1753,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">73</span>
+          <span class="site-state-item-count">74</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

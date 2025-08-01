@@ -193,6 +193,332 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/01/15/IC/1.%E6%95%B0%E5%AD%97IC%E8%AE%BE%E8%AE%A1%E6%B5%81%E7%A8%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/01/15/IC/1.%E6%95%B0%E5%AD%97IC%E8%AE%BE%E8%AE%A1%E6%B5%81%E7%A8%8B/" class="post-title-link" itemprop="url">第1章 数字IC设计流程</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-01-15 16:59:30" itemprop="dateCreated datePublished" datetime="2025-01-15T16:59:30+00:00">2025-01-15</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="1-参考"><a href="#1-参考" class="headerlink" title="1. 参考"></a>1. 参考</h2><p>白栎旸. 数字IC设计入门（微课视频版）[M]. 北京: 清华大学出版社，2023-09-01:第1章.</p>
+<h2 id="2-数字IC设计流程"><a href="#2-数字IC设计流程" class="headerlink" title="2. 数字IC设计流程"></a>2. 数字IC设计流程</h2><h3 id="2-1-三个主要流程："><a href="#2-1-三个主要流程：" class="headerlink" title="2.1. 三个主要流程："></a>2.1. 三个主要流程：</h3><ol>
+<li><p>前端设计: 用 Verilog 编写 RTL 设计文件（Register Transfer Level，RTL，寄存器传输层）。</p>
+</li>
+<li><p>综合（Synthesis）：将 RTL 转换位实际电子元器件的连接。输出文件称为网表（netlist），也是纯文本文件。</p>
+</li>
+<li><p>后端布局布线（PR）：将网表变为实际电路图，类似 PCB 图，称为版图（Layout）。版图是晶圆厂（Foundry）能识别的通用格式。</p>
+<p> 版图的绘制：</p>
+<ul>
+<li>布局（Place）：元器件如何摆放；</li>
+<li>布线（Route）：元器件如何连接。</li>
+</ul>
+<p> 数字版图的绘制大部分由计算机自动完成，称为自动布局布线（Automatic Place and Route，APR），很多时候也称为 PR 。</p>
+<p> 流片（TapeOut）：Foundry 根据版图制造芯片。</p>
+</li>
+</ol>
+<h3 id="2-2-验收和验证（SignOff）："><a href="#2-2-验收和验证（SignOff）：" class="headerlink" title="2.2. 验收和验证（SignOff）："></a>2.2. 验收和验证（SignOff）：</h3><p>对质量进行把控和最终验收。</p>
+<p>前仿真：检查 RTL 设计文件；用测试平台（Testbench）文件对实际应用环境仿真。这是在版图成型之前，称为前仿。一旦发现错误，验证人员会反馈给设计者修改，如此反复迭代，直至交付到综合阶段的 RTL 文件都是合格的。</p>
+<p>SignOff 检查：检查版图设计；对时序和功耗检查。如果检查不过，首先是数字后端工程师自己努力，重新绘制版图或微调元器件位置，若无法达到目的，再修改综合策略，重新综合。若仍无法达到目的，则反馈到前端 IC 设计，在 RTL 上调整。</p>
+<p>后仿真：在 SignOff 合格后，需要将网表和延迟信息提交给验证人员，进行后仿。对成型版图的时序进行最后验证和验收。后仿就是版图成型之后的仿真。</p>
+<h3 id="2-3-可测性设计（Design-For-Test，DFT）"><a href="#2-3-可测性设计（Design-For-Test，DFT）" class="headerlink" title="2.3. 可测性设计（Design For Test，DFT）"></a>2.3. 可测性设计（Design For Test，DFT）</h3><p>一个附属工序，原理是在芯片中加入与主要功能无关的附属电路，用于在芯片的生产过程中使用 TestBench 快速判断芯片功能的完好行、内部结构的正常性。</p>
+<p>如果芯片中包含 DFT 电路，则 TestBench 可以向芯片的某些引脚发送事先准备好的测试向量，在芯片的另一些引脚上采样芯片对测试向量的反应。将事先准备好的预期效果与实际采样到的结果进行对比，从而判断内部功能是否正常。</p>
+<p>DFT 功能也常常被称为扫描（Scan），即用 TestBench 扫描芯片内部之意。DFT 的检查对象是生产差错造成的芯片损坏，它不能检查设计问题。设计问题应该交给验证工序。</p>
+<p>DFT 对芯片来说不是必需的，一些低成本的芯片没有插入 DFT 电路，在设计流程中，直接从电路综合过渡到后端设计。</p>
+<h3 id="2-4-前端设计-VS-后端设计"><a href="#2-4-前端设计-VS-后端设计" class="headerlink" title="2.4. 前端设计 VS 后端设计"></a>2.4. 前端设计 VS 后端设计</h3><ul>
+<li>前端设计：抽象电路，只描述功能，不是具体电路。</li>
+<li>后端设计：具体电路，不仅要知道哪些元器件，还要确认这些元器件的摆放位置。</li>
+</ul>
+<p>综合是前端和后端的分界线，综合之前没有元器件而只有功能；综合之后，设计才有了具体化的元器件。</p>
+<p>当然，前端工程师往往强调心中有电路，并非实际电路，而是心中有功能相似的概念性电路。这样可以认清设计架构，并避免潜在的设计隐患。</p>
+<h2 id="3-模拟IC设计流程"><a href="#3-模拟IC设计流程" class="headerlink" title="3. 模拟IC设计流程"></a>3. 模拟IC设计流程</h2><ol>
+<li><p>绘制原理图（Schematic）</p>
+<p> 手动绘制。</p>
+</li>
+<li><p>原理图仿真</p>
+<p> 一般由原理图设计者亲自完成。原因是模拟电路的设计参数选择范围宽泛，需要验证的场景也复杂，仿真验收标准不十分明确。这就需要设计者搭建关键的应用环境和场景，对电路上产生的反应做出判断，随时调整电路结构和参数。</p>
+</li>
+<li><p>绘制版图（根据原理图）</p>
+<p> 手动绘制。</p>
+<p> 模拟版图工程师和模拟IC设计师一般是分开的两个职业。</p>
+<p> 模拟IC设计师一般也都掌握一些绘制版图的方法，单熟练程度以及对一些物理问题的处理方面，需要求助专业的版图工程师。</p>
+<p> 模拟版图工程师可以根据原理图及通用的绘图规则直接绘制。但是对诸如社评电路及高功率管之类有着特殊要求的设计，版图工程师需要与模拟IC设计师进行充分沟通，在模拟IC设计师的协助下进行绘制。</p>
+</li>
+<li><p>抽取寄生参数</p>
+</li>
+<li><p>版图后仿</p>
+</li>
+<li><p>设计规则检查（Design Rule Check，DRC）</p>
+</li>
+<li><p>版图和原理图的一致性检查（Layout Versus Schematics，LVS）</p>
+</li>
+<li><p>流片</p>
+</li>
+</ol>
+<p>模拟IC设计没有那么多自动化成分，需要手动绘制原理图、版图，电阻、电容等元器件需要人工确定。</p>
+<p>模拟IC仿真，无法像数字IC那样通过仿真验证和FPGA验证两种方法来相互印证设计效果。模拟仿真速度慢、情况多，很难覆盖真是使用中可能遇到的全部情况，因此，模拟设计具有很高的不确定，芯片的实际效果与仿真结果存在明显差距是经常发生的。</p>
+<p>但是模拟电路也有一些无法被数字电路取代的特性。</p>
+<p>可以想象，数字电路只需要处理 0 和 1 两种信号，但是模拟电路的数值域是实数域，包括所有连续的整数、浮点数、正负数，数据有无穷个。因此，即使是很小的电路，元器件数量不多，也需要设计者和仿真者从数值域中挑选一部份值作为设计和仿真中用到的值，绝对不可能覆盖所有情况。</p>
+<h2 id="4-芯片整体规划"><a href="#4-芯片整体规划" class="headerlink" title="4. 芯片整体规划"></a>4. 芯片整体规划</h2><p>版图布局规划（FloorPlan）：将芯片整体规划，以及内部数字、模拟电路的位置、面积、形状等特征的规划。</p>
+<figure style="text-align:center;">
+<img TODO width="50%"/>
+<figcaption>FloorPlan示例</figcaption>
+</figure>
+
+<ul>
+<li>Pad: FloorPlan的周围是芯片引脚(Pad)。Pad实际指的是芯片引脚之外的一块金属。</li>
+<li>IO: 包括Pad和内部逻辑在内的整个引脚设计。</li>
+</ul>
+<p>一个完整的引脚设计如图：</p>
+<img src="https://i.postimg.cc/MKfPd9z4/20250116222905.jpg" alt="20250116222905" width="50%"/>
+
+<ul>
+<li>封装: 芯片外面的塑料壳子称为芯片的封装，大体分为两种：插针式（引脚如针）、表贴式（引脚扁平）。</li>
+</ul>
+<h2 id="5-IC设计工具"><a href="#5-IC设计工具" class="headerlink" title="5. IC设计工具"></a>5. IC设计工具</h2><p>EDA 公司：电子设计自动化（Electronic Design Automation）公司，粗略来说，数字设计常用 Synopsys ，模拟设计常用 Cadence ， Mentor 在一些细分领域有优势。</p>
+<table>
+<thead>
+<tr>
+<th>数字&#x2F;模块</th>
+<th>数字流程</th>
+<th>常用软件</th>
+<th>其他软件</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>数字</td>
+<td>RTL 编写</td>
+<td>Vim&#x2F;Gvim</td>
+<td>普通文本编辑器</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>仿真</td>
+<td>VCS (Synopsys)</td>
+<td>Incisive (Cadence)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>看波形</td>
+<td>Verdi (Synopsys)</td>
+<td>DVE (Synopsys)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>设计检查</td>
+<td>Spyglass (Synopsys)</td>
+<td>Simvision (Cadence)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>综合</td>
+<td>DC (Synopsys)</td>
+<td>ModelSim (Mentor)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>时序仿真</td>
+<td>PT (Synopsys)</td>
+<td>nLint (Cadence)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>自动布局布线</td>
+<td>ICC2 (Synopsys)</td>
+<td>Genus (Cadence)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>设计版图形式验证</td>
+<td>Formality (Synopsys)</td>
+<td>Tempus (Cadence)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>提取寄生参数</td>
+<td>StarRC (Synopsys)</td>
+<td></td>
+</tr>
+<tr>
+<td>模拟</td>
+<td>原理图&#x2F;版图&#x2F;仿真等</td>
+<td>Virtuoso (Cadence)</td>
+<td>Calibre (Mentor)</td>
+</tr>
+<tr>
+<td>模拟</td>
+<td>寄生提取&#x2F;DRC&#x2F;LVS</td>
+<td>Calibre (Mentor)</td>
+<td></td>
+</tr>
+</tbody></table>
+<p>仿真加速器： <strong>Palladium</strong> (Cadence) 、 <strong>ZeBu</strong> (Synopsys) 。</p>
+<h3 id="5-1-数字IC设计工具"><a href="#5-1-数字IC设计工具" class="headerlink" title="5.1. 数字IC设计工具"></a>5.1. 数字IC设计工具</h3><p>RTL 仿真工具：有 Synopsys 的 VCS ，Cadence 的 Incisive （也叫 irun ）。这些工具可以胜任前仿、后仿、UVM 架构（Universal Verification Methodology，通用验证方法学）的仿真。Cadence 的 irun 与模拟设计工具 Virtuoso 工具中集成的 AMS 仿真工具相结合，支持数字模拟电路混合仿真。</p>
+<p>波形查看工具：一般集成在仿真工具中。VCS 的波形软件叫 DVE ， Incisive 的波形软件叫 SimVision 。但在这个领域，一家名为 Novas 的公司的软件，以其明快的界面、方便的功能、快捷的操作，异军突起，得到了广泛的认可，它就是 Verdi （以音乐家威尔第的名字命名，前身叫 Debussy ，以音乐家德彪西的名字命名）。 Verdi 现已被 Synopsys 收购。 Mentor 的仿真和看波形软件叫 ModelSim ，主要用于 FPGA 功能的仿真。</p>
+<p>RTL 语法检查工具： Atrenta 公司的 Sypyglass ，可以检查语法、跨时钟域处理方案的可靠性，甚至可以在内部执行综合、功耗评估和简单的布局布线，使它能全方位地给出设计建议。现已被 Synopsys 收购。 Cadence 的对应检查工具是 nLint 。</p>
+<p>综合工具：即将 RTL 转化为实际电路的工具，常用的的有 Synopsys 的 Design Compiler (DC) ，该工具内部还有一些 Synopsys 开发的库，能够帮助设计者减小面积，提高性能，例如加法器、乘法器等，这些设计好的子模块在 DC 中被称为 DesignWare (DW) 。可以是让工具自动从 RTL 中识别出可用 DW 替换的代码，也可以是设计者手动例化 DW 模块。 Cadence 相应的工具叫 Genus （原名叫 RTL Compiler ）。</p>
+<p>版图自动布局布线软件： Synopsys 有 ICC2 （旧版为 ICC ）， Cadence 有 Innovus （原名 Encounter ），两个软件都被广泛使用。由于两个软件的操作命令不同，后端工程师往往只掌握其中一种。 Synopsys 为了增强客户的黏性，开发了一个银河（ MilkyWay ）流程，从前端到后端，通过专用的二进制文件 (db) 传输，占用空间小，处理效率高，但也有许多公司使用 DC 综合，再将网表导入 Innovus 进行布局布线。</p>
+<p>SignOff 工具：即对整个设计的时序、功耗评估。 Synopsys 的 Prime Time (PT) ， Cadence 的 Tempus 。目前， PT 已经称为业内 SignOff 的标准。实际上，时序分析在 DC 中也能做，但两者在分析方法、细节考虑全面度、分析速度等方面存在差异。在综合时使用 DC 检查，而在 SignOff 时，使用 PT 检查。</p>
+<p>形式验证工具：也称为逻辑等效行检查（ Logic Equivalece Check, LEC ），将 RTL 和网表进行一一对照。因为从 RTL 到综合网表，以及从综合网表到后端网表的过程，可能意外地改变原有功能和设计意图，所以需要进行检查。 Synopsys 的工具时 Formality ， Candence 的工具是 Conformal 。</p>
+<p>寄生参数的提取工具：进入设计版图阶段，可以确定走线的延迟。该值受信号负载、线路长短、粗细、周围线路等多重影响，需要用模型和查表进行计算，才能得到确切的值。该过程称为寄生参数的提取。一般使用 Synopsys 的 StarRC 。提取出来的信息可用于 PT 进行 SignOff 。</p>
+<p>上述工具，最主要的控制语法是 TCL 语言， EDA 工具大多以该语言为基础，扩展出各种专用命令。</p>
+<p>除了以上数字设计工具，还有一些更加细分的工具类型，比如仿真加速器，有 Cadence 的 Palladium 、 Synopsys 的 ZeBu 。</p>
+<h3 id="5-2-模拟IC设计工具"><a href="#5-2-模拟IC设计工具" class="headerlink" title="5.2. 模拟IC设计工具"></a>5.2. 模拟IC设计工具</h3><p>主要是 Cadence 的 Virtuoso 。与数字设计中繁多的工具不同， Virtuoso 能满足大部分设计需求，例如绘制并仿真原理图、绘制并仿真版图、数模混合仿真等。实际上， Virtuoso 更像集成开发环境（ Integrated Development Environment, IDE ），它包含很多独立的设计工具，如仿真工具 Spectre 等。</p>
+<p>SignOff 工具：Mentor 的 Calibre 可以用来提取寄生参数、进行 DRC 和 LVS 检查。</p>
+<h3 id="5-3-职位、分工与工具"><a href="#5-3-职位、分工与工具" class="headerlink" title="5.3. 职位、分工与工具"></a>5.3. 职位、分工与工具</h3><table>
+<thead>
+<tr>
+<th>大职位</th>
+<th>细分职位</th>
+<th>功能</th>
+<th>常用工具</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>数字</td>
+<td>数字 IC 设计</td>
+<td>设计芯片中的数字电路</td>
+<td>Vim, VCS, Verdi, Spyglass, DC 等</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>数字 IC 验证</td>
+<td>验证芯片中的数字电路功能</td>
+<td>VCS, Verdi 等</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>数字 IC 后端</td>
+<td>将抽象电路转换为版图</td>
+<td>ICC2, Innovus, Calibre, PT 等</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>其他职位, 如 SignOff, DFT 等</td>
+<td>负责在数字电路中插入 DFT、对最终的版图进行时序、面积、功耗的检查等</td>
+<td>DC, PT, Formality 等</td>
+</tr>
+<tr>
+<td>模拟</td>
+<td>模拟 IC 设计</td>
+<td>设计芯片中的模拟电路</td>
+<td>Virtuoso 等</td>
+</tr>
+<tr>
+<td>模拟</td>
+<td>模拟版图</td>
+<td>将电路原理图做成版图</td>
+<td>Virtuoso, Calibre 等</td>
+</tr>
+<tr>
+<td>软件</td>
+<td>嵌入式软件工程师</td>
+<td>(1) 参与芯片开发&#x2F;验证 (2) 参与 SDK (3) 参与芯片应用方案</td>
+<td>Keil, SourceInsight, Visual Studio 等</td>
+</tr>
+<tr>
+<td>软件方案</td>
+<td>测试工程师</td>
+<td>(1) 对芯片设计性能的测试 (2) 芯片量产测试</td>
+<td>兼用软件和硬件工具</td>
+</tr>
+<tr>
+<td>硬方案</td>
+<td>应用工程师</td>
+<td>做电路板，为芯片找到合适的应用场景</td>
+<td>Pads, Altium Designer, Cadence 等</td>
+</tr>
+</tbody></table>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">管理</span><br><span class="line">├── 研发</span><br><span class="line">│   ├── 数字IC设计</span><br><span class="line">│   ├── 数字IC验证</span><br><span class="line">│   └── 数字后端</span><br><span class="line">│   └── 模拟IC设计</span><br><span class="line">│       └── 模拟版图</span><br><span class="line">├── 测试</span><br><span class="line">│   ├── 研发类测试</span><br><span class="line">│   │   ├── 方案测试</span><br><span class="line">│   │   └── 量产测试</span><br><span class="line">│   └── 客户测试</span><br><span class="line">├── 销售</span><br><span class="line">└── 方案</span><br><span class="line">    ├── 硬件方案</span><br><span class="line">    └── 软件方案</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="5-4-EDA-与-Foundry-的关系"><a href="#5-4-EDA-与-Foundry-的关系" class="headerlink" title="5.4. EDA 与 Foundry 的关系"></a>5.4. EDA 与 Foundry 的关系</h3><p>普通软件公司无力开发 EDA 软件。因为 EDA 厂商需要和 Foundry 厂商紧密合作，才能获得有关的生产细节数据，从而帮助用户进行更加准确的仿真、寄生参数的提取、规则的检查。不同的 EDA 工具抽取的寄生参数可能不同，原因可能是不同的工具获得的工艺数据不同。</p>
+<p>国内 EDA 厂商要想打破垄断，不仅要靠软件技术，还要与各大 Foundry 厂达成战略合作，共享工艺数据，才能做出有实用价值的 EDA 工具。</p>
+<h2 id="6-概念"><a href="#6-概念" class="headerlink" title="6. 概念"></a>6. 概念</h2><h3 id="6-1-寄存器："><a href="#6-1-寄存器：" class="headerlink" title="6.1. 寄存器："></a>6.1. 寄存器：</h3><p>register，这是对功能强调的名称，其物理实体很多，比如触发器 (Flip-Flop, FF)和锁存器(Latch)等等。在数字设计中，主要提倡触发器。</p>
+<p>寄存器是受控于时钟沿的元器件， Foundry 会在标准单元库中提供多种寄存器。</p>
+<p>触发器是由边沿信号而非电平信号导致数据存储的。触发源一般是时钟信号。</p>
+<p>锁存器较少使用，它一般以非时钟信号为存储控制，靠电平触发。一般不连接时钟，只是连接一根普通的信号线。这种锁存器一般很少被纳入时钟计算中，因为它既不属于组合逻辑，又无法像触发器一样作为时序路径的起终点，所以时序上无法通过工具保证，只能通过工程师来保证。</p>
+<p>本书说的寄存器，基本可以替换为触发器。在数字芯片 EDA 工具链中，两个概念也是混用的，一个 reg 既可以指寄存器，也可以指触发器。另外，所谓时序逻辑门电路，也基本等同于触发器。</p>
+<h3 id="6-2-设计-Design-的边界"><a href="#6-2-设计-Design-的边界" class="headerlink" title="6.2. 设计(Design)的边界"></a>6.2. 设计(Design)的边界</h3><img src="https://i.postimg.cc/gjQMGZHN/20250116211433.jpg" alt="20250116211433" width="50%"/>
+
+<ul>
+<li><p>Pad：芯片（封装）之外的引脚。</p>
+</li>
+<li><p>元器件：指芯片内的组合逻辑门电路及时序逻辑门电路。这些标准的元器件也被称为标准单元(Standard Cell)。元器件也称为逻辑门。</p>
+</li>
+<li><p>标准单元库&#x2F;工艺库：元器件的集合。</p>
+</li>
+<li><p>I&#x2F;O: 如前“FloorPlan”对IO的解释，I&#x2F;O是包括Pad和内部逻辑在内的整个引脚设计。在标准单元库中是一种标准单元，但是它比较特殊，可能与其他标准单元不放在同一个标准单元库中。驱动电平也可能不同。</p>
+</li>
+<li><p>通用单元库: 在综合时，有一个中间步骤是将 RTL 抽象逻辑先映射为<strong>通用单元(Generic Boolean)<strong>，然后映射到</strong>标准单元</strong>。通用单元与工艺无关，也不包含物理特性，只有功能属性，与 RTL 描述类似。而标准单元既有功能属性，又有延迟、电压等工艺属性，与工艺和 Foundry 相关。</p>
+</li>
+<li><p>lef文件: Library Exchange Format. 描述特定流片工艺下元器件的物理属性。</p>
+</li>
+<li><p>lib文件: Library. 描述特定流片工艺下元器件的功能属性。lib文件常常要被编译为二进制的db文件才能在某些EDA工具上使用。 lef 和 lib 文件都是技术库。</p>
+<p>  数字设计只能在 Foundry 提供的已有的选项中挑选元器件。</p>
+</li>
+<li><p>def文件: Design Exchange Format. 设计除了 RTL 外，也可以带有物理信息，保存为 def 文件，基础内容是设计的形状和尺寸，扩展内容包括端口的分布位置、RAM和ROM等硬核的放置位置、内部元器件的放置和布线位置等。 RTL 和 def 统称为设计。</p>
+</li>
+</ul>
+<p>自己写的模块可以称为设备(Device)或模块(Module)。</p>
+<p>用设备一词主要强调它具备相对独立的功能，在介绍SoC架构等上层逻辑时较为常用，设备也经常被替换为单元(Unit)一词，它指人为设计的单元，而非标准单元。一个设计可以包含很多个设备。</p>
+<p>用模块一词，主要强调它在设计文件结构上的独立性，在介绍通用设计和底层逻辑时较为常用。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/01/14/VPN%E8%AE%BE%E7%BD%AE/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +550,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-31 12:00:10" itemprop="dateModified" datetime="2025-07-31T12:00:10+00:00">2025-07-31</time>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
               </span>
 
           
@@ -364,7 +690,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-31 12:00:10" itemprop="dateModified" datetime="2025-07-31T12:00:10+00:00">2025-07-31</time>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
               </span>
 
           
@@ -432,7 +758,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-31 12:00:10" itemprop="dateModified" datetime="2025-07-31T12:00:10+00:00">2025-07-31</time>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
               </span>
 
           
@@ -496,7 +822,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/17/cplusplus/C++%E7%9A%84bool%E5%92%8Cint/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/17/cpp/C++%E7%9A%84bool%E5%92%8Cint/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -510,7 +836,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2024/09/17/cplusplus/C++%E7%9A%84bool%E5%92%8Cint/" class="post-title-link" itemprop="url">C++ 的 bool 和 int</a>
+            <a href="/blog/2024/09/17/cpp/C++%E7%9A%84bool%E5%92%8Cint/" class="post-title-link" itemprop="url">C++ 的 bool 和 int</a>
         </h2>
 
         <div class="post-meta">
@@ -527,7 +853,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-31 12:00:10" itemprop="dateModified" datetime="2025-07-31T12:00:10+00:00">2025-07-31</time>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -610,7 +936,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-31 12:00:10" itemprop="dateModified" datetime="2025-07-31T12:00:10+00:00">2025-07-31</time>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -743,7 +1069,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-31 12:00:10" itemprop="dateModified" datetime="2025-07-31T12:00:10+00:00">2025-07-31</time>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -827,7 +1153,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-31 12:00:10" itemprop="dateModified" datetime="2025-07-31T12:00:10+00:00">2025-07-31</time>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
               </span>
 
           
@@ -909,7 +1235,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-31 12:00:10" itemprop="dateModified" datetime="2025-07-31T12:00:10+00:00">2025-07-31</time>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -984,7 +1310,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-31 12:00:10" itemprop="dateModified" datetime="2025-07-31T12:00:10+00:00">2025-07-31</time>
+                <time title="Modified: 2025-08-01 09:50:32" itemprop="dateModified" datetime="2025-08-01T09:50:32+00:00">2025-08-01</time>
               </span>
 
           
@@ -1005,195 +1331,6 @@
 <li>Thread-Specific Signal Handling: Some signals, such as SIGINT (interrupt signal), SIGTERM (termination signal), or SIGABRT (abort signal), are typically delivered to the entire process, which means they can interrupt any thread. However, other signals, like SIGSEGV (segmentation fault) or SIGILL (illegal signal), are usually delivered to the specific thread that caused the signal.</li>
 <li>Signal Masking: In a multi-threaded program, you can use signal masking (sigprocmask in POSIX systems) to block certain signals in specific threads. This can affect whether a signal handler interrupts a particular thread or not.</li>
 <li>Asynchronous-Signal-Safe Functions: Signal handlers should only execute functions are considered “asynchronous-signal-safe” according to POSIX standards. These functions are designed to be safe to call from within a signal handler. Using non-safe functions in a signal handler can lead to undefined behavior.</li>
-</ol>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/02/24/thread/TBB%E5%85%A5%E9%97%A8/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/02/24/thread/TBB%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">TBB入门</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-02-24 14:59:52" itemprop="dateCreated datePublished" datetime="2024-02-24T14:59:52+00:00">2024-02-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-07-31 12:00:10" itemprop="dateModified" datetime="2025-07-31T12:00:10+00:00">2025-07-31</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="1-控制线程数"><a href="#1-控制线程数" class="headerlink" title="1. 控制线程数"></a>1. 控制线程数</h2><ul>
-<li>Method 1: Use the environment variable <code>TBB_NUM_THREADS</code> for the gloabl setting.</li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> TBB_NUM_THREADS=4</span><br></pre></td></tr></table></figure>
-
-<p>TODO: It doesn’t seem to work!</p>
-<ul>
-<li>Method 2: Use <code>tbb::task_arena</code> or <code>tbb::task_scheduler_init</code> (Deprecated).</li>
-</ul>
-<p>TBB will use this setting locally within the scope of the <code>tbb::task_arena</code>.</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tbb/pipeline.h&gt;</span></span></span><br><span class="line"><span class="comment">// Deprecated:</span></span><br><span class="line"><span class="comment">// #include &lt;tbb/task_scheduler_init.h&gt;</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tbb/task_arena.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Define your pipeline body</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MyPipeline</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">operator</span><span class="params">()</span> <span class="params">(tbb::flow_control&amp; fc)</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="comment">// Your pipeline logic here</span></span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line">        <span class="comment">// Inform the pipeline that there is no more data</span></span><br><span class="line">        fc.<span class="built_in">stop</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Deprecated: tbb::task_scheduler_init init(1);</span></span><br><span class="line">    <span class="function">tbb::task_arena <span class="title">arena</span><span class="params">(<span class="number">4</span>)</span></span>; <span class="comment">// 4 threads</span></span><br><span class="line">    <span class="comment">// Do some tasks:</span></span><br><span class="line">    tbb::<span class="built_in">parallel_pipeline</span>(<span class="comment">/* max_number_of_live_tokens */</span> <span class="number">4</span>, MyPipeline); <span class="comment">// <span class="doctag">FIXME:</span> 似乎需要放入 arena 的 execute 函数中</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="2-parallel-for"><a href="#2-parallel-for" class="headerlink" title="2. parallel_for"></a>2. <code>parallel_for</code></h2><p>API: <a target="_blank" rel="noopener" href="https://oneapi-spec.uxlfoundation.org/specifications/oneapi/latest/elements/onetbb/source/algorithms/functions/parallel_for_func">parallel_for</a></p>
-<ol>
-<li>用 <code>my_parallel_for</code> 模拟 <code>parallel_for</code> 的实现：</li>
-</ol>
-<figure class="highlight cpp"><figcaption><span>my_parallel_for.cpp</span><a href="/blog/downloads/code/TBB/my_parallel_for.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tbb/tbb.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 模拟 parallel_for 的内部实现</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">my_parallel_for</span><span class="params">(<span class="type">const</span> tbb::blocked_range&lt;<span class="type">size_t</span>&gt;&amp; range, <span class="type">const</span> std::function&lt;<span class="type">void</span>(<span class="type">const</span> tbb::blocked_range&lt;<span class="type">size_t</span>&gt;&amp;)&gt;&amp; body)</span> </span>{</span><br><span class="line">    <span class="keyword">if</span> (range.<span class="built_in">is_divisible</span>()) {</span><br><span class="line">        <span class="comment">// 分割范围</span></span><br><span class="line">        <span class="function">tbb::blocked_range&lt;<span class="type">size_t</span>&gt; <span class="title">left</span><span class="params">(range.begin(), range.begin() + (range.end() - range.begin()) / <span class="number">2</span>)</span></span>;</span><br><span class="line">        <span class="function">tbb::blocked_range&lt;<span class="type">size_t</span>&gt; <span class="title">right</span><span class="params">(left.end(), range.end())</span></span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 递归调用</span></span><br><span class="line">        tbb::<span class="built_in">parallel_invoke</span>(</span><br><span class="line">            [&amp;] { <span class="built_in">my_parallel_for</span>(left, body); },</span><br><span class="line">            [&amp;] { <span class="built_in">my_parallel_for</span>(right, body); }</span><br><span class="line">        );</span><br><span class="line">    } <span class="keyword">else</span> {</span><br><span class="line">        <span class="comment">// 处理当前范围</span></span><br><span class="line">        <span class="built_in">body</span>(range);</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="function">std::vector&lt;<span class="type">int</span>&gt; <span class="title">data</span><span class="params">(<span class="number">100</span>)</span></span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; ++i) {</span><br><span class="line">        data[i] = i;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 使用自定义的 parallel_for 进行并行处理</span></span><br><span class="line">    <span class="built_in">my_parallel_for</span>(tbb::<span class="built_in">blocked_range</span>&lt;<span class="type">size_t</span>&gt;(<span class="number">0</span>, data.<span class="built_in">size</span>()), [&amp;](<span class="type">const</span> tbb::blocked_range&lt;<span class="type">size_t</span>&gt;&amp; r) {</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">size_t</span> i = r.<span class="built_in">begin</span>(); i != r.<span class="built_in">end</span>(); ++i) {</span><br><span class="line">            data[i] *= <span class="number">2</span>; <span class="comment">// 示例操作：将每个元素乘以2</span></span><br><span class="line">        }</span><br><span class="line">    });</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 输出结果</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">const</span> <span class="keyword">auto</span>&amp; val : data) {</span><br><span class="line">        std::cout &lt;&lt; val &lt;&lt; <span class="string">&quot; &quot;</span>;</span><br><span class="line">    }</span><br><span class="line">    std::cout &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-<ol start="2">
-<li>发出任务的线程也会成为工作线程之一，并参与任务的执行，测试代码如下：</li>
-</ol>
-<figure class="highlight cpp"><figcaption><span>test_parallel_for.cpp</span><a href="/blog/downloads/code/TBB/test_parallel_for.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tbb/tbb.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;mutex&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> tbb;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> std::atomic&lt;<span class="type">int</span>&gt; <span class="title">total_blocks</span><span class="params">(<span class="number">0</span>)</span></span>;  <span class="comment">// Atomic counter to track the number of tasks processed</span></span><br><span class="line"><span class="function"><span class="type">static</span> std::atomic&lt;<span class="type">int</span>&gt; <span class="title">total_blocks2</span><span class="params">(<span class="number">0</span>)</span></span>;  <span class="comment">// Atomic counter to track the number of tasks processed</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Function to process each data element</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">process_data</span><span class="params">(<span class="type">int</span> i, std::mutex&amp; mtx)</span> </span>{</span><br><span class="line">    <span class="comment">// std::this_thread::sleep_for(std::chrono::milliseconds(1));  // Simulate some processing time</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; ++i)</span><br><span class="line">        ;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span>* argv[])</span> </span>{</span><br><span class="line">    <span class="keyword">if</span> (argc &lt; <span class="number">3</span>) {</span><br><span class="line">        std::cerr &lt;&lt; <span class="string">&quot;Usage: &quot;</span> &lt;&lt; argv[<span class="number">0</span>] &lt;&lt; <span class="string">&quot; &lt;number_of_elements&gt;&quot;</span></span><br><span class="line">                  &lt;&lt; <span class="string">&quot;&lt;grain_size&gt;&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> num_elements = std::<span class="built_in">stoi</span>(argv[<span class="number">1</span>]);</span><br><span class="line">    <span class="type">int</span> grain_size = std::<span class="built_in">stoi</span>(argv[<span class="number">2</span>]);</span><br><span class="line"></span><br><span class="line">    std::mutex mtx;</span><br><span class="line">    <span class="function">std::vector&lt;<span class="type">int</span>&gt; <span class="title">data</span><span class="params">(num_elements)</span></span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; num_elements; ++i) {</span><br><span class="line">        data[i] = i;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// {</span></span><br><span class="line">    <span class="comment">//     std::lock_guard&lt;std::mutex&gt; lock(mtx);</span></span><br><span class="line">    <span class="comment">//     std::cout &lt;&lt; &quot;Main thread ID: &quot; &lt;&lt; std::this_thread::get_id() &lt;&lt; std::endl;</span></span><br><span class="line">    <span class="comment">// }</span></span><br><span class="line"></span><br><span class="line">    tbb::concurrent_unordered_map&lt;std::thread::id, tbb::concurrent_vector&lt;<span class="type">int</span>&gt;&gt; thread_task_counts;  <span class="comment">// To store task counts for each thread</span></span><br><span class="line">    tbb::concurrent_unordered_map&lt;std::thread::id, tbb::concurrent_vector&lt;<span class="type">int</span>&gt;&gt; thread_task_counts2;  <span class="comment">// To store task counts for each thread</span></span><br><span class="line"></span><br><span class="line">    tbb::<span class="built_in">parallel_for</span>(<span class="number">0</span>, <span class="built_in">static_cast</span>&lt;<span class="type">int</span>&gt;((data.<span class="built_in">size</span>() + grain_size - <span class="number">1</span>) / grain_size), [&amp;](<span class="type">int</span> i) {</span><br><span class="line">        total_blocks++;</span><br><span class="line">        <span class="type">int</span> cnt = <span class="number">0</span>;  <span class="comment">// Thread-local variable to avoid data</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> j = i * grain_size; j &lt; std::<span class="built_in">min</span>(<span class="built_in">static_cast</span>&lt;<span class="type">int</span>&gt;(data.<span class="built_in">size</span>()), (i + <span class="number">1</span>) * grain_size); ++j) {</span><br><span class="line">            <span class="built_in">process_data</span>(i, mtx);</span><br><span class="line">            ++cnt;</span><br><span class="line">        }</span><br><span class="line">        thread_task_counts[std::this_thread::<span class="built_in">get_id</span>()].<span class="built_in">push_back</span>(cnt);</span><br><span class="line">    });</span><br><span class="line"></span><br><span class="line">    tbb::<span class="built_in">parallel_for</span>(<span class="built_in">blocked_range</span>&lt;<span class="type">int</span>&gt;(<span class="number">0u</span>, data.<span class="built_in">size</span>(), grain_size), [&amp;](<span class="type">const</span> blocked_range&lt;<span class="type">int</span>&gt;&amp; r) {</span><br><span class="line">        total_blocks2++;</span><br><span class="line">        <span class="type">int</span> cnt = <span class="number">0</span>;  <span class="comment">// Thread-local variable to avoid data</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = r.<span class="built_in">begin</span>(); i &lt; r.<span class="built_in">end</span>(); ++i) {</span><br><span class="line">            <span class="built_in">process_data</span>(i, mtx);</span><br><span class="line">            ++cnt;</span><br><span class="line">        }</span><br><span class="line">        thread_task_counts2[std::this_thread::<span class="built_in">get_id</span>()].<span class="built_in">push_back</span>(cnt);</span><br><span class="line">    });</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Total blocks processed: &quot;</span> &lt;&lt; total_blocks.<span class="built_in">load</span>() &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">const</span> <span class="keyword">auto</span>&amp; pair : thread_task_counts) {</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Thread &quot;</span> &lt;&lt; pair.first &lt;&lt; <span class="string">&quot; processed: &quot;</span>;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">const</span> <span class="keyword">auto</span>&amp; task_count : pair.second)</span><br><span class="line">            std::cout &lt;&lt; task_count &lt;&lt; <span class="string">&quot;, &quot;</span>;</span><br><span class="line">        std::cout &lt;&lt; std::endl;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Total blocks2 processed: &quot;</span> &lt;&lt; total_blocks2.<span class="built_in">load</span>() &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">const</span> <span class="keyword">auto</span>&amp; pair : thread_task_counts2) {</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Thread &quot;</span> &lt;&lt; pair.first &lt;&lt; <span class="string">&quot; processed: &quot;</span>;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">const</span> <span class="keyword">auto</span>&amp; task_count : pair.second)</span><br><span class="line">            std::cout &lt;&lt; task_count &lt;&lt; <span class="string">&quot;, &quot;</span>;</span><br><span class="line">        std::cout &lt;&lt; std::endl;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-<p>测试结果：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ ./test_parallel_for </span><br><span class="line">Main thread ID: 140220582070080</span><br><span class="line">Processing data: 2 on thread 140220582070080</span><br><span class="line">Processing data: 6 on thread 140220557755968</span><br><span class="line">Processing data: 4 on thread 140220574795328</span><br><span class="line">Processing data: 8 on thread 140220566275648</span><br><span class="line">Processing data: 10 on thread 140220562015808</span><br></pre></td></tr></table></figure>
-
-<p>可见，<code>data 2</code> 是由主线程处理的。也就是说，<code>parallel_for</code> 虽然被称为 a blocking parallel construt，但线程等待所有任务完成期间是非阻塞的，它还可以充当工作线程执行任务池中的任务。</p>
-<p>代码模拟 <code>parallel_for</code> 的 <code>wait</code> ：</p>
-<figure class="highlight cpp"><figcaption><span>my_task_scheduler.cpp</span><a href="/blog/downloads/code/TBB/my_task_scheduler.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;functional&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;condition_variable&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;queue&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TaskScheduler</span> {</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">TaskScheduler</span>(<span class="type">size_t</span> numThreads);</span><br><span class="line">    ~<span class="built_in">TaskScheduler</span>();</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">enqueue</span><span class="params">(std::function&lt;<span class="type">void</span>()&gt; task)</span></span>;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">wait</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::vector&lt;std::thread&gt; workers;</span><br><span class="line">    std::queue&lt;std::function&lt;<span class="type">void</span>()&gt;&gt; tasks;</span><br><span class="line">    std::mutex queueMutex;</span><br><span class="line">    std::condition_variable condition;</span><br><span class="line">    std::condition_variable finished;</span><br><span class="line">    <span class="type">bool</span> stop;</span><br><span class="line">    <span class="type">size_t</span> activeTasks;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">workerThread</span><span class="params">()</span></span>;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">executeTask</span><span class="params">()</span></span>;</span><br><span class="line">};</span><br><span class="line"></span><br><span class="line">TaskScheduler::<span class="built_in">TaskScheduler</span>(<span class="type">size_t</span> numThreads) : <span class="built_in">stop</span>(<span class="literal">false</span>), <span class="built_in">activeTasks</span>(<span class="number">0</span>) {</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">size_t</span> i = <span class="number">0</span>; i &lt; numThreads; ++i) {</span><br><span class="line">        workers.<span class="built_in">emplace_back</span>(&amp;TaskScheduler::workerThread, <span class="keyword">this</span>);</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">TaskScheduler::~<span class="built_in">TaskScheduler</span>() {</span><br><span class="line">    {</span><br><span class="line">        <span class="function">std::unique_lock&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(queueMutex)</span></span>;</span><br><span class="line">        stop = <span class="literal">true</span>;</span><br><span class="line">    }</span><br><span class="line">    condition.<span class="built_in">notify_all</span>();</span><br><span class="line">    <span class="keyword">for</span> (std::thread &amp;worker : workers) {</span><br><span class="line">        worker.<span class="built_in">join</span>();</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">TaskScheduler::enqueue</span><span class="params">(std::function&lt;<span class="type">void</span>()&gt; task)</span> </span>{</span><br><span class="line">    {</span><br><span class="line">        <span class="function">std::unique_lock&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(queueMutex)</span></span>;</span><br><span class="line">        tasks.<span class="built_in">push</span>(std::<span class="built_in">move</span>(task));</span><br><span class="line">    }</span><br><span class="line">    condition.<span class="built_in">notify_one</span>();</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">TaskScheduler::wait</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="function">std::unique_lock&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(queueMutex)</span></span>;</span><br><span class="line">    <span class="keyword">while</span> (!tasks.<span class="built_in">empty</span>() || activeTasks &gt; <span class="number">0</span>) {</span><br><span class="line">        <span class="comment">// 如果还有任务，执行一个任务，避免当前线程被阻塞</span></span><br><span class="line">        <span class="keyword">if</span> (!tasks.<span class="built_in">empty</span>()) {</span><br><span class="line">            <span class="built_in">executeTask</span>();</span><br><span class="line">        } <span class="keyword">else</span> {</span><br><span class="line">            finished.<span class="built_in">wait</span>(lock);</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">TaskScheduler::workerThread</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">while</span> (<span class="literal">true</span>) {</span><br><span class="line">        std::function&lt;<span class="type">void</span>()&gt; task;</span><br><span class="line">        {</span><br><span class="line">            <span class="function">std::unique_lock&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(queueMutex)</span></span>;</span><br><span class="line">            condition.<span class="built_in">wait</span>(lock, [<span class="keyword">this</span>] { <span class="keyword">return</span> stop || !tasks.<span class="built_in">empty</span>(); });</span><br><span class="line">            <span class="keyword">if</span> (stop &amp;&amp; tasks.<span class="built_in">empty</span>()) <span class="keyword">return</span>;</span><br><span class="line">            task = std::<span class="built_in">move</span>(tasks.<span class="built_in">front</span>());</span><br><span class="line">            tasks.<span class="built_in">pop</span>();</span><br><span class="line">            ++activeTasks;</span><br><span class="line">        }</span><br><span class="line">        <span class="built_in">task</span>();</span><br><span class="line">        {</span><br><span class="line">            <span class="function">std::unique_lock&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(queueMutex)</span></span>;</span><br><span class="line">            --activeTasks;</span><br><span class="line">            <span class="keyword">if</span> (tasks.<span class="built_in">empty</span>() &amp;&amp; activeTasks == <span class="number">0</span>) {</span><br><span class="line">                finished.<span class="built_in">notify_all</span>();</span><br><span class="line">            }</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">TaskScheduler::executeTask</span><span class="params">()</span> </span>{</span><br><span class="line">    std::function&lt;<span class="type">void</span>()&gt; task;</span><br><span class="line">    {</span><br><span class="line">        <span class="function">std::unique_lock&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(queueMutex)</span></span>;</span><br><span class="line">        <span class="keyword">if</span> (tasks.<span class="built_in">empty</span>()) <span class="keyword">return</span>;</span><br><span class="line">        task = std::<span class="built_in">move</span>(tasks.<span class="built_in">front</span>());</span><br><span class="line">        tasks.<span class="built_in">pop</span>();</span><br><span class="line">        ++activeTasks;</span><br><span class="line">    }</span><br><span class="line">    <span class="built_in">task</span>();</span><br><span class="line">    {</span><br><span class="line">        <span class="function">std::unique_lock&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(queueMutex)</span></span>;</span><br><span class="line">        --activeTasks;</span><br><span class="line">        <span class="keyword">if</span> (tasks.<span class="built_in">empty</span>() &amp;&amp; activeTasks == <span class="number">0</span>) {</span><br><span class="line">            finished.<span class="built_in">notify_all</span>();</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">parallel_for</span><span class="params">(<span class="type">int</span> start, <span class="type">int</span> end, std::function&lt;<span class="type">void</span>(<span class="type">int</span>)&gt; func)</span> </span>{</span><br><span class="line">    <span class="function"><span class="type">static</span> TaskScheduler <span class="title">scheduler</span><span class="params">(std::thread::hardware_concurrency())</span></span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = start; i &lt; end; ++i) {</span><br><span class="line">        scheduler.<span class="built_in">enqueue</span>([i, &amp;func] { <span class="built_in">func</span>(i); });</span><br><span class="line">    }</span><br><span class="line">    scheduler.<span class="built_in">wait</span>();</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="type">const</span> <span class="type">int</span> N1 = <span class="number">100</span>;</span><br><span class="line">    <span class="type">const</span> <span class="type">int</span> N2 = <span class="number">100</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// The first parallel loop.</span></span><br><span class="line">    <span class="built_in">parallel_for</span>(<span class="number">0</span>, N1, [&amp;](<span class="type">int</span> i) {</span><br><span class="line">        <span class="comment">// The second parallel loop.</span></span><br><span class="line">        <span class="built_in">parallel_for</span>(<span class="number">0</span>, N2, [&amp;](<span class="type">int</span> j) {</span><br><span class="line">            <span class="comment">// Some work</span></span><br><span class="line">        });</span><br><span class="line">        <span class="comment">// 线程发出 parallel_for 之后，需要等待内部所有 parallel loop 的任务完成</span></span><br><span class="line">        <span class="comment">// 在此期间允许继续拿取外部的 parallel loop 的任务执行</span></span><br><span class="line">    });</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-<h2 id="3-TBB线程池"><a href="#3-TBB线程池" class="headerlink" title="3. TBB线程池"></a>3. TBB线程池</h2><p>TBB似乎总是使用同一个全局线程池。测试代码如下：</p>
-<figure class="highlight cpp"><figcaption><span>tbb_thread_pool.cpp</span><a href="/blog/downloads/code/TBB/tbb_thread_pool.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tbb/tbb.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;mutex&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line">std::mutex mtx;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">task_group_function</span><span class="params">()</span> </span>{</span><br><span class="line">    tbb::task_group tg;</span><br><span class="line">    <span class="type">int</span> max_concurrency = tbb::this_task_arena::<span class="built_in">max_concurrency</span>();</span><br><span class="line">    {</span><br><span class="line">        <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(mtx)</span></span>;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Task group max concurrency: &quot;</span> &lt;&lt; max_concurrency &lt;&lt; endl;</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">16</span>; ++i) {</span><br><span class="line">        tg.<span class="built_in">run</span>([i] {</span><br><span class="line">            {</span><br><span class="line">                std::lock_guard&lt;std::mutex&gt; <span class="built_in">lock</span>(mtx);</span><br><span class="line">                std::cout &lt;&lt; <span class="string">&quot;Task group thread &quot;</span> &lt;&lt; std::this_thread::<span class="built_in">get_id</span>() &lt;&lt; <span class="string">&quot; is running.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">            }</span><br><span class="line">            <span class="built_in">sleep</span>(<span class="number">1</span>);</span><br><span class="line">        });</span><br><span class="line">    }</span><br><span class="line">    tg.<span class="built_in">wait</span>();</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">task_arena_function</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="function">tbb::task_arena <span class="title">arena</span><span class="params">(<span class="number">4</span>)</span></span>;</span><br><span class="line">    <span class="type">int</span> max_concurrency = arena.<span class="built_in">max_concurrency</span>();</span><br><span class="line">    {</span><br><span class="line">        <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(mtx)</span></span>;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Task arena max concurrency: &quot;</span> &lt;&lt; max_concurrency &lt;&lt; endl;</span><br><span class="line">    }</span><br><span class="line">    arena.<span class="built_in">execute</span>([max_concurrency] {</span><br><span class="line">        tbb::<span class="built_in">parallel_for</span>(<span class="number">0</span>, <span class="number">16</span>, [](<span class="type">int</span> i) {</span><br><span class="line">            {</span><br><span class="line">                std::lock_guard&lt;std::mutex&gt; <span class="built_in">lock</span>(mtx);</span><br><span class="line">                std::cout &lt;&lt; <span class="string">&quot;Task arena thread &quot;</span> &lt;&lt; std::this_thread::<span class="built_in">get_id</span>() &lt;&lt; <span class="string">&quot; is running.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">            }</span><br><span class="line">            <span class="built_in">sleep</span>(<span class="number">2</span>);</span><br><span class="line">        });</span><br><span class="line">    });</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="comment">// 获取默认task_arena的最大并发线程数</span></span><br><span class="line">    <span class="type">int</span> arena_max_concurrency = tbb::this_task_arena::<span class="built_in">max_concurrency</span>();</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Default task_arena max concurrency: &quot;</span> &lt;&lt; arena_max_concurrency &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 创建两个线程</span></span><br><span class="line">    <span class="function">std::thread <span class="title">tg_thread</span><span class="params">(task_group_function)</span></span>;</span><br><span class="line">    <span class="function">std::thread <span class="title">ta_thread</span><span class="params">(task_arena_function)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 等待两个线程完成</span></span><br><span class="line">    tg_thread.<span class="built_in">join</span>();</span><br><span class="line">    ta_thread.<span class="built_in">join</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-
-<p>测试：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">mkdir</span> build &amp;&amp; <span class="built_in">cd</span> build &amp;&amp; cmake .. &amp;&amp; make</span><br><span class="line">$ ./tbb_thread_pool &gt; result.txt</span><br><span class="line">$ <span class="built_in">cat</span> result.txt | grep running | <span class="built_in">sort</span> | <span class="built_in">uniq</span></span><br><span class="line">Task arena thread 140667163379264 is running.</span><br><span class="line">Task arena thread 140667167639104 is running.</span><br><span class="line">Task arena thread 140667184678464 is running.</span><br><span class="line">Task arena thread 140667201848896 is running.</span><br><span class="line">Task group thread 140667167639104 is running.</span><br><span class="line">Task group thread 140667171898944 is running.</span><br><span class="line">Task group thread 140667176158784 is running.</span><br><span class="line">Task group thread 140667180418624 is running.</span><br><span class="line">Task group thread 140667188938304 is running.</span><br><span class="line">Task group thread 140667210303040 is running.</span><br></pre></td></tr></table></figure>
-
-<p>从这两行日志可以看出，arena 和 group 重用了同一个线程 ID ，说明它们同属于同一个全局线程池。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Task arena thread 140667167639104 is running.</span><br><span class="line">Task group thread 140667167639104 is running.</span><br></pre></td></tr></table></figure>
-
-<p>进一步，我们发现全局线程池中的线程总数是自适应的，比如本例就是 <code>10</code> 个，既不是 <code>task_group</code> 的 <code>8</code> 个，<br>也不是 <code>task_arena</code> 的 <code>4</code> 个：</p>
-<p>TODO</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cat</span> result.txt | grep running | <span class="built_in">sort</span> | <span class="built_in">uniq</span> | <span class="built_in">wc</span> -l</span><br><span class="line">10</span><br></pre></td></tr></table></figure>
-
-<h2 id="4-任务调度器（Task-Scheduler）"><a href="#4-任务调度器（Task-Scheduler）" class="headerlink" title="4. 任务调度器（Task Scheduler）"></a>4. 任务调度器（Task Scheduler）</h2><p><a target="_blank" rel="noopener" href="https://uxlfoundation.github.io/oneTBB/main/tbb_userguide/The_Task_Scheduler.html">The Task Scheduler</a></p>
-<h3 id="4-1-基于任务编程（Task-Based-Programming）"><a href="#4-1-基于任务编程（Task-Based-Programming）" class="headerlink" title="4.1. 基于任务编程（Task-Based Programming）"></a>4.1. 基于任务编程（Task-Based Programming）</h3><p>当追求性能时，推荐以逻辑任务（logical tasks）而不是线程（threads）来编程，有以下原因：</p>
-<ul>
-<li>将并行性与可用资源匹配</li>
-<li>更快的任务启动和关闭</li>
-<li>更有效的评估顺序</li>
-<li>改进负载均衡</li>
-<li>更高层的思考</li>
-</ul>
-<p>TODO</p>
-<h3 id="4-2-任务调度器（Task-Scheduler）如何工作"><a href="#4-2-任务调度器（Task-Scheduler）如何工作" class="headerlink" title="4.2. 任务调度器（Task Scheduler）如何工作"></a>4.2. 任务调度器（Task Scheduler）如何工作</h3><p><a target="_blank" rel="noopener" href="https://uxlfoundation.github.io/oneTBB/main/tbb_userguide/How_Task_Scheduler_Works.html">How Task Scheduler Works</a></p>
-<h4 id="4-2-1-深度优先（depth-first）"><a href="#4-2-1-深度优先（depth-first）" class="headerlink" title="4.2.1. 深度优先（depth-first）"></a>4.2.1. 深度优先（depth-first）</h4><p>每个线程都有自己的双端队列，头部称为 top （也称顶部），尾部称为 bottom （也称底部）。<br>队列的底部是队列的最深处（最末处），底部任务是最新的，顶部任务是最旧的。</p>
-<p>深度优先有以下好处：</p>
-<ul>
-<li><code>热点缓存命中</code>：最新的任务的缓存是最热的，所以优先执行新任务。</li>
-<li><code>最小化空间</code>：广度优先会同时创建指数级数量的共存节点，而深度优先虽然也会创建相同数量的节点，但是只有线性数目的节点会同时共存，因为它创建了其他就绪任务的栈。</li>
-</ul>
-<p>生产：当线程产生一个任务时，将其放置到线程自身所有的 deque 的尾部。</p>
-<p>消费：当线程执行任务时，根据以下规则顺序选取一个任务：</p>
-<ul>
-<li>规则1：获取上一个任务返回的任务，如果有；</li>
-<li>规则2：从线程自己所有的 deque 尾部选取一个任务（即深度优先），如果有；</li>
-<li>规则3：随机选择一个其他线程的 deque ，从其头部窃取一个任务（即广度优先）。如果被选 deque 为空，则重复本条规则直至成功。</li>
-</ul>
-<p>规则1 被称为“任务调度绕行（Task Scheduler Bypass）”。</p>
-<p>规则2 是深度优先，这使得当前线程得以不断执行最新的任务直至其完成所有工作。</p>
-<p>规则3 是临时的广度优先，它将潜在的并行转化为实际的并行。</p>
-<h4 id="4-2-2-任务调度绕行（Task-Scheduler-Bypass）技术"><a href="#4-2-2-任务调度绕行（Task-Scheduler-Bypass）技术" class="headerlink" title="4.2.2. 任务调度绕行（Task Scheduler Bypass）技术"></a>4.2.2. 任务调度绕行（Task Scheduler Bypass）技术</h4><p>一个任务从产生到被执行涉及以下步骤：</p>
-<blockquote>
-<ul>
-<li>将新任务加入线程的 deque 。</li>
-<li>执行当前任务直至完成。</li>
-<li>从线程 deque 获取一个任务执行，除非该任务被其他线程窃取走了。</li>
-</ul>
-</blockquote>
-<p>其中，步骤1 和 步骤3 会引入不必要的 deque 操作，甚至更糟的是，允许窃取会损害局部性而不会增加显著的并行性。<br>任务调度器绕行技术可以直接指向下一个要被执行的任务，而不是生产该任务，从而避免了上述问题。<br>因为根据“规则1”，上一个任务产生的新任务会称为第一个备选任务。<br>此外，该技术几乎保证了该新任务被当前线程执行，而不是其他线程。</p>
-<p>注意：当前唯一能使用该优化技术的是使用 <code>tbb::task_group</code> 。</p>
-<h3 id="4-3-指导任务调度器的执行（Guiding-Task-Scheduler-Execution）"><a href="#4-3-指导任务调度器的执行（Guiding-Task-Scheduler-Execution）" class="headerlink" title="4.3. 指导任务调度器的执行（Guiding Task Scheduler Execution）"></a>4.3. 指导任务调度器的执行（Guiding Task Scheduler Execution）</h3><p><a target="_blank" rel="noopener" href="https://uxlfoundation.github.io/oneTBB/main/tbb_userguide/Guiding_Task_Scheduler_Execution.html">Guiding Task Scheduler Execution</a></p>
-<p>默认情况下，任务计划程序会尝试使用所有可用的计算资源。在某些情况下，您可能希望将任务计划程序配置为仅使用其中的一些资源。</p>
-<p>注意：指导任务调度程序的执行可能会导致可组合性问题。</p>
-<p>TBB 提供 <code>task_arena</code> 接口，通过以下方式指导任务在 arena （竞技场）内被执行:</p>
-<ul>
-<li>设置首选计算单元；</li>
-<li>限制部分计算单元。</li>
-</ul>
-<h3 id="4-4-工作隔离（Work-Isolation）"><a href="#4-4-工作隔离（Work-Isolation）" class="headerlink" title="4.4. 工作隔离（Work Isolation）"></a>4.4. 工作隔离（Work Isolation）</h3><p><a target="_blank" rel="noopener" href="https://www.intel.com/content/www/us/en/docs/onetbb/developer-guide-api-reference/2021-12/work-isolation.html">Work Isolation</a></p>
-<figure class="highlight cpp"><figcaption><span>work_isolation_eg1.cpp</span><a href="/blog/downloads/code/TBB/work_isolation_eg1.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// The first parallel loop.</span></span><br><span class="line">oneapi::tbb::<span class="built_in">parallel_for</span>( <span class="number">0</span>, N1, []( <span class="type">int</span> i ) {</span><br><span class="line">    <span class="comment">// The second parallel loop.</span></span><br><span class="line">    oneapi::tbb::<span class="built_in">parallel_for</span>( <span class="number">0</span>, N2, []( <span class="type">int</span> j ) { <span class="comment">/* Some work */</span> } );</span><br><span class="line">} );</span><br></pre></td></tr></table></figure>
-
-<p>如果当前线程被 <code>parallel_for</code> “阻塞”（不是真正的阻塞，只能称为 a blocking parallel construct），那么该线程被允许拿取第一个循环的任务来执行。这会导致即使是同一个线程内，也可出现乱序执行的情况。在大多数情况下，这没有什么危害。</p>
-<p>但是少数情况可能出现错误，例如一个 thread-local 变量可能会在嵌套并行构造之外意外被更改：</p>
-<figure class="highlight cpp"><figcaption><span>work_isolation_eg2.cpp</span><a href="/blog/downloads/code/TBB/work_isolation_eg2.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">oneapi::tbb::enumerable_thread_specific&lt;<span class="type">int</span>&gt; ets;</span><br><span class="line">oneapi::tbb::<span class="built_in">parallel_for</span>( <span class="number">0</span>, N1, [&amp;ets]( <span class="type">int</span> i ) {</span><br><span class="line">    <span class="comment">// Set a thread specific value</span></span><br><span class="line">    ets.<span class="built_in">local</span>() = i;</span><br><span class="line">    oneapi::tbb::<span class="built_in">parallel_for</span>( <span class="number">0</span>, N2, []( <span class="type">int</span> j ) { <span class="comment">/* Some work */</span> } );</span><br><span class="line">    <span class="comment">// While executing the above parallel_for, the thread might have run iterations</span></span><br><span class="line">    <span class="comment">// of the outer parallel_for, and so might have changed the thread specific value.</span></span><br><span class="line">    <span class="built_in">assert</span>( ets.<span class="built_in">local</span>()==i ); <span class="comment">// The assertion may fail!</span></span><br><span class="line">} );</span><br></pre></td></tr></table></figure>
-
-<p>在其它场景下，这种行为可能会导致死锁或其他问题。在这些情况下，需要更有力地保证线程内的执行次序。为此，TBB 提供了一些隔离并行构造的执行的方法，以使其任务不会干扰其他同时运行的任务。</p>
-<p>其中一种方法是在单独的 <code>task_arena</code> 中执行内层循环：</p>
-<figure class="highlight cpp"><figcaption><span>work_isolation_eg3.cpp</span><a href="/blog/downloads/code/TBB/work_isolation_eg3.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">oneapi::tbb::enumerable_thread_specific&lt;<span class="type">int</span>&gt; ets;</span><br><span class="line">oneapi::tbb::task_arena nested;</span><br><span class="line">oneapi::tbb::<span class="built_in">parallel_for</span>( <span class="number">0</span>, N1, [&amp;]( <span class="type">int</span> i ) {</span><br><span class="line">    <span class="comment">// Set a thread specific value</span></span><br><span class="line">    ets.<span class="built_in">local</span>() = i;</span><br><span class="line">    nested.<span class="built_in">execute</span>( []{</span><br><span class="line">        <span class="comment">// Run the inner parallel_for in a separate arena to prevent the thread</span></span><br><span class="line">        <span class="comment">// from taking tasks of the outer parallel_for.</span></span><br><span class="line">        oneapi::tbb::<span class="built_in">parallel_for</span>( <span class="number">0</span>, N2, []( <span class="type">int</span> j ) { <span class="comment">/* Some work */</span> } );</span><br><span class="line">    } );</span><br><span class="line">    <span class="built_in">assert</span>( ets.<span class="built_in">local</span>()==i ); <span class="comment">// Valid assertion</span></span><br><span class="line">} );</span><br></pre></td></tr></table></figure>
-
-<p>然而，使用单独的 arena 进行工作隔离并不总是方便的，并且可能会产生明显的开销。为了解决这些缺点，TBB 提供 <code>this_task_arena::isolate</code> 函数，通过限制调用线程仅处理在函数对象范围内（也称为隔离区域）安排的任务，来隔离地运行一个用户提供的函数对象。</p>
-<p>当一个线程进入一个任务等待调用或（等待）在一个隔离区域内的阻塞并行结构时，该线程只能执行在该隔离区域内生成的任务及其由其他线程生成的子任务（换句话说，即使子任务是由其他线程生成的，只要属于当前隔离区域，当前线程也可以执行这些任务）。线程被禁止执行任何外层任务或属于其他隔离区域的任务。</p>
-<p>下面的示例展示了 <code>this_task_arena::isolate</code> 的使用，以保证在嵌套的并行结构调用时， thread-local 变量不会被意外修改：</p>
-<figure class="highlight cpp"><figcaption><span>work_isolation_eg4.cpp</span><a href="/blog/downloads/code/TBB/work_isolation_eg4.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;oneapi/tbb/task_arena.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;oneapi/tbb/parallel_for.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;oneapi/tbb/enumerable_thread_specific.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cassert&gt;</span></span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="type">const</span> <span class="type">int</span> N1 = <span class="number">1000</span>, N2 = <span class="number">1000</span>;</span><br><span class="line">    oneapi::tbb::enumerable_thread_specific&lt;<span class="type">int</span>&gt; ets;</span><br><span class="line">    oneapi::tbb::<span class="built_in">parallel_for</span>( <span class="number">0</span>, N1, [&amp;ets]( <span class="type">int</span> i ) {</span><br><span class="line">        <span class="comment">// Set a thread specific value</span></span><br><span class="line">        ets.<span class="built_in">local</span>() = i;</span><br><span class="line">        <span class="comment">// Run the second parallel loop in an isolated region to prevent the current thread</span></span><br><span class="line">        <span class="comment">// from taking tasks related to the outer parallel loop.</span></span><br><span class="line">        oneapi::tbb::this_task_arena::<span class="built_in">isolate</span>( []{</span><br><span class="line">            oneapi::tbb::<span class="built_in">parallel_for</span>( <span class="number">0</span>, N2, []( <span class="type">int</span> j ) { <span class="comment">/* Some work */</span> } );</span><br><span class="line">        } );</span><br><span class="line">        <span class="built_in">assert</span>( ets.<span class="built_in">local</span>()==i ); <span class="comment">// Valid assertion</span></span><br><span class="line">    } );</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-<p><strong>补充：</strong>让我们通过一个简单的例子来说明隔离区域内其他线程如何生成子任务，并且这些子任务可以由当前线程执行。</p>
-<p>假设我们有一个隔离区域，其中有两个线程：线程A和线程B。我们在这个隔离区域内生成了一些任务，并且这些任务可能会生成子任务。</p>
-<figure class="highlight cpp"><figcaption><span>work_isolation_eg5.cpp</span><a href="/blog/downloads/code/TBB/work_isolation_eg5.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tbb/tbb.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">taskA</span><span class="params">()</span> </span>{</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Task A executed by thread &quot;</span> &lt;&lt; tbb::this_task_arena::<span class="built_in">current_thread_index</span>() &lt;&lt; std::endl;</span><br><span class="line">    tbb::<span class="built_in">parallel_invoke</span>(</span><br><span class="line">         {</span><br><span class="line">            std::cout &lt;&lt; <span class="string">&quot;Subtask A1 executed by thread &quot;</span> &lt;&lt; tbb::this_task_arena::<span class="built_in">current_thread_index</span>() &lt;&lt; std::endl;</span><br><span class="line">        },</span><br><span class="line">         {</span><br><span class="line">            std::cout &lt;&lt; <span class="string">&quot;Subtask A2 executed by thread &quot;</span> &lt;&lt; tbb::this_task_arena::<span class="built_in">current_thread_index</span>() &lt;&lt; std::endl;</span><br><span class="line">        }</span><br><span class="line">    );</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">taskB</span><span class="params">()</span> </span>{</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Task B executed by thread &quot;</span> &lt;&lt; tbb::this_task_arena::<span class="built_in">current_thread_index</span>() &lt;&lt; std::endl;</span><br><span class="line">    tbb::<span class="built_in">parallel_invoke</span>(</span><br><span class="line">         {</span><br><span class="line">            std::cout &lt;&lt; <span class="string">&quot;Subtask B1 executed by thread &quot;</span> &lt;&lt; tbb::this_task_arena::<span class="built_in">current_thread_index</span>() &lt;&lt; std::endl;</span><br><span class="line">        },</span><br><span class="line">         {</span><br><span class="line">            std::cout &lt;&lt; <span class="string">&quot;Subtask B2 executed by thread &quot;</span> &lt;&lt; tbb::this_task_arena::<span class="built_in">current_thread_index</span>() &lt;&lt; std::endl;</span><br><span class="line">        }</span><br><span class="line">    );</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    tbb::task_arena arena;</span><br><span class="line">    arena.<span class="built_in">execute</span>([&amp;] {</span><br><span class="line">        tbb::this_task_arena::<span class="built_in">isolate</span>([&amp;] {</span><br><span class="line">            tbb::<span class="built_in">parallel_invoke</span>(taskA, taskB);</span><br><span class="line">        });</span><br><span class="line">    });</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-<p>在这个例子中：</p>
-<p>taskA 和 taskB 是在隔离区域内生成的任务。<br>taskA 生成了两个子任务 Subtask A1 和 Subtask A2。<br>taskB 生成了两个子任务 Subtask B1 和 Subtask B2。<br>假设线程A执行了 taskA，线程B执行了 taskB。在隔离区域内，线程A和线程B可以执行彼此生成的子任务。例如，线程A可以执行 Subtask B1 或 Subtask B2，而线程B可以执行 Subtask A1 或 Subtask A2，只要这些子任务属于同一个隔离区域。</p>
-<h2 id="5-推荐阅读"><a href="#5-推荐阅读" class="headerlink" title="5. 推荐阅读"></a>5. 推荐阅读</h2><h3 id="5-1-书籍"><a href="#5-1-书籍" class="headerlink" title="5.1. 书籍"></a>5.1. 书籍</h3><ol>
-<li>Intel Building Blocks 编程指南. James Reinders.</li>
-<li>Patterns for Parallel Pragramming. Timothy Mattson 等.</li>
-<li>设计模式：Design Patterns of Reusable Object-Oriented Software (Addison Wesley). Gamma, Helm, Johnson 和 Vlissides.</li>
 </ol>
 
       
@@ -1281,7 +1418,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">73</span>
+          <span class="site-state-item-count">74</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
