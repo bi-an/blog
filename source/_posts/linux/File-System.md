@@ -1,5 +1,5 @@
 ---
-title: File System
+title: 文件系统
 date: 2024-01-23 20:01:02
 categories: Linux
 tags: filesystem
@@ -34,6 +34,10 @@ tags: filesystem
     tmpfs                 3.9G  168K  3.9G   1% /dev/shm
     /dev/sda1             228M   32M  184M  15% /boot
     ```
+
+* `/proc/[pid]/maps`
+
+可以看到映射的so.
 
 ## 分区(Partition)和文件系统(Filesystem)
 
