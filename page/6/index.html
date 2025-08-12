@@ -193,6 +193,210 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/linux/File-System/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/linux/File-System/" class="post-title-link" itemprop="url">文件系统</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 20:01:02" itemprop="dateCreated datePublished" datetime="2024-01-23T20:01:02+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-12 10:03:07" itemprop="dateModified" datetime="2025-08-12T10:03:07+00:00">2025-08-12</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="文件示例"><a href="#文件示例" class="headerlink" title="文件示例"></a>文件示例</h2><ul>
+<li><p><code>/proc</code>: 查看手册 <code>man proc</code>。</p>
+</li>
+<li><p><code>/proc/self/exe</code>: 是指向当前进程的程序文件的软链接。</p>
+</li>
+<li><p><code>/proc/&lt;pid&gt;/exe</code>: 是指向进程<code>&lt;pid&gt;</code>的程序文件的软链接。</p>
+<p>  <a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E19455-01/805-7228/bkuptasks2-78540/index.html">How to Find File System Names</a></p>
+</li>
+<li><p><code>/proc/[pid]/status</code>：可查看进程的内存使用峰值等信息，关键字为”VmHWM”、”VmPeak”、”VmRSS”。</p>
+</li>
+<li><p><code>/proc/[pid]/stat</code>：get current memory</p>
+</li>
+<li><p><code>/dev/shm</code>:</p>
+<p>  <a target="_blank" rel="noopener" href="https://www.cyberciti.biz/tips/what-is-devshm-and-its-practical-usage.html">What Is &#x2F;dev&#x2F;shm And Its Practical Usage</a></p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">df</span> -h</span><br></pre></td></tr></table></figure>
+
+<p>  Sample outputs:</p>
+  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Filesystem            Size  Used Avail Use% Mounted on</span><br><span class="line">/dev/mapper/wks01-root</span><br><span class="line">                    444G   70G  351G  17% /</span><br><span class="line">tmpfs                 3.9G     0  3.9G   0% /lib/init/rw</span><br><span class="line">udev                  3.9G  332K  3.9G   1% /dev</span><br><span class="line">tmpfs                 3.9G  168K  3.9G   1% /dev/shm</span><br><span class="line">/dev/sda1             228M   32M  184M  15% /boot</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>/proc/[pid]/maps</code></p>
+</li>
+</ul>
+<p>可以看到映射的so.</p>
+<h2 id="分区-Partition-和文件系统-Filesystem"><a href="#分区-Partition-和文件系统-Filesystem" class="headerlink" title="分区(Partition)和文件系统(Filesystem)"></a>分区(Partition)和文件系统(Filesystem)</h2><p>本小节内容来自 <a target="_blank" rel="noopener" href="https://www.linuxfordevices.com/tutorials/linux/partitions-and-filesystems">参考链接</a> 。</p>
+<h3 id="分区："><a href="#分区：" class="headerlink" title="分区："></a>分区：</h3><p>Linux上的分区指：存储设备中划分出来的一个片段，该片段与其他片段逻辑上分离，好比一个个独立的房间。</p>
+<h3 id="分区表-partition-table-："><a href="#分区表-partition-table-：" class="headerlink" title="分区表(partition table)："></a>分区表(partition table)：</h3><p>分区表存储各个分区的元数据，比如起始位置、终止位置、大小等。<br>有两种主要的分区表类型，MBR(older)和GPT(newer)：</p>
+<table>
+<thead>
+<tr>
+<th>Partition tables</th>
+<th>Maximum primary partitions</th>
+<th>Maximum size for each partition</th>
+<th>Security</th>
+<th>Operating system Support</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Master Boot Record (MBR)</td>
+<td>4</td>
+<td>2TB</td>
+<td>No such security features</td>
+<td>Supports most modern OS</td>
+</tr>
+<tr>
+<td>Guid Partition Table (GPT)</td>
+<td>No such limit</td>
+<td>18 Exabytes</td>
+<td>CRC32 checksum mechanism to verify the integrity of files</td>
+<td>Supports most modern OS</td>
+</tr>
+</tbody></table>
+<p>从上表可以很明显地看出，为什么GPT更推荐。</p>
+<h2 id="文件系统"><a href="#文件系统" class="headerlink" title="文件系统"></a>文件系统</h2><p>文件系统是我们在每个分区中管理数据的方式。它负责索引、存储、检索、命名文件和维护文件的元数据（文件所有者、大小、权限等）。存储在分区中。</p>
+<p>一个文件保存在多个连续的 <strong>扇区（sector）</strong> 中，现代每个扇区大约为4096字节。<br>文件系统负责组织哪些扇区准备好使用了、一个文件必须存储在哪个扇区、哪个扇区存储了什么文件。<br>如果没有这种组织，就无法无法检索任何文件，因为系统无法得知文件的位置（block，块）。</p>
+<p>主要的文件系统分类：</p>
+<ul>
+<li>FAT</li>
+</ul>
+<p>文件分配表（FAT，File Allocation Table）是Microsoft开发的第一个文件系统。<br>从1997发布之后，有多个版本，称为FAT12、FAT16、FAT32，连续地增加了最大支持文件大小（file size）和驱动器大小（drive size）。</p>
+<p>FAT32允许的最大文件大小为4Gb。直至WindowsXP，FAT32是默认的文件系统，之后被NTFS取代。<br>虽然FAT非常基础，但是它支持几乎所有的设备和操作系统。</p>
+<p><strong>注：</strong> 驱动器（<a target="_blank" rel="noopener" href="https://www.computerhope.com/jargon/d/drive.htm">drive</a>），是一个能存储和读取非易失信息的位置，比如磁盘（disk）或光盘（disc）。</p>
+<p>如下图，驱动器A:是一个软盘（<a target="_blank" rel="noopener" href="https://www.computerhope.com/jargon/f/fdd.htm">floppy drive</a>），<br>驱动器C:是主硬盘（primary hard drivce），<br>驱动器D:和E:是分区，F:是<a target="_blank" rel="noopener" href="https://www.computerhope.com/jargon/c/cdrom.htm">CD-ROM</a>。<br>CD-ROM常常是最后一个盘符（drive letter）。<br>在多数情况下，硬盘是C:驱动器，CD-ROM或其他光盘是D:驱动器。</p>
+<p><img src="/blog/my-compu-drive.webp" alt="驱动器示例" title="驱动器示例图"></p>
+<ul>
+<li>NTFS</li>
+</ul>
+<p>新技术文件系统（New Technology File System，NTFS）是FAT的现代替代者。<br>除了支持高达16EB（大于170亿GB）的驱动器大小和256TB的单文件大小外，还支持日志系统（<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Journaling_file_system">journaling system</a>）。</p>
+<ul>
+<li>ext&#x2F;ext2&#x2F;ext3&#x2F;ext4</li>
+</ul>
+<p>Linux的扩展文件系统（extended file system）或ext于1992年发布。之后有了3次更新：</p>
+<p>ext2引入了文件属性（文件权限），ext3引入了日志功能（<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Journaling_file_system">journaling</a>）。</p>
+<p>ext4对ext2和ext3向后兼容，增加了存储限制和一些性能调整。<br>可以支持高达1EB的卷（volumn），单个文件可以达16TB。</p>
+<p>ext4也引入了延迟内存分配的概念，即在文件被强制刷新到存储设备时才为其分配扇区。<br>这提高了CPU的性能并减少了坏的扇区。<br>今天几乎所有的现代Linux发行版都使用ext4作为默认的文件系统。</p>
+<ul>
+<li><p>ZFS</p>
+</li>
+<li><p>Btrfs</p>
+</li>
+</ul>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>下图是一个分区和文件系统的层次结构示例：</p>
+<p><img src="/blog/Example-of-partition-and-filesystem1-768x340.png.webp" alt="分区和文件系统的层次结构示例图" title="分区和文件系统的层次结构示例图"></p>
+<p>我有一个500GB的SSD，分成3个分区（boot、home、root），使用GPT作为分区表。</p>
+<p>我没有分出swap分区。所有的分区都跑在ext4文件系统上。</p>
+<p>在一个双启动（dual-booted）存储设备（Windows和Linux）上，还有几个适用于Windwows的NTFS分区。</p>
+<p>你可以使用以下命令在任意存储设备上查看分区：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lsblk</span><br></pre></td></tr></table></figure>
+
+<p>更多资源请访问：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.linuxfordevices.com/tutorials/ubuntu/install-zfs-on-ubuntu">How to install ZFS on Ubuntu – A Setup and Usage Guide</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.linuxfordevices.com/tutorials/linux/ext4-vs-btrfs-filesystem">Ext4 vs Btrfs Filesystems – Which one should you choose?</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.linuxfordevices.com/tutorials/linux/btrfs-on-ubuntu">How to install and format a partition with the Btrfs on Ubuntu?</a></li>
+<li><a target="_blank" rel="noopener" href="https://ext4.wiki.kernel.org/index.php/Frequently_Asked_Questions">Frequently Asked Questions regarding ext4</a></li>
+</ul>
+<h2 id="挂载"><a href="#挂载" class="headerlink" title="挂载"></a>挂载</h2><p>挂载：使设备上的文件和目录可以通过文件系统访问的一个过程。见<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/zh-cn/%E6%8C%82%E8%BD%BD">维基百科</a>。</p>
+<p>挂载点：A mount point is a location in the partition used as a root filesystem.</p>
+<h2 id="驱动"><a href="#驱动" class="headerlink" title="驱动"></a>驱动</h2><h2 id="相关命令一览表"><a href="#相关命令一览表" class="headerlink" title="相关命令一览表"></a>相关命令一览表</h2><p>lsblk</p>
+<pre><code>lsblk [options] [device...]
+
+list all avaivable or specified block devices.
+Reads the sysfs filesystem to gather information.
+</code></pre>
+<p>df</p>
+<pre><code>df [OPTION]... [FILE]...
+
+report file system disk space usage on which each FILE resides.
+
+df -T 打印文件系统的类型。
+</code></pre>
+<p>du</p>
+<pre><code>du [OPTION]... [FILE]...
+
+estimate file space usage.
+</code></pre>
+<p>quota</p>
+<pre><code>quota -s -u user...
+
+display users&#39; disk usage and limits.
+quota reports the quotas of all the filesystems listed in /etc/mtab.
+For filesystems that are NFS-mounted a call to the rpc.rquotad on the server machine is performed to get the information.
+
+-s, --human-readable
+</code></pre>
+<p>repquota</p>
+<pre><code>prints a summary of disc usage and quotas for the specified file system.
+</code></pre>
+<p>mount</p>
+<p>lsof - list open files</p>
+<pre><code>https://unix.stackexchange.com/questions/11238/how-to-get-over-device-or-resource-busy
+</code></pre>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/21/net/RPC/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +428,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-04 00:30:50" itemprop="dateModified" datetime="2025-08-04T00:30:50+00:00">2025-08-04</time>
+                <time title="Modified: 2025-08-12 10:03:07" itemprop="dateModified" datetime="2025-08-12T10:03:07+00:00">2025-08-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -301,7 +505,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-04 00:30:50" itemprop="dateModified" datetime="2025-08-04T00:30:50+00:00">2025-08-04</time>
+                <time title="Modified: 2025-08-12 10:03:07" itemprop="dateModified" datetime="2025-08-12T10:03:07+00:00">2025-08-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -375,7 +579,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-04 00:30:50" itemprop="dateModified" datetime="2025-08-04T00:30:50+00:00">2025-08-04</time>
+                <time title="Modified: 2025-08-12 10:03:07" itemprop="dateModified" datetime="2025-08-12T10:03:07+00:00">2025-08-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -487,7 +691,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-04 00:30:50" itemprop="dateModified" datetime="2025-08-04T00:30:50+00:00">2025-08-04</time>
+                <time title="Modified: 2025-08-12 10:03:07" itemprop="dateModified" datetime="2025-08-12T10:03:07+00:00">2025-08-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -562,7 +766,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-04 00:30:50" itemprop="dateModified" datetime="2025-08-04T00:30:50+00:00">2025-08-04</time>
+                <time title="Modified: 2025-08-12 10:03:07" itemprop="dateModified" datetime="2025-08-12T10:03:07+00:00">2025-08-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -658,7 +862,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-04 00:30:50" itemprop="dateModified" datetime="2025-08-04T00:30:50+00:00">2025-08-04</time>
+                <time title="Modified: 2025-08-12 10:03:07" itemprop="dateModified" datetime="2025-08-12T10:03:07+00:00">2025-08-12</time>
               </span>
 
           
@@ -855,7 +1059,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-04 00:30:50" itemprop="dateModified" datetime="2025-08-04T00:30:50+00:00">2025-08-04</time>
+                <time title="Modified: 2025-08-12 10:03:07" itemprop="dateModified" datetime="2025-08-12T10:03:07+00:00">2025-08-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -955,7 +1159,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-04 00:30:50" itemprop="dateModified" datetime="2025-08-04T00:30:50+00:00">2025-08-04</time>
+                <time title="Modified: 2025-08-12 10:03:07" itemprop="dateModified" datetime="2025-08-12T10:03:07+00:00">2025-08-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1031,7 +1235,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-04 00:30:50" itemprop="dateModified" datetime="2025-08-04T00:30:50+00:00">2025-08-04</time>
+                <time title="Modified: 2025-08-12 10:03:07" itemprop="dateModified" datetime="2025-08-12T10:03:07+00:00">2025-08-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1056,204 +1260,6 @@
       
           <h2 id="Options"><a href="#Options" class="headerlink" title="Options"></a>Options</h2><p><code>npm root</code> - Current installation root path.<br><code>npm root -g</code> - The global installation root path.<br><code>npm uninstall</code> - After executing this command, you should also remove the items in the <code>package.json</code> file and delete the <code>package-lock.json</code> file and the <code>node_modules</code> directory.</p>
 <h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><p><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/5926672/where-does-npm-install-packages">Where does npm install packages?</a><br><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/66978786/cannot-uninstall-two-npm-packages">Cannot Uninstall two npm Packages</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/12/29/net/%E7%BD%91%E7%BB%9C%E6%8E%A2%E6%B5%8B%E5%B7%A5%E5%85%B7/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2023/12/29/net/%E7%BD%91%E7%BB%9C%E6%8E%A2%E6%B5%8B%E5%B7%A5%E5%85%B7/" class="post-title-link" itemprop="url">网络检测工具</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2023-12-29 09:55:00" itemprop="dateCreated datePublished" datetime="2023-12-29T09:55:00+00:00">2023-12-29</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-04 00:30:50" itemprop="dateModified" datetime="2025-08-04T00:30:50+00:00">2025-08-04</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Network/" itemprop="url" rel="index"><span itemprop="name">Network</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><pre><code>sudo apt install net-tools
-</code></pre>
-<h2 id="手册"><a href="#手册" class="headerlink" title="手册"></a>手册</h2><pre><code>man 7 socket - socket options
-man 7 tcp - tcp options
-</code></pre>
-<h2 id="文件系统"><a href="#文件系统" class="headerlink" title="文件系统"></a>文件系统</h2><pre><code>/proc/sys/net/ipv4/ip_local_port_range
-</code></pre>
-<h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><h3 id="网关（Gateway）"><a href="#网关（Gateway）" class="headerlink" title="网关（Gateway）"></a>网关（Gateway）</h3><p>网关（Gateway）是一个网络节点，它充当其他网络之间的访问点或网关。网关通常用于连接不同的网络，并且可以在不同的协议之间进行转换。网关设备可以是路由器、服务器或其他网络设备。当本地网络中的设备需要与外部网络通信时，它们会将数据包发送到网关，网关再将数据包转发到目标网络。</p>
-<p>举例： 假设你的本地网络使用的IP地址范围是192.168.1.0&#x2F;24，而你的网关IP地址是192.168.1.1。当你的计算机需要访问外部网络（例如互联网）时，它会将数据包发送到网关（192.168.1.1），然后由网关将数据包转发到目标网络。</p>
-<p>在Linux系统中，你可以使用<code>ip route</code>命令查看默认网关。例如：</p>
-<p>在这个例子中，<code>default via 192.168.1.1 dev eth0</code>表示默认网关是<code>192.168.1.1</code>，你的计算机通过网络接口<code>eth0</code>与网关连接。</p>
-<h3 id="子网（CIDR表示法）"><a href="#子网（CIDR表示法）" class="headerlink" title="子网（CIDR表示法）"></a>子网（CIDR表示法）</h3><p>CIDR（Classless Inter-Domain Routing，无类别域间路由）是一种用于分配IP地址和路由的标准，使用斜杠（&#x2F;）后跟一个数字来表示子网掩码的位数。</p>
-<p>在CIDR表示法中，<code>192.168.1.0/24</code>表示一个子网，其中<code>/24</code>表示子网掩码为255.255.255.0。这意味着子网中有256个IP地址（从0到255），但其中两个地址是保留的：</p>
-<ol>
-<li><strong>网络地址</strong>：<code>192.168.1.0</code>，用于标识子网本身。</li>
-<li><strong>广播地址</strong>：<code>192.168.1.255</code>，用于向子网中的所有设备发送广播消息。</li>
-</ol>
-<p>因此，有效的主机IP地址范围是从<code>192.168.1.1</code>到<code>192.168.1.254</code>，共254个可用的IP地址。</p>
-<h3 id="Link-local-Adress"><a href="#Link-local-Adress" class="headerlink" title="Link-local Adress"></a>Link-local Adress</h3><p>The link-local address range refers to IP addresses that are used for communication within a single network segment or link. These addresses are not routable, meaning they are not intended to be used for communication beyond the local network segment.</p>
-<p>For IPv4, the link-local address range is 169.254.0.0&#x2F;16. This range is automatically assigned to network interfaces when no other IP address is available (e.g., when DHCP fails). Devices on the same local network can communicate with each other using these addresses without requiring a router.</p>
-<p>For IPv6, the link-local address range is fe80::&#x2F;10. These addresses are automatically configured on all IPv6-enabled interfaces and are used for local network communication.</p>
-<p>The IP address range 169.254.0.0&#x2F;16 is regarded as link-local because it is reserved for link-local addresses by the Internet Assigned Numbers Authority (IANA). These addresses are used for communication within a single network segment or link and are not routable beyond that segment.</p>
-<p>Characteristics of Link-Local Addresses:</p>
-<ul>
-<li>Automatic Assignment: Devices automatically assign themselves an IP address from the 169.254.0.0&#x2F;16 range if they cannot obtain an IP address through DHCP.</li>
-<li>Non-Routable: These addresses are not meant to be routed across different network segments. They are only valid within the local network.</li>
-<li>Zero Configuration: Link-local addresses allow devices to communicate without manual configuration or a DHCP server.</li>
-</ul>
-<p>Example:<br>When a device fails to get an IP address from a DHCP server, it might assign itself an address like 169.254.1.2. Other devices on the same local network segment will also have addresses in the 169.254.0.0&#x2F;16 range, allowing them to communicate directly.</p>
-<h2 id="命令"><a href="#命令" class="headerlink" title="命令"></a>命令</h2><h3 id="ip"><a href="#ip" class="headerlink" title="ip"></a>ip</h3><p>NAME</p>
-<pre><code>ip - show / manipulate routing, devices, policy routing and tunnels.
-</code></pre>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ ip route get 8.8.8.8</span><br><span class="line">8.8.8.8 via 192.168.1.1 dev eth0 src 192.168.1.100 uid 1000</span><br><span class="line">    cache</span><br></pre></td></tr></table></figure>
-
-<p>说明：</p>
-<ul>
-<li><code>8.8.8.8</code>: The destination IP address for which the route is being queried.</li>
-<li><code>via 192.168.1.1</code>: The gateway IP address through which the destination can be reached.</li>
-<li><code>dev eth0</code>: The network interface (e.g., <code>eth0</code>) used to reach the destination.</li>
-<li><code>src 192.168.1.100</code>: The source IP address used for sending packets to the destination.</li>
-<li><code>uid 1000</code>: The user ID of the process that issued the command.</li>
-<li><code>cache</code>: Indicates that the route information is cached.</li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ ip route show</span><br><span class="line">default via 192.168.1.1 dev eth0 </span><br><span class="line">192.168.1.0/24 dev eth0 proto kernel scope <span class="built_in">link</span> src 192.168.1.100</span><br><span class="line">169.254.0.0/16 dev idrac proto kernel scope <span class="built_in">link</span> src 169.254.1.2</span><br></pre></td></tr></table></figure>
-
-<p>说明：该命令用于显示路由表：</p>
-<ul>
-<li><code>default via 192.168.1.1 dev eth0</code>: The default route, packets to any destination not in the routing table will be sent to <code>192.168.1.1</code> via the <code>eth0</code> interface.</li>
-<li><code>192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.100</code>: A route for the <code>192.168.1.0/24</code> network (destination network), directly reachable via the <code>eth0</code> interface, with the source IP <code>192.168.1.100</code>.</li>
-<li><code>192.168.1.0/24</code>: Destination network.</li>
-<li><code>dev eth0</code>: Interface <code>eth0</code>.</li>
-<li><code>proto kernel</code>: Added by the kernel.</li>
-<li><code>scope link</code>: Directly reachable.</li>
-<li><code>src 192.168.1.100</code>: Source IP address.</li>
-<li><code>169.254.0.0/16</code>: Link-local address range.</li>
-</ul>
-<h3 id="netstat-ss"><a href="#netstat-ss" class="headerlink" title="netstat &#x2F; ss"></a>netstat &#x2F; ss</h3><p>NAME</p>
-<pre><code>ss - another to investigate sockets.
-</code></pre>
-<p>Reference</p>
-<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/45920111">查看进程占用的端口</a></p>
-<p>COMMANDS</p>
-<pre><code>ss -lnpt
-</code></pre>
-<p>OPTIONS</p>
-<pre><code>-n, --numberic
-
--l, --listening
-
--t, --tcp
-    Note: Only established (non-listening) connections.
-
--a, --all
-    Display both listening and non-linstening (for TCP this means established connections) sockets.
-
--u, --udp
-
--p, --process
-</code></pre>
-<h3 id="lsof"><a href="#lsof" class="headerlink" title="lsof"></a>lsof</h3><p>Options:</p>
-<pre><code>-n inhibits the conversion of network numbers to host names for network files.
-
--P inhibits the conversion of port numbers to port names for network files.
-
--i specifies the Internet addresses
-
-    multiple addresses (up to a limit of 100) may be specified with multiple options.
-
-    An Internet address is specified in the form (Items in square brackets are optional.):
-
-    [46][protocol][@hostname|hostaddr][:service|port]
-
-    where:
-    46 specifies the IP version, IPv4 or IPv6
-        that applies to the following address.
-        &#39;6&#39; may be be specified only if the UNIX
-        dialect supports IPv6.  If neither &#39;4&#39; nor
-        &#39;6&#39; is specified, the following address
-        applies to all IP versions.
-    protocol is a protocol name - TCP, UDP
-    hostname is an Internet host name.  Unless a
-        specific IP version is specified, open
-        network files associated with host names
-        of all versions will be selected.
-    hostaddr is a numeric Internet IPv4 address in
-        dot form; or an IPv6 numeric address in
-        colon form, enclosed in brackets, if the
-        UNIX dialect supports IPv6.  When an IP
-        version is selected, only its numeric
-        addresses may be specified.
-    service is an /etc/services name - e.g., smtp -
-        or a list of them.
-    port is a port number, or a list of them.
-
--s list file size
-
--s p:s  exclude(^)|select protocol (p = TCP|UDP) states by name(s).
-</code></pre>
-<p>Examples:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">lsof -i:&lt;port&gt;</span><br><span class="line">lsof -i -P -n | grep LISTEN</span><br><span class="line">lsof -nP -iTCP -sTCP:LISTEN</span><br></pre></td></tr></table></figure>
-
-<h3 id="nc-netcat-nmap"><a href="#nc-netcat-nmap" class="headerlink" title="nc&#x2F;netcat&#x2F;nmap"></a>nc&#x2F;netcat&#x2F;nmap</h3><h3 id="socket"><a href="#socket" class="headerlink" title="socket"></a>socket</h3><p>Create a TCP or a UNIX domain socket and connect to stdin&#x2F;out.</p>
-<p>Installation:</p>
-<pre><code>sudo apt-get install socket
-</code></pre>
 
       
     </div>
@@ -1340,7 +1346,7 @@ man 7 tcp - tcp options
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">76</span>
+          <span class="site-state-item-count">77</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

@@ -193,6 +193,204 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/12/29/net/%E7%BD%91%E7%BB%9C%E6%8E%A2%E6%B5%8B%E5%B7%A5%E5%85%B7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2023/12/29/net/%E7%BD%91%E7%BB%9C%E6%8E%A2%E6%B5%8B%E5%B7%A5%E5%85%B7/" class="post-title-link" itemprop="url">网络检测工具</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2023-12-29 09:55:00" itemprop="dateCreated datePublished" datetime="2023-12-29T09:55:00+00:00">2023-12-29</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-12 10:03:07" itemprop="dateModified" datetime="2025-08-12T10:03:07+00:00">2025-08-12</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Network/" itemprop="url" rel="index"><span itemprop="name">Network</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><pre><code>sudo apt install net-tools
+</code></pre>
+<h2 id="手册"><a href="#手册" class="headerlink" title="手册"></a>手册</h2><pre><code>man 7 socket - socket options
+man 7 tcp - tcp options
+</code></pre>
+<h2 id="文件系统"><a href="#文件系统" class="headerlink" title="文件系统"></a>文件系统</h2><pre><code>/proc/sys/net/ipv4/ip_local_port_range
+</code></pre>
+<h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><h3 id="网关（Gateway）"><a href="#网关（Gateway）" class="headerlink" title="网关（Gateway）"></a>网关（Gateway）</h3><p>网关（Gateway）是一个网络节点，它充当其他网络之间的访问点或网关。网关通常用于连接不同的网络，并且可以在不同的协议之间进行转换。网关设备可以是路由器、服务器或其他网络设备。当本地网络中的设备需要与外部网络通信时，它们会将数据包发送到网关，网关再将数据包转发到目标网络。</p>
+<p>举例： 假设你的本地网络使用的IP地址范围是192.168.1.0&#x2F;24，而你的网关IP地址是192.168.1.1。当你的计算机需要访问外部网络（例如互联网）时，它会将数据包发送到网关（192.168.1.1），然后由网关将数据包转发到目标网络。</p>
+<p>在Linux系统中，你可以使用<code>ip route</code>命令查看默认网关。例如：</p>
+<p>在这个例子中，<code>default via 192.168.1.1 dev eth0</code>表示默认网关是<code>192.168.1.1</code>，你的计算机通过网络接口<code>eth0</code>与网关连接。</p>
+<h3 id="子网（CIDR表示法）"><a href="#子网（CIDR表示法）" class="headerlink" title="子网（CIDR表示法）"></a>子网（CIDR表示法）</h3><p>CIDR（Classless Inter-Domain Routing，无类别域间路由）是一种用于分配IP地址和路由的标准，使用斜杠（&#x2F;）后跟一个数字来表示子网掩码的位数。</p>
+<p>在CIDR表示法中，<code>192.168.1.0/24</code>表示一个子网，其中<code>/24</code>表示子网掩码为255.255.255.0。这意味着子网中有256个IP地址（从0到255），但其中两个地址是保留的：</p>
+<ol>
+<li><strong>网络地址</strong>：<code>192.168.1.0</code>，用于标识子网本身。</li>
+<li><strong>广播地址</strong>：<code>192.168.1.255</code>，用于向子网中的所有设备发送广播消息。</li>
+</ol>
+<p>因此，有效的主机IP地址范围是从<code>192.168.1.1</code>到<code>192.168.1.254</code>，共254个可用的IP地址。</p>
+<h3 id="Link-local-Adress"><a href="#Link-local-Adress" class="headerlink" title="Link-local Adress"></a>Link-local Adress</h3><p>The link-local address range refers to IP addresses that are used for communication within a single network segment or link. These addresses are not routable, meaning they are not intended to be used for communication beyond the local network segment.</p>
+<p>For IPv4, the link-local address range is 169.254.0.0&#x2F;16. This range is automatically assigned to network interfaces when no other IP address is available (e.g., when DHCP fails). Devices on the same local network can communicate with each other using these addresses without requiring a router.</p>
+<p>For IPv6, the link-local address range is fe80::&#x2F;10. These addresses are automatically configured on all IPv6-enabled interfaces and are used for local network communication.</p>
+<p>The IP address range 169.254.0.0&#x2F;16 is regarded as link-local because it is reserved for link-local addresses by the Internet Assigned Numbers Authority (IANA). These addresses are used for communication within a single network segment or link and are not routable beyond that segment.</p>
+<p>Characteristics of Link-Local Addresses:</p>
+<ul>
+<li>Automatic Assignment: Devices automatically assign themselves an IP address from the 169.254.0.0&#x2F;16 range if they cannot obtain an IP address through DHCP.</li>
+<li>Non-Routable: These addresses are not meant to be routed across different network segments. They are only valid within the local network.</li>
+<li>Zero Configuration: Link-local addresses allow devices to communicate without manual configuration or a DHCP server.</li>
+</ul>
+<p>Example:<br>When a device fails to get an IP address from a DHCP server, it might assign itself an address like 169.254.1.2. Other devices on the same local network segment will also have addresses in the 169.254.0.0&#x2F;16 range, allowing them to communicate directly.</p>
+<h2 id="命令"><a href="#命令" class="headerlink" title="命令"></a>命令</h2><h3 id="ip"><a href="#ip" class="headerlink" title="ip"></a>ip</h3><p>NAME</p>
+<pre><code>ip - show / manipulate routing, devices, policy routing and tunnels.
+</code></pre>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ ip route get 8.8.8.8</span><br><span class="line">8.8.8.8 via 192.168.1.1 dev eth0 src 192.168.1.100 uid 1000</span><br><span class="line">    cache</span><br></pre></td></tr></table></figure>
+
+<p>说明：</p>
+<ul>
+<li><code>8.8.8.8</code>: The destination IP address for which the route is being queried.</li>
+<li><code>via 192.168.1.1</code>: The gateway IP address through which the destination can be reached.</li>
+<li><code>dev eth0</code>: The network interface (e.g., <code>eth0</code>) used to reach the destination.</li>
+<li><code>src 192.168.1.100</code>: The source IP address used for sending packets to the destination.</li>
+<li><code>uid 1000</code>: The user ID of the process that issued the command.</li>
+<li><code>cache</code>: Indicates that the route information is cached.</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ ip route show</span><br><span class="line">default via 192.168.1.1 dev eth0 </span><br><span class="line">192.168.1.0/24 dev eth0 proto kernel scope <span class="built_in">link</span> src 192.168.1.100</span><br><span class="line">169.254.0.0/16 dev idrac proto kernel scope <span class="built_in">link</span> src 169.254.1.2</span><br></pre></td></tr></table></figure>
+
+<p>说明：该命令用于显示路由表：</p>
+<ul>
+<li><code>default via 192.168.1.1 dev eth0</code>: The default route, packets to any destination not in the routing table will be sent to <code>192.168.1.1</code> via the <code>eth0</code> interface.</li>
+<li><code>192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.100</code>: A route for the <code>192.168.1.0/24</code> network (destination network), directly reachable via the <code>eth0</code> interface, with the source IP <code>192.168.1.100</code>.</li>
+<li><code>192.168.1.0/24</code>: Destination network.</li>
+<li><code>dev eth0</code>: Interface <code>eth0</code>.</li>
+<li><code>proto kernel</code>: Added by the kernel.</li>
+<li><code>scope link</code>: Directly reachable.</li>
+<li><code>src 192.168.1.100</code>: Source IP address.</li>
+<li><code>169.254.0.0/16</code>: Link-local address range.</li>
+</ul>
+<h3 id="netstat-ss"><a href="#netstat-ss" class="headerlink" title="netstat &#x2F; ss"></a>netstat &#x2F; ss</h3><p>NAME</p>
+<pre><code>ss - another to investigate sockets.
+</code></pre>
+<p>Reference</p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/45920111">查看进程占用的端口</a></p>
+<p>COMMANDS</p>
+<pre><code>ss -lnpt
+</code></pre>
+<p>OPTIONS</p>
+<pre><code>-n, --numberic
+
+-l, --listening
+
+-t, --tcp
+    Note: Only established (non-listening) connections.
+
+-a, --all
+    Display both listening and non-linstening (for TCP this means established connections) sockets.
+
+-u, --udp
+
+-p, --process
+</code></pre>
+<h3 id="lsof"><a href="#lsof" class="headerlink" title="lsof"></a>lsof</h3><p>Options:</p>
+<pre><code>-n inhibits the conversion of network numbers to host names for network files.
+
+-P inhibits the conversion of port numbers to port names for network files.
+
+-i specifies the Internet addresses
+
+    multiple addresses (up to a limit of 100) may be specified with multiple options.
+
+    An Internet address is specified in the form (Items in square brackets are optional.):
+
+    [46][protocol][@hostname|hostaddr][:service|port]
+
+    where:
+    46 specifies the IP version, IPv4 or IPv6
+        that applies to the following address.
+        &#39;6&#39; may be be specified only if the UNIX
+        dialect supports IPv6.  If neither &#39;4&#39; nor
+        &#39;6&#39; is specified, the following address
+        applies to all IP versions.
+    protocol is a protocol name - TCP, UDP
+    hostname is an Internet host name.  Unless a
+        specific IP version is specified, open
+        network files associated with host names
+        of all versions will be selected.
+    hostaddr is a numeric Internet IPv4 address in
+        dot form; or an IPv6 numeric address in
+        colon form, enclosed in brackets, if the
+        UNIX dialect supports IPv6.  When an IP
+        version is selected, only its numeric
+        addresses may be specified.
+    service is an /etc/services name - e.g., smtp -
+        or a list of them.
+    port is a port number, or a list of them.
+
+-s list file size
+
+-s p:s  exclude(^)|select protocol (p = TCP|UDP) states by name(s).
+</code></pre>
+<p>Examples:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">lsof -i:&lt;port&gt;</span><br><span class="line">lsof -i -P -n | grep LISTEN</span><br><span class="line">lsof -nP -iTCP -sTCP:LISTEN</span><br></pre></td></tr></table></figure>
+
+<h3 id="nc-netcat-nmap"><a href="#nc-netcat-nmap" class="headerlink" title="nc&#x2F;netcat&#x2F;nmap"></a>nc&#x2F;netcat&#x2F;nmap</h3><h3 id="socket"><a href="#socket" class="headerlink" title="socket"></a>socket</h3><p>Create a TCP or a UNIX domain socket and connect to stdin&#x2F;out.</p>
+<p>Installation:</p>
+<pre><code>sudo apt-get install socket
+</code></pre>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/12/23/english/Written-in-Blood/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +422,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-04 00:30:50" itemprop="dateModified" datetime="2025-08-04T00:30:50+00:00">2025-08-04</time>
+                <time title="Modified: 2025-08-12 10:03:07" itemprop="dateModified" datetime="2025-08-12T10:03:07+00:00">2025-08-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -308,7 +506,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-04 00:30:50" itemprop="dateModified" datetime="2025-08-04T00:30:50+00:00">2025-08-04</time>
+                <time title="Modified: 2025-08-12 10:03:07" itemprop="dateModified" datetime="2025-08-12T10:03:07+00:00">2025-08-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -385,7 +583,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-04 00:30:50" itemprop="dateModified" datetime="2025-08-04T00:30:50+00:00">2025-08-04</time>
+                <time title="Modified: 2025-08-12 10:03:07" itemprop="dateModified" datetime="2025-08-12T10:03:07+00:00">2025-08-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -465,7 +663,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-04 00:30:50" itemprop="dateModified" datetime="2025-08-04T00:30:50+00:00">2025-08-04</time>
+                <time title="Modified: 2025-08-12 10:03:07" itemprop="dateModified" datetime="2025-08-12T10:03:07+00:00">2025-08-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -647,7 +845,7 @@ sudo apt install ibverbs-utils
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-04 00:30:50" itemprop="dateModified" datetime="2025-08-04T00:30:50+00:00">2025-08-04</time>
+                <time title="Modified: 2025-08-12 10:03:07" itemprop="dateModified" datetime="2025-08-12T10:03:07+00:00">2025-08-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -725,7 +923,7 @@ sudo apt install ibverbs-utils
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-04 00:30:50" itemprop="dateModified" datetime="2025-08-04T00:30:50+00:00">2025-08-04</time>
+                <time title="Modified: 2025-08-12 10:03:07" itemprop="dateModified" datetime="2025-08-12T10:03:07+00:00">2025-08-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -799,7 +997,7 @@ sudo apt install ibverbs-utils
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-04 00:30:50" itemprop="dateModified" datetime="2025-08-04T00:30:50+00:00">2025-08-04</time>
+                <time title="Modified: 2025-08-12 10:03:07" itemprop="dateModified" datetime="2025-08-12T10:03:07+00:00">2025-08-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -884,7 +1082,7 @@ sudo apt install ibverbs-utils
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-04 00:30:50" itemprop="dateModified" datetime="2025-08-04T00:30:50+00:00">2025-08-04</time>
+                <time title="Modified: 2025-08-12 10:03:07" itemprop="dateModified" datetime="2025-08-12T10:03:07+00:00">2025-08-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -959,7 +1157,7 @@ sudo apt install ibverbs-utils
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-04 00:30:50" itemprop="dateModified" datetime="2025-08-04T00:30:50+00:00">2025-08-04</time>
+                <time title="Modified: 2025-08-12 10:03:07" itemprop="dateModified" datetime="2025-08-12T10:03:07+00:00">2025-08-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1018,83 +1216,6 @@ sudo apt install ibverbs-utils
 
 <p>最后两行其实不需要，默认规则已经足够了。</p>
 <p>其中，<code>$(SRCS:.c=.o)</code>表示将变量<code>SRCS</code>中的每个单词（以空格分割）中的<code>.c</code>替换为<code>.o</code>。以上代码则是将所有<code>.c</code>都去掉。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/11/13/linux/Shell-Configuration/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2023/11/13/linux/Shell-Configuration/" class="post-title-link" itemprop="url">Shell Configuration</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2023-11-13 14:27:59" itemprop="dateCreated datePublished" datetime="2023-11-13T14:27:59+00:00">2023-11-13</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-04 00:30:50" itemprop="dateModified" datetime="2025-08-04T00:30:50+00:00">2025-08-04</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Color-Scheme"><a href="#Color-Scheme" class="headerlink" title="Color Scheme"></a>Color Scheme</h2><p>Refer to <a target="_blank" rel="noopener" href="https://askubuntu.com/questions/466198/how-do-i-change-the-color-for-directories-with-ls-in-the-console">the link</a>.</p>
-<p>Add these three lines to ~&#x2F;.bashrc</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ vi ~/.bashrc</span><br><span class="line"><span class="built_in">export</span> LS_OPTIONS=<span class="string">&#x27;--color=auto&#x27;</span></span><br><span class="line"><span class="comment"># dircolors - color set for ls</span></span><br><span class="line"><span class="built_in">eval</span> <span class="string">&quot;<span class="subst">$(dircolors -b)</span>&quot;</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">ls</span>=<span class="string">&#x27;ls $LS_OPTIONS&#x27;</span></span><br></pre></td></tr></table></figure>
-
 
       
     </div>
@@ -1181,7 +1302,7 @@ sudo apt install ibverbs-utils
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">76</span>
+          <span class="site-state-item-count">77</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
