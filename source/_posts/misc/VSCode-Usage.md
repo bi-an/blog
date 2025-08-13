@@ -1,5 +1,5 @@
 ---
-title: VSCode Usage
+title: VSCode使用方法
 date: 2024-01-24 17:26:44
 categories: Misc
 tags: vscode
@@ -47,3 +47,29 @@ tags: vscode
 配置文件：
 - launch.json
 - tasks.json: [ref](https://stackoverflow.com/questions/48273346/vscode-command-for-user-input-in-debug-launch-config), [ref](https://code.visualstudio.com/updates/v1_30#_improved-user-input-variables-for-task-and-debug-configurations)
+
+
+## 使用 VSCode 合并 Perforce 代码
+
+在 `~.cshrc` 脚本中添加：
+
+```bash
+## Use VSCode to diff/merge the Perforce code
+#
+# Refer to:
+#  https://github.com/mjcrouch/vscode-perforce/issues/259
+#  https://www.perforce.com/manuals/cmdref/Content/CmdRef/p4_resolve.html
+#
+# Map p4 resolve arguments to vscode's merge editor arguments
+#
+# 'code' takes: <path1> <path2> <base> <result>
+#
+# perforce gives:
+#   1 the base file
+#   2 the source file (also known as "theirs")
+#   3 the target file (also known as "yours")
+#   4 the merge file.
+setenv P4MERGE 'code --wait --merge $2 $3 $1 $4'
+setenv P4DIFF 'code --wait --diff'
+setenv P4EDITOR 'code --wait'
+```
