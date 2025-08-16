@@ -20,19 +20,26 @@
     var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="TODO先放上之前的博客： https:&#x2F;&#x2F;blog.csdn.net&#x2F;GreatTang&#x2F;article&#x2F;details&#x2F;107702036?spm&#x3D;1001.2014.3001.5502">
+  <meta name="description" content="打开文件的内核数据结构注意：对同一个文件，不同进程拥有各自的文件表项，但是对每个文件，v节点表项在整个操作系统中只有一份。见下一节。  文件描述符标志（即fd标志）：目前只有一个，即 close-on-exec 文件状态标志：   文件状态标志 说明    O_RDONLY 只读打开   O_WRONLY 只写打开   O_RDWR 读、写打开   O_EXEC 只执行打开   O_SEARCH">
 <meta property="og:type" content="article">
 <meta property="og:title" content="文件IO与进程">
 <meta property="og:url" content="https://bi-an.github.io/blog/2025/08/16/os/%E6%96%87%E4%BB%B6IO%E4%B8%8E%E8%BF%9B%E7%A8%8B/index.html">
 <meta property="og:site_name" content="江南人物的博客">
-<meta property="og:description" content="TODO先放上之前的博客： https:&#x2F;&#x2F;blog.csdn.net&#x2F;GreatTang&#x2F;article&#x2F;details&#x2F;107702036?spm&#x3D;1001.2014.3001.5502">
+<meta property="og:description" content="打开文件的内核数据结构注意：对同一个文件，不同进程拥有各自的文件表项，但是对每个文件，v节点表项在整个操作系统中只有一份。见下一节。  文件描述符标志（即fd标志）：目前只有一个，即 close-on-exec 文件状态标志：   文件状态标志 说明    O_RDONLY 只读打开   O_WRONLY 只写打开   O_RDWR 读、写打开   O_EXEC 只执行打开   O_SEARCH">
 <meta property="og:locale">
+<meta property="og:image" content="https://i.postimg.cc/hG2hPTDM/image.png">
+<meta property="og:image" content="https://i.postimg.cc/rFRyX7Rh/image.png">
+<meta property="og:image" content="https://i.postimg.cc/3xM8K9g3/i.png">
+<meta property="og:image" content="https://i.postimg.cc/hG2hPTDM/image.png">
+<meta property="og:image" content="https://i.postimg.cc/s2mGQbcY/dup-1.png">
+<meta property="og:image" content="https://i.postimg.cc/TYbyqK0Y/fork.png">
 <meta property="article:published_time" content="2025-08-16T20:50:37.000Z">
-<meta property="article:modified_time" content="2025-08-16T12:55:18.104Z">
+<meta property="article:modified_time" content="2025-08-16T13:33:31.677Z">
 <meta property="article:author" content="bi-an">
 <meta property="article:tag" content="文件">
 <meta property="article:tag" content="进程">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.postimg.cc/hG2hPTDM/image.png">
 
 <link rel="canonical" href="https://bi-an.github.io/blog/2025/08/16/os/%E6%96%87%E4%BB%B6IO%E4%B8%8E%E8%BF%9B%E7%A8%8B/">
 
@@ -224,7 +231,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2025-08-16 20:50:37 / Modified: 12:55:18" itemprop="dateCreated datePublished" datetime="2025-08-16T20:50:37+00:00">2025-08-16</time>
+              <time title="Created: 2025-08-16 20:50:37 / Modified: 13:33:31" itemprop="dateCreated datePublished" datetime="2025-08-16T20:50:37+00:00">2025-08-16</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -247,8 +254,142 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h2 id="TODO"><a href="#TODO" class="headerlink" title="TODO"></a>TODO</h2><p>先放上之前的博客：</p>
-<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/GreatTang/article/details/107702036?spm=1001.2014.3001.5502">https://blog.csdn.net/GreatTang/article/details/107702036?spm=1001.2014.3001.5502</a></p>
+        <h2 id="打开文件的内核数据结构"><a href="#打开文件的内核数据结构" class="headerlink" title="打开文件的内核数据结构"></a>打开文件的内核数据结构</h2><p>注意：对同一个文件，不同进程拥有各自的文件表项，但是对每个文件，v节点表项在整个操作系统中只有一份。见下一节。</p>
+<p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/hG2hPTDM/image.png" alt="image"/></a></p>
+<h3 id="文件描述符标志（即fd标志）："><a href="#文件描述符标志（即fd标志）：" class="headerlink" title="文件描述符标志（即fd标志）："></a>文件描述符标志（即fd标志）：</h3><p>目前只有一个，即 <code>close-on-exec</code></p>
+<h3 id="文件状态标志："><a href="#文件状态标志：" class="headerlink" title="文件状态标志："></a>文件状态标志：</h3><table>
+<thead>
+<tr>
+<th>文件状态标志</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>O_RDONLY</td>
+<td>只读打开</td>
+</tr>
+<tr>
+<td>O_WRONLY</td>
+<td>只写打开</td>
+</tr>
+<tr>
+<td>O_RDWR</td>
+<td>读、写打开</td>
+</tr>
+<tr>
+<td>O_EXEC</td>
+<td>只执行打开</td>
+</tr>
+<tr>
+<td>O_SEARCH</td>
+<td>只搜索打开目录</td>
+</tr>
+<tr>
+<td>O_APPEND</td>
+<td>追加写</td>
+</tr>
+<tr>
+<td>O_NONBLOCK</td>
+<td>非阻塞模式</td>
+</tr>
+<tr>
+<td>O_SYNC</td>
+<td>等待写完成（数据和属性）</td>
+</tr>
+<tr>
+<td>O_DSYNC</td>
+<td>等待写完成（仅数据）</td>
+</tr>
+<tr>
+<td>O_RSYNC</td>
+<td>同步读和写</td>
+</tr>
+<tr>
+<td>O_FSYNC</td>
+<td>等待写完成（仅 FreeBSD 和 Mac OS X）</td>
+</tr>
+<tr>
+<td>O_ASYNC</td>
+<td>异步 I&#x2F;O（仅 FreeBSD 和 Mac OS X）</td>
+</tr>
+</tbody></table>
+<hr>
+<h3 id="i-node：包含以下内容"><a href="#i-node：包含以下内容" class="headerlink" title="i-node：包含以下内容"></a>i-node：包含以下内容</h3><ul>
+<li>链接计数（指向该i节点的目录项数）；</li>
+<li>文件类型、文件访问权限位、文件长度、指向文件数据块的指针等。<code>stat</code>结构中的大多数信息都取自i节点。</li>
+<li>只要两项重要数据放在目录项中：文件名和i-node编号。</li>
+</ul>
+<p><strong>注：</strong></p>
+<ul>
+<li>i-node中的链接称为“硬链接”，当硬链接数降为0时，才从磁盘的数据块中删除该文件，所以删除文件（即目录项）称为<code>unlink</code>，而不是<code>delete</code>。</li>
+<li>“软链接”：术语为“符号链接”，其数据块的实际内容是其指向的文件名字，i-node中的文件类型是<code>S_IFLINK</code>，表明是符号链接。</li>
+</ul>
+<p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/rFRyX7Rh/image.png" alt="磁盘、分区和文件系统"/></a></p>
+<p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/3xM8K9g3/i.png" alt="i节点和数据块"/></a></p>
+<hr>
+<h2 id="两个独立进程各自打开同一个文件："><a href="#两个独立进程各自打开同一个文件：" class="headerlink" title="两个独立进程各自打开同一个文件："></a>两个独立进程各自打开同一个文件：</h2><p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/hG2hPTDM/image.png" alt="两个独立进程各自打开同一个文件"/></a></p>
+<ul>
+<li>O_APPEND：<br>如果使用 <code>O_APPEND</code> 标志打开一个文件，那么相应的标志也被设置到文件表项的文件状态标志中。每次对文件执行写操作时，文件表项中的当前文件偏移量首先会被设置为 i 节点表项中的文件长度（相对其他进程来说是原子操作）。这就使得每次写入的数据都追加到文件的当前尾端处。<a target="_blank" rel="noopener" href="https://blog.csdn.net/yangbodong22011/article/details/63064166">这里</a>有一个测试的例子，文章结论不见得正确，请参考评论的讨论。</li>
+</ul>
+<p>以下是 <code>man page &quot;write(2)&quot;</code>：</p>
+<blockquote>
+<p>If the file was open(2)ed with O_APPEND, the file offset is first set to the end of the file before writing.  The adjustment of the file offset and the write operation are performed as an atomic step.</p>
+</blockquote>
+<ul>
+<li>lseek：<br>若一个文件用 <code>lseek</code> 定位到文件当前的尾端，则文件表项中的当前文件偏移量被设置为 i 节点表项中的当前文件长度（注意，此时，设置偏移量和写操作之间不是原子操作）。</li>
+</ul>
+<hr>
+<h2 id="dup-1-后的内核数据结构："><a href="#dup-1-后的内核数据结构：" class="headerlink" title="dup(1)后的内核数据结构："></a>dup(1)后的内核数据结构：</h2><p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/s2mGQbcY/dup-1.png" alt="dup(1)"/></a></p>
+<hr>
+<h3 id="fork之后父进程和子进程对打开文件的共享："><a href="#fork之后父进程和子进程对打开文件的共享：" class="headerlink" title="fork之后父进程和子进程对打开文件的共享："></a>fork之后父进程和子进程对打开文件的共享：</h3><p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/TYbyqK0Y/fork.png" alt="fork"/></a></p>
+<ul>
+<li>fork之后子进程复制父进程所有的打开描述符，并且保持其打开，即使执行了<code>exec()</code>，除非该文件描述符使用<code>fcntl()</code>设置了<code>FD_CLOEXEC</code>标志。</li>
+</ul>
+<hr>
+<h2 id="问题："><a href="#问题：" class="headerlink" title="问题："></a>问题：</h2><h3 id="1-进程为什么会自动打开0-1-2三个文件描述符？"><a href="#1-进程为什么会自动打开0-1-2三个文件描述符？" class="headerlink" title="1. 进程为什么会自动打开0, 1, 2三个文件描述符？"></a>1. 进程为什么会自动打开0, 1, 2三个文件描述符？</h3><p><strong>答：</strong></p>
+<ul>
+<li>shell进程启动时，会自动打开这三个文件描述符（可能由配置项决定）；</li>
+<li>shell利用<code>fork()</code>开启用户进程（子进程），该子进程复制父进程shell的所有文件描述符，于是0, 1, 2文件描述符被打开；</li>
+<li>由于子进程共享父进程的文件表项，子进程对文件状态标志（读、写、同步或非阻塞等）的修改，将会影响父进程。</li>
+</ul>
+<hr>
+<p>测试代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> err_sys(x)                                                             \</span></span><br><span class="line"><span class="meta">  &#123;                                                                            \</span></span><br><span class="line"><span class="meta">    perror(x);                                                                 \</span></span><br><span class="line"><span class="meta">    exit(1);                                                                   \</span></span><br><span class="line"><span class="meta">  &#125;</span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">pr_fl</span><span class="params">(<span class="type">int</span> fd)</span>;             <span class="comment">// 自定义函数：打印文件状态标志</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">set_fl</span><span class="params">(<span class="type">int</span> fd, <span class="type">int</span> flags)</span>; <span class="comment">// 自定义函数：设置文件状态标志</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">  pr_fl(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  set_fl(<span class="number">0</span>, O_APPEND);</span><br><span class="line">  pr_fl(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">set_fl</span><span class="params">(<span class="type">int</span> fd, <span class="type">int</span> flags)</span> &#123;</span><br><span class="line">  <span class="type">int</span> val;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> ((val = fcntl(fd, F_GETFL, <span class="number">0</span>)) &lt; <span class="number">0</span>)</span><br><span class="line">    err_sys(<span class="string">&quot;fcntl F_GETFL error&quot;</span>);</span><br><span class="line"></span><br><span class="line">  val |= flags;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (fcntl(fd, F_SETFL, val) &lt; <span class="number">0</span>)</span><br><span class="line">    err_sys(<span class="string">&quot;fcntl F_SETFL error&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">pr_fl</span><span class="params">(<span class="type">int</span> fd)</span> &#123;</span><br><span class="line">  <span class="type">int</span> val;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// do not guarantee success on certain system, check EINVAL first</span></span><br><span class="line">  <span class="keyword">if</span> ((val = fcntl(fd, F_GETFL, <span class="number">0</span>)) &lt; <span class="number">0</span>)</span><br><span class="line">    err_sys(<span class="string">&quot;fcntl F_GETFL error&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">switch</span> (val &amp; O_ACCMODE) &#123;</span><br><span class="line">  <span class="keyword">case</span> O_RDONLY:</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;read only&quot;</span>);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> O_WRONLY:</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;write only&quot;</span>);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> O_RDWR:</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;read write&quot;</span>);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">default</span>:</span><br><span class="line">    err_sys(<span class="string">&quot;unknown open type&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (val &amp; O_CREAT)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;, create&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> (val &amp; O_APPEND)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;, append&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> (val &amp; O_NONBLOCK)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;, non-block&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> (val &amp; O_SYNC)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;, synchronized file&quot;</span>);</span><br><span class="line">  <span class="comment">// if (val &amp; O_DSYNC)</span></span><br><span class="line">  <span class="comment">//   printf(&quot;, synchronize data&quot;);</span></span><br><span class="line"></span><br><span class="line">  <span class="built_in">putchar</span>(<span class="string">&#x27;\n&#x27;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="测试结果："><a href="#测试结果：" class="headerlink" title="测试结果："></a>测试结果：</h3><h4 id="第一次运行："><a href="#第一次运行：" class="headerlink" title="第一次运行："></a>第一次运行：</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ ./a.out</span><br><span class="line"><span class="built_in">read</span> write</span><br><span class="line"><span class="built_in">read</span> write, append</span><br></pre></td></tr></table></figure>
+
+<h4 id="第二次运行："><a href="#第二次运行：" class="headerlink" title="第二次运行："></a>第二次运行：</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ ./a.out</span><br><span class="line"><span class="built_in">read</span> write, append</span><br><span class="line"><span class="built_in">read</span> write, append</span><br></pre></td></tr></table></figure>
+
+<p><strong>分析：</strong></p>
+<ul>
+<li>第二次运行时，文件描述符0的初始状态保持了第一次运行的结果！</li>
+<li>这是因为父进程shell的文件表项的文件状态标志被子进程<code>a.out</code>改变了。</li>
+</ul>
+<h4 id="第三次运行："><a href="#第三次运行：" class="headerlink" title="第三次运行："></a>第三次运行：</h4><p>重新启动shell，并运行<code>a.out</code></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ ./a.out</span><br><span class="line"><span class="built_in">read</span> write</span><br><span class="line"><span class="built_in">read</span> write, append</span><br></pre></td></tr></table></figure>
+
+<p><strong>分析：</strong></p>
+<ul>
+<li>第三次运行，结果与第一次一致，这说明我们的猜测正确。</li>
+<li>父进程shell关闭之后，所有文件描述符被关闭，文件IO被关闭，文件表被释放。重启shell也就重置了文件表。</li>
+</ul>
+<hr>
+<h3 id="引申："><a href="#引申：" class="headerlink" title="引申："></a>引申：</h3><p>在此我们注意到，文件描述符0, 1, 2（标准输入、标准输出、标准错误）在一个shell及其所有子进程中，对应的文件（设备）是同一个。由于共享了文件表项，指向了同一个v-node表项，故都指向同一个虚拟终端。这与我们的平时观察一致，不然shell运行程序时，输入输出的入口在哪里呢？</p>
+<hr>
+<h3 id="Linux-文件锁与记录锁"><a href="#Linux-文件锁与记录锁" class="headerlink" title="Linux 文件锁与记录锁"></a>Linux 文件锁与记录锁</h3><p>参考链接：<a href="#">链接1</a>、<a href="#">链接2</a>。</p>
+<hr>
+<h3 id="相关数据结构："><a href="#相关数据结构：" class="headerlink" title="相关数据结构："></a>相关数据结构：</h3><h4 id="task-struct"><a href="#task-struct" class="headerlink" title="task_struct"></a><code>task_struct</code></h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">task_struct</span> &#123;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">fs_struct</span>* <span class="title">fs</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">files_struct</span>* <span class="title">files</span>;</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h4 id="files-struct"><a href="#files-struct" class="headerlink" title="files_struct"></a><code>files_struct</code></h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// File: &lt;linux/fdtable.h&gt;</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">files_struct</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">fdtable</span>* <span class="title">fdt</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">file</span>* <span class="title">fd_array</span>[<span class="title">NR_OPEN_DEFAULT</span>];</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h4 id="file"><a href="#file" class="headerlink" title="file"></a><code>file</code></h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">file</span> &#123;</span></span><br><span class="line">  <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">fu_list</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">rcu_head</span> <span class="title">fu_rcuhead</span>;</span></span><br><span class="line">  &#125; f_u;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">path</span> <span class="title">f_path</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">file_operations</span>* <span class="title">f_op</span>;</span></span><br><span class="line">  <span class="type">spinlock_t</span> f_lock;</span><br><span class="line">  <span class="type">atomic_long_t</span> f_count;</span><br><span class="line">  <span class="type">unsigned</span> <span class="type">int</span> f_flags;</span><br><span class="line">  <span class="type">fmode_t</span> f_mode;</span><br><span class="line">  <span class="type">loff_t</span> f_pos;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">fown_struct</span> <span class="title">f_owner</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">cred</span>* <span class="title">f_cred</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">file_ra_state</span> <span class="title">f_ra</span>;</span></span><br><span class="line">  u64 f_version;</span><br><span class="line">  <span class="type">void</span>* private_data;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">address_space</span>* <span class="title">f_mapping</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">file</span>* <span class="title">next</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">file</span>* <span class="title">parent</span>;</span></span><br><span class="line">  <span class="type">const</span> <span class="type">char</span>* name;</span><br><span class="line">  <span class="type">int</span> lineno;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="参考资料："><a href="#参考资料：" class="headerlink" title="参考资料："></a>参考资料：</h3><ul>
+<li>《UNIX 环境高级编程》</li>
+<li>《Linux 内核设计与实现（原书第 3 版） - Linux Kernel Development, Third Edition》，（美）拉芙（Love, R.）著；陈莉君，康华译. ——北京：机械工业出版社，2011.9（2021.5 重印）</li>
+</ul>
 
     </div>
 
@@ -330,7 +471,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#TODO"><span class="nav-text">TODO</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%93%E5%BC%80%E6%96%87%E4%BB%B6%E7%9A%84%E5%86%85%E6%A0%B8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-text">打开文件的内核数据结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6%E6%A0%87%E5%BF%97%EF%BC%88%E5%8D%B3fd%E6%A0%87%E5%BF%97%EF%BC%89%EF%BC%9A"><span class="nav-text">文件描述符标志（即fd标志）：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E7%8A%B6%E6%80%81%E6%A0%87%E5%BF%97%EF%BC%9A"><span class="nav-text">文件状态标志：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#i-node%EF%BC%9A%E5%8C%85%E5%90%AB%E4%BB%A5%E4%B8%8B%E5%86%85%E5%AE%B9"><span class="nav-text">i-node：包含以下内容</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%A4%E4%B8%AA%E7%8B%AC%E7%AB%8B%E8%BF%9B%E7%A8%8B%E5%90%84%E8%87%AA%E6%89%93%E5%BC%80%E5%90%8C%E4%B8%80%E4%B8%AA%E6%96%87%E4%BB%B6%EF%BC%9A"><span class="nav-text">两个独立进程各自打开同一个文件：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#dup-1-%E5%90%8E%E7%9A%84%E5%86%85%E6%A0%B8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%EF%BC%9A"><span class="nav-text">dup(1)后的内核数据结构：</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#fork%E4%B9%8B%E5%90%8E%E7%88%B6%E8%BF%9B%E7%A8%8B%E5%92%8C%E5%AD%90%E8%BF%9B%E7%A8%8B%E5%AF%B9%E6%89%93%E5%BC%80%E6%96%87%E4%BB%B6%E7%9A%84%E5%85%B1%E4%BA%AB%EF%BC%9A"><span class="nav-text">fork之后父进程和子进程对打开文件的共享：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%EF%BC%9A"><span class="nav-text">问题：</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E8%BF%9B%E7%A8%8B%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BC%9A%E8%87%AA%E5%8A%A8%E6%89%93%E5%BC%800-1-2%E4%B8%89%E4%B8%AA%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6%EF%BC%9F"><span class="nav-text">1. 进程为什么会自动打开0, 1, 2三个文件描述符？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C%EF%BC%9A"><span class="nav-text">测试结果：</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E6%AC%A1%E8%BF%90%E8%A1%8C%EF%BC%9A"><span class="nav-text">第一次运行：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E6%AC%A1%E8%BF%90%E8%A1%8C%EF%BC%9A"><span class="nav-text">第二次运行：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AC%AC%E4%B8%89%E6%AC%A1%E8%BF%90%E8%A1%8C%EF%BC%9A"><span class="nav-text">第三次运行：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%95%E7%94%B3%EF%BC%9A"><span class="nav-text">引申：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Linux-%E6%96%87%E4%BB%B6%E9%94%81%E4%B8%8E%E8%AE%B0%E5%BD%95%E9%94%81"><span class="nav-text">Linux 文件锁与记录锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%EF%BC%9A"><span class="nav-text">相关数据结构：</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#task-struct"><span class="nav-text">task_struct</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#files-struct"><span class="nav-text">files_struct</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#file"><span class="nav-text">file</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99%EF%BC%9A"><span class="nav-text">参考资料：</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
