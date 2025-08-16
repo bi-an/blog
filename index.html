@@ -218,7 +218,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2025-08-16 20:50:37 / Modified: 13:36:57" itemprop="dateCreated datePublished" datetime="2025-08-16T20:50:37+00:00">2025-08-16</time>
+              <time title="Created: 2025-08-16 20:50:37 / Modified: 14:01:38" itemprop="dateCreated datePublished" datetime="2025-08-16T20:50:37+00:00">2025-08-16</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -241,9 +241,12 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="打开文件的内核数据结构"><a href="#打开文件的内核数据结构" class="headerlink" title="打开文件的内核数据结构"></a>打开文件的内核数据结构</h2><p>注意：对同一个文件，不同进程拥有各自的文件表项，但是对每个文件，v节点表项在整个操作系统中只有一份。见下一节。</p>
-<p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/hG2hPTDM/image.png" alt="image"/></a></p>
-<h3 id="文件描述符标志（即fd标志）："><a href="#文件描述符标志（即fd标志）：" class="headerlink" title="文件描述符标志（即fd标志）："></a>文件描述符标志（即fd标志）：</h3><p>目前只有一个，即 <code>close-on-exec</code></p>
+          <h2 id="进程打开文件"><a href="#进程打开文件" class="headerlink" title="进程打开文件"></a>进程打开文件</h2><ul>
+<li>对同一个文件，不同进程拥有各自的文件表项。</li>
+<li>但是对每个文件，v节点表项在整个操作系统中只有一份。</li>
+</ul>
+<p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/50jyHyjJ/image.png" alt="image"/></a></p>
+<h3 id="文件描述符标志（即fd标志）："><a href="#文件描述符标志（即fd标志）：" class="headerlink" title="文件描述符标志（即fd标志）："></a>文件描述符标志（即fd标志）：</h3><p>目前只有一个，即 <code>close-on-exec</code> 。</p>
 <h3 id="文件状态标志："><a href="#文件状态标志：" class="headerlink" title="文件状态标志："></a>文件状态标志：</h3><table>
 <thead>
 <tr>
@@ -300,19 +303,75 @@
 <td>异步 I&#x2F;O（仅 FreeBSD 和 Mac OS X）</td>
 </tr>
 </tbody></table>
-<h3 id="i-node：包含以下内容"><a href="#i-node：包含以下内容" class="headerlink" title="i-node：包含以下内容"></a>i-node：包含以下内容</h3><ul>
+<h3 id="i-node"><a href="#i-node" class="headerlink" title="i-node"></a>i-node</h3><p>i-node 包含以下内容</p>
+<ul>
 <li>链接计数（指向该i节点的目录项数）；</li>
 <li>文件类型、文件访问权限位、文件长度、指向文件数据块的指针等。<code>stat</code>结构中的大多数信息都取自i节点。</li>
 <li>只要两项重要数据放在目录项中：文件名和i-node编号。</li>
 </ul>
-<p><strong>注：</strong></p>
-<ul>
-<li>i-node中的链接称为“硬链接”，当硬链接数降为0时，才从磁盘的数据块中删除该文件，所以删除文件（即目录项）称为<code>unlink</code>，而不是<code>delete</code>。</li>
-<li>“软链接”：术语为“符号链接”，其数据块的实际内容是其指向的文件名字，i-node中的文件类型是<code>S_IFLINK</code>，表明是符号链接。</li>
-</ul>
 <p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/rFRyX7Rh/image.png" alt="磁盘、分区和文件系统"/></a></p>
 <p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/3xM8K9g3/i.png" alt="i节点和数据块"/></a></p>
-<h2 id="两个独立进程各自打开同一个文件："><a href="#两个独立进程各自打开同一个文件：" class="headerlink" title="两个独立进程各自打开同一个文件："></a>两个独立进程各自打开同一个文件：</h2><p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/hG2hPTDM/image.png" alt="两个独立进程各自打开同一个文件"/></a></p>
+<p>软链接与硬链接</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>定义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>硬链接 (Hard Link)</strong></td>
+<td>文件系统中对同一个 <strong>inode</strong> 的不同名字引用。它们指向同一个文件内容。</td>
+</tr>
+<tr>
+<td><strong>软链接 (Symbolic Link &#x2F; Symlink)</strong></td>
+<td>类似快捷方式，是一个 <strong>独立文件</strong>，内容是指向目标文件的路径。</td>
+</tr>
+</tbody></table>
+<ul>
+<li>硬链接：当硬链接数降为0时，才从磁盘的数据块中删除该文件，所以删除文件（即目录项）称为<code>unlink</code>，而不是<code>delete</code>。</li>
+<li>软链接：i-node中的文件类型是<code>S_IFLINK</code>，表明是符号链接。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>硬链接</th>
+<th>软链接</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>是否指向 inode</td>
+<td>是，直接指向同一 inode</td>
+<td>否，指向目标路径</td>
+</tr>
+<tr>
+<td>是否可以跨文件系统</td>
+<td>否，只能在同一分区</td>
+<td>可以跨分区</td>
+</tr>
+<tr>
+<td>是否可以链接目录</td>
+<td>通常不能（除非 root）</td>
+<td>可以</td>
+</tr>
+<tr>
+<td>删除目标文件后</td>
+<td>文件内容仍可访问</td>
+<td>链接会失效（称为“悬挂链接”）</td>
+</tr>
+<tr>
+<td>占用空间</td>
+<td>不占用额外数据空间（只是多了一个目录项）</td>
+<td>占用少量空间存储路径信息</td>
+</tr>
+<tr>
+<td>更新文件内容</td>
+<td>所有硬链接同步可见</td>
+<td>通过软链接修改目标文件内容时可见，软链接本身只是路径</td>
+</tr>
+</tbody></table>
+<h2 id="两个独立进程各自打开同一个文件"><a href="#两个独立进程各自打开同一个文件" class="headerlink" title="两个独立进程各自打开同一个文件"></a>两个独立进程各自打开同一个文件</h2><p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/hG2hPTDM/image.png" alt="两个独立进程各自打开同一个文件"/></a></p>
 <ul>
 <li>O_APPEND：<br>如果使用 <code>O_APPEND</code> 标志打开一个文件，那么相应的标志也被设置到文件表项的文件状态标志中。每次对文件执行写操作时，文件表项中的当前文件偏移量首先会被设置为 i 节点表项中的文件长度（相对其他进程来说是原子操作）。这就使得每次写入的数据都追加到文件的当前尾端处。<a target="_blank" rel="noopener" href="https://blog.csdn.net/yangbodong22011/article/details/63064166">这里</a>有一个测试的例子，文章结论不见得正确，请参考评论的讨论。</li>
 </ul>
@@ -324,8 +383,8 @@
 <li>lseek：<br>若一个文件用 <code>lseek</code> 定位到文件当前的尾端，则文件表项中的当前文件偏移量被设置为 i 节点表项中的当前文件长度（注意，此时，设置偏移量和写操作之间不是原子操作）。</li>
 </ul>
 <hr>
-<h2 id="dup-1-后的内核数据结构："><a href="#dup-1-后的内核数据结构：" class="headerlink" title="dup(1)后的内核数据结构："></a>dup(1)后的内核数据结构：</h2><p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/s2mGQbcY/dup-1.png" alt="dup(1)"/></a></p>
-<h3 id="fork之后父进程和子进程对打开文件的共享："><a href="#fork之后父进程和子进程对打开文件的共享：" class="headerlink" title="fork之后父进程和子进程对打开文件的共享："></a>fork之后父进程和子进程对打开文件的共享：</h3><p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/TYbyqK0Y/fork.png" alt="fork"/></a></p>
+<h2 id="dup后的内核数据结构"><a href="#dup后的内核数据结构" class="headerlink" title="dup后的内核数据结构"></a>dup后的内核数据结构</h2><p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/s2mGQbcY/dup-1.png" alt="dup(1)"/></a></p>
+<h2 id="fork与文件共享"><a href="#fork与文件共享" class="headerlink" title="fork与文件共享"></a>fork与文件共享</h2><p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/TYbyqK0Y/fork.png" alt="fork"/></a></p>
 <ul>
 <li>fork之后子进程复制父进程所有的打开描述符，并且保持其打开，即使执行了<code>exec()</code>，除非该文件描述符使用<code>fcntl()</code>设置了<code>FD_CLOEXEC</code>标志。</li>
 </ul>
@@ -414,7 +473,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2025-08-16 20:37:50 / Modified: 13:36:57" itemprop="dateCreated datePublished" datetime="2025-08-16T20:37:50+00:00">2025-08-16</time>
+              <time title="Created: 2025-08-16 20:37:50 / Modified: 14:01:38" itemprop="dateCreated datePublished" datetime="2025-08-16T20:37:50+00:00">2025-08-16</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -665,7 +724,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2025-08-16 20:01:24 / Modified: 13:36:57" itemprop="dateCreated datePublished" datetime="2025-08-16T20:01:24+00:00">2025-08-16</time>
+              <time title="Created: 2025-08-16 20:01:24 / Modified: 14:01:38" itemprop="dateCreated datePublished" datetime="2025-08-16T20:01:24+00:00">2025-08-16</time>
             </span>
 
           
@@ -888,7 +947,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2025-08-16 13:31:26 / Modified: 13:36:57" itemprop="dateCreated datePublished" datetime="2025-08-16T13:31:26+00:00">2025-08-16</time>
+              <time title="Created: 2025-08-16 13:31:26 / Modified: 14:01:38" itemprop="dateCreated datePublished" datetime="2025-08-16T13:31:26+00:00">2025-08-16</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1003,7 +1062,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2025-08-16 10:54:08 / Modified: 13:36:57" itemprop="dateCreated datePublished" datetime="2025-08-16T10:54:08+00:00">2025-08-16</time>
+              <time title="Created: 2025-08-16 10:54:08 / Modified: 14:01:38" itemprop="dateCreated datePublished" datetime="2025-08-16T10:54:08+00:00">2025-08-16</time>
             </span>
 
           
@@ -1152,7 +1211,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 13:36:57" itemprop="dateModified" datetime="2025-08-16T13:36:57+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 14:01:38" itemprop="dateModified" datetime="2025-08-16T14:01:38+00:00">2025-08-16</time>
               </span>
 
           
@@ -1218,7 +1277,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 13:36:57" itemprop="dateModified" datetime="2025-08-16T13:36:57+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 14:01:38" itemprop="dateModified" datetime="2025-08-16T14:01:38+00:00">2025-08-16</time>
               </span>
 
           
@@ -1356,7 +1415,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 13:36:57" itemprop="dateModified" datetime="2025-08-16T13:36:57+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 14:01:38" itemprop="dateModified" datetime="2025-08-16T14:01:38+00:00">2025-08-16</time>
               </span>
 
           
@@ -1531,7 +1590,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 13:36:57" itemprop="dateModified" datetime="2025-08-16T13:36:57+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 14:01:38" itemprop="dateModified" datetime="2025-08-16T14:01:38+00:00">2025-08-16</time>
               </span>
 
           
@@ -2276,7 +2335,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 13:36:57" itemprop="dateModified" datetime="2025-08-16T13:36:57+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 14:01:38" itemprop="dateModified" datetime="2025-08-16T14:01:38+00:00">2025-08-16</time>
               </span>
 
           
