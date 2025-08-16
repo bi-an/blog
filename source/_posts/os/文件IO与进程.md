@@ -46,11 +46,21 @@ i-node 包含以下内容
 
 - 链接计数（指向该i节点的目录项数）；
 - 文件类型、文件访问权限位、文件长度、指向文件数据块的指针等。`stat`结构中的大多数信息都取自i节点。
-- 只要两项重要数据放在目录项中：文件名和i-node编号。
+- 只有两项重要数据放在目录项中：文件名和i-node编号。
 
-<a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/rFRyX7Rh/image.png" alt="磁盘、分区和文件系统"/></a>
+<div style="text-align: center">
+<figure>
+  <img src="https://i.postimg.cc/rFRyX7Rh/image.png" alt="磁盘、分区和文件系统">
+  <figcaption>磁盘、分区和文件系统</figcaption>
+</figure>
+</div>
 
-<a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/3xM8K9g3/i.png" alt="i节点和数据块"/></a>
+<div style="text-align: center">
+<figure>
+  <img src="https://i.postimg.cc/3xM8K9g3/i.png" alt="i节点和数据块">
+  <figcaption>i节点和数据块</figcaption>
+</figure>
+</div>
 
 
 软链接与硬链接
