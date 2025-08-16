@@ -37,7 +37,7 @@ tags:
 | O\_FSYNC    | 等待写完成（仅 FreeBSD 和 Mac OS X）  |
 | O\_ASYNC    | 异步 I/O（仅 FreeBSD 和 Mac OS X） |
 
----
+
 
 ### i-node：包含以下内容
 
@@ -53,7 +53,7 @@ tags:
 
 <a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/3xM8K9g3/i.png" alt="i节点和数据块"/></a>
 
----
+
 
 ## 两个独立进程各自打开同一个文件：
 
@@ -75,7 +75,7 @@ tags:
 
 <a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/s2mGQbcY/dup-1.png" alt="dup(1)"/></a>
 
----
+
 
 ### fork之后父进程和子进程对打开文件的共享：
 
@@ -83,18 +83,16 @@ tags:
 
 - fork之后子进程复制父进程所有的打开描述符，并且保持其打开，即使执行了`exec()`，除非该文件描述符使用`fcntl()`设置了`FD_CLOEXEC`标志。
 
----
 
-## 问题：
 
-### 1. 进程为什么会自动打开0, 1, 2三个文件描述符？
+## 进程为什么会自动打开0, 1, 2三个文件描述符？
 
 **答：**
 - shell进程启动时，会自动打开这三个文件描述符（可能由配置项决定）；
 - shell利用`fork()`开启用户进程（子进程），该子进程复制父进程shell的所有文件描述符，于是0, 1, 2文件描述符被打开；
 - 由于子进程共享父进程的文件表项，子进程对文件状态标志（读、写、同步或非阻塞等）的修改，将会影响父进程。
 
----
+
 
 测试代码：
 
@@ -169,7 +167,7 @@ void pr_fl(int fd) {
 }
 ```
 
----
+
 
 ### 测试结果：
 
@@ -207,22 +205,22 @@ read write, append
 - 第三次运行，结果与第一次一致，这说明我们的猜测正确。
 - 父进程shell关闭之后，所有文件描述符被关闭，文件IO被关闭，文件表被释放。重启shell也就重置了文件表。
 
----
+
 
 ### 引申：
 在此我们注意到，文件描述符0, 1, 2（标准输入、标准输出、标准错误）在一个shell及其所有子进程中，对应的文件（设备）是同一个。由于共享了文件表项，指向了同一个v-node表项，故都指向同一个虚拟终端。这与我们的平时观察一致，不然shell运行程序时，输入输出的入口在哪里呢？
 
----
 
-### Linux 文件锁与记录锁
+
+## Linux 文件锁与记录锁
 
 参考链接：[链接1](#)、[链接2](#)。
 
----
 
-### 相关数据结构：
 
-#### `task_struct`
+## 相关数据结构：
+
+### `task_struct`
 
 ```c
 struct task_struct {
@@ -231,7 +229,7 @@ struct task_struct {
 };
 ```
 
-#### `files_struct`
+### `files_struct`
 
 ```c
 // File: <linux/fdtable.h>
@@ -241,7 +239,7 @@ struct files_struct {
 };
 ```
 
-#### `file`
+### `file`
 
 ```c
 struct file {
@@ -269,8 +267,7 @@ struct file {
 };
 ```
 
----
 
-### 参考资料：
+## 参考
 - 《UNIX 环境高级编程》
 - 《Linux 内核设计与实现（原书第 3 版） - Linux Kernel Development, Third Edition》，（美）拉芙（Love, R.）著；陈莉君，康华译. ——北京：机械工业出版社，2011.9（2021.5 重印）
