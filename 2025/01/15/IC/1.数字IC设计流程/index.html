@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="1. 参考白栎旸. 数字IC设计入门（微课视频版）[M]. 北京: 清华大学出版社，2023-09-01:第1章. 2. 数字IC设计流程2.1. 三个主要流程： 前端设计: 用 Verilog 编写 RTL 设计文件（Register Transfer Level，RTL，寄存器传输层）。  综合（Synthesis）：将 RTL 转换位实际电子元器件的连接。输出文件称为网表（netlist），">
+<meta property="og:type" content="article">
+<meta property="og:title" content="第1章 数字IC设计流程">
+<meta property="og:url" content="https://bi-an.github.io/blog/2025/01/15/IC/1.%E6%95%B0%E5%AD%97IC%E8%AE%BE%E8%AE%A1%E6%B5%81%E7%A8%8B/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="1. 参考白栎旸. 数字IC设计入门（微课视频版）[M]. 北京: 清华大学出版社，2023-09-01:第1章. 2. 数字IC设计流程2.1. 三个主要流程： 前端设计: 用 Verilog 编写 RTL 设计文件（Register Transfer Level，RTL，寄存器传输层）。  综合（Synthesis）：将 RTL 转换位实际电子元器件的连接。输出文件称为网表（netlist），">
+<meta property="og:locale">
+<meta property="og:image" content="https://i.postimg.cc/MKfPd9z4/20250116222905.jpg">
+<meta property="og:image" content="https://i.postimg.cc/gjQMGZHN/20250116211433.jpg">
+<meta property="article:published_time" content="2025-01-15T16:59:30.000Z">
+<meta property="article:modified_time" content="2025-08-16T04:03:43.678Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="IC">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.postimg.cc/MKfPd9z4/20250116222905.jpg">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2025/01/15/IC/1.%E6%95%B0%E5%AD%97IC%E8%AE%BE%E8%AE%A1%E6%B5%81%E7%A8%8B/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>第1章 数字IC设计流程 | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-resource">
+
+    <a href="/blog/resources/" rel="section"><i class="fa fa-paperclip fa-fw"></i>Resource</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/01/15/IC/1.%E6%95%B0%E5%AD%97IC%E8%AE%BE%E8%AE%A1%E6%B5%81%E7%A8%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          第1章 数字IC设计流程
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-01-15 16:59:30" itemprop="dateCreated datePublished" datetime="2025-01-15T16:59:30+00:00">2025-01-15</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-16 04:03:43" itemprop="dateModified" datetime="2025-08-16T04:03:43+00:00">2025-08-16</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="1-参考"><a href="#1-参考" class="headerlink" title="1. 参考"></a>1. 参考</h2><p>白栎旸. 数字IC设计入门（微课视频版）[M]. 北京: 清华大学出版社，2023-09-01:第1章.</p>
+<h2 id="2-数字IC设计流程"><a href="#2-数字IC设计流程" class="headerlink" title="2. 数字IC设计流程"></a>2. 数字IC设计流程</h2><h3 id="2-1-三个主要流程："><a href="#2-1-三个主要流程：" class="headerlink" title="2.1. 三个主要流程："></a>2.1. 三个主要流程：</h3><ol>
+<li><p>前端设计: 用 Verilog 编写 RTL 设计文件（Register Transfer Level，RTL，寄存器传输层）。</p>
+</li>
+<li><p>综合（Synthesis）：将 RTL 转换位实际电子元器件的连接。输出文件称为网表（netlist），也是纯文本文件。</p>
+</li>
+<li><p>后端布局布线（PR）：将网表变为实际电路图，类似 PCB 图，称为版图（Layout）。版图是晶圆厂（Foundry）能识别的通用格式。</p>
+<p> 版图的绘制：</p>
+<ul>
+<li>布局（Place）：元器件如何摆放；</li>
+<li>布线（Route）：元器件如何连接。</li>
+</ul>
+<p> 数字版图的绘制大部分由计算机自动完成，称为自动布局布线（Automatic Place and Route，APR），很多时候也称为 PR 。</p>
+<p> 流片（TapeOut）：Foundry 根据版图制造芯片。</p>
+</li>
+</ol>
+<h3 id="2-2-验收和验证（SignOff）："><a href="#2-2-验收和验证（SignOff）：" class="headerlink" title="2.2. 验收和验证（SignOff）："></a>2.2. 验收和验证（SignOff）：</h3><p>对质量进行把控和最终验收。</p>
+<p>前仿真：检查 RTL 设计文件；用测试平台（Testbench）文件对实际应用环境仿真。这是在版图成型之前，称为前仿。一旦发现错误，验证人员会反馈给设计者修改，如此反复迭代，直至交付到综合阶段的 RTL 文件都是合格的。</p>
+<p>SignOff 检查：检查版图设计；对时序和功耗检查。如果检查不过，首先是数字后端工程师自己努力，重新绘制版图或微调元器件位置，若无法达到目的，再修改综合策略，重新综合。若仍无法达到目的，则反馈到前端 IC 设计，在 RTL 上调整。</p>
+<p>后仿真：在 SignOff 合格后，需要将网表和延迟信息提交给验证人员，进行后仿。对成型版图的时序进行最后验证和验收。后仿就是版图成型之后的仿真。</p>
+<h3 id="2-3-可测性设计（Design-For-Test，DFT）"><a href="#2-3-可测性设计（Design-For-Test，DFT）" class="headerlink" title="2.3. 可测性设计（Design For Test，DFT）"></a>2.3. 可测性设计（Design For Test，DFT）</h3><p>一个附属工序，原理是在芯片中加入与主要功能无关的附属电路，用于在芯片的生产过程中使用 TestBench 快速判断芯片功能的完好行、内部结构的正常性。</p>
+<p>如果芯片中包含 DFT 电路，则 TestBench 可以向芯片的某些引脚发送事先准备好的测试向量，在芯片的另一些引脚上采样芯片对测试向量的反应。将事先准备好的预期效果与实际采样到的结果进行对比，从而判断内部功能是否正常。</p>
+<p>DFT 功能也常常被称为扫描（Scan），即用 TestBench 扫描芯片内部之意。DFT 的检查对象是生产差错造成的芯片损坏，它不能检查设计问题。设计问题应该交给验证工序。</p>
+<p>DFT 对芯片来说不是必需的，一些低成本的芯片没有插入 DFT 电路，在设计流程中，直接从电路综合过渡到后端设计。</p>
+<h3 id="2-4-前端设计-VS-后端设计"><a href="#2-4-前端设计-VS-后端设计" class="headerlink" title="2.4. 前端设计 VS 后端设计"></a>2.4. 前端设计 VS 后端设计</h3><ul>
+<li>前端设计：抽象电路，只描述功能，不是具体电路。</li>
+<li>后端设计：具体电路，不仅要知道哪些元器件，还要确认这些元器件的摆放位置。</li>
+</ul>
+<p>综合是前端和后端的分界线，综合之前没有元器件而只有功能；综合之后，设计才有了具体化的元器件。</p>
+<p>当然，前端工程师往往强调心中有电路，并非实际电路，而是心中有功能相似的概念性电路。这样可以认清设计架构，并避免潜在的设计隐患。</p>
+<h2 id="3-模拟IC设计流程"><a href="#3-模拟IC设计流程" class="headerlink" title="3. 模拟IC设计流程"></a>3. 模拟IC设计流程</h2><ol>
+<li><p>绘制原理图（Schematic）</p>
+<p> 手动绘制。</p>
+</li>
+<li><p>原理图仿真</p>
+<p> 一般由原理图设计者亲自完成。原因是模拟电路的设计参数选择范围宽泛，需要验证的场景也复杂，仿真验收标准不十分明确。这就需要设计者搭建关键的应用环境和场景，对电路上产生的反应做出判断，随时调整电路结构和参数。</p>
+</li>
+<li><p>绘制版图（根据原理图）</p>
+<p> 手动绘制。</p>
+<p> 模拟版图工程师和模拟IC设计师一般是分开的两个职业。</p>
+<p> 模拟IC设计师一般也都掌握一些绘制版图的方法，单熟练程度以及对一些物理问题的处理方面，需要求助专业的版图工程师。</p>
+<p> 模拟版图工程师可以根据原理图及通用的绘图规则直接绘制。但是对诸如社评电路及高功率管之类有着特殊要求的设计，版图工程师需要与模拟IC设计师进行充分沟通，在模拟IC设计师的协助下进行绘制。</p>
+</li>
+<li><p>抽取寄生参数</p>
+</li>
+<li><p>版图后仿</p>
+</li>
+<li><p>设计规则检查（Design Rule Check，DRC）</p>
+</li>
+<li><p>版图和原理图的一致性检查（Layout Versus Schematics，LVS）</p>
+</li>
+<li><p>流片</p>
+</li>
+</ol>
+<p>模拟IC设计没有那么多自动化成分，需要手动绘制原理图、版图，电阻、电容等元器件需要人工确定。</p>
+<p>模拟IC仿真，无法像数字IC那样通过仿真验证和FPGA验证两种方法来相互印证设计效果。模拟仿真速度慢、情况多，很难覆盖真是使用中可能遇到的全部情况，因此，模拟设计具有很高的不确定，芯片的实际效果与仿真结果存在明显差距是经常发生的。</p>
+<p>但是模拟电路也有一些无法被数字电路取代的特性。</p>
+<p>可以想象，数字电路只需要处理 0 和 1 两种信号，但是模拟电路的数值域是实数域，包括所有连续的整数、浮点数、正负数，数据有无穷个。因此，即使是很小的电路，元器件数量不多，也需要设计者和仿真者从数值域中挑选一部份值作为设计和仿真中用到的值，绝对不可能覆盖所有情况。</p>
+<h2 id="4-芯片整体规划"><a href="#4-芯片整体规划" class="headerlink" title="4. 芯片整体规划"></a>4. 芯片整体规划</h2><p>版图布局规划（FloorPlan）：将芯片整体规划，以及内部数字、模拟电路的位置、面积、形状等特征的规划。</p>
+<figure style="text-align:center;">
+<img TODO width="50%"/>
+<figcaption>FloorPlan示例</figcaption>
+</figure>
+
+<ul>
+<li>Pad: FloorPlan的周围是芯片引脚(Pad)。Pad实际指的是芯片引脚之外的一块金属。</li>
+<li>IO: 包括Pad和内部逻辑在内的整个引脚设计。</li>
+</ul>
+<p>一个完整的引脚设计如图：</p>
+<img src="https://i.postimg.cc/MKfPd9z4/20250116222905.jpg" alt="20250116222905" width="50%"/>
+
+<ul>
+<li>封装: 芯片外面的塑料壳子称为芯片的封装，大体分为两种：插针式（引脚如针）、表贴式（引脚扁平）。</li>
+</ul>
+<h2 id="5-IC设计工具"><a href="#5-IC设计工具" class="headerlink" title="5. IC设计工具"></a>5. IC设计工具</h2><p>EDA 公司：电子设计自动化（Electronic Design Automation）公司，粗略来说，数字设计常用 Synopsys ，模拟设计常用 Cadence ， Mentor 在一些细分领域有优势。</p>
+<table>
+<thead>
+<tr>
+<th>数字&#x2F;模块</th>
+<th>数字流程</th>
+<th>常用软件</th>
+<th>其他软件</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>数字</td>
+<td>RTL 编写</td>
+<td>Vim&#x2F;Gvim</td>
+<td>普通文本编辑器</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>仿真</td>
+<td>VCS (Synopsys)</td>
+<td>Incisive (Cadence)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>看波形</td>
+<td>Verdi (Synopsys)</td>
+<td>DVE (Synopsys)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>设计检查</td>
+<td>Spyglass (Synopsys)</td>
+<td>Simvision (Cadence)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>综合</td>
+<td>DC (Synopsys)</td>
+<td>ModelSim (Mentor)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>时序仿真</td>
+<td>PT (Synopsys)</td>
+<td>nLint (Cadence)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>自动布局布线</td>
+<td>ICC2 (Synopsys)</td>
+<td>Genus (Cadence)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>设计版图形式验证</td>
+<td>Formality (Synopsys)</td>
+<td>Tempus (Cadence)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>提取寄生参数</td>
+<td>StarRC (Synopsys)</td>
+<td></td>
+</tr>
+<tr>
+<td>模拟</td>
+<td>原理图&#x2F;版图&#x2F;仿真等</td>
+<td>Virtuoso (Cadence)</td>
+<td>Calibre (Mentor)</td>
+</tr>
+<tr>
+<td>模拟</td>
+<td>寄生提取&#x2F;DRC&#x2F;LVS</td>
+<td>Calibre (Mentor)</td>
+<td></td>
+</tr>
+</tbody></table>
+<p>仿真加速器： <strong>Palladium</strong> (Cadence) 、 <strong>ZeBu</strong> (Synopsys) 。</p>
+<h3 id="5-1-数字IC设计工具"><a href="#5-1-数字IC设计工具" class="headerlink" title="5.1. 数字IC设计工具"></a>5.1. 数字IC设计工具</h3><p>RTL 仿真工具：有 Synopsys 的 VCS ，Cadence 的 Incisive （也叫 irun ）。这些工具可以胜任前仿、后仿、UVM 架构（Universal Verification Methodology，通用验证方法学）的仿真。Cadence 的 irun 与模拟设计工具 Virtuoso 工具中集成的 AMS 仿真工具相结合，支持数字模拟电路混合仿真。</p>
+<p>波形查看工具：一般集成在仿真工具中。VCS 的波形软件叫 DVE ， Incisive 的波形软件叫 SimVision 。但在这个领域，一家名为 Novas 的公司的软件，以其明快的界面、方便的功能、快捷的操作，异军突起，得到了广泛的认可，它就是 Verdi （以音乐家威尔第的名字命名，前身叫 Debussy ，以音乐家德彪西的名字命名）。 Verdi 现已被 Synopsys 收购。 Mentor 的仿真和看波形软件叫 ModelSim ，主要用于 FPGA 功能的仿真。</p>
+<p>RTL 语法检查工具： Atrenta 公司的 Sypyglass ，可以检查语法、跨时钟域处理方案的可靠性，甚至可以在内部执行综合、功耗评估和简单的布局布线，使它能全方位地给出设计建议。现已被 Synopsys 收购。 Cadence 的对应检查工具是 nLint 。</p>
+<p>综合工具：即将 RTL 转化为实际电路的工具，常用的的有 Synopsys 的 Design Compiler (DC) ，该工具内部还有一些 Synopsys 开发的库，能够帮助设计者减小面积，提高性能，例如加法器、乘法器等，这些设计好的子模块在 DC 中被称为 DesignWare (DW) 。可以是让工具自动从 RTL 中识别出可用 DW 替换的代码，也可以是设计者手动例化 DW 模块。 Cadence 相应的工具叫 Genus （原名叫 RTL Compiler ）。</p>
+<p>版图自动布局布线软件： Synopsys 有 ICC2 （旧版为 ICC ）， Cadence 有 Innovus （原名 Encounter ），两个软件都被广泛使用。由于两个软件的操作命令不同，后端工程师往往只掌握其中一种。 Synopsys 为了增强客户的黏性，开发了一个银河（ MilkyWay ）流程，从前端到后端，通过专用的二进制文件 (db) 传输，占用空间小，处理效率高，但也有许多公司使用 DC 综合，再将网表导入 Innovus 进行布局布线。</p>
+<p>SignOff 工具：即对整个设计的时序、功耗评估。 Synopsys 的 Prime Time (PT) ， Cadence 的 Tempus 。目前， PT 已经称为业内 SignOff 的标准。实际上，时序分析在 DC 中也能做，但两者在分析方法、细节考虑全面度、分析速度等方面存在差异。在综合时使用 DC 检查，而在 SignOff 时，使用 PT 检查。</p>
+<p>形式验证工具：也称为逻辑等效行检查（ Logic Equivalece Check, LEC ），将 RTL 和网表进行一一对照。因为从 RTL 到综合网表，以及从综合网表到后端网表的过程，可能意外地改变原有功能和设计意图，所以需要进行检查。 Synopsys 的工具时 Formality ， Candence 的工具是 Conformal 。</p>
+<p>寄生参数的提取工具：进入设计版图阶段，可以确定走线的延迟。该值受信号负载、线路长短、粗细、周围线路等多重影响，需要用模型和查表进行计算，才能得到确切的值。该过程称为寄生参数的提取。一般使用 Synopsys 的 StarRC 。提取出来的信息可用于 PT 进行 SignOff 。</p>
+<p>上述工具，最主要的控制语法是 TCL 语言， EDA 工具大多以该语言为基础，扩展出各种专用命令。</p>
+<p>除了以上数字设计工具，还有一些更加细分的工具类型，比如仿真加速器，有 Cadence 的 Palladium 、 Synopsys 的 ZeBu 。</p>
+<h3 id="5-2-模拟IC设计工具"><a href="#5-2-模拟IC设计工具" class="headerlink" title="5.2. 模拟IC设计工具"></a>5.2. 模拟IC设计工具</h3><p>主要是 Cadence 的 Virtuoso 。与数字设计中繁多的工具不同， Virtuoso 能满足大部分设计需求，例如绘制并仿真原理图、绘制并仿真版图、数模混合仿真等。实际上， Virtuoso 更像集成开发环境（ Integrated Development Environment, IDE ），它包含很多独立的设计工具，如仿真工具 Spectre 等。</p>
+<p>SignOff 工具：Mentor 的 Calibre 可以用来提取寄生参数、进行 DRC 和 LVS 检查。</p>
+<h3 id="5-3-职位、分工与工具"><a href="#5-3-职位、分工与工具" class="headerlink" title="5.3. 职位、分工与工具"></a>5.3. 职位、分工与工具</h3><table>
+<thead>
+<tr>
+<th>大职位</th>
+<th>细分职位</th>
+<th>功能</th>
+<th>常用工具</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>数字</td>
+<td>数字 IC 设计</td>
+<td>设计芯片中的数字电路</td>
+<td>Vim, VCS, Verdi, Spyglass, DC 等</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>数字 IC 验证</td>
+<td>验证芯片中的数字电路功能</td>
+<td>VCS, Verdi 等</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>数字 IC 后端</td>
+<td>将抽象电路转换为版图</td>
+<td>ICC2, Innovus, Calibre, PT 等</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>其他职位, 如 SignOff, DFT 等</td>
+<td>负责在数字电路中插入 DFT、对最终的版图进行时序、面积、功耗的检查等</td>
+<td>DC, PT, Formality 等</td>
+</tr>
+<tr>
+<td>模拟</td>
+<td>模拟 IC 设计</td>
+<td>设计芯片中的模拟电路</td>
+<td>Virtuoso 等</td>
+</tr>
+<tr>
+<td>模拟</td>
+<td>模拟版图</td>
+<td>将电路原理图做成版图</td>
+<td>Virtuoso, Calibre 等</td>
+</tr>
+<tr>
+<td>软件</td>
+<td>嵌入式软件工程师</td>
+<td>(1) 参与芯片开发&#x2F;验证 (2) 参与 SDK (3) 参与芯片应用方案</td>
+<td>Keil, SourceInsight, Visual Studio 等</td>
+</tr>
+<tr>
+<td>软件方案</td>
+<td>测试工程师</td>
+<td>(1) 对芯片设计性能的测试 (2) 芯片量产测试</td>
+<td>兼用软件和硬件工具</td>
+</tr>
+<tr>
+<td>硬方案</td>
+<td>应用工程师</td>
+<td>做电路板，为芯片找到合适的应用场景</td>
+<td>Pads, Altium Designer, Cadence 等</td>
+</tr>
+</tbody></table>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">管理</span><br><span class="line">├── 研发</span><br><span class="line">│   ├── 数字IC设计</span><br><span class="line">│   ├── 数字IC验证</span><br><span class="line">│   └── 数字后端</span><br><span class="line">│   └── 模拟IC设计</span><br><span class="line">│       └── 模拟版图</span><br><span class="line">├── 测试</span><br><span class="line">│   ├── 研发类测试</span><br><span class="line">│   │   ├── 方案测试</span><br><span class="line">│   │   └── 量产测试</span><br><span class="line">│   └── 客户测试</span><br><span class="line">├── 销售</span><br><span class="line">└── 方案</span><br><span class="line">    ├── 硬件方案</span><br><span class="line">    └── 软件方案</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="5-4-EDA-与-Foundry-的关系"><a href="#5-4-EDA-与-Foundry-的关系" class="headerlink" title="5.4. EDA 与 Foundry 的关系"></a>5.4. EDA 与 Foundry 的关系</h3><p>普通软件公司无力开发 EDA 软件。因为 EDA 厂商需要和 Foundry 厂商紧密合作，才能获得有关的生产细节数据，从而帮助用户进行更加准确的仿真、寄生参数的提取、规则的检查。不同的 EDA 工具抽取的寄生参数可能不同，原因可能是不同的工具获得的工艺数据不同。</p>
+<p>国内 EDA 厂商要想打破垄断，不仅要靠软件技术，还要与各大 Foundry 厂达成战略合作，共享工艺数据，才能做出有实用价值的 EDA 工具。</p>
+<h2 id="6-概念"><a href="#6-概念" class="headerlink" title="6. 概念"></a>6. 概念</h2><h3 id="6-1-寄存器："><a href="#6-1-寄存器：" class="headerlink" title="6.1. 寄存器："></a>6.1. 寄存器：</h3><p>register，这是对功能强调的名称，其物理实体很多，比如触发器 (Flip-Flop, FF)和锁存器(Latch)等等。在数字设计中，主要提倡触发器。</p>
+<p>寄存器是受控于时钟沿的元器件， Foundry 会在标准单元库中提供多种寄存器。</p>
+<p>触发器是由边沿信号而非电平信号导致数据存储的。触发源一般是时钟信号。</p>
+<p>锁存器较少使用，它一般以非时钟信号为存储控制，靠电平触发。一般不连接时钟，只是连接一根普通的信号线。这种锁存器一般很少被纳入时钟计算中，因为它既不属于组合逻辑，又无法像触发器一样作为时序路径的起终点，所以时序上无法通过工具保证，只能通过工程师来保证。</p>
+<p>本书说的寄存器，基本可以替换为触发器。在数字芯片 EDA 工具链中，两个概念也是混用的，一个 reg 既可以指寄存器，也可以指触发器。另外，所谓时序逻辑门电路，也基本等同于触发器。</p>
+<h3 id="6-2-设计-Design-的边界"><a href="#6-2-设计-Design-的边界" class="headerlink" title="6.2. 设计(Design)的边界"></a>6.2. 设计(Design)的边界</h3><img src="https://i.postimg.cc/gjQMGZHN/20250116211433.jpg" alt="20250116211433" width="50%"/>
+
+<ul>
+<li><p>Pad：芯片（封装）之外的引脚。</p>
+</li>
+<li><p>元器件：指芯片内的组合逻辑门电路及时序逻辑门电路。这些标准的元器件也被称为标准单元(Standard Cell)。元器件也称为逻辑门。</p>
+</li>
+<li><p>标准单元库&#x2F;工艺库：元器件的集合。</p>
+</li>
+<li><p>I&#x2F;O: 如前“FloorPlan”对IO的解释，I&#x2F;O是包括Pad和内部逻辑在内的整个引脚设计。在标准单元库中是一种标准单元，但是它比较特殊，可能与其他标准单元不放在同一个标准单元库中。驱动电平也可能不同。</p>
+</li>
+<li><p>通用单元库: 在综合时，有一个中间步骤是将 RTL 抽象逻辑先映射为<strong>通用单元(Generic Boolean)<strong>，然后映射到</strong>标准单元</strong>。通用单元与工艺无关，也不包含物理特性，只有功能属性，与 RTL 描述类似。而标准单元既有功能属性，又有延迟、电压等工艺属性，与工艺和 Foundry 相关。</p>
+</li>
+<li><p>lef文件: Library Exchange Format. 描述特定流片工艺下元器件的物理属性。</p>
+</li>
+<li><p>lib文件: Library. 描述特定流片工艺下元器件的功能属性。lib文件常常要被编译为二进制的db文件才能在某些EDA工具上使用。 lef 和 lib 文件都是技术库。</p>
+<p>  数字设计只能在 Foundry 提供的已有的选项中挑选元器件。</p>
+</li>
+<li><p>def文件: Design Exchange Format. 设计除了 RTL 外，也可以带有物理信息，保存为 def 文件，基础内容是设计的形状和尺寸，扩展内容包括端口的分布位置、RAM和ROM等硬核的放置位置、内部元器件的放置和布线位置等。 RTL 和 def 统称为设计。</p>
+</li>
+</ul>
+<p>自己写的模块可以称为设备(Device)或模块(Module)。</p>
+<p>用设备一词主要强调它具备相对独立的功能，在介绍SoC架构等上层逻辑时较为常用，设备也经常被替换为单元(Unit)一词，它指人为设计的单元，而非标准单元。一个设计可以包含很多个设备。</p>
+<p>用模块一词，主要强调它在设计文件结构上的独立性，在介绍通用设计和底层逻辑时较为常用。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/IC/" rel="tag"># IC</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2025/01/14/VPN%E8%AE%BE%E7%BD%AE/" rel="prev" title="VPN设置">
+      <i class="fa fa-chevron-left"></i> VPN设置
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2025/01/17/IC/2.%E5%9F%BA%E4%BA%8EVerilog%E7%9A%84%E6%95%B0%E5%AD%97IC%E8%AE%BE%E8%AE%A1%E6%96%B9%E6%B3%95/" rel="next" title="第2章 基于Verilog的数字IC设计方法">
+      第2章 基于Verilog的数字IC设计方法 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E5%8F%82%E8%80%83"><span class="nav-text">1. 参考</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E6%95%B0%E5%AD%97IC%E8%AE%BE%E8%AE%A1%E6%B5%81%E7%A8%8B"><span class="nav-text">2. 数字IC设计流程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E4%B8%89%E4%B8%AA%E4%B8%BB%E8%A6%81%E6%B5%81%E7%A8%8B%EF%BC%9A"><span class="nav-text">2.1. 三个主要流程：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-%E9%AA%8C%E6%94%B6%E5%92%8C%E9%AA%8C%E8%AF%81%EF%BC%88SignOff%EF%BC%89%EF%BC%9A"><span class="nav-text">2.2. 验收和验证（SignOff）：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-%E5%8F%AF%E6%B5%8B%E6%80%A7%E8%AE%BE%E8%AE%A1%EF%BC%88Design-For-Test%EF%BC%8CDFT%EF%BC%89"><span class="nav-text">2.3. 可测性设计（Design For Test，DFT）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-%E5%89%8D%E7%AB%AF%E8%AE%BE%E8%AE%A1-VS-%E5%90%8E%E7%AB%AF%E8%AE%BE%E8%AE%A1"><span class="nav-text">2.4. 前端设计 VS 后端设计</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E6%A8%A1%E6%8B%9FIC%E8%AE%BE%E8%AE%A1%E6%B5%81%E7%A8%8B"><span class="nav-text">3. 模拟IC设计流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E8%8A%AF%E7%89%87%E6%95%B4%E4%BD%93%E8%A7%84%E5%88%92"><span class="nav-text">4. 芯片整体规划</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-IC%E8%AE%BE%E8%AE%A1%E5%B7%A5%E5%85%B7"><span class="nav-text">5. IC设计工具</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#5-1-%E6%95%B0%E5%AD%97IC%E8%AE%BE%E8%AE%A1%E5%B7%A5%E5%85%B7"><span class="nav-text">5.1. 数字IC设计工具</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-2-%E6%A8%A1%E6%8B%9FIC%E8%AE%BE%E8%AE%A1%E5%B7%A5%E5%85%B7"><span class="nav-text">5.2. 模拟IC设计工具</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-3-%E8%81%8C%E4%BD%8D%E3%80%81%E5%88%86%E5%B7%A5%E4%B8%8E%E5%B7%A5%E5%85%B7"><span class="nav-text">5.3. 职位、分工与工具</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-4-EDA-%E4%B8%8E-Foundry-%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="nav-text">5.4. EDA 与 Foundry 的关系</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-%E6%A6%82%E5%BF%B5"><span class="nav-text">6. 概念</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#6-1-%E5%AF%84%E5%AD%98%E5%99%A8%EF%BC%9A"><span class="nav-text">6.1. 寄存器：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-2-%E8%AE%BE%E8%AE%A1-Design-%E7%9A%84%E8%BE%B9%E7%95%8C"><span class="nav-text">6.2. 设计(Design)的边界</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">80</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">39</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://bi-an.github.io/" title="http:&#x2F;&#x2F;bi-an.github.io">bi-an's Page</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
