@@ -193,6 +193,118 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/14/misc/%E5%8F%AF%E9%87%8D%E5%85%A5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/14/misc/%E5%8F%AF%E9%87%8D%E5%85%A5/" class="post-title-link" itemprop="url">可重入</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-14 17:44:16" itemprop="dateCreated datePublished" datetime="2024-01-14T17:44:16+00:00">2024-01-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-16 12:55:18" itemprop="dateModified" datetime="2025-08-16T12:55:18+00:00">2025-08-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p><strong>可重入函数</strong>：如果一个函数在执行过程中被中断服务程序打断，执行中断服务程序之后恢复执行，还能不妨碍之前的执行，就称该函数是<strong>可重入的</strong>。</p>
+<p>可重入函数一般用于<strong>硬件中断处理</strong>或<strong>递归</strong>等应用程序中。</p>
+<p><strong>可重入程序&#x2F;可重入子例程</strong>：在多个处理器上能被安全地多次并发调用。</p>
+<p><strong>与线程安全的区别</strong>：可重入函数的概念在多任务操作系统出现之前就存在了，所以该概念仅仅针对的是单线程执行过程。<br>一个函数可以是线程安全但非可重入的，例如，该函数每次都使用互斥量来包裹。但是，如果该函数用于中断服务程序，那么，它可能在等待第一次执行过程释放互斥量时陷入饥饿。<strong>TODO：陷入饥饿为什么就不是可重入了？</strong></p>
+<p>要实现可重入性，函数通常需要满足以下条件：</p>
+<ul>
+<li>不使用静态或全局变量：这些变量在多次调用之间共享，可能导致数据竞争。</li>
+<li>不依赖于不可重入的函数：例如，标准库中的某些函数可能不是可重入的。</li>
+<li>不使用动态内存分配：动态内存分配可能会导致竞争条件。</li>
+<li>不使用信号处理：信号处理可能会中断函数的执行。</li>
+</ul>
+<p>可重入性在多线程编程和中断处理程序中尤为重要，因为它确保了函数在并发环境下的安全性。</p>
+<h3 id="可重入-VS-线程安全"><a href="#可重入-VS-线程安全" class="headerlink" title="可重入 VS 线程安全"></a>可重入 VS 线程安全</h3><p>可重入性和线程安全虽然都涉及到并发编程，但它们有不同的侧重点：</p>
+<p>可重入性：</p>
+<p>定义：一个函数可以在被中断后安全地再次调用，而不会影响其执行结果。<br>条件：不使用静态或全局变量、不依赖不可重入的函数、不使用动态内存分配、不使用信号处理。<br>应用场景：主要用于中断处理程序和嵌入式系统。<br>线程安全：</p>
+<p>定义：一个函数或代码块在多线程环境下可以安全地并发执行，而不会导致竞争条件或数据不一致。<br>条件：通常需要使用同步机制（如互斥锁、信号量）来保护共享资源。<br>应用场景：主要用于多线程编程。<br>总结来说，可重入性关注的是函数在被中断后能否安全地再次调用，而线程安全关注的是在多线程环境下能否安全地并发执行。可重入函数不一定是线程安全的，线程安全的函数也不一定是可重入的。</p>
+<ol>
+<li>可重入函数不一定是线程安全的</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> counter = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">reentrantFunction</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> localCounter = counter;</span><br><span class="line">    localCounter++;</span><br><span class="line">    counter = localCounter;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">reentrantFunction</span>();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Counter: %d\n&quot;</span>, counter);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>解释：</p>
+<p>reentrantFunction 是可重入的，因为它满足以下条件：</p>
+<p>不使用静态或全局变量：虽然 counter 是一个全局变量，但 reentrantFunction 中的操作都是基于局部变量 localCounter，并且没有依赖于函数外部的状态。<br>不依赖不可重入的函数：reentrantFunction 中没有调用任何不可重入的函数。<br>不使用动态内存分配：函数中没有使用 malloc 或其他动态内存分配函数。<br>不使用信号处理：函数中没有涉及信号处理。<br>因此，reentrantFunction 可以在被中断后安全地再次调用，而不会影响其执行结果。</p>
+<p>然而，正因为它使用了全局变量 counter，在多线程环境下可能会导致竞争条件，所以它不是线程安全的。</p>
+<ol start="2">
+<li>线程安全的函数不一定是可重入的</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">pthread_mutex_t</span> lock = PTHREAD_MUTEX_INITIALIZER;</span><br><span class="line"><span class="type">int</span> counter = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span>* <span class="title">threadSafeFunction</span><span class="params">(<span class="type">void</span>* arg)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">pthread_mutex_lock</span>(&amp;lock);</span><br><span class="line">    counter++;</span><br><span class="line">    <span class="built_in">pthread_mutex_unlock</span>(&amp;lock);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">pthread_t</span> thread1, thread2;</span><br><span class="line">    <span class="built_in">pthread_create</span>(&amp;thread1, <span class="literal">NULL</span>, threadSafeFunction, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_create</span>(&amp;thread2, <span class="literal">NULL</span>, threadSafeFunction, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_join</span>(thread1, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_join</span>(thread2, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Counter: %d\n&quot;</span>, counter);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>解释：</p>
+<p>这个函数 threadSafeFunction 是线程安全的，因为它使用了互斥锁来保护对 counter 的访问。<br>然而，它不是可重入的，因为它使用了互斥锁，互斥锁在中断处理程序中可能会导致死锁：</p>
+<p>互斥锁的使用：互斥锁用于确保线程安全，但它们在中断处理程序中可能会导致死锁。如果一个线程在持有锁时被中断，然后中断处理程序尝试再次调用该函数并试图获取同一个锁，就会发生死锁。</p>
+<p>依赖于锁的状态：函数的执行依赖于锁的状态。如果锁已经被其他线程持有，函数就无法继续执行，必须等待锁释放。这种依赖性使得函数在中断后无法安全地再次调用。</p>
+<p>不可重入的行为：由于锁的存在，函数在中断后重新进入时可能无法正确处理锁的状态，从而导致不可预期的行为。</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://www.geeksforgeeks.org/reentrant-function/">Reentrant Function</a></li>
+<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Reentrancy_(computing)">Reentrancy</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/09/net/%E7%BD%91%E7%BB%9C%E5%8F%91%E7%8E%B0/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +336,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:55:18" itemprop="dateModified" datetime="2025-08-16T12:55:18+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -299,7 +411,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:55:18" itemprop="dateModified" datetime="2025-08-16T12:55:18+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -395,7 +507,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:55:18" itemprop="dateModified" datetime="2025-08-16T12:55:18+00:00">2025-08-16</time>
               </span>
 
           
@@ -592,7 +704,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:55:18" itemprop="dateModified" datetime="2025-08-16T12:55:18+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -692,7 +804,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:55:18" itemprop="dateModified" datetime="2025-08-16T12:55:18+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -768,7 +880,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:55:18" itemprop="dateModified" datetime="2025-08-16T12:55:18+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -843,7 +955,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:55:18" itemprop="dateModified" datetime="2025-08-16T12:55:18+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1041,7 +1153,7 @@ man 7 tcp - tcp options
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:55:18" itemprop="dateModified" datetime="2025-08-16T12:55:18+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1125,7 +1237,7 @@ man 7 tcp - tcp options
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:55:18" itemprop="dateModified" datetime="2025-08-16T12:55:18+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1152,86 +1264,6 @@ man 7 tcp - tcp options
 <figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span>(ENV&#123;PKG_CONFIG_PATH&#125; <span class="string">&quot;$&#123;CMAKE_SOURCE_DIR&#125;/libs/opencv-install/lib/pkgconfig&quot;</span>)</span><br></pre></td></tr></table></figure>
 
 <p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/97369704">find_package</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/12/07/personal_site/Hexo-Documentation/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2023/12/07/personal_site/Hexo-Documentation/" class="post-title-link" itemprop="url">Hexo Documentation</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2023-12-07 10:06:59" itemprop="dateCreated datePublished" datetime="2023-12-07T10:06:59+00:00">2023-12-07</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Tools/" itemprop="url" rel="index"><span itemprop="name">Tools</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="hexo修改默认端口号"><a href="#hexo修改默认端口号" class="headerlink" title="hexo修改默认端口号"></a>hexo修改默认端口号</h2><p>参考<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/8398621502fd">博客</a></p>
-<h2 id="添加目录"><a href="#添加目录" class="headerlink" title="添加目录"></a>添加目录</h2><p><a target="_blank" rel="noopener" href="https://blog.ligos.net/2016-07-25/Writing-Content-On-Hexo.html">https://blog.ligos.net/2016-07-25/Writing-Content-On-Hexo.html</a><br><a target="_blank" rel="noopener" href="https://medium.com/employbl/create-a-custom-blog-theme-with-hexo-js-b24c82eb9271#.viurzqeac">https://medium.com/employbl/create-a-custom-blog-theme-with-hexo-js-b24c82eb9271#.viurzqeac</a><br><a target="_blank" rel="noopener" href="https://hexo.io/docs/themes">https://hexo.io/docs/themes</a><br><a target="_blank" rel="noopener" href="https://hexo.io/docs/templates">https://hexo.io/docs/templates</a><br><a target="_blank" rel="noopener" href="https://hexo.io/docs/helpers">https://hexo.io/docs/helpers</a></p>
-<h2 id="Add-pages"><a href="#Add-pages" class="headerlink" title="Add pages"></a>Add pages</h2><p>Commands</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># The following command generate a &#x27;categories/index.md&#x27; file</span></span><br><span class="line">hexo new page categories</span><br><span class="line"></span><br><span class="line">hexo new page tags</span><br><span class="line">hexo new page about</span><br></pre></td></tr></table></figure>
-
-<p>Refers to <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/60759559/hexo-next-theme-categories-and-tags-page">Hexo NeXT Theme categories and tags page</a></p>
-<h2 id="Plugins"><a href="#Plugins" class="headerlink" title="Plugins"></a>Plugins</h2><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/wugenqiang/article/details/88377669">Display PDF</a></p>
 
       
     </div>
@@ -1318,7 +1350,7 @@ man 7 tcp - tcp options
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">82</span>
+          <span class="site-state-item-count">83</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1331,7 +1363,7 @@ man 7 tcp - tcp options
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">41</span>
+        <span class="site-state-item-count">42</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
