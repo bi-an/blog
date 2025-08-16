@@ -2,7 +2,7 @@
 title: Linux权限管理
 date: 2025-08-16 20:37:50
 categories: 操作系统
-tags: 操作系统
+tags:
 ---
 
 Unix权限涉及三个部分：**用户**、**进程**、**文件**。
