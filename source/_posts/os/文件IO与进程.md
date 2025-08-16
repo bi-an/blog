@@ -8,16 +8,17 @@ tags:
 ---
 
 
-## 打开文件的内核数据结构
+## 进程打开文件
 
-注意：对同一个文件，不同进程拥有各自的文件表项，但是对每个文件，v节点表项在整个操作系统中只有一份。见下一节。
+- 对同一个文件，不同进程拥有各自的文件表项。
+- 但是对每个文件，v节点表项在整个操作系统中只有一份。
 
-<a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/hG2hPTDM/image.png" alt="image"/></a>
+<a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/50jyHyjJ/image.png" alt="image"/></a>
 
 
 ### 文件描述符标志（即fd标志）：
 
-目前只有一个，即 `close-on-exec`
+目前只有一个，即 `close-on-exec` 。
 
 
 ### 文件状态标志：
@@ -39,23 +40,41 @@ tags:
 
 
 
-### i-node：包含以下内容
+### i-node
+
+i-node 包含以下内容
 
 - 链接计数（指向该i节点的目录项数）；
 - 文件类型、文件访问权限位、文件长度、指向文件数据块的指针等。`stat`结构中的大多数信息都取自i节点。
 - 只要两项重要数据放在目录项中：文件名和i-node编号。
-
-**注：**
-- i-node中的链接称为“硬链接”，当硬链接数降为0时，才从磁盘的数据块中删除该文件，所以删除文件（即目录项）称为`unlink`，而不是`delete`。
-- “软链接”：术语为“符号链接”，其数据块的实际内容是其指向的文件名字，i-node中的文件类型是`S_IFLINK`，表明是符号链接。
 
 <a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/rFRyX7Rh/image.png" alt="磁盘、分区和文件系统"/></a>
 
 <a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/3xM8K9g3/i.png" alt="i节点和数据块"/></a>
 
 
+软链接与硬链接
 
-## 两个独立进程各自打开同一个文件：
+| 类型                                | 定义                                       |
+| --------------------------------- | ---------------------------------------- |
+| **硬链接 (Hard Link)**               | 文件系统中对同一个 **inode** 的不同名字引用。它们指向同一个文件内容。 |
+| **软链接 (Symbolic Link / Symlink)** | 类似快捷方式，是一个 **独立文件**，内容是指向目标文件的路径。        |
+
+- 硬链接：当硬链接数降为0时，才从磁盘的数据块中删除该文件，所以删除文件（即目录项）称为`unlink`，而不是`delete`。
+- 软链接：i-node中的文件类型是`S_IFLINK`，表明是符号链接。
+
+| 特性         | 硬链接                  | 软链接                        |
+| ---------- | -------------------- | -------------------------- |
+| 是否指向 inode | 是，直接指向同一 inode       | 否，指向目标路径                   |
+| 是否可以跨文件系统  | 否，只能在同一分区            | 可以跨分区                      |
+| 是否可以链接目录   | 通常不能（除非 root）        | 可以                         |
+| 删除目标文件后   | 文件内容仍可访问             | 链接会失效（称为“悬挂链接”）            |
+| 占用空间       | 不占用额外数据空间（只是多了一个目录项） | 占用少量空间存储路径信息               |
+| 更新文件内容     | 所有硬链接同步可见            | 通过软链接修改目标文件内容时可见，软链接本身只是路径 |
+
+
+
+## 两个独立进程各自打开同一个文件
 
 <a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/hG2hPTDM/image.png" alt="两个独立进程各自打开同一个文件"/></a>
 
@@ -71,13 +90,13 @@ tags:
 
 ---
 
-## dup(1)后的内核数据结构：
+## dup后的内核数据结构
 
 <a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/s2mGQbcY/dup-1.png" alt="dup(1)"/></a>
 
 
 
-### fork之后父进程和子进程对打开文件的共享：
+## fork与文件共享
 
 <a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/TYbyqK0Y/fork.png" alt="fork"/></a>
 
