@@ -193,6 +193,142 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/07/25/cpp/gcc%E5%B1%9E%E6%80%A7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/07/25/cpp/gcc%E5%B1%9E%E6%80%A7/" class="post-title-link" itemprop="url">gcc属性</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-07-25 11:53:54" itemprop="dateCreated datePublished" datetime="2025-07-25T11:53:54+00:00">2025-07-25</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="attribute-visibility-default"><a href="#attribute-visibility-default" class="headerlink" title="__attribute__((__visibility__(&quot;default&quot;)))"></a><code>__attribute__((__visibility__(&quot;default&quot;)))</code></h2><p><code>__attribute__((__visibility__(&quot;default&quot;)))</code> 是 GCC 编译器的一个属性，用于控制符号的可见性。它指定了一个符号（如函数或变量）在共享库中的可见性。</p>
+<h3 id="含义："><a href="#含义：" class="headerlink" title="含义："></a>含义：</h3><ul>
+<li><strong><code>default</code> 可见性</strong>：<ul>
+<li>符号可以被其他共享库或可执行文件访问。</li>
+<li>符号会被导出到共享库的符号表中。</li>
+</ul>
+</li>
+</ul>
+<h3 id="用途："><a href="#用途：" class="headerlink" title="用途："></a>用途：</h3><ul>
+<li><p>用于显式导出符号，使其在动态链接时可被其他模块使用。</p>
+</li>
+<li><p>在共享库中，默认情况下符号是 <code>default</code> 可见的，但使用 <code>-fvisibility=hidden</code> 编译选项时，所有符号会被隐藏，只有显式标记为 <code>default</code> 的符号才会导出。</p>
+</li>
+<li><p>编译器优化的影响：即使没有 <code>-fvisibility=hidden</code>，某些编译器优化（如 <code>-flto</code>）可能会影响符号的导出。<br>显式使用 <code>__attribute__((__visibility__(&quot;default&quot;)))</code> 可以避免这些问题。</p>
+</li>
+</ul>
+<h3 id="示例："><a href="#示例：" class="headerlink" title="示例："></a>示例：</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">__attribute__((__visibility__(<span class="string">&quot;default&quot;</span>)))</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">myFunc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Function implementation</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<hr>
+<p>可以通过以下步骤确认 <code>myFunc</code> 是否在被链接时可见：</p>
+<h3 id="方法-1-使用-nm-工具检查符号"><a href="#方法-1-使用-nm-工具检查符号" class="headerlink" title="方法 1: 使用 nm 工具检查符号"></a>方法 1: 使用 <code>nm</code> 工具检查符号</h3><p><code>nm</code> 是一个工具，可以列出目标文件或共享库中的符号表。</p>
+<ol>
+<li><p>检查 <code>libchip.so</code> 中是否导出了 <code>myFunc</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nm -D libchip.so | grep myFunc</span><br></pre></td></tr></table></figure>
+<ul>
+<li>如果 <code>myFunc</code> 出现在输出中，说明它被导出并且可见。</li>
+<li>如果没有出现，可能是符号被隐藏（例如使用了 <code>-fvisibility=hidden</code>）。</li>
+</ul>
+</li>
+<li><p>如果 <code>myFunc</code> 没有导出：</p>
+<ul>
+<li>确认是否在代码中使用了 <code>__attribute__((__visibility__(&quot;default&quot;)))</code>。</li>
+<li>确认编译时是否启用了 <code>-fvisibility=hidden</code>。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="方法-2-使用-readelf-检查动态符号"><a href="#方法-2-使用-readelf-检查动态符号" class="headerlink" title="方法 2: 使用 readelf 检查动态符号"></a>方法 2: 使用 <code>readelf</code> 检查动态符号</h3><p><code>readelf</code> 可以显示共享库的动态符号表。</p>
+<ol>
+<li>检查 <code>libchip.so</code> 的动态符号表：<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">readelf -Ws libchip.so | grep myFunc</span><br></pre></td></tr></table></figure>
+<ul>
+<li>如果 <code>myFunc</code> 出现在输出中，说明它是动态可见的。</li>
+<li>如果没有出现，说明符号被隐藏。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="方法-3-检查链接依赖关系"><a href="#方法-3-检查链接依赖关系" class="headerlink" title="方法 3: 检查链接依赖关系"></a>方法 3: 检查链接依赖关系</h3><ol>
+<li><p>检查 <code>libdbg.so</code> 是否声明了对 <code>libchip.so</code> 的依赖：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">readelf -d libdbg.so | grep NEEDED</span><br></pre></td></tr></table></figure>
+<ul>
+<li>如果 <code>libchip.so</code> 出现在 <code>NEEDED</code> 列表中，说明 <code>libdbg.so</code>依赖 <code>libchip.so</code>。</li>
+</ul>
+</li>
+<li><p>如果 <code>libchip.so</code> 在依赖列表中，但链接时仍然报错：</p>
+<ul>
+<li>确认 <code>myFunc</code> 是否在 <code>libchip.so</code> 中导出（使用 <code>nm</code> 或 <code>readelf</code> 检查）。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="方法-4-检查链接器错误"><a href="#方法-4-检查链接器错误" class="headerlink" title="方法 4: 检查链接器错误"></a>方法 4: 检查链接器错误</h3><p>如果链接器报错 <code>undefined reference to myFunc</code>：</p>
+<ul>
+<li>确认链接命令是否显式包含 <code>libchip.so</code>：<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ -o executable main.o -L/path/to/libs -ldbg -lchip</span><br></pre></td></tr></table></figure></li>
+<li>如果没有显式链接 <code>libchip.so</code>，动态链接器可能无法解析 <code>myFunc</code>。</li>
+</ul>
+<hr>
+<h3 id="总结："><a href="#总结：" class="headerlink" title="总结："></a>总结：</h3><ul>
+<li>使用 <code>nm</code> 或 <code>readelf</code> 检查 <code>libchip.so</code> 是否导出了 <code>myFunc</code>。</li>
+<li>如果符号未导出，确保代码中使用了 <code>__attribute__((__visibility__(&quot;default&quot;)))</code> 并检查编译选项。</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/07/23/cpp/shell%E8%AF%AF%E5%AF%BC%E6%80%A7%E9%94%99%E8%AF%AFNo-such-file-or-directory/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +360,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 04:03:43" itemprop="dateModified" datetime="2025-08-16T04:03:43+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
               </span>
 
           
@@ -394,7 +530,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 04:03:43" itemprop="dateModified" datetime="2025-08-16T04:03:43+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
               </span>
 
           
@@ -461,7 +597,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 04:03:43" itemprop="dateModified" datetime="2025-08-16T04:03:43+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
               </span>
 
           
@@ -726,7 +862,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 04:03:43" itemprop="dateModified" datetime="2025-08-16T04:03:43+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
               </span>
 
           
@@ -825,7 +961,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 04:03:43" itemprop="dateModified" datetime="2025-08-16T04:03:43+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
               </span>
 
           
@@ -1122,7 +1258,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 04:03:43" itemprop="dateModified" datetime="2025-08-16T04:03:43+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
               </span>
 
           
@@ -1448,7 +1584,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 04:03:43" itemprop="dateModified" datetime="2025-08-16T04:03:43+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
               </span>
 
           
@@ -1588,7 +1724,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 04:03:43" itemprop="dateModified" datetime="2025-08-16T04:03:43+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
               </span>
 
           
@@ -1656,7 +1792,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 04:03:43" itemprop="dateModified" datetime="2025-08-16T04:03:43+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
               </span>
 
           
@@ -1716,93 +1852,10 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/17/cpp/C++%E7%9A%84bool%E5%92%8Cint/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/09/17/cpp/C++%E7%9A%84bool%E5%92%8Cint/" class="post-title-link" itemprop="url">C++ 的 bool 和 int</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-09-17 21:19:50" itemprop="dateCreated datePublished" datetime="2024-09-17T21:19:50+00:00">2024-09-17</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 04:03:43" itemprop="dateModified" datetime="2025-08-16T04:03:43+00:00">2025-08-16</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>在测试leetcode的 <a target="_blank" rel="noopener" href="https://leetcode.cn/problems/bus-routes/description/">815.公交路线</a> 一题时，发现一个现象，当我使用<code>vector&lt;vector&lt;bool&gt;&gt;</code>作为图的邻接矩阵的类型时，运行速度比使用<code>vector&lt;vector&lt;int&gt;&gt;</code>慢了近1倍。使用<code>bool</code>运行速度为600ms左右，使用<code>int</code>时运行速度为300ms左右。</p>
-<p>以下是ChatGPT的回答：</p>
-<p>在C++中，bool类型并不一定比int类型慢，但在某些情况下，它们的性能表现可能有所不同。以下是一些与性能差异相关的考虑：</p>
-<ol>
-<li>内存大小<br>bool类型在标准中只需要表示 true（非0）和 false（0），通常占用1个字节（8位），而 int 通常占用4个字节（32位）。因此，bool类型可以节省内存，在某些情况下会带来缓存效率的提升，尤其是在处理大量布尔值时（例如布尔数组）。</li>
-<li>对齐和内存访问<br>在某些架构上，处理单字节的bool类型时，可能会有额外的开销，因为处理器通常优化对齐访问。如果内存没有正确对齐，处理器可能需要额外的操作来处理非对齐的字节，导致性能下降。相比之下，int的对齐通常与系统的内存总线对齐更好（如32位或64位系统上），因此读取和写入可能更高效。</li>
-<li>指令集和操作<br>现代处理器在处理布尔值时通常会将其扩展为完整的寄存器大小（例如32位或64位）。因此，虽然bool类型的存储可能更小，但在实际操作中，处理器可能将它提升为int或更大的类型来执行逻辑操作。处理布尔值可能涉及隐式类型转换，这在某些极端情况下可能带来开销。</li>
-<li>寄存器使用<br>int 类型可以直接映射到处理器寄存器中进行操作，而 bool 类型的操作有时可能会涉及额外的逻辑运算（如掩码操作）以确保布尔值的正确性。</li>
-<li>编译器优化<br>现代编译器在优化时会考虑到bool与int的差异，并尽量优化代码，因此在大多数应用场景下，你不会感受到显著的性能差异。但在一些特定的场合（如大规模数组、频繁内存访问等），bool类型的使用确实可能带来性能影响，尤其是在处理器需要对齐或执行额外的操作时。<br>总结<br>bool类型通常并不会比int慢，实际的性能差异取决于平台、内存对齐、编译器优化以及应用场景。在大多数情况下，差异是微不足道的，但在对性能非常敏感的程序中，这种差异可能会显现。</li>
-</ol>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/blog/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="page-number current">2</span><a class="page-number" href="/blog/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/8/">8</a><a class="extend next" rel="next" href="/blog/page/3/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+    <a class="extend prev" rel="prev" href="/blog/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="page-number current">2</span><a class="page-number" href="/blog/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/9/">9</a><a class="extend next" rel="next" href="/blog/page/3/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -1870,7 +1923,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">80</span>
+          <span class="site-state-item-count">81</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1883,7 +1936,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">39</span>
+        <span class="site-state-item-count">40</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
