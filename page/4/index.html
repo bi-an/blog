@@ -193,6 +193,186 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/02/02/cpp/gcc%E4%B8%8Eglibc/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/02/02/cpp/gcc%E4%B8%8Eglibc/" class="post-title-link" itemprop="url">gcc 与 glibc</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-02-02 13:24:45" itemprop="dateCreated datePublished" datetime="2024-02-02T13:24:45+00:00">2024-02-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="gcc"><a href="#gcc" class="headerlink" title="gcc"></a>gcc</h2><p>gcc是一个编译套件，包含c、c++、Fortran语言的编译器。</p>
+<h2 id="glibc"><a href="#glibc" class="headerlink" title="glibc"></a>glibc</h2><p>glibc是一个library，为C程序提供基础公共功能，包括系统调用、数学函数和其他核心组件。<br>Linux平台和vscode似乎都依赖glibc，如果擅自将<code>LD_LIBRARY_PATH</code>更改为其他版本的glibc路径，则bash会直接crash。</p>
+<h3 id="glibc包含以下bin和lib："><a href="#glibc包含以下bin和lib：" class="headerlink" title="glibc包含以下bin和lib："></a>glibc包含以下bin和lib：</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cd</span> glibc-v2.34/Linux/RHEL7.0-2017-x86_64/bin &amp;&amp; <span class="built_in">ls</span></span><br><span class="line">catchsegv  getconf  iconv  locale     makedb  pcprofiledump  sotruss  tzselect  zdump</span><br><span class="line">gencat     getent   ldd    localedef  mtrace  pldd           sprof    xtrace</span><br><span class="line"></span><br><span class="line"><span class="comment"># 进入其他版本的glibc/lib目录执行ls命令会报错，大概原因可能是因为当前路径的glibc的lib和系统的lib冲突。</span></span><br><span class="line">$ <span class="built_in">cd</span> ../lib &amp;&amp; <span class="built_in">ls</span></span><br><span class="line"><span class="built_in">ls</span>: relocation error: ./libc.so.6: symbol __tunable_get_val, version GLIBC_PRIVATE not defined <span class="keyword">in</span> file ld-linux-x86-64.so.2 with <span class="built_in">link</span> time reference</span><br><span class="line"></span><br><span class="line">$ <span class="built_in">cd</span> .. &amp;&amp; <span class="built_in">ls</span> lib</span><br><span class="line">Mcrt1.o               libanl.so.1             libm.so             libnss_hesiod.so.2</span><br><span class="line">Scrt1.o               libc.a                  libm.so.6           libpcprofile.so</span><br><span class="line">audit                 libc.so                 libmcheck.a         libpthread.a</span><br><span class="line">crt1.o                libc.so.6               libmemusage.so      libpthread.so.0</span><br><span class="line">crti.o                libc_malloc_debug.so    libmvec.a           libresolv.a</span><br><span class="line">crtn.o                libc_malloc_debug.so.0  libmvec.so          libresolv.so</span><br><span class="line">gconv                 libc_nonshared.a        libmvec.so.1        libresolv.so.2</span><br><span class="line">gcrt1.o               libcrypt.a              libnsl.so.1         librt.a</span><br><span class="line">ld-linux-x86-64.so.2  libcrypt.so             libnss_compat.so    librt.so.1</span><br><span class="line">libBrokenLocale.a     libcrypt.so.1           libnss_compat.so.2  libthread_db.so</span><br><span class="line">libBrokenLocale.so    libdl.a                 libnss_db.so        libthread_db.so.1</span><br><span class="line">libBrokenLocale.so.1  libdl.so.2              libnss_db.so.2      libutil.a</span><br><span class="line">libSegFault.so        libg.a                  libnss_dns.so.2     libutil.so.1</span><br><span class="line">libanl.a              libm-2.34.a             libnss_files.so.2</span><br><span class="line">libanl.so             libm.a                  libnss_hesiod.so</span><br></pre></td></tr></table></figure>
+
+<h3 id="查看glibc的版本："><a href="#查看glibc的版本：" class="headerlink" title="查看glibc的版本："></a>查看glibc的版本：</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 从上可知，ldd是glibc的核心组件之一</span></span><br><span class="line">$ ldd --version</span><br></pre></td></tr></table></figure>
+
+<h3 id="寻找libc-so的路径："><a href="#寻找libc-so的路径：" class="headerlink" title="寻找libc.so的路径："></a>寻找libc.so的路径：</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ locate libc.so</span><br><span class="line">/usr/lib/x86_64-linux-gnu/libc.so</span><br><span class="line">/usr/lib/x86_64-linux-gnu/libc.so.6</span><br><span class="line">$ locate libstdc++.so</span><br><span class="line">/usr/lib/gcc/x86_64-linux-gnu/11/libstdc++.so</span><br><span class="line">/usr/lib/x86_64-linux-gnu/libstdc++.so.6</span><br><span class="line">/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30</span><br><span class="line">/usr/share/gdb/auto-load/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30-gdb.py</span><br></pre></td></tr></table></figure>
+
+<h3 id="安装glibc："><a href="#安装glibc：" class="headerlink" title="安装glibc："></a>安装glibc：</h3><p>Ubuntu平台</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install lib6</span><br></pre></td></tr></table></figure>
+
+<p>RedHat平台</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo yum install glibc</span><br></pre></td></tr></table></figure>
+
+<h3 id="检查GNC-C-Library-libstdc-的版本："><a href="#检查GNC-C-Library-libstdc-的版本：" class="headerlink" title="检查GNC C++ Library (libstdc++)的版本："></a>检查GNC C++ Library (libstdc++)的版本：</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">$ strings /usr/lib/libstdc++.so.* | grep LIBCXX</span><br><span class="line">[sjcvl-zhigaoz ] /lan/cva_rel/vxe_main/24.02.650.d000/tools.lnx86/lib/64bit % strings /usr/lib/libstdc++.so.* | grep LIBCXX</span><br><span class="line">GLIBCXX_3.4</span><br><span class="line">GLIBCXX_3.4.1</span><br><span class="line">GLIBCXX_3.4.2</span><br><span class="line">...</span><br><span class="line">GLIBCXX_3.4.19</span><br><span class="line">GLIBCXX_DEBUG_MESSAGE_LENGTH</span><br><span class="line"></span><br><span class="line">$ strings /usr/lib/libc.so.* | grep GLIBC</span><br><span class="line">GLIBC_2.0</span><br><span class="line">GLIBC_2.1</span><br><span class="line">GLIBC_2.1.1</span><br><span class="line">...</span><br><span class="line">GLIBC_2.17</span><br><span class="line">GLIBC_PRIVATE</span><br></pre></td></tr></table></figure>
+
+<p>如果你有一个使用了libstdc++的特定的binary或application，可以用下面的命令来检查其版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ldd &lt;your_binary_or_application&gt; | grep libstdc++</span><br></pre></td></tr></table></figure>
+
+<p>使用vscode的“Remote SSH”工具试图连接到Linux时，可能会报错如下：</p>
+<blockquote>
+<p>Warning: Missing GLIBCXX &gt;&#x3D; 3.4.25! from &#x2F;usr&#x2F;lib64&#x2F;libstdc++.so.6.0.19<br>Warning: Missing GLIBC &gt;&#x3D; 2.28! from &#x2F;usr&#x2F;lib64&#x2F;libc-2.17.so<br>Error: Missing required dependencies. Please refer to our FAQ <a target="_blank" rel="noopener" href="https://aka.ms/vscode-remote/faq/old-linux">https://aka.ms/vscode-remote/faq/old-linux</a> for additional information.</p>
+</blockquote>
+<p>这是因为Linux系统上的glibc版本中不包含GLIBCXX_3.4.25及以上的版本。此时需要降级vscode（建议做法）或升级glibc（似乎很难）。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/30/misc/%E8%AE%A1%E6%97%B6%E5%B7%A5%E5%85%B7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/30/misc/%E8%AE%A1%E6%97%B6%E5%B7%A5%E5%85%B7/" class="post-title-link" itemprop="url">计时工具</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-30 11:07:39" itemprop="dateCreated datePublished" datetime="2024-01-30T11:07:39+00:00">2024-01-30</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="times"><a href="#times" class="headerlink" title="times"></a>times</h2><ol>
+<li>bash built-in</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">times</span></span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>function</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/times.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">clock_t</span> <span class="title">times</span><span class="params">(<span class="keyword">struct</span> tms *buf)</span></span>;</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/29/linux/Introduction-to-memory/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +404,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -319,7 +499,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -395,7 +575,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -513,7 +693,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -590,7 +770,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -693,7 +873,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -797,7 +977,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1297,7 +1477,7 @@ PHSICIAN &amp; SURGEON
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1358,185 +1538,6 @@ PHSICIAN &amp; SURGEON
 </ul>
 <h2 id="使用-VSCode-合并-Perforce-代码"><a href="#使用-VSCode-合并-Perforce-代码" class="headerlink" title="使用 VSCode 合并 Perforce 代码"></a>使用 VSCode 合并 Perforce 代码</h2><p>在 <code>~.cshrc</code> 脚本中添加：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">## Use VSCode to diff/merge the Perforce code</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Refer to:</span></span><br><span class="line"><span class="comment">#  https://github.com/mjcrouch/vscode-perforce/issues/259</span></span><br><span class="line"><span class="comment">#  https://www.perforce.com/manuals/cmdref/Content/CmdRef/p4_resolve.html</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Map p4 resolve arguments to vscode&#x27;s merge editor arguments</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># &#x27;code&#x27; takes: &lt;path1&gt; &lt;path2&gt; &lt;base&gt; &lt;result&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># perforce gives:</span></span><br><span class="line"><span class="comment">#   1 the base file</span></span><br><span class="line"><span class="comment">#   2 the source file (also known as &quot;theirs&quot;)</span></span><br><span class="line"><span class="comment">#   3 the target file (also known as &quot;yours&quot;)</span></span><br><span class="line"><span class="comment">#   4 the merge file.</span></span><br><span class="line">setenv P4MERGE <span class="string">&#x27;code --wait --merge $2 $3 $1 $4&#x27;</span></span><br><span class="line">setenv P4DIFF <span class="string">&#x27;code --wait --diff&#x27;</span></span><br><span class="line">setenv P4EDITOR <span class="string">&#x27;code --wait&#x27;</span></span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/%E6%89%93%E5%8D%B0%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%A0%86%E6%A0%88/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/cpp/%E6%89%93%E5%8D%B0%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%A0%86%E6%A0%88/" class="post-title-link" itemprop="url">打印进程堆栈</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 22:33:09" itemprop="dateCreated datePublished" datetime="2024-01-23T22:33:09+00:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h2><p><a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Backtraces.html">glic Functions</a></p>
-<pre><code>backtrace
-backtrace_symbols
-backtrace_symbols_fd
-</code></pre>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;execinfo.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print_trace</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">static</span> <span class="type">const</span> <span class="type">int</span> SIZE = <span class="number">10</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">void</span>* buffer[SIZE];</span><br><span class="line">    <span class="type">char</span>** strings;</span><br><span class="line">    <span class="type">int</span> size, i;</span><br><span class="line"></span><br><span class="line">    size = <span class="built_in">backtrace</span>(buffer, SIZE);</span><br><span class="line">    strings = <span class="built_in">backtrace_symbols</span>(buffer, size);</span><br><span class="line">    <span class="keyword">if</span> (strings != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Obtained %d stack frames.\n&quot;</span>, size);</span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; size; ++i)</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>, strings[i]);</span><br><span class="line">        <span class="built_in">free</span>(strings);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="第三方库"><a href="#第三方库" class="headerlink" title="第三方库"></a>第三方库</h2><p>breakpad: <a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_45609638/article/details/125090204">https://blog.csdn.net/weixin_45609638/article/details/125090204</a></p>
-<p><a target="_blank" rel="noopener" href="https://juejin.cn/post/6899070041074073614">https://juejin.cn/post/6899070041074073614</a></p>
-<p><a target="_blank" rel="noopener" href="https://juejin.cn/post/7130820896213712927">https://juejin.cn/post/7130820896213712927</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/linux/Build-Linux-Kernel-Module/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/linux/Build-Linux-Kernel-Module/" class="post-title-link" itemprop="url">Build Linux Kernel Module</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 22:24:57" itemprop="dateCreated datePublished" datetime="2024-01-23T22:24:57+00:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="内核编译"><a href="#内核编译" class="headerlink" title="内核编译"></a>内核编译</h2><p>obj-m: <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/57839941/what-is-the-meaning-of-obj-m-in-linux-device-driver-makefile">链接</a></p>
-<p>make modules: <a target="_blank" rel="noopener" href="https://askubuntu.com/questions/1363530/what-does-make-and-make-modules-do-when-compiling-building-the-kernel">链接</a></p>
-<h2 id="编译内核模块"><a href="#编译内核模块" class="headerlink" title="编译内核模块"></a>编译内核模块</h2><p><a target="_blank" rel="noopener" href="https://tldp.org/LDP/lkmpg/2.6/html/x181.html">文档</a></p>
-<p>Makefile:</p>
-<pre><code>obj-m += hello-1.o
-
-all:
-    make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
-
-clean:
-    make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
-</code></pre>
-<p><code>make -C</code> changes to a new directory where the new makefiles will be run.</p>
-<p><code>M=$(PWD)</code> defines a variable <code>M</code> which the child makefiles can use.</p>
-<h2 id="命令"><a href="#命令" class="headerlink" title="命令"></a>命令</h2><ul>
-<li><code>insmod</code>: 插入一个模块（.ko）到kernel中。</li>
-<li><code>rmmod</code>: 从内核中删除一个模块。</li>
-<li><code>modprobe</code>: 从内核中增删模块。<code>modprobe</code>从<code>/lib/modules/`uname -r`</code>中搜索所有的模块和其他文件，除了<code>/etc/modprobe.d</code>目录中的可选配置文件（参见<code>modprobe.d(5)</code>）。</li>
-<li><code>lsmod</code>: 显示当前加载的内核模块的状态（即对<code>/proc/modules</code>内容的格式化）。</li>
-<li><code>modinfo</code>: 从命令行指定的内核模块中提取信息，如果没有给出模块名称，那么会搜索<code>/lib/modules/version</code>目录，就像<code>modprobe</code>加载模块时一样。</li>
-<li><code>depmod</code>: 生成<code>modules.dep</code>和映射文件。</li>
-<li><code>dmesg</code>: 打印或控制内核ring buffer（存储kernel message）。</li>
-</ul>
 
       
     </div>
@@ -1623,20 +1624,20 @@ clean:
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">81</span>
+          <span class="site-state-item-count">82</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-count">8</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-count">41</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

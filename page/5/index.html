@@ -193,6 +193,185 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/%E6%89%93%E5%8D%B0%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%A0%86%E6%A0%88/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/cpp/%E6%89%93%E5%8D%B0%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%A0%86%E6%A0%88/" class="post-title-link" itemprop="url">打印进程堆栈</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 22:33:09" itemprop="dateCreated datePublished" datetime="2024-01-23T22:33:09+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h2><p><a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Backtraces.html">glic Functions</a></p>
+<pre><code>backtrace
+backtrace_symbols
+backtrace_symbols_fd
+</code></pre>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;execinfo.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print_trace</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">static</span> <span class="type">const</span> <span class="type">int</span> SIZE = <span class="number">10</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">void</span>* buffer[SIZE];</span><br><span class="line">    <span class="type">char</span>** strings;</span><br><span class="line">    <span class="type">int</span> size, i;</span><br><span class="line"></span><br><span class="line">    size = <span class="built_in">backtrace</span>(buffer, SIZE);</span><br><span class="line">    strings = <span class="built_in">backtrace_symbols</span>(buffer, size);</span><br><span class="line">    <span class="keyword">if</span> (strings != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Obtained %d stack frames.\n&quot;</span>, size);</span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; size; ++i)</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>, strings[i]);</span><br><span class="line">        <span class="built_in">free</span>(strings);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="第三方库"><a href="#第三方库" class="headerlink" title="第三方库"></a>第三方库</h2><p>breakpad: <a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_45609638/article/details/125090204">https://blog.csdn.net/weixin_45609638/article/details/125090204</a></p>
+<p><a target="_blank" rel="noopener" href="https://juejin.cn/post/6899070041074073614">https://juejin.cn/post/6899070041074073614</a></p>
+<p><a target="_blank" rel="noopener" href="https://juejin.cn/post/7130820896213712927">https://juejin.cn/post/7130820896213712927</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/linux/Build-Linux-Kernel-Module/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/linux/Build-Linux-Kernel-Module/" class="post-title-link" itemprop="url">Build Linux Kernel Module</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 22:24:57" itemprop="dateCreated datePublished" datetime="2024-01-23T22:24:57+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="内核编译"><a href="#内核编译" class="headerlink" title="内核编译"></a>内核编译</h2><p>obj-m: <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/57839941/what-is-the-meaning-of-obj-m-in-linux-device-driver-makefile">链接</a></p>
+<p>make modules: <a target="_blank" rel="noopener" href="https://askubuntu.com/questions/1363530/what-does-make-and-make-modules-do-when-compiling-building-the-kernel">链接</a></p>
+<h2 id="编译内核模块"><a href="#编译内核模块" class="headerlink" title="编译内核模块"></a>编译内核模块</h2><p><a target="_blank" rel="noopener" href="https://tldp.org/LDP/lkmpg/2.6/html/x181.html">文档</a></p>
+<p>Makefile:</p>
+<pre><code>obj-m += hello-1.o
+
+all:
+    make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+
+clean:
+    make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+</code></pre>
+<p><code>make -C</code> changes to a new directory where the new makefiles will be run.</p>
+<p><code>M=$(PWD)</code> defines a variable <code>M</code> which the child makefiles can use.</p>
+<h2 id="命令"><a href="#命令" class="headerlink" title="命令"></a>命令</h2><ul>
+<li><code>insmod</code>: 插入一个模块（.ko）到kernel中。</li>
+<li><code>rmmod</code>: 从内核中删除一个模块。</li>
+<li><code>modprobe</code>: 从内核中增删模块。<code>modprobe</code>从<code>/lib/modules/`uname -r`</code>中搜索所有的模块和其他文件，除了<code>/etc/modprobe.d</code>目录中的可选配置文件（参见<code>modprobe.d(5)</code>）。</li>
+<li><code>lsmod</code>: 显示当前加载的内核模块的状态（即对<code>/proc/modules</code>内容的格式化）。</li>
+<li><code>modinfo</code>: 从命令行指定的内核模块中提取信息，如果没有给出模块名称，那么会搜索<code>/lib/modules/version</code>目录，就像<code>modprobe</code>加载模块时一样。</li>
+<li><code>depmod</code>: 生成<code>modules.dep</code>和映射文件。</li>
+<li><code>dmesg</code>: 打印或控制内核ring buffer（存储kernel message）。</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/misc/PCIE/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +403,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -574,7 +753,7 @@ PCI ROM.
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -649,7 +828,7 @@ PCI ROM.
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -733,7 +912,7 @@ PCI ROM.
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -808,7 +987,7 @@ PCI ROM.
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -890,7 +1069,7 @@ PCI ROM.
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -967,7 +1146,7 @@ PCI ROM.
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1047,7 +1226,7 @@ PCI ROM.
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1191,263 +1370,6 @@ PCI ROM.
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/gcc%E5%85%A5%E9%97%A8/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/cpp/gcc%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">gcc 入门</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 21:44:11" itemprop="dateCreated datePublished" datetime="2024-01-23T21:44:11+00:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="递归处理顺序"><a href="#递归处理顺序" class="headerlink" title="递归处理顺序"></a>递归处理顺序</h2><p>gcc 的输入文件和库是从左往右处理的。也就是说，以下命令是错误的：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -L. -la main.cc</span><br></pre></td></tr></table></figure>
-
-<p>链接器处理到某个目标文件（如 main.cc 编译后的目标代码）时，如果遇到未解析的符号（比如 f() ），<br>它会从接下来的库中查找这些符号。因此顺序非常重要。</p>
-<p>这里，-L. -la 选项在 main.cc 之前，链接器会首先尝试从 liba.so 中查找引用的符号，<br>但是，因为此时 main.cc 还未被处理，所以链接器还不知道有对 liba.so 中的函数 f() 的引用。<br>到了 main.cc ，链接器解析出引用，但它不会回头再去 liba.so 中查找，导致报错：”undefined reference to f()”。</p>
-<p>正确的命令如下：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc main.cc -L. -la</span><br></pre></td></tr></table></figure>
-
-<p>注意：liba.so 的指定必须去掉 lib 和 .so ，也就是说不允许直接指定“库文件名”，而是只能指定“库名”。<br>如果想直接指定库文件名，那么应该把 liba.so 当成输入文件：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc main.cc ./liba.so</span><br></pre></td></tr></table></figure>
-
-<h2 id="属性语法（Attribute-Syntax）"><a href="#属性语法（Attribute-Syntax）" class="headerlink" title="属性语法（Attribute Syntax）"></a>属性语法（Attribute Syntax）</h2><p>参考：<a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/gcc-3.2/gcc/Attribute-Syntax.html#Attribute%20Syntax">官方文档</a>。</p>
-<h3 id="函数属性（Function-Attributes）"><a href="#函数属性（Function-Attributes）" class="headerlink" title="函数属性（Function Attributes）"></a>函数属性（Function Attributes）</h3><p>参考：</p>
-<ul>
-<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/11621043/how-should-i-properly-use-attribute-format-printf-x-y-inside-a-class">stackoverflow</a></li>
-<li><a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/gcc-3.2/gcc/Function-Attributes.html">gcc官方文档：Function Attributes</a></li>
-</ul>
-<p>属性列举：</p>
-<ul>
-<li><p><code>format (archetype, string-index, first-to-check)</code></p>
-<p>  format 属性，指定函数采用 printf、scanf、strftime 或 strfmon 风格的参数，<br>  这些参数应根据格式字符串（format string）进行类型检查（type-checked）。<br>  类型检查发生在编译期。</p>
-<p>  举例：</p>
-  <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">extern</span> <span class="type">int</span></span></span><br><span class="line"><span class="function"><span class="title">my_printf</span> <span class="params">(<span class="type">void</span> *my_object, <span class="type">const</span> <span class="type">char</span> *my_format, ...)</span></span></span><br><span class="line"><span class="function">    __<span class="title">attribute__</span> <span class="params">((format (printf, <span class="number">2</span>, <span class="number">3</span>)))</span></span>;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><code>archetype</code>决定format string应该如何解释。<br>可选为<code>printf</code>、<code>scanf</code>、<code>strftime</code>或<code>strfmon</code>（也可以使用<code>__printf__</code>、<code>__scanf__</code>、<code>__strftime__</code>或<code>__strfmon__</code>）。</li>
-<li><code>string-index</code>指定哪个参数是format string（从1开始）。</li>
-<li><code>first-to-check</code>指定format string对应的第一个参数的序号。<br>对于那些无法检查参数的函数（比如<code>vprintf</code>），该参数指定为<code>0</code>。在这种情况下，编译器仅检查format string的一致性。对于<code>strftime</code>格式，该参数必须为<code>0</code>。</li>
-</ul>
-</li>
-</ul>
-<h2 id="选项"><a href="#选项" class="headerlink" title="选项"></a>选项</h2><ul>
-<li><code>-save-temps</code>: 可以保留所有中间文件，例如预编译文件、汇编文件、目标文件等。</li>
-</ul>
-<h2 id="符号可见性"><a href="#符号可见性" class="headerlink" title="符号可见性"></a>符号可见性</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">pragma</span> GCC visibility push(hidden)</span></span><br><span class="line"></span><br><span class="line">__attribute__((__visibility__(<span class="string">&quot;default&quot;</span>)))</span><br></pre></td></tr></table></figure>
-
-<p>gcc 编译选项：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -fvisibility=hidden ...</span><br></pre></td></tr></table></figure>
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/core-dump/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/cpp/core-dump/" class="post-title-link" itemprop="url">core dump</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 21:42:51" itemprop="dateCreated datePublished" datetime="2024-01-23T21:42:51+00:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="ulimit"><a href="#ulimit" class="headerlink" title="ulimit"></a><code>ulimit</code></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#查看配置</span></span><br><span class="line"><span class="built_in">ulimit</span> -a</span><br><span class="line"><span class="comment">#设置core file size</span></span><br><span class="line"><span class="built_in">ulimit</span> -c unlimited</span><br></pre></td></tr></table></figure>
-
-<p><code>ulimit</code>只对当前终端有效。</p>
-<p>以下两种方法对所有用户和终端有效：</p>
-<ol>
-<li>在<code>/etc/security/limits.conf</code>中设置（redhat衍生系linux）。</li>
-<li>或注释掉<code>/etc/profile</code>中的这一行： <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># No core files by default</span></span><br><span class="line"><span class="built_in">ulimit</span> -S -c 0 &gt; /dev/null 2&gt;&amp;1</span><br></pre></td></tr></table></figure></li>
-</ol>
-<h2 id="core-pattern"><a href="#core-pattern" class="headerlink" title="core_pattern"></a>core_pattern</h2><h3 id="core-pattern解释"><a href="#core-pattern解释" class="headerlink" title="core_pattern解释"></a>core_pattern解释</h3><p>见<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2065912/core-dumped-but-core-file-is-not-in-the-current-directory">链接</a>。</p>
-<p>Read <a target="_blank" rel="noopener" href="http://www.kernel.org/doc/Documentation/sysctl/kernel.txt">&#x2F;usr&#x2F;src&#x2F;linux&#x2F;Documentation&#x2F;sysctl&#x2F;kernel.txt</a>.</p>
-<pre><code>core_pattern is used to specify a core dumpfile pattern name.
-</code></pre>
-<p>在系统启动时，<a target="_blank" rel="noopener" href="https://wiki.ubuntu.com/Apport">Apport</a>（crash reporting service）会生成配置文件<code>/proc/sys/kernel/core_pattern</code>。参考<a target="_blank" rel="noopener" href="https://askubuntu.com/questions/420410/how-to-permanently-edit-the-core-pattern-file">这里</a>。</p>
-<p>Apport uses <code>/proc/sys/kernel/core_pattern</code> to directly pipe the core dump into <code>apport</code>:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cat</span> /proc/sys/kernel/core_pattern</span><br><span class="line">|/usr/share/apport/apport %p %s %c</span><br><span class="line">$ </span><br></pre></td></tr></table></figure>
-
-<p>Note that even if <code>ulimit</code> is set to disabled core files (by specyfing a core file size of zero using <code>ulimit -c 0</code>), <code>apport</code> will still capture the crash.</p>
-<p>For intercepting Python crashes it installs a <code>/etc/python*/sitecustomize.py</code> to call apport on unhandled exceptions.</p>
-<p>其中，<code>/usr/share/apport/apport</code>是一个python脚本。</p>
-<p>以下是core_pattern文件的参数说明（参考Linux Manual Page：<code>man core</code>）：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">%c - Core file size soft resource limit of crashing process (since Linux 2.6.24).</span><br><span class="line">%p - insert pid into filename 添加pid</span><br><span class="line">%u - insert current uid into filename 添加当前uid</span><br><span class="line">%g - insert current gid into filename 添加当前gid</span><br><span class="line">%s - insert signal that caused the coredump into the filename 添加导致产生core的信号</span><br><span class="line">%t - insert UNIX time that the coredump occurred into filename 添加core文件生成时的unix时间</span><br><span class="line">%h - insert hostname where the coredump happened into filename 添加主机名</span><br><span class="line">%e - insert coredumping executable name into filename 添加命令名</span><br><span class="line"></span><br><span class="line">If the first character of the pattern is a &#x27;|&#x27;, the kernel will treat the rest of the pattern as a command to run. The core dump will be written to the standard input of that program instead of to a file.</span><br></pre></td></tr></table></figure>
-
-<p>Apport的拦截组件默认是关闭的：</p>
-<p>Apport itself is running at all times because it collects crash data for whoopsie (see <a target="_blank" rel="noopener" href="https://wiki.ubuntu.com/ErrorTracker">ErrorTracker</a>). However, the crash interception component is still disabled. To enable it permanently, do:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo nano /etc/apport/crashdb.conf</span><br></pre></td></tr></table></figure>
-
-<p>… and add a hash symbol # in the beginning of the following line:</p>
-<pre><code>&#39;problem_types&#39;: [&#39;Bug&#39;, &#39;Package&#39;],
-</code></pre>
-<p>To disable crash reporting just remove the hash symbol.</p>
-<h3 id="设置core-pattern"><a href="#设置core-pattern" class="headerlink" title="设置core_pattern"></a>设置core_pattern</h3><p>见<a target="_blank" rel="noopener" href="https://www.cnblogs.com/xiaodoujiaohome/p/6222895.html">链接</a>。</p>
-<ol>
-<li><p>&#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;core_uses_pid可以控制产生的core文件的文件名中是否添加pid作为扩展，如果添加则文件内容为1，否则为0；</p>
-</li>
-<li><p>&#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;core_pattern可以设置格式化的core文件保存位置或文件名：</p>
- <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cat</span> /proc/sys/kernel/core_pattern</span><br><span class="line">|/usr/share/apport/apport %p %s %c</span><br><span class="line">$ <span class="built_in">echo</span> <span class="string">&quot;/corefile/core-%e-%p-%t&quot;</span> &gt; /proc/sys/kernel/core_pattern</span><br></pre></td></tr></table></figure>
-
-
-<p> 你可以用下列方式来完成：</p>
- <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#查看所有sysctl所有变量的值。</span></span><br><span class="line">sysctl -a</span><br><span class="line"><span class="comment">#设置变量kernel.core_pattern为如下值。</span></span><br><span class="line">sudo sysctl -w kernel.core_pattern=/tmp/core-%e.%p.%h.%t</span><br></pre></td></tr></table></figure>
-
-<p> 这些操作一旦计算机重启，则会丢失，如果你想持久化这些操作，可以在 &#x2F;etc&#x2F;sysctl.conf文件中增加：</p>
- <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kernel.core_pattern=/tmp/core%p</span><br></pre></td></tr></table></figure>
-
-<p> 加好后，如果你想不重启看看效果的话，则用下面的命令：</p>
- <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sysctl -p /etc/sysctl.conf</span><br></pre></td></tr></table></figure></li>
-</ol>
-<h2 id="相关命令行工具"><a href="#相关命令行工具" class="headerlink" title="相关命令行工具"></a>相关命令行工具</h2><p>参考资料：</p>
-<p>Linux Manual Page: <a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man5/core.5.html"><code>man core</code></a></p>
-<pre><code>SEE ALSO
-    bash(1),  coredumpctl(1),  gdb(1),  getrlimit(2), mmap(2), prctl(2), sigaction(2), elf(5), proc(5), pthreads(7), signal(7), systemd-coredump(8)
-</code></pre>
-<h2 id="Segment-Fault排查"><a href="#Segment-Fault排查" class="headerlink" title="Segment Fault排查"></a>Segment Fault排查</h2><p>参考<a target="_blank" rel="noopener" href="https://www.wtango.com/%E6%AE%B5%E9%94%99%E8%AF%AFsegmentation-fault%E4%BA%A7%E7%94%9F%E7%9A%84%E5%8E%9F%E5%9B%A0%E4%BB%A5%E5%8F%8A%E8%B0%83%E8%AF%95%E6%96%B9%E6%B3%95/">链接</a>。</p>
-<ol>
-<li><p>dmesg + nm + addr2line</p>
-<p>addr2line只能找出executable的行号；如果是shared libraries，请使用gdb。参考<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2549214/interpreting-segfault-messages">这里</a>。</p>
-<p>dmesg输出的含义：</p>
-<p>ip: 表示instruction pointer.</p>
-</li>
-<li><p>fprintf</p>
-</li>
-<li><p>gdb</p>
-</li>
-<li><p>signal(SIGSEGV,handler)</p>
-</li>
-<li><p>valgrind<br>参考：<br> <a target="_blank" rel="noopener" href="https://jvns.ca/blog/2018/04/28/debugging-a-segfault-on-linux/">博客</a><br> <a target="_blank" rel="noopener" href="https://valgrind.org/docs/manual/ms-manual.html">文档</a><br> <a target="_blank" rel="noopener" href="https://courses.cs.washington.edu/courses/cse326/05wi/valgrind-doc/ms_main.html">可以使用PostScript查看图形化结果</a></p>
-</li>
-<li><p>heaptrack</p>
-<p> 见<a target="_blank" rel="noopener" href="https://github.com/KDE/heaptrack">github仓库</a></p>
-</li>
-<li><p>Jemalloc</p>
-<p> 见<a target="_blank" rel="noopener" href="https://jemalloc.net/">官网</a></p>
-</li>
-</ol>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1519,20 +1441,20 @@ PCI ROM.
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">81</span>
+          <span class="site-state-item-count">82</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-count">8</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-count">41</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

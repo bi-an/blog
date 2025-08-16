@@ -193,6 +193,462 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/07/31/cpp/%E6%B7%B7%E5%90%88%E7%BC%96%E8%AF%91/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/07/31/cpp/%E6%B7%B7%E5%90%88%E7%BC%96%E8%AF%91/" class="post-title-link" itemprop="url">混合编译</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-07-31 15:29:32" itemprop="dateCreated datePublished" datetime="2025-07-31T15:29:32+00:00">2025-07-31</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>“Hybrid Build”（混合构建）是指一种 兼顾调试能力与运行性能 的构建方式，常用于需要在 Release 环境中进行问题分析，但又不能完全使用 Debug 构建的场景。</p>
+<h3 id="🧩-Hybrid-Build-的核心特征"><a href="#🧩-Hybrid-Build-的核心特征" class="headerlink" title="🧩 Hybrid Build 的核心特征"></a>🧩 Hybrid Build 的核心特征</h3><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>优化等级</td>
+<td>使用 -O2 或 -O3，保持接近 Release 的性能</td>
+</tr>
+<tr>
+<td>调试信息</td>
+<td>保留 -g，生成 DWARF 调试符号，便于分析 core dump 或使用 gdb</td>
+</tr>
+<tr>
+<td>符号表</td>
+<td>可选开启 -fno-omit-frame-pointer，便于栈回溯</td>
+</tr>
+<tr>
+<td>日志&#x2F;保护机制</td>
+<td>可嵌入轻量级日志、ASAN-lite、canary 等机制，增强可观测性</td>
+</tr>
+<tr>
+<td>部署策略</td>
+<td>仅在内部或特定客户环境中使用，避免暴露完整源码结构或调试符号</td>
+</tr>
+</tbody></table>
+<p>✅ 编译示例（GCC&#x2F;Clang）</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ -O2 -g -fno-omit-frame-pointer -DNDEBUG -o your_program main.cpp</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>-O2：优化代码，接近 Release 性能</li>
+<li>-g：保留调试信息</li>
+<li>-fno-omit-frame-pointer：保留帧指针，便于栈追踪</li>
+<li>-DNDEBUG：关闭断言（assert）</li>
+</ul>
+<h3 id="🎯-使用场景"><a href="#🎯-使用场景" class="headerlink" title="🎯 使用场景"></a>🎯 使用场景</h3><table>
+<thead>
+<tr>
+<th>场景</th>
+<th>是否推荐使用 Hybrid Build</th>
+<th>原因说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>客户现场复现崩溃</td>
+<td>✅</td>
+<td>可通过 core dump + 符号表快速定位问题</td>
+</tr>
+<tr>
+<td>内部性能测试</td>
+<td>✅</td>
+<td>保持优化效果，同时可调试</td>
+</tr>
+<tr>
+<td>正式发布给客户（大规模部署）</td>
+<td>❌</td>
+<td>不建议，可能暴露符号信息，体积较大</td>
+</tr>
+<tr>
+<td>与 ASAN&#x2F;TSAN 联合使用</td>
+<td>⚠️（需关闭优化）</td>
+<td>ASAN&#x2F;TSAN 更适合 Debug 构建，Hybrid 会影响检测精度</td>
+</tr>
+</tbody></table>
+<h3 id="🛠️-实践建议"><a href="#🛠️-实践建议" class="headerlink" title="🛠️ 实践建议"></a>🛠️ 实践建议</h3><ul>
+<li>符号分离：使用 <code>objcopy --only-keep-debug</code> 分离调试符号，避免暴露给客户。</li>
+<li>符号服务器：内部维护符号服务器，支持通过 core 文件自动符号化。</li>
+<li>结合日志框架：Hybrid Build 可与轻量级日志框架结合，增强问题定位能力。</li>
+</ul>
+<h2 id="符号分离（Split-Debug-Info）"><a href="#符号分离（Split-Debug-Info）" class="headerlink" title="符号分离（Split Debug Info）"></a>符号分离（Split Debug Info）</h2><p><strong>✅ 为什么要分离？</strong></p>
+<ul>
+<li>Release 版本：体积小，性能高，但缺少调试信息</li>
+<li>调试符号文件：保留完整符号信息，用于内部分析 core dump</li>
+</ul>
+<p><strong>🛠️ 分离流程（以 GCC&#x2F;Clang 为例）</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 编译时保留调试信息</span></span><br><span class="line">g++ -O2 -g -o your_program main.cpp</span><br><span class="line"></span><br><span class="line"><span class="comment"># 分离调试符号</span></span><br><span class="line">objcopy --only-keep-debug your_program your_program.debug</span><br><span class="line"></span><br><span class="line"><span class="comment"># 去除主程序中的调试信息</span></span><br><span class="line">strip --strip-debug --strip-unneeded your_program</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加调试符号关联信息</span></span><br><span class="line">objcopy --add-gnu-debuglink=your_program.debug your_program</span><br></pre></td></tr></table></figure>
+
+<p><strong>✅ 最终产物：</strong></p>
+<ul>
+<li>your_program：可交付给客户的 Release 可执行文件</li>
+<li>your_program.debug：内部使用的调试符号文件</li>
+</ul>
+<h2 id="core-dump-分析"><a href="#core-dump-分析" class="headerlink" title="core dump 分析"></a>core dump 分析</h2><p><strong>1. 客户侧设置 core dump</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ulimit</span> -c unlimited</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 客户运行程序并生成 core 文件</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">./your_program crash_input.txt</span><br><span class="line"><span class="comment"># 程序崩溃后生成 core 文件，如 core.12345</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 客户提供 core 文件 + 可执行文件</strong></p>
+<ul>
+<li>core.12345</li>
+<li>your_program（Release 版本）</li>
+</ul>
+<p><strong>4. 你在内部分析 core 文件</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">gdb your_program core.12345</span><br><span class="line"><span class="comment"># 加载调试符号</span></span><br><span class="line">(gdb) symbol-file your_program.debug</span><br><span class="line">(gdb) bt  <span class="comment"># 查看调用栈</span></span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/07/31/cpp/%E5%86%85%E5%AD%98%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/07/31/cpp/%E5%86%85%E5%AD%98%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">内存分析</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-07-31 14:53:40" itemprop="dateCreated datePublished" datetime="2025-07-31T14:53:40+00:00">2025-07-31</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="工具"><a href="#工具" class="headerlink" title="工具"></a>工具</h2><p>valgrind 是一个强大的内存调试和性能分析工具，它的不同子工具用于不同的分析目的。<code>--memcheck</code> 和 <code>--massif</code> 是其中两个常用的工具。</p>
+<p>ASAN（AddressSanitizer） 和 TSAN（ThreadSanitizer） 都是由现代编译器（如 Clang 和 GCC）提供的 运行时检测工具，用于帮助开发者在开发阶段发现内存错误和线程问题。</p>
+<ul>
+<li>Clang：全面支持 ASAN 和 TSAN</li>
+<li>GCC：也支持，但 TSAN 的支持略逊于 Clang</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://jvns.ca/blog/2018/04/28/debugging-a-segfault-on-linux/">博客：How to get a core dump for a segfault on Linux</a></p>
+<h3 id="Memcheck：内存错误检查工具"><a href="#Memcheck：内存错误检查工具" class="headerlink" title="Memcheck：内存错误检查工具"></a>Memcheck：内存错误检查工具</h3><p>官方文档：<a target="_blank" rel="noopener" href="https://valgrind.org/docs/manual/mc-manual.html">4. Memcheck: a memory error detector</a></p>
+<ul>
+<li>用途：检测内存相关的错误，如内存泄漏、越界访问、未初始化内存读取等。</li>
+<li>适用场景：调试程序中的内存错误，确保程序的内存使用是安全的。</li>
+<li>输出内容：<ul>
+<li>哪些内存没有释放（内存泄漏）</li>
+<li>哪些内存被非法访问（越界、未初始化等）</li>
+<li>哪些内存访问是未定义行为</li>
+</ul>
+</li>
+<li>常用命令：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">valgrind --tool=memcheck ./your_program</span><br></pre></td></tr></table></figure>
+
+<h3 id="Massif：堆内存使用分析工具"><a href="#Massif：堆内存使用分析工具" class="headerlink" title="Massif：堆内存使用分析工具"></a>Massif：堆内存使用分析工具</h3><p>官方文档：<a target="_blank" rel="noopener" href="https://valgrind.org/docs/manual/ms-manual.html">9. Massif: a heap profiler</a></p>
+<ul>
+<li>用途：分析程序在运行过程中堆内存的使用情况，帮助优化内存占用。</li>
+<li>适用场景：性能分析，找出内存占用高的代码路径或数据结构。</li>
+<li>输出内容：<ul>
+<li>堆内存使用随时间的变化（快照）：需用 <code>ms_print</code> 或 <a target="_blank" rel="noopener" href="https://courses.cs.washington.edu/courses/cse326/05wi/valgrind-doc/ms_main.html">PostScript Viewer</a> 查看</li>
+<li>哪些函数或调用路径分配了最多的内存</li>
+<li>常用命令：</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">valgrind --tool=massif ./your_program</span><br><span class="line">ms_print massif.out.&lt;pid&gt;</span><br></pre></td></tr></table></figure>
+
+<p><strong>🆚 Memcheck vs Massif 对比总结</strong></p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th><code>--memcheck</code></th>
+<th><code>--massif</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>工具类型</td>
+<td>内存错误检查工具</td>
+<td>堆内存使用分析工具</td>
+</tr>
+<tr>
+<td>主要用途</td>
+<td>检查内存泄漏、越界访问、未初始化读取等</td>
+<td>分析堆内存使用趋势和峰值</td>
+</tr>
+<tr>
+<td>检测内存泄漏</td>
+<td>✅</td>
+<td>❌（不直接检测）</td>
+</tr>
+<tr>
+<td>分析内存增长趋势</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>输出格式</td>
+<td>错误报告（文本）</td>
+<td>内存快照（需用 <code>ms_print</code> 查看）</td>
+</tr>
+<tr>
+<td>性能开销</td>
+<td>高（运行速度变慢）</td>
+<td>中等</td>
+</tr>
+</tbody></table>
+<h3 id="ThreadSanitizer（TSAN）"><a href="#ThreadSanitizer（TSAN）" class="headerlink" title="ThreadSanitizer（TSAN）"></a>ThreadSanitizer（TSAN）</h3><ul>
+<li>用途：检测多线程程序中的 数据竞争（data race） 和其他线程同步问题。</li>
+<li>适用场景：并发程序调试，尤其是当多个线程访问共享变量时。</li>
+<li>检测内容：<ul>
+<li>数据竞争（两个线程同时访问同一变量，且至少一个是写操作）</li>
+<li>锁使用错误（死锁、双重解锁等）</li>
+</ul>
+</li>
+<li>启用方式（Clang&#x2F;GCC）：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">clang -fsanitize=thread -g your_program.c -o your_program</span><br></pre></td></tr></table></figure>
+
+<h3 id="AddressSanitizer（ASAN）"><a href="#AddressSanitizer（ASAN）" class="headerlink" title="AddressSanitizer（ASAN）"></a>AddressSanitizer（ASAN）</h3><p><a target="_blank" rel="noopener" href="https://github.com/google/sanitizers/wiki/AddressSanitizer">AddressSanitizer 文档</a></p>
+<ul>
+<li>用途：检测内存访问错误。</li>
+<li>适用场景：单线程或多线程程序中调试内存问题。</li>
+<li>检测内容：<ul>
+<li>越界访问（stack&#x2F;heap&#x2F;global）</li>
+<li>use-after-free（释放后使用）</li>
+<li>内存泄漏（可选）</li>
+<li>use-after-scope（作用域结束后使用局部变量）</li>
+</ul>
+</li>
+<li>启用方式：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">clang -fsanitize=address -g your_program.c -o your_program</span><br></pre></td></tr></table></figure>
+
+<p><strong>🆚 TSAN vs ASAN 对比总结</strong></p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>TSAN（ThreadSanitizer）</th>
+<th>ASAN（AddressSanitizer）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>检测目标</td>
+<td>多线程数据竞争</td>
+<td>内存访问错误</td>
+</tr>
+<tr>
+<td>是否支持多线程</td>
+<td>✅（专为多线程设计）</td>
+<td>✅（支持，但不检测数据竞争）</td>
+</tr>
+<tr>
+<td>性能开销</td>
+<td>较高（10x~40x）</td>
+<td>中等（2x~3x）</td>
+</tr>
+<tr>
+<td>内存开销</td>
+<td>中等</td>
+<td>较高（增加约2倍内存使用）</td>
+</tr>
+<tr>
+<td>是否检测内存泄漏</td>
+<td>❌（不检测）</td>
+<td>✅（可选开启）</td>
+</tr>
+<tr>
+<td>是否检测数据竞争</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+</tbody></table>
+<p><strong>🆚 Memcheck vs Massif vs TSAN vs ASAN 对比总结</strong></p>
+<table>
+<thead>
+<tr>
+<th>工具名称</th>
+<th>类型</th>
+<th>主要用途</th>
+<th>检测内容</th>
+<th>是否支持多线程</th>
+<th>性能开销</th>
+<th>内存开销</th>
+<th>是否检测内存泄漏</th>
+<th>是否检测数据竞争</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Memcheck</strong></td>
+<td>Valgrind 工具</td>
+<td>内存错误检测</td>
+<td>内存泄漏、越界访问、未初始化读取、非法释放等</td>
+<td>✅（有限支持）</td>
+<td>高（10x+）</td>
+<td>高</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><strong>Massif</strong></td>
+<td>Valgrind 工具</td>
+<td>堆内存使用分析</td>
+<td>堆内存分配趋势、内存峰值、调用路径分析</td>
+<td>✅</td>
+<td>中等</td>
+<td>中等</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><strong>ASAN</strong></td>
+<td>编译器工具</td>
+<td>内存访问错误检测</td>
+<td>越界访问、use-after-free、use-after-scope、内存泄漏（可选）</td>
+<td>✅</td>
+<td>中等（2x~3x）</td>
+<td>高（约2倍）</td>
+<td>✅（可选）</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><strong>TSAN</strong></td>
+<td>编译器工具</td>
+<td>多线程数据竞争检测</td>
+<td>数据竞争、死锁、错误的锁使用等</td>
+<td>✅（强支持）</td>
+<td>高（5x~40x）</td>
+<td>中等</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+</tbody></table>
+<h2 id="UBSan-Unifined-Behavior-Sanitizer"><a href="#UBSan-Unifined-Behavior-Sanitizer" class="headerlink" title="UBSan (Unifined Behavior Sanitizer)"></a>UBSan (Unifined Behavior Sanitizer)</h2><table>
+<thead>
+<tr>
+<th>Sanitizer</th>
+<th>检测内容</th>
+<th>Google 贡献</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ASAN</td>
+<td>内存访问错误</td>
+<td>✅ 是</td>
+</tr>
+<tr>
+<td>UBSan</td>
+<td>未定义行为</td>
+<td>✅ 是</td>
+</tr>
+<tr>
+<td>TSAN</td>
+<td>数据竞争</td>
+<td>✅ 是</td>
+</tr>
+<tr>
+<td>MSAN</td>
+<td>未初始化内存使用</td>
+<td>✅ 是</td>
+</tr>
+</tbody></table>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/07/25/cpp/gcc%E5%B1%9E%E6%80%A7/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +680,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
 
           
@@ -360,7 +816,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
 
           
@@ -530,7 +986,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
 
           
@@ -597,7 +1053,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
 
           
@@ -862,7 +1318,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
 
           
@@ -961,7 +1417,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
 
           
@@ -1258,7 +1714,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
 
           
@@ -1584,7 +2040,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-16 12:44:13" itemprop="dateModified" datetime="2025-08-16T12:44:13+00:00">2025-08-16</time>
               </span>
 
           
@@ -1689,169 +2145,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/28/Segment-Tree/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/09/28/Segment-Tree/" class="post-title-link" itemprop="url">线段树</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-09-28 20:57:33" itemprop="dateCreated datePublished" datetime="2024-09-28T20:57:33+00:00">2024-09-28</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>线段树（Segment Tree）是一种将数组区间存储为树的数据结构 <a target="_blank" rel="noopener" href="https://cp-algorithms.com/data_structures/segment_tree.html">^1</a>。</p>
-<h2 id="时间复杂度"><a href="#时间复杂度" class="headerlink" title="时间复杂度"></a>时间复杂度</h2><p>查询连续子数组 或 查询范围内的最小元素：O(logn)</p>
-<h2 id="最简单形式的线段树"><a href="#最简单形式的线段树" class="headerlink" title="最简单形式的线段树"></a>最简单形式的线段树</h2><h2 id="高阶版本的线段树"><a href="#高阶版本的线段树" class="headerlink" title="高阶版本的线段树"></a>高阶版本的线段树</h2><p>TODO</p>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://oi-wiki.org/ds/seg/#%E5%AE%9E%E7%8E%B0">OI wiki</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/26/Implementation-of-shared-ptr/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/09/26/Implementation-of-shared-ptr/" class="post-title-link" itemprop="url">shared_ptr 的实现</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-09-26 16:44:29" itemprop="dateCreated datePublished" datetime="2024-09-26T16:44:29+00:00">2024-09-26</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 05:56:33" itemprop="dateModified" datetime="2025-08-16T05:56:33+00:00">2025-08-16</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="参考源码"><a href="#参考源码" class="headerlink" title="参考源码"></a>参考源码</h2><blockquote>
-<p>&#x2F;usr&#x2F;include&#x2F;c++&#x2F;11&#x2F;bits&#x2F;shared_ptr_base.h<br>&#x2F;usr&#x2F;include&#x2F;c++&#x2F;11&#x2F;bits&#x2F;shared_ptr.h</p>
-</blockquote>
-<p>博客：<a target="_blank" rel="noopener" href="https://zhiqiang.org/coding/std-shared-ptr.html">https://zhiqiang.org/coding/std-shared-ptr.html</a></p>
-<h2 id="std-shared-ptr-的性质"><a href="#std-shared-ptr-的性质" class="headerlink" title="std::shared_ptr 的性质"></a><code>std::shared_ptr</code> 的性质</h2><ol>
-<li>复制构造、析构是线程安全的。</li>
-</ol>
-<p>标准库使用原子操作实现无锁的线程安全性。</p>
-<ol start="2">
-<li>写操作（例如 <code>reset</code> 、 赋值 <code>operator=</code> ）是线程不安全的。</li>
-</ol>
-<p>写操作和复制构造、析构的主要区别是：</p>
-<ul>
-<li>复制构造、析构函数中，单个线程只处理一个对象，复制构造函数将其他对象复制过来之后，不会改动其他对象的资源（引用计数、所管理的内存）。</li>
-<li>但是写操作可能多个线程都在处理该 shared_ptr 。例如多个线程都对同一个 shared_ptr 进行赋值：</li>
-</ul>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">shared_ptr&lt;<span class="type">int</span>&gt; sp1 = <span class="built_in">make_shared</span>&lt;<span class="type">int</span>&gt;(<span class="number">1</span>);</span><br><span class="line">sp1 = sp2; <span class="comment">// 线程 1</span></span><br><span class="line">sp1 = sp3; <span class="comment">// 线程 2</span></span><br></pre></td></tr></table></figure>
-
-<p>对比源码分析：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">     __shared_count&amp;</span><br><span class="line">     <span class="keyword">operator</span>=(<span class="type">const</span> __shared_count&amp; __r) <span class="keyword">noexcept</span></span><br><span class="line">     &#123;</span><br><span class="line">_Sp_counted_base&lt;_Lp&gt;* __tmp = __r._M_pi;</span><br><span class="line"><span class="keyword">if</span> (__tmp != _M_pi)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> (__tmp != <span class="literal">nullptr</span>)</span><br><span class="line">      __tmp-&gt;_M_add_ref_copy();</span><br><span class="line">    <span class="keyword">if</span> (_M_pi != <span class="literal">nullptr</span>)</span><br><span class="line">      _M_pi-&gt;_M_release(); <span class="comment">// 注意：线程 1 和线程 2 持有相同的 _M_pi！</span></span><br><span class="line">    _M_pi = __tmp; <span class="comment">// 注意：线程 1 和线程 2 持有相同的 _M_pi！</span></span><br><span class="line">  &#125;</span><br><span class="line"><span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">     &#125;</span><br></pre></td></tr></table></figure>
-
-<p>以上代码中两个“注意”可能同时在发生，例如：<br>线程 1 release 的时候，线程 2 在给 _M_pi 赋值；<br>或者两个线程同时在 release 或同时在给 _M_pi 赋值。</p>
-<h2 id="要点"><a href="#要点" class="headerlink" title="要点"></a>要点</h2><ol>
-<li>管理的内存和引用计数都应该动态分配到堆（ heap ）上，这样多个 shared_ptr 对象才能更新同一份数据。</li>
-<li>需要同时维护强引用计数和弱引用计数。</li>
-<li>引用计数本身应该是一个控制块类，使用 <code>delete this</code> 来自动删除（析构）引用计数。</li>
-</ol>
-<p>永远不要手动 <code>delete use_count</code>，因为其他线程可能此时正在使用该资源，例如解引用 <code>*use_count</code>。</p>
-<figure class="highlight cpp"><figcaption><span>SharedPtr.hpp</span><a href="/blog/downloads/code/SharedPtr.hpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;_Lock_policy _Lp = __default_lock_policy&gt;</span><br><span class="line">    <span class="keyword">class</span> _Sp_counted_base</span><br><span class="line">    : <span class="keyword">public</span> _Mutex_base&lt;_Lp&gt;</span><br><span class="line">    {</span><br><span class="line">      <span class="type">void</span></span><br><span class="line">      _M_add_ref_copy()</span><br><span class="line">      { __gnu_cxx::__atomic_add_dispatch(&amp;_M_use_count, <span class="number">1</span>); }</span><br><span class="line"></span><br><span class="line">      <span class="type">void</span></span><br><span class="line">      _M_release() <span class="keyword">noexcept</span></span><br><span class="line">      {</span><br><span class="line">        <span class="comment">// Be race-detector-friendly.  For more info see bits/c++config.</span></span><br><span class="line">        _GLIBCXX_SYNCHRONIZATION_HAPPENS_BEFORE(&amp;_M_use_count);</span><br><span class="line">	<span class="keyword">if</span> (__gnu_cxx::__exchange_and_add_dispatch(&amp;_M_use_count, <span class="number">-1</span>) == <span class="number">1</span>)</span><br><span class="line">	  {</span><br><span class="line">            _GLIBCXX_SYNCHRONIZATION_HAPPENS_AFTER(&amp;_M_use_count);</span><br><span class="line">	    _M_dispose();</span><br><span class="line">	    <span class="comment">// There must be a memory barrier between dispose() and destroy()</span></span><br><span class="line">	    <span class="comment">// to ensure that the effects of dispose() are observed in the</span></span><br><span class="line">	    <span class="comment">// thread that runs destroy().</span></span><br><span class="line">	    <span class="comment">// See http://gcc.gnu.org/ml/libstdc++/2005-11/msg00136.html</span></span><br><span class="line">	    <span class="keyword">if</span> (_Mutex_base&lt;_Lp&gt;::_S_need_barriers)</span><br><span class="line">	      {</span><br><span class="line">		__atomic_thread_fence (__ATOMIC_ACQ_REL);</span><br><span class="line">	      }</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Be race-detector-friendly.  For more info see bits/c++config.</span></span><br><span class="line">            _GLIBCXX_SYNCHRONIZATION_HAPPENS_BEFORE(&amp;_M_weak_count);</span><br><span class="line">	    <span class="keyword">if</span> (__gnu_cxx::__exchange_and_add_dispatch(&amp;_M_weak_count,</span><br><span class="line">						       <span class="number">-1</span>) == <span class="number">1</span>)</span><br><span class="line">              {</span><br><span class="line">                _GLIBCXX_SYNCHRONIZATION_HAPPENS_AFTER(&amp;_M_weak_count);</span><br><span class="line">	        _M_destroy();</span><br><span class="line">              }</span><br><span class="line">	  }</span><br><span class="line">      }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">      _Sp_counted_base(_Sp_counted_base <span class="type">const</span>&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">      _Sp_counted_base&amp; <span class="keyword">operator</span>=(_Sp_counted_base <span class="type">const</span>&amp;) = <span class="keyword">delete</span>;</span><br><span class="line"></span><br><span class="line">      <span class="comment">// using _Atomic_word = int;</span></span><br><span class="line">      _Atomic_word  _M_use_count;     <span class="comment">// #shared</span></span><br><span class="line">      _Atomic_word  _M_weak_count;    <span class="comment">// #weak + (#shared != 0)</span></span><br><span class="line">    };</span><br><span class="line"></span><br><span class="line">  <span class="keyword">template</span>&lt;_Lock_policy _Lp&gt;</span><br><span class="line">    <span class="keyword">class</span> <span class="title class_">__shared_count</span></span><br><span class="line">    {</span><br><span class="line">      _Sp_counted_base&lt;_Lp&gt;*  _M_pi; <span class="comment">// 引用计数的指针</span></span><br><span class="line"></span><br><span class="line">      __shared_count(<span class="type">const</span> __shared_count&amp; __r) <span class="keyword">noexcept</span></span><br><span class="line">      : _M_pi(__r._M_pi)</span><br><span class="line">      {</span><br><span class="line">	<span class="keyword">if</span> (_M_pi != <span class="literal">nullptr</span>)</span><br><span class="line">	  _M_pi-&gt;_M_add_ref_copy(); <span class="comment">// <span class="doctag">TODO:</span> 有没有可能此时的 _M_pi 所引对象已经被释放了呢</span></span><br><span class="line">      }</span><br><span class="line"></span><br><span class="line">      ~__shared_count() <span class="keyword">noexcept</span></span><br><span class="line">      {</span><br><span class="line">	<span class="keyword">if</span> (_M_pi != <span class="literal">nullptr</span>)</span><br><span class="line">	  _M_pi-&gt;_M_release(); <span class="comment">// 没有直接 delete _M_pi，</span></span><br><span class="line">                           <span class="comment">// 而是使用 _M_pi 的成员函数来释放它。</span></span><br><span class="line">      }</span><br><span class="line"></span><br><span class="line">      __shared_count&amp;</span><br><span class="line">      <span class="keyword">operator</span>=(<span class="type">const</span> __shared_count&amp; __r) <span class="keyword">noexcept</span></span><br><span class="line">      {</span><br><span class="line">	_Sp_counted_base&lt;_Lp&gt;* __tmp = __r._M_pi;</span><br><span class="line">	<span class="keyword">if</span> (__tmp != _M_pi)</span><br><span class="line">	  {</span><br><span class="line">	    <span class="keyword">if</span> (__tmp != <span class="literal">nullptr</span>)</span><br><span class="line">	      __tmp-&gt;_M_add_ref_copy();</span><br><span class="line">	    <span class="keyword">if</span> (_M_pi != <span class="literal">nullptr</span>)</span><br><span class="line">	      _M_pi-&gt;_M_release(); <span class="comment">// 没有直接 delete _M_pi，</span></span><br><span class="line">                               <span class="comment">// 而是使用 _M_pi 的成员函数来释放它。</span></span><br><span class="line">	    _M_pi = __tmp;</span><br><span class="line">	  }</span><br><span class="line">	<span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">      }</span><br><span class="line">    };</span><br></pre></td></tr></table></figure>
-
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/libstdc++/manual/ext_concurrency.html">https://gcc.gnu.org/onlinedocs/libstdc++/manual/ext_concurrency.html</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1923,20 +2216,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">81</span>
+          <span class="site-state-item-count">82</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-count">8</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-count">41</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
