@@ -58,7 +58,12 @@ curl https://www.google.com
 如果你只想暂时走代理一次，不想改 .bashrc，你可以直接这样运行：
 
 ```bash
+# 方法1
 http_proxy=http://127.0.0.1:7890 https_proxy=http://127.0.0.1:7890 curl https://www.google.com
+# 方法2
+curl -I https://www.google.com -x http://127.0.0.1:7890
+# 方法3：走socks5代理
+curl -I --socks5 127.0.0.1:7890 https://www.google.com
 ```
 
 
