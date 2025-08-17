@@ -25,7 +25,10 @@ tags:
 
 https://www.xiaolincoding.com/os/8_network_system/zero_copy.html#%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9B%B6%E6%8B%B7%E8%B4%9D
 
-
+- O_DIRECT: 绕过操作系统缓存，直接读写磁盘，可以避免缓存延迟，提高性能。可用于：
+  - 数据库系统：对性能要求极高，且直接操作磁盘数据。
+  - 存储设置：如 SSD、硬盘，直接与硬件设备进行高效的 I/O 操作。
+  - 注意：由于绕过了缓存，所以read如果小于当前数据包的大小，则本次read后，内核会直接丢弃多余的数据。这是为了避免多余的数据在内存中驻留。
 
 ### 散布读写 (Scatter read/write)
 
