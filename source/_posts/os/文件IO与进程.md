@@ -22,6 +22,7 @@ tags:
   /* 进程控制块 */
   struct task_struct {
       struct files_struct *files; // 进程当前打开的文件
+      // ...
   };
   ```
 
@@ -41,6 +42,8 @@ tags:
       // 1. 性能优化：大多数程序，fd 都在 0~1023，直接访问数组更快
       // 2. 向后兼容：早期接口会访问fd_array
       // 3. 动态扩展：如果 fd 超过 NR_OPEN_DEFAULT，内核会复制 fd_array 到 fdt->fd 来保证一致性。
+
+      // ... `struct files_struct' 还有其他成员
   };
 
   // fd 表（动态管理）
