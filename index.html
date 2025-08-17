@@ -218,7 +218,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2025-08-17 10:39:19 / Modified: 03:08:57" itemprop="dateCreated datePublished" datetime="2025-08-17T10:39:19+00:00">2025-08-17</time>
+              <time title="Created: 2025-08-17 10:39:19 / Modified: 03:45:18" itemprop="dateCreated datePublished" datetime="2025-08-17T10:39:19+00:00">2025-08-17</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -381,7 +381,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 03:08:57" itemprop="dateModified" datetime="2025-08-17T03:08:57+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 03:45:18" itemprop="dateModified" datetime="2025-08-17T03:45:18+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -458,7 +458,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 03:08:57" itemprop="dateModified" datetime="2025-08-17T03:08:57+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 03:45:18" itemprop="dateModified" datetime="2025-08-17T03:45:18+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -592,7 +592,7 @@
 </tbody></table>
 <h2 id="两个独立进程各自打开同一个文件"><a href="#两个独立进程各自打开同一个文件" class="headerlink" title="两个独立进程各自打开同一个文件"></a>两个独立进程各自打开同一个文件</h2><p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/hG2hPTDM/image.png" alt="两个独立进程各自打开同一个文件"/></a></p>
 <ul>
-<li>O_APPEND：<br>如果使用 <code>O_APPEND</code> 标志打开一个文件，那么相应的标志也被设置到文件表项的文件状态标志中。每次对文件执行写操作时，文件表项中的当前文件偏移量首先会被设置为 i 节点表项中的文件长度（相对其他进程来说是原子操作）。这就使得每次写入的数据都追加到文件的当前尾端处。<a target="_blank" rel="noopener" href="https://blog.csdn.net/yangbodong22011/article/details/63064166">这里</a>有一个测试的例子，文章结论不见得正确，请参考评论的讨论。</li>
+<li>O_APPEND：<br>如果使用 <code>O_APPEND</code> 标志打开一个文件，那么相应的标志也被设置到文件表项的文件状态标志中。每次对文件执行写操作时，文件表项中的当前文件偏移量首先会被设置为 i 节点表项中的文件长度（相对其他进程来说是<strong>原子</strong>操作）。这就使得每次写入的数据都追加到文件的当前尾端处。<a target="_blank" rel="noopener" href="https://blog.csdn.net/yangbodong22011/article/details/63064166">这里</a>有一个测试的例子，文章结论不见得正确，请参考评论的讨论。</li>
 </ul>
 <p>以下是 <code>man page &quot;write(2)&quot;</code>：</p>
 <blockquote>
@@ -602,14 +602,24 @@
 <li>lseek：<br>若一个文件用 <code>lseek</code> 定位到文件当前的尾端，则文件表项中的当前文件偏移量被设置为 i 节点表项中的当前文件长度（注意，此时，设置偏移量和写操作之间不是原子操作）。</li>
 </ul>
 <hr>
-<h2 id="dup后的内核数据结构"><a href="#dup后的内核数据结构" class="headerlink" title="dup后的内核数据结构"></a>dup后的内核数据结构</h2><p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/s2mGQbcY/dup-1.png" alt="dup(1)"/></a></p>
-<h2 id="fork与文件共享"><a href="#fork与文件共享" class="headerlink" title="fork与文件共享"></a>fork与文件共享</h2><p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/TYbyqK0Y/fork.png" alt="fork"/></a></p>
-<ul>
-<li>fork之后子进程复制父进程所有的打开描述符，并且保持其打开，即使执行了<code>exec()</code>，除非该文件描述符使用<code>fcntl()</code>设置了<code>FD_CLOEXEC</code>标志。</li>
+<h2 id="dup-后的内核数据结构"><a href="#dup-后的内核数据结构" class="headerlink" title="dup()后的内核数据结构"></a><code>dup()</code>后的内核数据结构</h2><p><code>dup()</code> &#x2F; <code>dup2()</code> 只复制 fd ，也就是在 fd 数组中新增了一个 fd 项。一般用来重定向。</p>
+<p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/s2mGQbcY/dup-1.png" alt="dup(1)"/></a></p>
+<h2 id="fork与文件共享"><a href="#fork与文件共享" class="headerlink" title="fork与文件共享"></a>fork与文件共享</h2><ul>
+<li>进程每打开一个文件，都会新建一个 <code>struct file</code> ，并添加到 fd 数组或 fd 表中。<ul>
 <li>对同一个文件，不同进程拥有各自的文件表项。</li>
 <li>但是对每个文件，v节点表项在整个操作系统中只有一份。</li>
 </ul>
-<h2 id="进程为什么会自动打开0-1-2三个文件描述符？"><a href="#进程为什么会自动打开0-1-2三个文件描述符？" class="headerlink" title="进程为什么会自动打开0, 1, 2三个文件描述符？"></a>进程为什么会自动打开0, 1, 2三个文件描述符？</h2><p><strong>答：</strong></p>
+</li>
+<li><code>fork()</code> 后的子进程直接复制父进程的 fd 数组，<code>exec()</code> 也不能将其替换；<ul>
+<li>子进程对 <code>struct task_struct</code> 是深拷贝，所以 fd 数组被复制；</li>
+<li>但是子进程对 fd 数组是浅拷贝，fd 数组中的 <code>struct file*</code> 仍然指向父进程创建的 <code>struct file </code> （共享）；</li>
+<li>所以子进程共享了文件状态标志 (O_APPEND, O_NONBLOCK, O_RDONLY 等)、当前文件偏移量。</li>
+</ul>
+</li>
+<li>除非该文件描述符使用<code>fcntl()</code>设置了<code>FD_CLOEXEC</code>标志，此时 <code>exec</code> 会关闭继承的文件描述符。</li>
+</ul>
+<p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/TYbyqK0Y/fork.png" alt="fork"/></a></p>
+<p><strong>进程为什么会自动打开0, 1, 2三个文件描述符？</strong></p>
 <ul>
 <li>shell进程启动时，会自动打开这三个文件描述符（可能由配置项决定）；</li>
 <li>shell利用<code>fork()</code>开启用户进程（子进程），该子进程复制父进程shell的所有文件描述符，于是0, 1, 2文件描述符被打开；</li>
@@ -618,27 +628,39 @@
 <p>测试代码：</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> err_sys(x)                                                             \</span></span><br><span class="line"><span class="meta">  &#123;                                                                            \</span></span><br><span class="line"><span class="meta">    perror(x);                                                                 \</span></span><br><span class="line"><span class="meta">    exit(1);                                                                   \</span></span><br><span class="line"><span class="meta">  &#125;</span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">pr_fl</span><span class="params">(<span class="type">int</span> fd)</span>;             <span class="comment">// 自定义函数：打印文件状态标志</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">set_fl</span><span class="params">(<span class="type">int</span> fd, <span class="type">int</span> flags)</span>; <span class="comment">// 自定义函数：设置文件状态标志</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">  pr_fl(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  set_fl(<span class="number">0</span>, O_APPEND);</span><br><span class="line">  pr_fl(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">set_fl</span><span class="params">(<span class="type">int</span> fd, <span class="type">int</span> flags)</span> &#123;</span><br><span class="line">  <span class="type">int</span> val;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> ((val = fcntl(fd, F_GETFL, <span class="number">0</span>)) &lt; <span class="number">0</span>)</span><br><span class="line">    err_sys(<span class="string">&quot;fcntl F_GETFL error&quot;</span>);</span><br><span class="line"></span><br><span class="line">  val |= flags;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (fcntl(fd, F_SETFL, val) &lt; <span class="number">0</span>)</span><br><span class="line">    err_sys(<span class="string">&quot;fcntl F_SETFL error&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">pr_fl</span><span class="params">(<span class="type">int</span> fd)</span> &#123;</span><br><span class="line">  <span class="type">int</span> val;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// do not guarantee success on certain system, check EINVAL first</span></span><br><span class="line">  <span class="keyword">if</span> ((val = fcntl(fd, F_GETFL, <span class="number">0</span>)) &lt; <span class="number">0</span>)</span><br><span class="line">    err_sys(<span class="string">&quot;fcntl F_GETFL error&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">switch</span> (val &amp; O_ACCMODE) &#123;</span><br><span class="line">  <span class="keyword">case</span> O_RDONLY:</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;read only&quot;</span>);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> O_WRONLY:</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;write only&quot;</span>);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> O_RDWR:</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;read write&quot;</span>);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">default</span>:</span><br><span class="line">    err_sys(<span class="string">&quot;unknown open type&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (val &amp; O_CREAT)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;, create&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> (val &amp; O_APPEND)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;, append&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> (val &amp; O_NONBLOCK)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;, non-block&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> (val &amp; O_SYNC)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;, synchronized file&quot;</span>);</span><br><span class="line">  <span class="comment">// if (val &amp; O_DSYNC)</span></span><br><span class="line">  <span class="comment">//   printf(&quot;, synchronize data&quot;);</span></span><br><span class="line"></span><br><span class="line">  <span class="built_in">putchar</span>(<span class="string">&#x27;\n&#x27;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-
-
-<h3 id="测试结果："><a href="#测试结果：" class="headerlink" title="测试结果："></a>测试结果：</h3><h4 id="第一次运行："><a href="#第一次运行：" class="headerlink" title="第一次运行："></a>第一次运行：</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ ./a.out</span><br><span class="line"><span class="built_in">read</span> write</span><br><span class="line"><span class="built_in">read</span> write, append</span><br></pre></td></tr></table></figure>
-
-<h4 id="第二次运行："><a href="#第二次运行：" class="headerlink" title="第二次运行："></a>第二次运行：</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ ./a.out</span><br><span class="line"><span class="built_in">read</span> write, append</span><br><span class="line"><span class="built_in">read</span> write, append</span><br></pre></td></tr></table></figure>
-
-<p><strong>分析：</strong></p>
 <ul>
+<li><p>第一次运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ ./a.out</span><br><span class="line"><span class="built_in">read</span> write</span><br><span class="line"><span class="built_in">read</span> write, append</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>第二次运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ ./a.out</span><br><span class="line"><span class="built_in">read</span> write, append</span><br><span class="line"><span class="built_in">read</span> write, append</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>分析<ul>
 <li>第二次运行时，文件描述符0的初始状态保持了第一次运行的结果！</li>
 <li>这是因为父进程shell的文件表项的文件状态标志被子进程<code>a.out</code>改变了。</li>
 </ul>
-<h4 id="第三次运行："><a href="#第三次运行：" class="headerlink" title="第三次运行："></a>第三次运行：</h4><p>重新启动shell，并运行<code>a.out</code></p>
+</li>
+</ul>
+</li>
+<li><p>第三次运行：</p>
+<p>重新启动shell，并运行<code>a.out</code></p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ ./a.out</span><br><span class="line"><span class="built_in">read</span> write</span><br><span class="line"><span class="built_in">read</span> write, append</span><br></pre></td></tr></table></figure>
 
-<p><strong>分析：</strong></p>
+<ul>
+<li><p>分析</p>
 <ul>
 <li>第三次运行，结果与第一次一致，这说明我们的猜测正确。</li>
 <li>父进程shell关闭之后，所有文件描述符被关闭，文件IO被关闭，文件表被释放。重启shell也就重置了文件表。</li>
 </ul>
-<h3 id="引申："><a href="#引申：" class="headerlink" title="引申："></a>引申：</h3><p>在此我们注意到，文件描述符0, 1, 2（标准输入、标准输出、标准错误）在一个shell及其所有子进程中，对应的文件（设备）是同一个。由于共享了文件表项，指向了同一个v-node表项，故都指向同一个虚拟终端。这与我们的平时观察一致，不然shell运行程序时，输入输出的入口在哪里呢？</p>
-<h2 id="Linux-文件锁与记录锁"><a href="#Linux-文件锁与记录锁" class="headerlink" title="Linux 文件锁与记录锁"></a>Linux 文件锁与记录锁</h2><p>参考链接：<a href="#">链接1</a>、<a href="#">链接2</a>。</p>
+</li>
+<li><p>引申：<br>在此我们注意到，文件描述符0, 1, 2（标准输入、标准输出、标准错误）在一个shell及其所有子进程中，对应的文件（设备）是同一个。由于共享了文件表项，指向了同一个v-node表项，故都指向同一个虚拟终端。这与我们的平时观察一致，不然shell运行程序时，输入输出的入口在哪里呢？</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="Linux-文件锁与记录锁"><a href="#Linux-文件锁与记录锁" class="headerlink" title="Linux 文件锁与记录锁"></a>Linux 文件锁与记录锁</h2><p>TODO</p>
+<p>参考链接：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/xuyh/p/3278881.html">链接1</a>、<a target="_blank" rel="noopener" href="https://www.cnblogs.com/fortunely/p/15219611.html">链接2</a>。</p>
 <h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
 <li>《UNIX 环境高级编程》</li>
 <li>《Linux 内核设计与实现（原书第 3 版） - Linux Kernel Development, Third Edition》，（美）拉芙（Love, R.）著；陈莉君，康华译. ——北京：机械工业出版社，2011.9（2021.5 重印）</li>
@@ -694,7 +716,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 03:08:57" itemprop="dateModified" datetime="2025-08-17T03:08:57+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 03:45:18" itemprop="dateModified" datetime="2025-08-17T03:45:18+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -951,7 +973,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 03:08:57" itemprop="dateModified" datetime="2025-08-17T03:08:57+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 03:45:18" itemprop="dateModified" datetime="2025-08-17T03:45:18+00:00">2025-08-17</time>
               </span>
 
           
@@ -1180,7 +1202,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 03:08:57" itemprop="dateModified" datetime="2025-08-17T03:08:57+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 03:45:18" itemprop="dateModified" datetime="2025-08-17T03:45:18+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1301,7 +1323,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 03:08:57" itemprop="dateModified" datetime="2025-08-17T03:08:57+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 03:45:18" itemprop="dateModified" datetime="2025-08-17T03:45:18+00:00">2025-08-17</time>
               </span>
 
           
@@ -1450,7 +1472,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 03:08:57" itemprop="dateModified" datetime="2025-08-17T03:08:57+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 03:45:18" itemprop="dateModified" datetime="2025-08-17T03:45:18+00:00">2025-08-17</time>
               </span>
 
           
@@ -1516,7 +1538,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 03:08:57" itemprop="dateModified" datetime="2025-08-17T03:08:57+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 03:45:18" itemprop="dateModified" datetime="2025-08-17T03:45:18+00:00">2025-08-17</time>
               </span>
 
           
@@ -1654,7 +1676,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 03:08:57" itemprop="dateModified" datetime="2025-08-17T03:08:57+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 03:45:18" itemprop="dateModified" datetime="2025-08-17T03:45:18+00:00">2025-08-17</time>
               </span>
 
           
