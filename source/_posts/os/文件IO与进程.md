@@ -139,7 +139,7 @@ tags:
 <a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/hG2hPTDM/image.png" alt="两个独立进程各自打开同一个文件"/></a>
 
 - O_APPEND：
-如果使用 `O_APPEND` 标志打开一个文件，那么相应的标志也被设置到文件表项的文件状态标志中。每次对文件执行写操作时，文件表项中的当前文件偏移量首先会被设置为 i 节点表项中的文件长度（相对其他进程来说是原子操作）。这就使得每次写入的数据都追加到文件的当前尾端处。[这里](https://blog.csdn.net/yangbodong22011/article/details/63064166)有一个测试的例子，文章结论不见得正确，请参考评论的讨论。
+如果使用 `O_APPEND` 标志打开一个文件，那么相应的标志也被设置到文件表项的文件状态标志中。每次对文件执行写操作时，文件表项中的当前文件偏移量首先会被设置为 i 节点表项中的文件长度（相对其他进程来说是**原子**操作）。这就使得每次写入的数据都追加到文件的当前尾端处。[这里](https://blog.csdn.net/yangbodong22011/article/details/63064166)有一个测试的例子，文章结论不见得正确，请参考评论的讨论。
 
 以下是 `man page "write(2)"`：
 
@@ -150,28 +150,32 @@ tags:
 
 ---
 
-## dup后的内核数据结构
+## `dup()`后的内核数据结构
+
+`dup()` / `dup2()` 只复制 fd ，也就是在 fd 数组中新增了一个 fd 项。一般用来重定向。
 
 <a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/s2mGQbcY/dup-1.png" alt="dup(1)"/></a>
 
 
-
 ## fork与文件共享
+
+- 进程每打开一个文件，都会新建一个 `struct file` ，并添加到 fd 数组或 fd 表中。
+  - 对同一个文件，不同进程拥有各自的文件表项。
+  - 但是对每个文件，v节点表项在整个操作系统中只有一份。
+- `fork()` 后的子进程直接复制父进程的 fd 数组，`exec()` 也不能将其替换；
+  - 子进程对 `struct task_struct` 是深拷贝，所以 fd 数组被复制；
+  - 但是子进程对 fd 数组是浅拷贝，fd 数组中的 `struct file*` 仍然指向父进程创建的 `struct file ` （共享）；
+  - 所以子进程共享了文件状态标志 (O_APPEND, O_NONBLOCK, O_RDONLY 等)、当前文件偏移量。
+- 除非该文件描述符使用`fcntl()`设置了`FD_CLOEXEC`标志，此时 `exec` 会关闭继承的文件描述符。
 
 <a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/TYbyqK0Y/fork.png" alt="fork"/></a>
 
-- fork之后子进程复制父进程所有的打开描述符，并且保持其打开，即使执行了`exec()`，除非该文件描述符使用`fcntl()`设置了`FD_CLOEXEC`标志。
-- 对同一个文件，不同进程拥有各自的文件表项。
-- 但是对每个文件，v节点表项在整个操作系统中只有一份。
 
+**进程为什么会自动打开0, 1, 2三个文件描述符？**
 
-## 进程为什么会自动打开0, 1, 2三个文件描述符？
-
-**答：**
 - shell进程启动时，会自动打开这三个文件描述符（可能由配置项决定）；
 - shell利用`fork()`开启用户进程（子进程），该子进程复制父进程shell的所有文件描述符，于是0, 1, 2文件描述符被打开；
 - 由于子进程共享父进程的文件表项，子进程对文件状态标志（读、写、同步或非阻塞等）的修改，将会影响父进程。
-
 
 
 测试代码：
@@ -247,55 +251,49 @@ void pr_fl(int fd) {
 }
 ```
 
+- 第一次运行：
 
+  ```bash
+  $ ./a.out
+  read write
+  read write, append
+  ```
 
-### 测试结果：
+- 第二次运行：
 
-#### 第一次运行：
+  ```bash
+  $ ./a.out
+  read write, append
+  read write, append
+  ```
 
-```bash
-$ ./a.out
-read write
-read write, append
-```
+  - 分析
+    - 第二次运行时，文件描述符0的初始状态保持了第一次运行的结果！
+    - 这是因为父进程shell的文件表项的文件状态标志被子进程`a.out`改变了。
 
-#### 第二次运行：
+- 第三次运行：
 
-```bash
-$ ./a.out
-read write, append
-read write, append
-```
+  重新启动shell，并运行`a.out`
 
-**分析：**
-- 第二次运行时，文件描述符0的初始状态保持了第一次运行的结果！
-- 这是因为父进程shell的文件表项的文件状态标志被子进程`a.out`改变了。
+  ```bash
+  $ ./a.out
+  read write
+  read write, append
+  ```
 
-#### 第三次运行：
+  - 分析
+    - 第三次运行，结果与第一次一致，这说明我们的猜测正确。
+    - 父进程shell关闭之后，所有文件描述符被关闭，文件IO被关闭，文件表被释放。重启shell也就重置了文件表。
 
-重新启动shell，并运行`a.out`
-
-```bash
-$ ./a.out
-read write
-read write, append
-```
-
-**分析：**
-- 第三次运行，结果与第一次一致，这说明我们的猜测正确。
-- 父进程shell关闭之后，所有文件描述符被关闭，文件IO被关闭，文件表被释放。重启shell也就重置了文件表。
-
-
-
-### 引申：
-在此我们注意到，文件描述符0, 1, 2（标准输入、标准输出、标准错误）在一个shell及其所有子进程中，对应的文件（设备）是同一个。由于共享了文件表项，指向了同一个v-node表项，故都指向同一个虚拟终端。这与我们的平时观察一致，不然shell运行程序时，输入输出的入口在哪里呢？
-
+  - 引申：
+    在此我们注意到，文件描述符0, 1, 2（标准输入、标准输出、标准错误）在一个shell及其所有子进程中，对应的文件（设备）是同一个。由于共享了文件表项，指向了同一个v-node表项，故都指向同一个虚拟终端。这与我们的平时观察一致，不然shell运行程序时，输入输出的入口在哪里呢？
 
 
 ## Linux 文件锁与记录锁
 
-参考链接：[链接1](#)、[链接2](#)。
+TODO
 
+参考链接：[链接1](https://www.cnblogs.com/xuyh/p/3278881.html)、[链接2](https://www.cnblogs.com/fortunely/p/15219611.html)。
 
 
 ## 参考
