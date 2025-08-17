@@ -46,6 +46,12 @@ https://www.xiaolincoding.com/os/8_network_system/zero_copy.html#%E5%A6%82%E4%BD
 - select
 - poll
 - epoll
+- 非阻塞IO
+
+如果 select / poll / epoll 通知可读写，那么一定可读写吗？
+答案是不一定。因为内核不是**实时地**检查内核缓冲区是否有空间或有数据，所以内核的通知有时间差和虚假性。
+而 epoll 等函数只关注事件变化，不检查缓冲区。这样可以提高效率。
+最终的结果就是鼓励用户程序尝试，但是不保证一定成功，也就是可能阻塞。所以需要非阻塞IO来进一步提高性能。
 
 ### epoll
 
