@@ -218,7 +218,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2025-08-17 10:39:19 / Modified: 04:48:02" itemprop="dateCreated datePublished" datetime="2025-08-17T10:39:19+00:00">2025-08-17</time>
+              <time title="Created: 2025-08-17 10:39:19 / Modified: 04:49:01" itemprop="dateCreated datePublished" datetime="2025-08-17T10:39:19+00:00">2025-08-17</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -381,7 +381,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 04:48:02" itemprop="dateModified" datetime="2025-08-17T04:48:02+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 04:49:01" itemprop="dateModified" datetime="2025-08-17T04:49:01+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -458,7 +458,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 04:48:02" itemprop="dateModified" datetime="2025-08-17T04:48:02+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 04:49:01" itemprop="dateModified" datetime="2025-08-17T04:49:01+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -635,11 +635,11 @@
 <li>除非该文件描述符使用<code>fcntl()</code>设置了<code>FD_CLOEXEC</code>标志，此时 <code>exec</code> 会关闭继承的文件描述符。</li>
 </ul>
 <p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/TYbyqK0Y/fork.png" alt="fork"/></a></p>
-<p><strong>子进程对文件状态标志、文件偏移量的修改，会不会影响父进程？</strong></p>
+<p><strong>子进程对文件表项的修改，会不会影响父进程？</strong></p>
 <ul>
 <li>shell进程启动时，会自动打开这三个文件描述符（可能由配置项决定）；</li>
 <li>shell利用<code>fork()</code>开启用户进程（子进程），该子进程复制父进程shell的所有文件描述符，于是0, 1, 2文件描述符被打开；</li>
-<li>由于子进程<strong>共享</strong>父进程的<strong>文件表项</strong>，子进程对文件状态标志（读、写、同步或非阻塞等）的修改，将<strong>会影响父进程</strong>。</li>
+<li>由于子进程<strong>共享</strong>父进程的<strong>文件表项</strong>，子进程对文件状态标志（读、写、同步或非阻塞等）、文件偏移量的修改，将<strong>会影响父进程</strong>。</li>
 </ul>
 <p>测试代码：</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> err_sys(x)                                                             \</span></span><br><span class="line"><span class="meta">  &#123;                                                                            \</span></span><br><span class="line"><span class="meta">    perror(x);                                                                 \</span></span><br><span class="line"><span class="meta">    exit(1);                                                                   \</span></span><br><span class="line"><span class="meta">  &#125;</span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">pr_fl</span><span class="params">(<span class="type">int</span> fd)</span>;             <span class="comment">// 自定义函数：打印文件状态标志</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">set_fl</span><span class="params">(<span class="type">int</span> fd, <span class="type">int</span> flags)</span>; <span class="comment">// 自定义函数：设置文件状态标志</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">  pr_fl(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  set_fl(<span class="number">0</span>, O_APPEND);</span><br><span class="line">  pr_fl(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">set_fl</span><span class="params">(<span class="type">int</span> fd, <span class="type">int</span> flags)</span> &#123;</span><br><span class="line">  <span class="type">int</span> val;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> ((val = fcntl(fd, F_GETFL, <span class="number">0</span>)) &lt; <span class="number">0</span>)</span><br><span class="line">    err_sys(<span class="string">&quot;fcntl F_GETFL error&quot;</span>);</span><br><span class="line"></span><br><span class="line">  val |= flags;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (fcntl(fd, F_SETFL, val) &lt; <span class="number">0</span>)</span><br><span class="line">    err_sys(<span class="string">&quot;fcntl F_SETFL error&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">pr_fl</span><span class="params">(<span class="type">int</span> fd)</span> &#123;</span><br><span class="line">  <span class="type">int</span> val;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// do not guarantee success on certain system, check EINVAL first</span></span><br><span class="line">  <span class="keyword">if</span> ((val = fcntl(fd, F_GETFL, <span class="number">0</span>)) &lt; <span class="number">0</span>)</span><br><span class="line">    err_sys(<span class="string">&quot;fcntl F_GETFL error&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">switch</span> (val &amp; O_ACCMODE) &#123;</span><br><span class="line">  <span class="keyword">case</span> O_RDONLY:</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;read only&quot;</span>);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> O_WRONLY:</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;write only&quot;</span>);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> O_RDWR:</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;read write&quot;</span>);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">default</span>:</span><br><span class="line">    err_sys(<span class="string">&quot;unknown open type&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (val &amp; O_CREAT)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;, create&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> (val &amp; O_APPEND)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;, append&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> (val &amp; O_NONBLOCK)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;, non-block&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> (val &amp; O_SYNC)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;, synchronized file&quot;</span>);</span><br><span class="line">  <span class="comment">// if (val &amp; O_DSYNC)</span></span><br><span class="line">  <span class="comment">//   printf(&quot;, synchronize data&quot;);</span></span><br><span class="line"></span><br><span class="line">  <span class="built_in">putchar</span>(<span class="string">&#x27;\n&#x27;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -734,7 +734,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 04:48:02" itemprop="dateModified" datetime="2025-08-17T04:48:02+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 04:49:01" itemprop="dateModified" datetime="2025-08-17T04:49:01+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -991,7 +991,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 04:48:02" itemprop="dateModified" datetime="2025-08-17T04:48:02+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 04:49:01" itemprop="dateModified" datetime="2025-08-17T04:49:01+00:00">2025-08-17</time>
               </span>
 
           
@@ -1220,7 +1220,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 04:48:02" itemprop="dateModified" datetime="2025-08-17T04:48:02+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 04:49:01" itemprop="dateModified" datetime="2025-08-17T04:49:01+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1341,7 +1341,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 04:48:02" itemprop="dateModified" datetime="2025-08-17T04:48:02+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 04:49:01" itemprop="dateModified" datetime="2025-08-17T04:49:01+00:00">2025-08-17</time>
               </span>
 
           
@@ -1490,7 +1490,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 04:48:02" itemprop="dateModified" datetime="2025-08-17T04:48:02+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 04:49:01" itemprop="dateModified" datetime="2025-08-17T04:49:01+00:00">2025-08-17</time>
               </span>
 
           
@@ -1556,7 +1556,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 04:48:02" itemprop="dateModified" datetime="2025-08-17T04:48:02+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 04:49:01" itemprop="dateModified" datetime="2025-08-17T04:49:01+00:00">2025-08-17</time>
               </span>
 
           
@@ -1694,7 +1694,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 04:48:02" itemprop="dateModified" datetime="2025-08-17T04:48:02+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 04:49:01" itemprop="dateModified" datetime="2025-08-17T04:49:01+00:00">2025-08-17</time>
               </span>
 
           
