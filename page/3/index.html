@@ -193,303 +193,6 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/01/17/IC/2.%E5%9F%BA%E4%BA%8EVerilog%E7%9A%84%E6%95%B0%E5%AD%97IC%E8%AE%BE%E8%AE%A1%E6%96%B9%E6%B3%95/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/01/17/IC/2.%E5%9F%BA%E4%BA%8EVerilog%E7%9A%84%E6%95%B0%E5%AD%97IC%E8%AE%BE%E8%AE%A1%E6%96%B9%E6%B3%95/" class="post-title-link" itemprop="url">第2章 基于Verilog的数字IC设计方法</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-01-17 15:37:49" itemprop="dateCreated datePublished" datetime="2025-01-17T15:37:49+00:00">2025-01-17</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 05:25:52" itemprop="dateModified" datetime="2025-08-17T05:25:52+00:00">2025-08-17</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="1-参考"><a href="#1-参考" class="headerlink" title="1. 参考"></a>1. 参考</h2><p>白栎旸. 数字IC设计入门（微课视频版）[M]. 北京: 清华大学出版社，2023-09-01:第2章.</p>
-<h2 id="2-数字器件与Verilog语法"><a href="#2-数字器件与Verilog语法" class="headerlink" title="2. 数字器件与Verilog语法"></a>2. 数字器件与Verilog语法</h2><p>虽然 Foundry 提供的可用元器件种类较多，但数字设计师并不特别在意这些元器件，在其头脑中，只存在 10 种简单元器件：</p>
-<ul>
-<li>与门、或门、非门、异或门、</li>
-<li>加法器、乘法器、移位器、</li>
-<li>选择器、比较器、</li>
-<li>触发器</li>
-</ul>
-<p>注意，虽然加法器、乘法器、比较器等元器件可以由逻辑门生成，但是从Verilog常用的表达式来看，一般直接用“+”这个符号表示加法，而很少用门电路去直接搭建。因为现代芯片规模庞大，功能复杂，工程师应该将主要精力投入到重点难题的实现中，而对于如何实现加法器等最底层的问题，应该交给综合步骤自动完成。</p>
-<p>基本元器件中不包括除法，因为除法的实现不同于乘法，它受到被除数、除数、商的数值范围限制，有时需要用到迭代等复杂方法实现，还有分母为 0 等异常情况需要报告，所以不属于Verilog中常用的直接运算方式。</p>
-<p>务必注意，数字前端写的Verilog仅仅是代码，而非程序，其代码是代替电路图的一种文本语言描述。与或非加乘等指的是元器件。写Verilog时要有电路概貌和时序。</p>
-<p>10种数字器件的符号表示及Verilog表示方法见表格：</p>
-<figure style="text-align:center;">
-<figcaption>10种数字逻辑器件和Verilog表示</figcaption>
-<img src='https://i.postimg.cc/B65vgDMk/20250117214703.jpg' border='0' alt='20250117214703' width="90%"/>
-</figure>
-
-<p>真正的元器件库中有很多复杂的元器件，如图所示：</p>
-<figure style="text-align:center;">
-<img src="https://i.postimg.cc/6QSLdsyT/20250117214659.jpg" alt="20250117214659" width="50%"/>
-<figcaption>复杂元器件示例</figcaption>
-</figure>
-
-<p>但是这些元器件都可以看作以上10种基础元器件的组合，不会超出原有的功能范围。所以设计时，头脑中只需要有以上10种元器件。</p>
-<p>数字IC设计又称为数字逻辑设计，因为其本身就是逻辑的，只有<code>0</code>和<code>1</code>两种逻辑。</p>
-<ul>
-<li>组合逻辑：电平输入和电平输出。元器件结构简单，但问题是如果输入含有毛刺，输出就有毛刺。</li>
-</ul>
-<img src='https://i.postimg.cc/C1s5wkTY/20250117215056.jpg' border='0' alt='20250117215056' width="50%"/>
-
-<figure style="text-align:center;">
-<img src='https://i.postimg.cc/NMH8DNHD/20250117214654.jpg' border='0' alt='20250117214654' width="50%"/>
-<figcaption>组合逻辑电路的毛刺</figcaption>
-</figure>
-
-<ul>
-<li>时序逻辑：以时钟为驱动源。一个触发器，在时钟的驱动（边沿触发）下，将 D 输入端的信号送到 Q 端输出。</li>
-</ul>
-<img src='https://i.postimg.cc/BbfTVx50/20250117214649.jpg' border='0' alt='20250117214649' width="100%"/>
-
-<p>触发器也可以叫寄存器(register, reg)，因为如果没有时钟驱动，那么Q端会保持原有状态不变，也就寄存了上一次触发时的D端信息。而组合逻辑，输出端是无法寄存信息的。</p>
-<p>时序逻辑是数字电路的基础。10 种元器件中，只有触发器属于时序逻辑器件，所以触发器是整个数字电路的基础。从 RTL 的名称可以知晓，RTL 意为寄存器传输层，直译过来就是：从一个触发器的输出到另一个触发器的输入，通过触发器的层层传递，最终实现了一个功能完整的数字电路。</p>
-<p>数字电路的时序分析，主要是分析两个触发器之间的路径延迟。</p>
-<p>进行前仿时，看到的仿真波形会和本图一样，是理想的，而使用版图网表进行后仿时，仿真波形是带延迟的。</p>
-<p>上图中触发器的符号表示，它共有4个引脚，除输入的D端和输出的<code>Q</code>端外，三角形位置表示时钟，下方的<code>rst_n</code>表示复位，其上的圆圈表示<code>0</code>电平有效，即<code>rst_n</code>等于<code>0</code>时，寄存器处于复位状态。此时，<code>Q</code>端保持<code>0</code>，即使时钟和<code>D</code>端有动作，<code>Q</code>端也不会变化，只有当<code>rst_n</code>等于<code>1</code>时，才解除复位状态，寄存器方能正常工作。</p>
-<h2 id="3-可综合的Verilog设计语法"><a href="#3-可综合的Verilog设计语法" class="headerlink" title="3. 可综合的Verilog设计语法"></a>3. 可综合的Verilog设计语法</h2><p>能变成电路的Verilog表达叫做可综合，在设计电路时，只能使用可综合的语法表述。而在仿真时，由于只在计算机上运行，不留片，可使用不能综合的高级语法，以增加语言表达的灵活度和复杂度。</p>
-<p>可综合的电路表述只有两种：</p>
-<ul>
-<li><code>assign</code></li>
-<li><code>always</code></li>
-</ul>
-<p>与门：</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">assign</span> z = a &amp; b;</span><br></pre></td></tr></table></figure>
-
-<p>触发器：</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(<span class="keyword">posedge</span> clk <span class="keyword">or</span> <span class="keyword">negedge</span> rst_n)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (!rst_n)</span><br><span class="line">        Q &lt;= <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        Q &lt;= D;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<p>符号说明：</p>
-<ul>
-<li><code>&lt;=</code>: 非阻塞赋值，凡是时序逻辑，都用非阻塞赋值；</li>
-<li><code>=</code>: 阻塞赋值，凡是组合逻辑，都用阻塞赋值；</li>
-<li><code>@(...)</code>: 括号中的列表叫敏感列表，意思是，<code>always</code>块输出的<code>Q</code>对列表中信号保持敏感，如果敏感信号动，则Q也会动。</li>
-<li><code>posedge clk</code>: 意思是时钟的上升沿；</li>
-<li><code>negedge rst_n</code>: 意思是时钟的下降沿。</li>
-<li><code>begin</code> &#x2F; <code>end</code>: 相当于 C 语言中的 <code>&#123;&#125;</code> ，如果语句只有一条，可以不写 <code>begin</code> &#x2F; <code>end</code> 。</li>
-</ul>
-<p><code>always</code>不仅可以表示时序逻辑，也可以表示组合逻辑。如下是与门的另一种表示：</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    z = a &amp; b;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<p>其中，<code>@(*)</code>中的<code>*</code>是省略表述的敏感列表，综合器会自动在<code>always</code>块中寻找与输出<code>z</code>相关的输入信号，自动填入敏感列表中。本例中，会自动将<code>a</code>和<code>b</code>作为输入填入。这种让工具自动填入的方式是可靠且推荐的。</p>
-<p>Verilog的语法规律：</p>
-<ol>
-<li>时序逻辑，必须使用<code>always</code>块，并同时使用<code>&lt;=</code>非阻塞赋值。在其敏感列表中，必须出现时钟信号的边沿和复位信号的边沿。</li>
-<li>组合逻辑，可以使用<code>assign</code>，也可以使用<code>always</code>块，但是它们的赋值是<code>=</code>阻塞赋值。若使用<code>always</code>块，则敏感列表中使用<code>*</code>。若遇到敏感列表中带有<code>*</code>，则可以直接判定为组合逻辑。</li>
-</ol>
-<p>再次强调，Verilog的语法表达，描述的都是电路，因此例子中的 <code>z</code>、<code>a</code>、<code>b</code>、<code>clk</code>、<code>rst_n</code>、<code>Q</code>、<code>D</code> 都称为信号，在电路中都是实实在在的金属连线，切勿称为变量。</p>
-<h2 id="4-对寄存器的深度解读"><a href="#4-对寄存器的深度解读" class="headerlink" title="4. 对寄存器的深度解读"></a>4. 对寄存器的深度解读</h2><p>一般会使用时钟上升沿来驱动寄存器。对于同样的功能需求，双沿触发需要的时钟慢，但要求时钟是<code>50%</code>占空比，而单沿触发，对时钟的要求快一倍，但对时钟形状的要求降低很多。</p>
-<p>复位信号<code>rst_n</code>，以<code>0</code>电平作为复位电平，1电平解复位，是通用标准，很少有反过来使用的。原因是，数字电路的复位信号是模拟电路给的，通常，模拟电路将其命名为<code>POR(Power On Reset)</code>，即上电复位信号。芯片刚通电时，电压小，逐渐上升到要求的电压，例如<code>1.8V</code>，<code>POR</code>本质上是一个电压上升的标志，模拟电路放一个比较器，将输入电压与<code>0.9V</code>比较，电压小于<code>0.9V</code>，<code>POR</code>为<code>0</code>，电压大于<code>0.9V</code>，<code>POR</code>为<code>1</code>。因而复位信号上电时总是先<code>0</code>后<code>1</code>，数字寄存器需要在复位信号为<code>0</code>的阶段保持复位态，不能运行，因为此时芯片电压不足，不能保证正常运行，而复位信号变成<code>1</code>，说明上电完毕，电压充足，寄存器解除复位进行正常运行是安全的。</p>
-<p>需要特别澄清的是语句<code>negedge rst_n</code>，但是经过仿真和与模拟工程师确认，复位信号对寄存器的作用不是通过信号沿来驱动的，而是通过电平来驱动，也就是 <code>0</code> 信号具有绝对控制权，只要 <code>rst_n</code> 为 <code>0</code> ，那么立即复位。</p>
-<h2 id="5-非阻塞赋值和阻塞赋值的区别"><a href="#5-非阻塞赋值和阻塞赋值的区别" class="headerlink" title="5. 非阻塞赋值和阻塞赋值的区别"></a>5. 非阻塞赋值和阻塞赋值的区别</h2><p>非阻塞赋值的意思是该句表达不会阻塞后续表达的执行。如下例中，<code>X &lt;＝ 0</code>的执行，不会阻碍到<code>Y &lt;＝ 0</code>的执行，它们是同时发生的：</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(<span class="keyword">posedge</span> clk <span class="keyword">or</span> <span class="keyword">negedge</span> rst_n)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (!rst_n)</span><br><span class="line">    <span class="keyword">begin</span></span><br><span class="line">        X &lt;= <span class="number">0</span>;</span><br><span class="line">        Y &lt;= <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    <span class="keyword">begin</span></span><br><span class="line">        X &lt;= A;</span><br><span class="line">        Y &lt;= B;</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<p>而阻塞赋值，意思是如果前一句不执行，后一句就无法执行，前一句会阻塞后一句。对于可综合的Verilog来讲，其实并不会阻塞。在下例中， <code>always</code> 块的目的是创造 <code>z</code> 和 <code>k</code> 两个信号。 <code>k ＝ 3 * z</code> 和 <code>z ＝ a &amp; b</code> 是两个不同的电路， <code>k ＝ 3 * z</code> 电路不会被 <code>z ＝ a &amp; b</code> 阻塞。</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    z = a &amp; b;  <span class="comment">// 与门</span></span><br><span class="line">    k = <span class="number">3</span> * z;  <span class="comment">// 乘法器</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<p>本例对应的原理图如图所示：</p>
-<img src='https://i.postimg.cc/MTs1Dhsh/20250117224729.jpg' border='0' alt='20250117224729' width="50%"/>
-
-<p>可见，对于电路描述来讲，语法只是表示一种连接关系，并没有执行先后顺序的说法，但如果本例使用非阻塞赋值，语法检查会报错，因此，这是一种惯用方法。阻塞赋值在Verilog中真正体现阻塞，是在仿真使用的不可综合语法中，到第3章再做解释。</p>
-<h2 id="6-组合逻辑的表达式"><a href="#6-组合逻辑的表达式" class="headerlink" title="6. 组合逻辑的表达式"></a>6. 组合逻辑的表达式</h2><p>对于一个组合逻辑电路，应该在什么情况下用assign，在什么情况下用always呢？</p>
-<p>比较简单的逻辑适合使用assign方式，较为复杂的逻辑应使用always块。下例给出了一个适合用always块的较复杂例子：</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (s1)</span><br><span class="line">        a = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s2)</span><br><span class="line">        a = <span class="number">2</span>;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s3)</span><br><span class="line">        a = <span class="number">3</span>;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        a = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<p>同样的功能若改用assign，则为下例所示。很明显，用always块表达意思更加清晰。</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">assign</span> a = s1 ? <span class="number">1</span> : (s2 ? <span class="number">2</span> : (s3 ? <span class="number">3</span> : <span class="number">0</span>));</span><br></pre></td></tr></table></figure>
-
-<p>前面解释了敏感列表中的 <code>*</code> 在组合逻辑 <code>always</code> 块中的作用。如果读者使用过一些老IP，则可能还会看到下例所示的表达，这种表达已随着综合器的进步渐渐被淘汰了，不建议初学者使用。</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(s1 <span class="keyword">or</span> s2 <span class="keyword">or</span> s3)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (s1)</span><br><span class="line">        a = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s2)</span><br><span class="line">        a = <span class="number">2</span>;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s3)</span><br><span class="line">        a = <span class="number">3</span>;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        a = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="7-组合逻辑中的选择器"><a href="#7-组合逻辑中的选择器" class="headerlink" title="7. 组合逻辑中的选择器"></a>7. 组合逻辑中的选择器</h2><h3 id="7-1-二选一-MUX-如何表达？"><a href="#7-1-二选一-MUX-如何表达？" class="headerlink" title="7.1. 二选一 MUX 如何表达？"></a>7.1. 二选一 MUX 如何表达？</h3><img src='https://i.postimg.cc/L6vnwrjX/20250117225844.jpg' border='0' alt='20250117225844' width="50%"/>
-
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 第 1 种表达， assign 完整表达</span></span><br><span class="line"><span class="keyword">assign</span> z = (s == <span class="number">1</span>) ? b : a;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 第 2 种表达， assign 简化表达</span></span><br><span class="line"><span class="keyword">assign</span> z = s ? b : a;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 第 3 种表达， always 块表达</span></span><br><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (s)</span><br><span class="line">        z = b;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        z = a;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<h3 id="7-2-多选一MUX，又该如何表示呢？"><a href="#7-2-多选一MUX，又该如何表示呢？" class="headerlink" title="7.2. 多选一MUX，又该如何表示呢？"></a>7.2. 多选一MUX，又该如何表示呢？</h3><p>因为使用 <code>assign</code> 表示显然会过于复杂，所以需要用 <code>always</code> 块表示。表示方法有两种，注意两种表达综合出来的电路是不同的。</p>
-<p>其一如下例所示。</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (s == <span class="number">0</span>)</span><br><span class="line">        z = a;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s == <span class="number">1</span>)</span><br><span class="line">        z = b;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s == <span class="number">2</span>)</span><br><span class="line">        z = c;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s == <span class="number">3</span>)</span><br><span class="line">        z = d;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s == <span class="number">4</span>)</span><br><span class="line">        z = e;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s == <span class="number">5</span>)</span><br><span class="line">        z = f;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        z = a; <span class="comment">// 默认值</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<p>综合出来的电路如图所示：</p>
-<img src='https://i.postimg.cc/x84BbfW8/20250117230859.jpg' border='0' alt='20250117230859' width="100%"/>
-
-<p>可见，使用 <code>if</code> 表述的选择关系，综合的电路是一层一层逐渐展开的，写在 <code>if</code> 最前面的语句，掌握着最终的选择权，因而优先级最高，再往后优先级逐层下降，而使用 <code>case</code> 表述的MUX，每个选择都是并列的，优先级相同，见下文。</p>
-<p>其二如下例所示。</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">case</span> (s)</span><br><span class="line">        <span class="number">0</span>: z = a;</span><br><span class="line">        <span class="number">1</span>: z = b;</span><br><span class="line">        <span class="number">2</span>: z = c;</span><br><span class="line">        <span class="number">3</span>: z = d;</span><br><span class="line">        <span class="number">4</span>: z = e;</span><br><span class="line">        <span class="number">5</span>: z = f;</span><br><span class="line">        <span class="keyword">default</span>: z = a; <span class="comment">// 默认值</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<p>所综合的电路如图所示：</p>
-<img src='https://i.postimg.cc/PrfqW20k/20250117230221.jpg' border='0' alt='20250117230221' width="30%"/>
-
-<p>使用 <code>if</code> 表述，有可能出现隐藏逻辑，即设计者没有考虑到，但实际会被综合出来的逻辑门。隐藏逻辑是设计的隐患，设计者在写代码时应该清楚其逻辑含义，尽量避免出现隐藏逻辑。为了避免设计中出现隐藏逻辑，在实际项目中往往会提倡使用 <code>case</code> 语句来表达。</p>
-<p>下例中反映出 <code>if</code> 的优先级特征，条件 <code>s &lt; 5</code> 包含 <code>s ＝＝ 4</code> 的情况，因为 <code>s &lt; 5</code> 优先，因而当 <code>s＝＝4</code> 时， <code>z</code> 的赋值是 <code>a</code> 而不是 <code>b</code> 。如果设计意图是要在 <code>s ＝＝ 4</code> 时使 <code>z ＝ b</code> ，则应当将其写在 <code>s &lt; 5</code> 之前。</p>
-<!--  -->
-
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (s &lt; <span class="number">5</span>)</span><br><span class="line">        z = a;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s == <span class="number">4</span>)</span><br><span class="line">        z = b;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        z = c;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<p>case有一种变体是 <code>casez</code> ，它可以拓展case的使用范围：</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">casez</span>(s)</span><br><span class="line">        <span class="number">16&#x27;b00011</span>???????????: z = a;</span><br><span class="line">        <span class="number">16&#x27;b10111111</span>????<span class="number">0000</span>: z = b;</span><br><span class="line">        <span class="number">16&#x27;b1111</span>?<span class="number">001000</span>?????: z = c;</span><br><span class="line">        <span class="keyword">default</span>: z = d;</span><br><span class="line">    <span class="keyword">endcase</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<p>其中，问号的意思是0或1都能匹配，类似计算机语言中的通配符。</p>
-<p>虽然很多项目提倡使用 <code>case</code> 或 <code>casez</code> 来表述选择器，但究竟是使用 <code>if</code> 还是 <code>case</code> ，仍然取决于表达的需要。总体而言， <code>case</code> 便于判断是否相等的情况，而 <code>if</code> 适合判断大于或小于关系，不同情况用不同的表达，可以使Verilog逻辑更加清晰，也更便于维护。</p>
-<p>注意组合逻辑中的 <code>if</code> 和 <code>else if</code> ，最后必须跟一句 <code>else</code> ，使整体逻辑完整。若没有else，则该电路会综合出一个锁存器(<code>Latch</code>)。锁存器不属于10种基本元器件之一。在设计中，凡有寄存需求，应尽量使用触发器，避免使用锁存器，特别要避免不写 <code>else</code> 引起的隐藏逻辑。</p>
-<h2 id="8-Verilog中的for循环"><a href="#8-Verilog中的for循环" class="headerlink" title="8. Verilog中的for循环"></a>8. Verilog中的for循环</h2><p>关键字：</p>
-<ul>
-<li><code>for</code></li>
-<li><code>generate</code> &#x2F; <code>endgenerate</code> &#x2F; <code>genvar</code></li>
-<li><code>integer</code>: 是编译时的变量，不是信号，不会被综合成电路或金属连线。如果变量 <code>ii</code> 声明为 <code>wire</code> 或 <code>reg</code> ，然后用 <code>a[ii]</code> 表示一个信号，则语法不能综合为电路。但是 <code>ii</code> 声明为 <code>integer</code> ，那么 <code>a[ii]</code> 将被综合成信号。</li>
-</ul>
-<h2 id="9-Verilog中的数值表示方法"><a href="#9-Verilog中的数值表示方法" class="headerlink" title="9. Verilog中的数值表示方法"></a>9. Verilog中的数值表示方法</h2><p> 数值一般不直接写，如果直接写，则工具会理解为十进制32比特数，但实际中的信号位宽多种多样，选用哪种进制表示数值也有多种选择，因此需要将这两方面予以规定。</p>
-<table>
-<thead>
-<tr>
-<th>进制制</th>
-<th>符号号</th>
-<th>举例</th>
-<th>解释</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>二进制</td>
-<td>b</td>
-<td>4’b0110</td>
-<td>4 比特数，用二进制表示为 0110</td>
-</tr>
-<tr>
-<td>十进制</td>
-<td>d</td>
-<td>8’d3</td>
-<td>8 比特数，用十进制表示为 3</td>
-</tr>
-<tr>
-<td>十六进制</td>
-<td>h</td>
-<td>15’h1abc</td>
-<td>15 比特数，用十六进制表示为 1abc</td>
-</tr>
-</tbody></table>
-<p> 特殊的数值表示方法： </p>
-<p> <code>&#123;5&#123;1&#39;b0&#125;&#125;</code> 表示5个比特0，再如 <code>&#123;4&#123;1&#39;b1&#125;&#125;</code> 表示4个比特1。这种表示一般不用，但是它有优点，上例中的比特数量5和4可以用参数替代，若Verilog中有一个参数 <code>kkk</code> ，则可以写为 <code>&#123;(kkk)&#123;1&#39;b0&#125;&#125;</code> ，甚至可以写成用计算式表示的位宽，如 <code>&#123;(kkk＋2)&#123;1&#39;b0&#125;&#125;</code> 。注意，kkk是参数，不是信号，它不是电路，而是一种编译时使用的变量。</p>
-<p> 这种表示方法还可以写为 <code>&#123;常数&#123;逻辑表达式&#125;&#125;</code> 的形式，如</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">assign</span> int_clr = &#123;<span class="number">2</span>&#123;(apb_addr = = <span class="number">4&#x27;d7</span>) &amp; wr_en&#125;&#125; &amp; apb_wdat[<span class="number">1</span> : <span class="number">0</span>];</span><br></pre></td></tr></table></figure>
-
-<p>此例的目的是使用APB总线配置两个只写信号（write-only信号）​，这两个信号合称为 <code>int_clr</code> ，等式的右边，仅当地址 <code>apb_addr</code> 等于7，并且在APB总线上发生写操作时，APB写入的两比特数据 <code>apb_wdat[1:0]</code> 才会被配置到int_clr中，否则int_clr就是0。问题在于， <code>(apb_addr＝＝4&#39;d7)&amp;wr_en</code> 是一比特，不能跟 <code>apb_wdat[1:0]</code> 按位求与，因而需要将一比特复制为两比特，即 <code>&#123;2&#123;(apb_addr＝＝4&#39;d7)&amp;wr_en&#125;&#125;</code> 。</p>
-<p>对于其他辅助变量，可以直接写数字，例如在for循环中讲述的 <code>genvar ii</code> ，ii只是个变量，没有对应的电路，那么for循环赋值就不需要带位宽 和进制了，可以像下面这样写</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(ii = <span class="number">0</span>;ii&lt;<span class="number">100</span>;ii = ii + <span class="number">1</span>)</span><br></pre></td></tr></table></figure>
-
-<p>注意Verilog中，如果单写a、b、c、d、e、f、x、z，表示的是信号名，不能作为数值，如果想表示十六进制的数值，则可写为4’ha等，1’bx表示未知态，1’bz表示高阻态。</p>
-<h2 id="10-信号的状态类型"><a href="#10-信号的状态类型" class="headerlink" title="10. 信号的状态类型"></a>10. 信号的状态类型</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0 1 x z</span><br></pre></td></tr></table></figure>
-
-<p>其中，</p>
-<ul>
-<li><p>0和1是数字电路本身的状态，它的本源是零电平和VDD电平。</p>
-<p>  VDD， Voltage Drain, 其中 Drain 表示漏极，是一个电源引脚，用来提供正电压给电路中的元件。由于晶体管的设计通常包含两个漏极（源极和漏极），所以在一些命名规则中，为了区分正电源和负电源，使用了两个 D，并且VDD 代表正电源电压，VSS（Voltage Source）代表地线或负电源。 整个芯片的电源常称为VCC，芯片的地常标注为VSS。</p>
-<p>  不同工艺和元器件库需要的VDD不同，例如0.9V、1.8V、3.3V等，而同一个元器件库中的所有元器件，其需要的供电电压VDD一般相同的，只有I&#x2F;O器件等少数元器件，其输入端和控制端是比较低的电压，而输出端口却是较高的电压。</p>
-<p>  数字0和1对应的电平不会特别严格，而是有一个浮动范围，通常信号电平低于VDD的30%，就被认为是0，高于VDD的70%，就被认为是1。</p>
-</li>
-<li><p>z态是高阻态。</p>
-<p>  如果一颗芯片不通电，则它所有的引脚就都是高阻态。可见，高阻态的实际意义就是不会干扰到其他信号传输的状态，例如某信号A是高阻态，某信号B不是高阻态，那么信号A叠加到信号B上（可以想象为两根信号线被拧在一起）​，结果仍然是B，而A没有任何效果。</p>
-<p>  一般来讲，一个有着双向传输功能的引脚，如果设置为输入模式，就可以认为这个引脚处于高阻态，意思是它对电路板上与它相连的元器件没有任何影响，这些相连元器件如果要对本芯片输出0或1，就可以直接顺着该高阻态引脚输入，而不会被干扰或阻挡。</p>
-<p>  在FPGA的Verilog表述中，可以很形象地将FPGA的引脚描述为如下语句，其中b是FPGA的引脚，所以声明为inout类型，oe是该引脚的方向选择，若oe为1，则b为输出模式，将信号a输出到FPGA外面，而当oe为0时，是高阻态，即输入模式，外面的信号从b引脚可以进来后与信号c形成了组合逻辑，代码如下：</p>
-  <figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">inout</span> b;</span><br><span class="line"></span><br><span class="line"><span class="keyword">assign</span> b = oe ? a : <span class="number">1&#x27;bz</span></span><br><span class="line"><span class="keyword">assign</span> d = b ^ c;</span><br></pre></td></tr></table></figure>
-
-<p>  注意上例中引用FPGA的语法只是为了说明z态的含义。IC设计中对引脚的设计不像FPGA这么简单，需要例化一个引脚模块，在代码中不会出现1’bz数值。</p>
-<p>  <strong>博主注1：</strong></p>
-<p>  在集成电路（IC）中，高阻态（High Impedance State，简称 Hi-Z）是指一个电路输出引脚处于没有输出驱动信号的状态，即该引脚既不提供高电平（VDD）也不提供低电平（GND），而是处于一种“悬空”状态，几乎不消耗电流，像是断开了。高阻态通常用于多路复用（bus）或三态总线（tri-state bus）等应用中，允许多个设备共享同一条总线而不会相互干扰。</p>
-<p>  高阻态的实现<br>  高阻态通常通过 <strong>三态门（Tri-state Gate）</strong> 来实现。三态门是一种特殊类型的逻辑门，它具有三个输出状态：</p>
-<p>  高电平（逻辑 1）<br>  低电平（逻辑 0）<br>  高阻态（Hi-Z）<br>  具体来说，高阻态是通过在输出端增加一个高阻抗的电路来实现的，这个高阻抗值通常非常大，以至于该引脚对外部电路几乎没有影响。三态门的工作原理可以分为以下几种方式：</p>
-<p>  开关型设计：</p>
-<p>  P-Channel MOSFET（PMOS） 和 N-Channel MOSFET（NMOS） 组成的电路可以根据控制信号决定是否接通输出。如果三态门处于“高阻态”时，MOSFET 们并不会导通，从而使输出引脚处于高阻抗状态。<br>  控制信号：</p>
-<p>  三态门的输出通常由一个控制信号来控制。当控制信号为“使能”状态时，输出引脚会驱动高或低电平；而当控制信号为“禁用”状态时，输出引脚进入高阻态，基本与外部电路断开连接。<br>  双向总线：</p>
-<p>  在多路复用的场景中，多个设备可能需要共享同一条数据总线。为了避免多个设备同时驱动总线产生冲突，设备在不输出数据时会进入高阻态，不影响其他设备的信号传输。<br>  高阻态的作用<br>  多路复用：高阻态允许多个电路共享同一总线。只有一个电路在某个时间点输出数据，其他电路进入高阻态，防止冲突。</p>
-<p>  总线冲突保护：通过将不参与通信的设备置于高阻态，避免了多个设备在同一时间尝试驱动总线的冲突。</p>
-<p>  节省电力：通过在不需要输出信号时将输出置于高阻态，可以降低功耗，因为在高阻态下输出引脚几乎不消耗电流。</p>
-<p>  举例说明<br>  一个常见的例子是在 Tri-state Bus（三态总线）中，多个设备通过控制信号来决定是否驱动总线。如果设备不需要发送数据，它会将输出置于高阻态，允许其他设备使用总线。</p>
-<p>  总结来说，高阻态的实现依赖于三态门（Tri-state Gate），它通过控制MOSFET开关来使输出处于非驱动状态，从而让其他电路可以共享同一个引脚或总线。</p>
-<p>  <strong>博主注2：</strong></p>
-<p>  在数字电路中，inout 引脚是指一个既可以作为输入端口，也可以作为输出端口的引脚。它通常用于多路复用（bus）或双向数据传输的场合，允许一个引脚在不同时间根据需要在输入和输出之间切换。为了在同一引脚上同时支持输入和输出，通常使用 三态逻辑（Tri-state logic）来控制数据的流向。</p>
-<p>  inout 引脚的实现方式<br>  inout 引脚的实现依赖于几个关键的设计原则和组件</p>
-<p>  三态缓冲器（Tri-state Buffer）：</p>
-<p>  在 inout 引脚上，通常使用 三态缓冲器（Tri-state buffer）来控制该引脚是处于输入、输出还是高阻态。三态缓冲器的作用是通过控制信号来决定该引脚的状态。<br>  当引脚作为 输出 时，缓冲器将数据传递到引脚。<br>  当引脚作为 输入 时，缓冲器将引脚上的电压信号传送到内部电路。<br>  当引脚处于 高阻态（Hi-Z）时，缓冲器断开与引脚的连接，使得该引脚对外部电路“透明”，即不影响电路。<br>  控制信号：</p>
-<p>  inout 引脚的切换通常由控制信号（例如，方向控制信号）来决定，指示该引脚是作为输入使用还是作为输出使用。<br>  控制信号一般是由逻辑电路生成，当电路需要输出数据时，控制信号会使引脚成为输出；而当电路需要接收数据时，控制信号会使引脚成为输入。<br>  双向总线设计：</p>
-<p>  inout 引脚常用于总线设计，其中多个设备共享同一条总线。每个设备可以在需要时向总线发送数据，而在不需要时通过将输出设为高阻态来避免与其他设备的冲突。<br>  例如，数据总线（Data Bus）可能由多个设备共享。当一个设备不在发送数据时，它会将其 inout 引脚设为高阻态，确保只有发送设备影响总线信号。</p>
-<p>  工作原理</p>
-<p>  输出模式：</p>
-<p>  当inout 引脚作为输出时，相关的三态缓冲器连接到该引脚，并驱动电平（高或低）。此时，控制信号将引脚设置为输出模式，并且其他连接到该引脚的电路会处于断开状态。</p>
-<p>  输入模式：</p>
-<p>  当 inout 引脚作为输入时，缓冲器进入高阻态（Hi-Z），即引脚的状态不再由输出逻辑驱动，转而接收外部信号。此时，只有连接到引脚的其他设备会驱动该引脚的电平。<br>  高阻态：</p>
-<p>  当引脚不需要输出数据时，三态缓冲器将进入 高阻态，使该引脚对其他电路没有影响。这样，多个设备就可以共享同一个引脚或总线而不会发生电平冲突。<br>  应用示例<br>  双向数据总线：</p>
-<p>  假设有多个设备共享一条数据总线。每个设备的 inout 引脚可以作为数据的输入端或输出端。在某个时刻，只有一个设备向总线发送数据，其他设备则将其引脚设为高阻态，避免干扰。<br>  双向信号传输：</p>
-<p>  在通信协议中，inout 引脚可用于双向信号传输。例如，I²C总线就使用 inout 引脚，其中一个设备在某个时刻发送信号，而另一个设备则接收信号。<br>  芯片间通信：</p>
-<p>  在多芯片系统中，inout 引脚可用于芯片之间的数据交换，允许不同芯片在不同时刻控制同一引脚的输入和输出行为。<br>  总结<br>  inout 引脚通过三态缓冲器和控制信号的组合，实现了同一引脚可以在输入和输出之间切换的功能。通过将输出置于高阻态，可以使得该引脚不会干扰其他电路或设备，使其适用于总线系统或双向通信的设计中。</p>
-</li>
-<li><p>x态的含义是未知态。</p>
-<p>  有4种情况会产生未知态：</p>
-<ul>
-<li>其一是芯片已上电但复位信号未进行复位的情况；</li>
-<li>其二是双向引脚信号冲突，因为没控制好，导致有一路信号通过引脚输入，另一路信号通过相同的引脚输出；</li>
-<li>其三是芯片中一个元器件的某个输入端为x态，于是输出就跟着变成了x态，这就是所谓x态的传播；</li>
-<li>第四是触发器的时序不满足，产生了亚稳态，从而表示为x态。</li>
-</ul>
-<p>  上述4种情况在仿真中都能看到，但实际中，第1种情况基本不会出现，除非模拟电路设计有误，其他3种在数字设计有缺陷时会出现，实际在测量其电压时会出现不稳定或非预期的问题。在可综合的Verilog中，不会出现1’bx数值，因为没有一个设计会故意将一个错误引入RTL中，所有的错误都是意外发生的。该符号在仿真脚本和仿真波形中可能出现。</p>
-</li>
-</ul>
-<h2 id="电平信号与脉冲信号"><a href="#电平信号与脉冲信号" class="headerlink" title="电平信号与脉冲信号"></a>电平信号与脉冲信号</h2><p>电平信号也叫Latch信号，即一个信号持续多个时钟周期都一直保持为1的信号。</p>
-<p>脉冲信号就是只持续一个时钟周期的信号。</p>
-<p>工程师在交流时，对于电平信号a常用的说法是“将a给Latch住”​，对于脉冲信号b常用的说法是“打一个脉冲b”​。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/01/15/IC/1.%E6%95%B0%E5%AD%97IC%E8%AE%BE%E8%AE%A1%E6%B5%81%E7%A8%8B/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -521,7 +224,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 05:25:52" itemprop="dateModified" datetime="2025-08-17T05:25:52+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 07:56:27" itemprop="dateModified" datetime="2025-08-17T07:56:27+00:00">2025-08-17</time>
               </span>
 
           
@@ -847,7 +550,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 05:25:52" itemprop="dateModified" datetime="2025-08-17T05:25:52+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 07:56:27" itemprop="dateModified" datetime="2025-08-17T07:56:27+00:00">2025-08-17</time>
               </span>
 
           
@@ -987,7 +690,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 05:25:52" itemprop="dateModified" datetime="2025-08-17T05:25:52+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 07:56:27" itemprop="dateModified" datetime="2025-08-17T07:56:27+00:00">2025-08-17</time>
               </span>
 
           
@@ -1055,7 +758,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 05:25:52" itemprop="dateModified" datetime="2025-08-17T05:25:52+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 07:56:27" itemprop="dateModified" datetime="2025-08-17T07:56:27+00:00">2025-08-17</time>
               </span>
 
           
@@ -1150,7 +853,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 05:25:52" itemprop="dateModified" datetime="2025-08-17T05:25:52+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 07:56:27" itemprop="dateModified" datetime="2025-08-17T07:56:27+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1233,7 +936,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 05:25:52" itemprop="dateModified" datetime="2025-08-17T05:25:52+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 07:56:27" itemprop="dateModified" datetime="2025-08-17T07:56:27+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1366,7 +1069,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 05:25:52" itemprop="dateModified" datetime="2025-08-17T05:25:52+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 07:56:27" itemprop="dateModified" datetime="2025-08-17T07:56:27+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1450,7 +1153,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 05:25:52" itemprop="dateModified" datetime="2025-08-17T05:25:52+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 07:56:27" itemprop="dateModified" datetime="2025-08-17T07:56:27+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1540,7 +1243,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 05:25:52" itemprop="dateModified" datetime="2025-08-17T05:25:52+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 07:56:27" itemprop="dateModified" datetime="2025-08-17T07:56:27+00:00">2025-08-17</time>
               </span>
 
           
@@ -1573,6 +1276,81 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
 <p>当执行 <code>rpcgen infile</code> 命令时，由于 “abc.h” 不存在，可能会报错。</p>
 <p>但是如果在句首添加一个 <code>%</code> 符号，则可以绕过检查。</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">%#include &quot;abc.h&quot;</span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/05/08/english/Hair/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/05/08/english/Hair/" class="post-title-link" itemprop="url">Hair</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-05-08 22:10:46" itemprop="dateCreated datePublished" datetime="2024-05-08T22:10:46+00:00">2024-05-08</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-17 07:56:27" itemprop="dateModified" datetime="2025-08-17T07:56:27+00:00">2025-08-17</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/English/" itemprop="url" rel="index"><span itemprop="name">English</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Link"><a href="#Link" class="headerlink" title="Link"></a>Link</h2><p><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=EzFtsYC4pPg&t=344s">Free English Class! Topic: Hair! 🧔🏽💇✂️ (Lesson Only)</a></p>
+<h2 id="Words-Phrases"><a href="#Words-Phrases" class="headerlink" title="Words&#x2F;Phrases"></a>Words&#x2F;Phrases</h2><p>eyelashes<br>makeup<br>hairstyle&#x2F;hairdo<br>get my hair done<br>hair gel<br>buzz cut<br>helmet<br>When you have a lot of hair, the helmet makes your hair flat.<br>hair colouring</p>
+
       
     </div>
 
@@ -1658,7 +1436,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">85</span>
+          <span class="site-state-item-count">84</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1671,7 +1449,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">44</span>
+        <span class="site-state-item-count">43</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -1692,7 +1470,10 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
     </div>
     <ul class="links-of-blogroll-list">
         <li class="links-of-blogroll-item">
-          <a href="http://bi-an.github.io/" title="http:&#x2F;&#x2F;bi-an.github.io">bi-an's Page</a>
+          <a href="http://bi-an.github.io/cuda-doc" title="http:&#x2F;&#x2F;bi-an.github.io&#x2F;cuda-doc">CUDA笔记</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://infiniband-doc.readthedocs.io/" title="https:&#x2F;&#x2F;infiniband-doc.readthedocs.io&#x2F;" rel="noopener" target="_blank">InfiniBand笔记</a>
         </li>
     </ul>
   </div>
