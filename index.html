@@ -218,7 +218,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2025-08-17 10:39:19 / Modified: 03:50:18" itemprop="dateCreated datePublished" datetime="2025-08-17T10:39:19+00:00">2025-08-17</time>
+              <time title="Created: 2025-08-17 10:39:19 / Modified: 04:02:05" itemprop="dateCreated datePublished" datetime="2025-08-17T10:39:19+00:00">2025-08-17</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -381,7 +381,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 03:50:18" itemprop="dateModified" datetime="2025-08-17T03:50:18+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 04:02:05" itemprop="dateModified" datetime="2025-08-17T04:02:05+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -458,7 +458,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 03:50:18" itemprop="dateModified" datetime="2025-08-17T03:50:18+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 04:02:05" itemprop="dateModified" datetime="2025-08-17T04:02:05+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -592,14 +592,20 @@
 </tbody></table>
 <h2 id="两个独立进程各自打开同一个文件"><a href="#两个独立进程各自打开同一个文件" class="headerlink" title="两个独立进程各自打开同一个文件"></a>两个独立进程各自打开同一个文件</h2><p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/hG2hPTDM/image.png" alt="两个独立进程各自打开同一个文件"/></a></p>
 <ul>
-<li>O_APPEND：<br>如果使用 <code>O_APPEND</code> 标志打开一个文件，那么相应的标志也被设置到文件表项的文件状态标志中。每次对文件执行写操作时，文件表项中的当前文件偏移量首先会被设置为 i 节点表项中的文件长度（相对其他进程来说是<strong>原子</strong>操作，不论是两个独立的进程，还是父子进程）。这就使得每次写入的数据都追加到文件的当前尾端处。<a target="_blank" rel="noopener" href="https://blog.csdn.net/yangbodong22011/article/details/63064166">这里</a>有一个测试的例子，文章结论不见得正确，请参考评论的讨论。</li>
+<li><p>O_APPEND：</p>
+<ul>
+<li><p>原子操作：如果使用 <code>O_APPEND</code> 标志打开一个文件，那么相应的标志也被设置到文件表项的文件状态标志中。每次对文件执行写操作时，文件表项中的当前文件偏移量首先会被设置为 i 节点表项中的文件长度（相对其他进程来说是<strong>原子</strong>操作，不论是两个独立的进程，还是父子进程）。这就使得每次写入的数据都追加到文件的当前尾端处。<a target="_blank" rel="noopener" href="https://blog.csdn.net/yangbodong22011/article/details/63064166">这里</a>有一个测试的例子，文章结论不见得正确，请参考评论的讨论。</p>
+</li>
+<li><p><code>PIPE_BUF</code>：只保证小于<code>PIPE_BUF</code>的内容是原子；如果大于则可能被多次多段写入。PIPE_BUF 是管道（pipe）单次写入保证原子的最大字节数，Linux 上是 4096 字节。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看 PIPE_BUF 大小</span></span><br><span class="line"><span class="comment"># `/tmp&#x27; 可以换成任意文件系统路径</span></span><br><span class="line">$ getconf PIPE_BUF /tmp</span><br><span class="line">4096</span><br><span class="line"><span class="comment"># 也可以查看所有文件系统相关的 PIPE_BUF 限制</span></span><br><span class="line">$ getconf -a PIPE_BUF</span><br></pre></td></tr></table></figure></li>
 </ul>
-<p>以下是 <code>man page &quot;write(2)&quot;</code>：</p>
+<p>以下是 <code>man 2 write</code> 关于 <code>O_APPEND</code> 的说明：</p>
 <blockquote>
 <p>If the file was open(2)ed with O_APPEND, the file offset is first set to the end of the file before writing.  The adjustment of the file offset and the write operation are performed as an atomic step.</p>
 </blockquote>
-<ul>
-<li>lseek：<br>若一个文件用 <code>lseek</code> 定位到文件当前的尾端，则文件表项中的当前文件偏移量被设置为 i 节点表项中的当前文件长度（注意，此时，设置偏移量和写操作之间不是原子操作）。</li>
+</li>
+<li><p>lseek：<br>若一个文件用 <code>lseek</code> 定位到文件当前的尾端，则文件表项中的当前文件偏移量被设置为 i 节点表项中的当前文件长度（注意，此时，设置偏移量和写操作之间不是原子操作）。</p>
+</li>
 </ul>
 <hr>
 <h2 id="dup-后的内核数据结构"><a href="#dup-后的内核数据结构" class="headerlink" title="dup()后的内核数据结构"></a><code>dup()</code>后的内核数据结构</h2><p><code>dup()</code> &#x2F; <code>dup2()</code> 只复制 fd ，也就是在 fd 数组中新增了一个 fd 项。一般用来重定向。</p>
@@ -716,7 +722,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 03:50:18" itemprop="dateModified" datetime="2025-08-17T03:50:18+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 04:02:05" itemprop="dateModified" datetime="2025-08-17T04:02:05+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -973,7 +979,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 03:50:18" itemprop="dateModified" datetime="2025-08-17T03:50:18+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 04:02:05" itemprop="dateModified" datetime="2025-08-17T04:02:05+00:00">2025-08-17</time>
               </span>
 
           
@@ -1202,7 +1208,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 03:50:18" itemprop="dateModified" datetime="2025-08-17T03:50:18+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 04:02:05" itemprop="dateModified" datetime="2025-08-17T04:02:05+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1323,7 +1329,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 03:50:18" itemprop="dateModified" datetime="2025-08-17T03:50:18+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 04:02:05" itemprop="dateModified" datetime="2025-08-17T04:02:05+00:00">2025-08-17</time>
               </span>
 
           
@@ -1472,7 +1478,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 03:50:18" itemprop="dateModified" datetime="2025-08-17T03:50:18+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 04:02:05" itemprop="dateModified" datetime="2025-08-17T04:02:05+00:00">2025-08-17</time>
               </span>
 
           
@@ -1538,7 +1544,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 03:50:18" itemprop="dateModified" datetime="2025-08-17T03:50:18+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 04:02:05" itemprop="dateModified" datetime="2025-08-17T04:02:05+00:00">2025-08-17</time>
               </span>
 
           
@@ -1676,7 +1682,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 03:50:18" itemprop="dateModified" datetime="2025-08-17T03:50:18+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 04:02:05" itemprop="dateModified" datetime="2025-08-17T04:02:05+00:00">2025-08-17</time>
               </span>
 
           
