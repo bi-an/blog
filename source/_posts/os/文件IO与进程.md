@@ -16,79 +16,79 @@ tags:
   - 每个进程有一个 `task_struct`结构体，内核用它来描述进程。
   - 里面有一个指针 `files` ，执行该进程的 `files_struct` 。
 
-  ```c
-  // https://elixir.bootlin.com/linux/v6.16/source/include/linux/sched.h
+```c
+// https://elixir.bootlin.com/linux/v6.16/source/include/linux/sched.h
 
-  /* 进程控制块 */
-  struct task_struct {
-      struct files_struct *files; // 进程当前打开的文件
-      // ...
-  };
-  ```
+/* 进程控制块 */
+struct task_struct {
+    struct files_struct *files; // 进程当前打开的文件
+    // ...
+};
+```
 
 - `files_struct` (进程的文件表)
   - 这里保存了一个指向 fd 数组 的指针。
   - fd 数组的下标就是 0, 1, 2...，每个元素指向一个 `file *` 结构体。
 
-  ```cpp
-  // https://elixir.bootlin.com/linux/v6.16/source/include/linux/fdtable.h
+```cpp
+// https://elixir.bootlin.com/linux/v6.16/source/include/linux/fdtable.h
 
-  struct files_struct {
-      struct fdtable __rcu *fdt;                          // fd 表（动态管理）
-      struct file __rcu    *fd_array[NR_OPEN_DEFAULT];    // 固定大小数组（早期 fd 数组）
-                                                          // NR_OPEN_DEFAULT 通常为 1024
-                                                          // 早期没有设置 FD_CLOEXEC 新特性
-      // 为什么 fdt 与 fd_array 同时存在？
-      // 1. 性能优化：大多数程序，fd 都在 0~1023，直接访问数组更快
-      // 2. 向后兼容：早期接口会访问fd_array
-      // 3. 动态扩展：如果 fd 超过 NR_OPEN_DEFAULT，内核会复制 fd_array 到 fdt->fd 来保证一致性。
+struct files_struct {
+    struct fdtable __rcu *fdt;                          // fd 表（动态管理）
+    struct file __rcu    *fd_array[NR_OPEN_DEFAULT];    // 固定大小数组（早期 fd 数组）
+                                                        // NR_OPEN_DEFAULT 通常为 1024
+                                                        // 早期没有设置 FD_CLOEXEC 新特性
+    // 为什么 fdt 与 fd_array 同时存在？
+    // 1. 性能优化：大多数程序，fd 都在 0~1023，直接访问数组更快
+    // 2. 向后兼容：早期接口会访问fd_array
+    // 3. 动态扩展：如果 fd 超过 NR_OPEN_DEFAULT，内核会复制 fd_array 到 fdt->fd 来保证一致性。
 
-      // ... `struct files_struct' 还有其他成员
-  };
+    // ... `struct files_struct' 还有其他成员
+};
 
-  // fd 表（动态管理）
-  struct fdtable {
-      unsigned int        max_fds;
-      struct file __rcu **fd;             /* 当前打开的 fd 指针数组 */
-      unsigned long      *close_on_exec;  // fd 标志，目前只有一个
-                                          // FD_CLOEXEC 定义在 <fcntl.h> 中
-                                          // close_on_exec 指向一个位图(bitmap)，每个bit代表一个fd
-                                          // 如果bit=1，表示该fd设置了FD_CLOEXEC
-      unsigned long      *open_fds;       // 标记哪些fd是打开的，也是位图
-      unsigned long      *full_fds_bits;  // 辅助位图，用于快速找到空闲fd
-      struct rcu_head     rcu;
-  };
-  ```
+// fd 表（动态管理）
+struct fdtable {
+    unsigned int        max_fds;
+    struct file __rcu **fd;             /* 当前打开的 fd 指针数组 */
+    unsigned long      *close_on_exec;  // fd 标志，目前只有一个
+                                        // FD_CLOEXEC 定义在 <fcntl.h> 中
+                                        // close_on_exec 指向一个位图(bitmap)，每个bit代表一个fd
+                                        // 如果bit=1，表示该fd设置了FD_CLOEXEC
+    unsigned long      *open_fds;       // 标记哪些fd是打开的，也是位图
+    unsigned long      *full_fds_bits;  // 辅助位图，用于快速找到空闲fd
+    struct rcu_head     rcu;
+};
+```
 
 - `struct file` (打开文件表项)
   - 内核为每次 `open()`、`pipe()`、`socket()` 创建一个 `struct file`。
   - 它记录了文件状态（读写偏移、flag、引用计数等）。
 
-  ```c
-  // https://elixir.bootlin.com/linux/v6.16/source/include/linux/fs.h
+```c
+// https://elixir.bootlin.com/linux/v6.16/source/include/linux/fs.h
 
-  struct file {
-      spinlock_t                    f_lock;
-      fmode_t                       f_mode;
-      const struct file_operations *f_op;
-      struct address_space         *f_mapping;
-      void                         *private_data;  // 比如 socket
-      struct inode                 *f_inode;
-      unsigned int                  f_flags;  // 文件状态标志，如 O_RDONLY, O_NONBLOCK, O_APPEND 等
-      unsigned int                  f_iocb_flags;
-      const struct cred            *f_cred;
-      struct fown_struct           *f_owner;
-      /* --- cacheline 1 boundary (64 bytes) --- */
-      struct path f_path;
-      union {
-          /* regular files (with FMODE_ATOMIC_POS) and directories */
-          struct mutex f_pos_lock;
-          /* pipes */
-          u64 f_pipe;  // 管道
-      };
-      // ...
-  };
-  ```
+struct file {
+    spinlock_t                    f_lock;
+    fmode_t                       f_mode;
+    const struct file_operations *f_op;
+    struct address_space         *f_mapping;
+    void                         *private_data;  // 比如 socket
+    struct inode                 *f_inode;
+    unsigned int                  f_flags;  // 文件状态标志，如 O_RDONLY, O_NONBLOCK, O_APPEND 等
+    unsigned int                  f_iocb_flags;
+    const struct cred            *f_cred;
+    struct fown_struct           *f_owner;
+    /* --- cacheline 1 boundary (64 bytes) --- */
+    struct path f_path;
+    union {
+        /* regular files (with FMODE_ATOMIC_POS) and directories */
+        struct mutex f_pos_lock;
+        /* pipes */
+        u64 f_pipe;  // 管道
+    };
+    // ...
+};
+```
 
 - inode / pipe / socket 内核对象
   - `struct file` 再指向更底层的对象，比如 inode（磁盘文件）、socket 缓冲区、pipe 缓冲区。
@@ -98,19 +98,19 @@ tags:
     - 文件类型、文件访问权限位、文件长度、指向文件数据块的指针等。`stat`结构中的大多数信息都取自i节点。
     - 只有两项重要数据放在目录项中：文件名和i-node编号。
 
-  <div style="text-align: center">
-  <figure>
-    <img src="https://i.postimg.cc/rFRyX7Rh/image.png" alt="磁盘、分区和文件系统">
-    <figcaption>磁盘、分区和文件系统</figcaption>
-  </figure>
-  </div>
+<div style="text-align: center">
+<figure>
+  <img src="https://i.postimg.cc/rFRyX7Rh/image.png" alt="磁盘、分区和文件系统">
+  <figcaption>磁盘、分区和文件系统</figcaption>
+</figure>
+</div>
 
-  <div style="text-align: center">
-  <figure>
-    <img src="https://i.postimg.cc/3xM8K9g3/i.png" alt="i节点和数据块">
-    <figcaption>i节点和数据块</figcaption>
-  </figure>
-  </div>
+<div style="text-align: center">
+<figure>
+  <img src="https://i.postimg.cc/3xM8K9g3/i.png" alt="i节点和数据块">
+  <figcaption>i节点和数据块</figcaption>
+</figure>
+</div>
 
 
 软链接与硬链接
@@ -142,20 +142,21 @@ tags:
   - 原子操作：如果使用 `O_APPEND` 标志打开一个文件，那么相应的标志也被设置到文件表项的文件状态标志中。每次对文件执行写操作时，文件表项中的当前文件偏移量首先会被设置为 i 节点表项中的文件长度（相对其他进程来说是**原子**操作，不论是两个独立的进程，还是父子进程）。这就使得每次写入的数据都追加到文件的当前尾端处。[这里](https://blog.csdn.net/yangbodong22011/article/details/63064166)有一个测试的例子，文章结论不见得正确，请参考评论的讨论。
   - `PIPE_BUF`：只保证小于`PIPE_BUF`的内容是原子；如果大于则可能被多次多段写入。PIPE_BUF 是管道（pipe）单次写入保证原子的最大字节数，Linux 上是 4096 字节。
 
-    ```bash
-    # 查看 PIPE_BUF 大小
-    # `/tmp' 可以换成任意文件系统路径
-    $ getconf PIPE_BUF /tmp
-    4096
-    # 也可以查看所有文件系统相关的 PIPE_BUF 限制
-    $ getconf -a PIPE_BUF
-    ```
+```bash
+# 查看 PIPE_BUF 大小
+# `/tmp' 可以换成任意文件系统路径
+$ getconf PIPE_BUF /tmp
+4096
+# 也可以查看所有文件系统相关的 PIPE_BUF 限制
+$ getconf -a PIPE_BUF
+```
 
   以下是 `man 2 write` 关于 `O_APPEND` 的说明：
 
-  > If the file was open(2)ed with O_APPEND, the file offset is first set to the end of the file before writing.  The adjustment of the file offset and the write operation are performed as an atomic step.
+> If the file was open(2)ed with O_APPEND, the file offset is first set to the end of the file before writing.  The adjustment of the file offset and the write operation are performed as an atomic step.
 
 - lseek：
+
 若一个文件用 `lseek` 定位到文件当前的尾端，则文件表项中的当前文件偏移量被设置为 i 节点表项中的当前文件长度（注意，此时，设置偏移量和写操作之间不是原子操作）。
 
 ---
@@ -166,6 +167,7 @@ tags:
 
 <a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/s2mGQbcY/dup-1.png" alt="dup(1)"/></a>
 
+---
 
 ## fork与文件共享
 
@@ -181,11 +183,11 @@ tags:
 <a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/TYbyqK0Y/fork.png" alt="fork"/></a>
 
 
-**进程为什么会自动打开0, 1, 2三个文件描述符？**
+**子进程对文件状态标志、文件偏移量的修改，会不会影响父进程？**
 
 - shell进程启动时，会自动打开这三个文件描述符（可能由配置项决定）；
 - shell利用`fork()`开启用户进程（子进程），该子进程复制父进程shell的所有文件描述符，于是0, 1, 2文件描述符被打开；
-- 由于子进程共享父进程的文件表项，子进程对文件状态标志（读、写、同步或非阻塞等）的修改，将会影响父进程。
+- 由于子进程**共享**父进程的**文件表项**，子进程对文件状态标志（读、写、同步或非阻塞等）的修改，将**会影响父进程**。
 
 
 测试代码：
@@ -263,19 +265,19 @@ void pr_fl(int fd) {
 
 - 第一次运行：
 
-  ```bash
-  $ ./a.out
-  read write
-  read write, append
-  ```
+```bash
+$ ./a.out
+read write
+read write, append
+```
 
 - 第二次运行：
 
-  ```bash
-  $ ./a.out
-  read write, append
-  read write, append
-  ```
+```bash
+$ ./a.out
+read write, append
+read write, append
+```
 
   - 分析
     - 第二次运行时，文件描述符0的初始状态保持了第一次运行的结果！
@@ -285,11 +287,11 @@ void pr_fl(int fd) {
 
   重新启动shell，并运行`a.out`
 
-  ```bash
-  $ ./a.out
-  read write
-  read write, append
-  ```
+```bash
+$ ./a.out
+read write
+read write, append
+```
 
   - 分析
     - 第三次运行，结果与第一次一致，这说明我们的猜测正确。
