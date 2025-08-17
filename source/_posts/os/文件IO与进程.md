@@ -61,7 +61,7 @@ tags:
   ```
 
 - `struct file` (打开文件表项)
-  - 内核为每次 `open()`、`pipe()`、`socket()` 创建一个 struct file。
+  - 内核为每次 `open()`、`pipe()`、`socket()` 创建一个 `struct file`。
   - 它记录了文件状态（读写偏移、flag、引用计数等）。
 
   ```c
@@ -72,14 +72,20 @@ tags:
       fmode_t                       f_mode;
       const struct file_operations *f_op;
       struct address_space         *f_mapping;
-      void                         *private_data;
+      void                         *private_data;  // 比如 socket
       struct inode                 *f_inode;
-      unsigned int                  f_flags; // 文件状态标志，如 O_RDONLY, O_NONBLOCK, O_APPEND 等
+      unsigned int                  f_flags;  // 文件状态标志，如 O_RDONLY, O_NONBLOCK, O_APPEND 等
       unsigned int                  f_iocb_flags;
       const struct cred            *f_cred;
       struct fown_struct           *f_owner;
       /* --- cacheline 1 boundary (64 bytes) --- */
       struct path f_path;
+      union {
+          /* regular files (with FMODE_ATOMIC_POS) and directories */
+          struct mutex f_pos_lock;
+          /* pipes */
+          u64 f_pipe;  // 管道
+      };
       // ...
   };
   ```
