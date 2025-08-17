@@ -10,57 +10,98 @@ tags:
 
 ## 进程打开文件
 
-- 对同一个文件，不同进程拥有各自的文件表项。
-- 但是对每个文件，v节点表项在整个操作系统中只有一份。
-
 <a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/50jyHyjJ/image.png" alt="image"/></a>
 
+- `struct task_struct` (进程控制块)
+  - 每个进程有一个 `task_struct`结构体，内核用它来描述进程。
+  - 里面有一个指针 `files` ，执行该进程的 `files_struct` 。
 
-### 文件描述符标志（即fd标志）：
+  ```c
+  // https://elixir.bootlin.com/linux/v6.16/source/include/linux/sched.h
 
-目前只有一个，即 `close-on-exec` 。
+  /* 进程控制块 */
+  struct task_struct {
+      struct files_struct *files; // 进程当前打开的文件
+  };
+  ```
 
+- `files_struct` (进程的文件表)
+  - 这里保存了一个指向 fd 数组 的指针。
+  - fd 数组的下标就是 0, 1, 2...，每个元素指向一个 `file *` 结构体。
 
-### 文件状态标志：
+  ```cpp
+  // https://elixir.bootlin.com/linux/v6.16/source/include/linux/fdtable.h
 
-| 文件状态标志      | 说明                           |
-| ----------- | ---------------------------- |
-| O\_RDONLY   | 只读打开                         |
-| O\_WRONLY   | 只写打开                         |
-| O\_RDWR     | 读、写打开                        |
-| O\_EXEC     | 只执行打开                        |
-| O\_SEARCH   | 只搜索打开目录                      |
-| O\_APPEND   | 追加写                          |
-| O\_NONBLOCK | 非阻塞模式                        |
-| O\_SYNC     | 等待写完成（数据和属性）                 |
-| O\_DSYNC    | 等待写完成（仅数据）                   |
-| O\_RSYNC    | 同步读和写                        |
-| O\_FSYNC    | 等待写完成（仅 FreeBSD 和 Mac OS X）  |
-| O\_ASYNC    | 异步 I/O（仅 FreeBSD 和 Mac OS X） |
+  struct files_struct {
+      struct fdtable __rcu *fdt;                          // fd 表（动态管理）
+      struct file __rcu    *fd_array[NR_OPEN_DEFAULT];    // 固定大小数组（早期 fd 数组）
+                                                          // NR_OPEN_DEFAULT 通常为 1024
+                                                          // 早期没有设置 FD_CLOEXEC 新特性
+      // 为什么 fdt 与 fd_array 同时存在？
+      // 1. 性能优化：大多数程序，fd 都在 0~1023，直接访问数组更快
+      // 2. 向后兼容：早期接口会访问fd_array
+      // 3. 动态扩展：如果 fd 超过 NR_OPEN_DEFAULT，内核会复制 fd_array 到 fdt->fd 来保证一致性。
+  };
 
+  // fd 表（动态管理）
+  struct fdtable {
+      unsigned int        max_fds;
+      struct file __rcu **fd;             /* 当前打开的 fd 指针数组 */
+      unsigned long      *close_on_exec;  // fd 标志，目前只有一个
+                                          // FD_CLOEXEC 定义在 <fcntl.h> 中
+                                          // close_on_exec 指向一个位图(bitmap)，每个bit代表一个fd
+                                          // 如果bit=1，表示该fd设置了FD_CLOEXEC
+      unsigned long      *open_fds;       // 标记哪些fd是打开的，也是位图
+      unsigned long      *full_fds_bits;  // 辅助位图，用于快速找到空闲fd
+      struct rcu_head     rcu;
+  };
+  ```
 
+- `struct file` (打开文件表项)
+  - 内核为每次 `open()`、`pipe()`、`socket()` 创建一个 struct file。
+  - 它记录了文件状态（读写偏移、flag、引用计数等）。
 
-### i-node
+  ```c
+  // https://elixir.bootlin.com/linux/v6.16/source/include/linux/fs.h
 
-i-node 包含以下内容
+  struct file {
+      spinlock_t                    f_lock;
+      fmode_t                       f_mode;
+      const struct file_operations *f_op;
+      struct address_space         *f_mapping;
+      void                         *private_data;
+      struct inode                 *f_inode;
+      unsigned int                  f_flags; // 文件状态标志，如 O_RDONLY, O_NONBLOCK, O_APPEND 等
+      unsigned int                  f_iocb_flags;
+      const struct cred            *f_cred;
+      struct fown_struct           *f_owner;
+      /* --- cacheline 1 boundary (64 bytes) --- */
+      struct path f_path;
+      // ...
+  };
+  ```
 
-- 链接计数（指向该i节点的目录项数）；
-- 文件类型、文件访问权限位、文件长度、指向文件数据块的指针等。`stat`结构中的大多数信息都取自i节点。
-- 只有两项重要数据放在目录项中：文件名和i-node编号。
+- inode / pipe / socket 内核对象
+  - `struct file` 再指向更底层的对象，比如 inode（磁盘文件）、socket 缓冲区、pipe 缓冲区。
 
-<div style="text-align: center">
-<figure>
-  <img src="https://i.postimg.cc/rFRyX7Rh/image.png" alt="磁盘、分区和文件系统">
-  <figcaption>磁盘、分区和文件系统</figcaption>
-</figure>
-</div>
+  - i-node 包含以下内容
+    - 链接计数（指向该i节点的目录项数）；
+    - 文件类型、文件访问权限位、文件长度、指向文件数据块的指针等。`stat`结构中的大多数信息都取自i节点。
+    - 只有两项重要数据放在目录项中：文件名和i-node编号。
 
-<div style="text-align: center">
-<figure>
-  <img src="https://i.postimg.cc/3xM8K9g3/i.png" alt="i节点和数据块">
-  <figcaption>i节点和数据块</figcaption>
-</figure>
-</div>
+  <div style="text-align: center">
+  <figure>
+    <img src="https://i.postimg.cc/rFRyX7Rh/image.png" alt="磁盘、分区和文件系统">
+    <figcaption>磁盘、分区和文件系统</figcaption>
+  </figure>
+  </div>
+
+  <div style="text-align: center">
+  <figure>
+    <img src="https://i.postimg.cc/3xM8K9g3/i.png" alt="i节点和数据块">
+    <figcaption>i节点和数据块</figcaption>
+  </figure>
+  </div>
 
 
 软链接与硬链接
@@ -111,7 +152,8 @@ i-node 包含以下内容
 <a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/TYbyqK0Y/fork.png" alt="fork"/></a>
 
 - fork之后子进程复制父进程所有的打开描述符，并且保持其打开，即使执行了`exec()`，除非该文件描述符使用`fcntl()`设置了`FD_CLOEXEC`标志。
-
+- 对同一个文件，不同进程拥有各自的文件表项。
+- 但是对每个文件，v节点表项在整个操作系统中只有一份。
 
 
 ## 进程为什么会自动打开0, 1, 2三个文件描述符？
@@ -247,56 +289,7 @@ read write, append
 
 
 
-## 相关数据结构：
-
-### `task_struct`
-
-```c
-struct task_struct {
-  struct fs_struct* fs;
-  struct files_struct* files;
-};
-```
-
-### `files_struct`
-
-```c
-// File: <linux/fdtable.h>
-struct files_struct {
-    struct fdtable* fdt;
-    struct file* fd_array[NR_OPEN_DEFAULT];
-};
-```
-
-### `file`
-
-```c
-struct file {
-  union {
-    struct list_head fu_list;
-    struct rcu_head fu_rcuhead;
-  } f_u;
-  struct path f_path;
-  struct file_operations* f_op;
-  spinlock_t f_lock;
-  atomic_long_t f_count;
-  unsigned int f_flags;
-  fmode_t f_mode;
-  loff_t f_pos;
-  struct fown_struct f_owner;
-  struct cred* f_cred;
-  struct file_ra_state f_ra;
-  u64 f_version;
-  void* private_data;
-  struct address_space* f_mapping;
-  struct file* next;
-  struct file* parent;
-  const char* name;
-  int lineno;
-};
-```
-
-
 ## 参考
 - 《UNIX 环境高级编程》
 - 《Linux 内核设计与实现（原书第 3 版） - Linux Kernel Development, Third Edition》，（美）拉芙（Love, R.）著；陈莉君，康华译. ——北京：机械工业出版社，2011.9（2021.5 重印）
+- [图解进程控制块stask_struct](https://github.com/antsHub/task_struct/tree/main)
