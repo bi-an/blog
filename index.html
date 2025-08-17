@@ -218,7 +218,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2025-08-17 16:14:48 / Modified: 14:07:57" itemprop="dateCreated datePublished" datetime="2025-08-17T16:14:48+00:00">2025-08-17</time>
+              <time title="Created: 2025-08-17 16:14:48 / Modified: 14:27:21" itemprop="dateCreated datePublished" datetime="2025-08-17T16:14:48+00:00">2025-08-17</time>
             </span>
 
           
@@ -345,7 +345,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2025-08-17 10:39:19 / Modified: 14:07:57" itemprop="dateCreated datePublished" datetime="2025-08-17T10:39:19+00:00">2025-08-17</time>
+              <time title="Created: 2025-08-17 10:39:19 / Modified: 14:27:21" itemprop="dateCreated datePublished" datetime="2025-08-17T10:39:19+00:00">2025-08-17</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -477,7 +477,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/16/net/IO%E5%A4%8D%E7%94%A8/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/16/net/%E9%AB%98%E6%95%88IO/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -491,7 +491,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2025/08/16/net/IO%E5%A4%8D%E7%94%A8/" class="post-title-link" itemprop="url">IO复用</a>
+            <a href="/blog/2025/08/16/net/%E9%AB%98%E6%95%88IO/" class="post-title-link" itemprop="url">IO复用</a>
         </h2>
 
         <div class="post-meta">
@@ -508,7 +508,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 14:07:57" itemprop="dateModified" datetime="2025-08-17T14:07:57+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 14:27:21" itemprop="dateModified" datetime="2025-08-17T14:27:21+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -571,6 +571,19 @@
 <li>减少数据拷贝：select &#x2F; poll 只有一个函数，这会要求每次调用都必须将描述事件的数据从用户空间复制到内核空间；所以 epoll 拆分成三个函数，用户可以向内核直接注册事件数据；</li>
 <li>红黑树：epoll 事件数据是用红黑树来记录，增删查改的时间复杂度为 O(logn) ；select &#x2F; poll 是线性扫描，时间复杂度 O(n) 。红黑树需要额外的空间，所以这是空间换时间的办法。</li>
 </ul>
+<h4 id="EPOLLONESHOT"><a href="#EPOLLONESHOT" class="headerlink" title="EPOLLONESHOT"></a><code>EPOLLONESHOT</code></h4><p>阅读 manual：</p>
+<blockquote>
+<p>Since  even  with  edge-triggered  epoll,  multiple events can be generated upon receipt of multiple chunks of data, the caller has the option to specify the EPOLLONESHOT flag, to tell epoll to disable the associated file descriptor after the receipt of an event  with  epoll_wait(2).   When the EPOLLONESHOT flag is specified, it is the caller’s responsibility to rearm the file descriptor using epoll_ctl(2) with EPOLL_CTL_MOD.</p>
+</blockquote>
+<p>如果某个文件描述符上有多个数据块到达，那么即使是边沿触发也无法保证事件只通知一次。这可能是由于数据包过大被分片，或者是新数据到达。</p>
+<ul>
+<li>这在单线程程序上不会有太大影响，因为对同一个 fd 不会造成重复读写。</li>
+<li>多线程程序中，fd 准备好后，我们常常将这个 fd 交给某个线程去处理。此时如果 fd 有新的事件，会造成多线程处理同一个 fd 的情况。<ul>
+<li>为了避免竞争，要么加锁；要么使用内核的 ONESHOT 机制。后者由内核保证，无锁，更高效。</li>
+</ul>
+</li>
+<li><code>EPOLLONSHOT</code> 需要调用者自行 reset 这个标志。</li>
+</ul>
 <h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/salmonwilliam/article/details/112347938">https://blog.csdn.net/salmonwilliam/article/details/112347938</a></p>
 
       
@@ -622,7 +635,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 14:07:57" itemprop="dateModified" datetime="2025-08-17T14:07:57+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 14:27:21" itemprop="dateModified" datetime="2025-08-17T14:27:21+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -899,7 +912,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 14:07:57" itemprop="dateModified" datetime="2025-08-17T14:07:57+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 14:27:21" itemprop="dateModified" datetime="2025-08-17T14:27:21+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1156,7 +1169,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 14:07:57" itemprop="dateModified" datetime="2025-08-17T14:07:57+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 14:27:21" itemprop="dateModified" datetime="2025-08-17T14:27:21+00:00">2025-08-17</time>
               </span>
 
           
@@ -1385,7 +1398,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 14:07:57" itemprop="dateModified" datetime="2025-08-17T14:07:57+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 14:27:21" itemprop="dateModified" datetime="2025-08-17T14:27:21+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1506,7 +1519,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 14:07:57" itemprop="dateModified" datetime="2025-08-17T14:07:57+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 14:27:21" itemprop="dateModified" datetime="2025-08-17T14:27:21+00:00">2025-08-17</time>
               </span>
 
           
@@ -1655,7 +1668,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 14:07:57" itemprop="dateModified" datetime="2025-08-17T14:07:57+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 14:27:21" itemprop="dateModified" datetime="2025-08-17T14:27:21+00:00">2025-08-17</time>
               </span>
 
           
@@ -1793,7 +1806,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 14:07:57" itemprop="dateModified" datetime="2025-08-17T14:07:57+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 14:27:21" itemprop="dateModified" datetime="2025-08-17T14:27:21+00:00">2025-08-17</time>
               </span>
 
           
