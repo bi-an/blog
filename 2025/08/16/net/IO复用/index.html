@@ -28,10 +28,10 @@
 <meta property="og:description" content="高效的IO函数 sendfile mmap + write splice readv  零拷贝 (Zero copy) mmap + write sendfile splice  https:&#x2F;&#x2F;www.xiaolincoding.com&#x2F;os&#x2F;8_network_system&#x2F;zero_copy.html#%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9B%B6">
 <meta property="og:locale">
 <meta property="article:published_time" content="2025-08-16T23:40:06.000Z">
-<meta property="article:modified_time" content="2025-08-17T05:03:50.211Z">
+<meta property="article:modified_time" content="2025-08-17T05:16:43.924Z">
 <meta property="article:author" content="bi-an">
-<meta property="article:tag" content="文件">
 <meta property="article:tag" content="网络">
+<meta property="article:tag" content="文件">
 <meta name="twitter:card" content="summary">
 
 <link rel="canonical" href="https://bi-an.github.io/blog/2025/08/16/net/IO%E5%A4%8D%E7%94%A8/">
@@ -230,7 +230,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-17 05:03:50" itemprop="dateModified" datetime="2025-08-17T05:03:50+00:00">2025-08-17</time>
+                <time title="Modified: 2025-08-17 05:16:43" itemprop="dateModified" datetime="2025-08-17T05:16:43+00:00">2025-08-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -259,13 +259,13 @@
 <li>splice</li>
 <li>readv</li>
 </ul>
-<h2 id="零拷贝-Zero-copy"><a href="#零拷贝-Zero-copy" class="headerlink" title="零拷贝 (Zero copy)"></a>零拷贝 (Zero copy)</h2><ul>
+<h3 id="零拷贝-Zero-copy"><a href="#零拷贝-Zero-copy" class="headerlink" title="零拷贝 (Zero copy)"></a>零拷贝 (Zero copy)</h3><ul>
 <li>mmap + write</li>
 <li>sendfile</li>
 <li>splice</li>
 </ul>
 <p><a target="_blank" rel="noopener" href="https://www.xiaolincoding.com/os/8_network_system/zero_copy.html#%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9B%B6%E6%8B%B7%E8%B4%9D">https://www.xiaolincoding.com/os/8_network_system/zero_copy.html#%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9B%B6%E6%8B%B7%E8%B4%9D</a></p>
-<h2 id="散布读写-Scatter-read-write"><a href="#散布读写-Scatter-read-write" class="headerlink" title="散布读写 (Scatter read&#x2F;write)"></a>散布读写 (Scatter read&#x2F;write)</h2><ul>
+<h3 id="散布读写-Scatter-read-write"><a href="#散布读写-Scatter-read-write" class="headerlink" title="散布读写 (Scatter read&#x2F;write)"></a>散布读写 (Scatter read&#x2F;write)</h3><ul>
 <li>readv</li>
 <li>writev</li>
 </ul>
@@ -273,6 +273,10 @@
 <ul>
 <li>避免多次系统调用；</li>
 <li>直接分块读取，不需要额外用户态 memcpy 到不同的块。</li>
+</ul>
+<h2 id="IO复用"><a href="#IO复用" class="headerlink" title="IO复用"></a>IO复用</h2><h3 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h3><ul>
+<li>减少数据拷贝：select &#x2F; poll 只有一个函数，这会要求每次调用都必须将描述事件的数据从用户空间复制到内核空间；所以 epoll 拆分成三个函数，用户可以向内核直接注册事件数据；</li>
+<li>红黑树：epoll 事件数据是用红黑树来记录，增删查改的时间复杂度为 O(logn) ；select &#x2F; poll 是线性扫描，时间复杂度 O(n) 。红黑树需要额外的空间，所以这是空间换时间的办法。</li>
 </ul>
 <h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/salmonwilliam/article/details/112347938">https://blog.csdn.net/salmonwilliam/article/details/112347938</a></p>
 
@@ -284,8 +288,8 @@
 
       <footer class="post-footer">
           <div class="post-tags">
-              <a href="/blog/tags/%E6%96%87%E4%BB%B6/" rel="tag"># 文件</a>
               <a href="/blog/tags/%E7%BD%91%E7%BB%9C/" rel="tag"># 网络</a>
+              <a href="/blog/tags/%E6%96%87%E4%BB%B6/" rel="tag"># 文件</a>
           </div>
 
         
@@ -359,7 +363,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%AB%98%E6%95%88%E7%9A%84IO%E5%87%BD%E6%95%B0"><span class="nav-text">高效的IO函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9B%B6%E6%8B%B7%E8%B4%9D-Zero-copy"><span class="nav-text">零拷贝 (Zero copy)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%A3%E5%B8%83%E8%AF%BB%E5%86%99-Scatter-read-write"><span class="nav-text">散布读写 (Scatter read&#x2F;write)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-text">参考</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%AB%98%E6%95%88%E7%9A%84IO%E5%87%BD%E6%95%B0"><span class="nav-text">高效的IO函数</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9B%B6%E6%8B%B7%E8%B4%9D-Zero-copy"><span class="nav-text">零拷贝 (Zero copy)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%A3%E5%B8%83%E8%AF%BB%E5%86%99-Scatter-read-write"><span class="nav-text">散布读写 (Scatter read&#x2F;write)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#IO%E5%A4%8D%E7%94%A8"><span class="nav-text">IO复用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#epoll"><span class="nav-text">epoll</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-text">参考</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
