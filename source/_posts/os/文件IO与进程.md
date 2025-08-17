@@ -139,11 +139,21 @@ tags:
 <a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/hG2hPTDM/image.png" alt="两个独立进程各自打开同一个文件"/></a>
 
 - O_APPEND：
-如果使用 `O_APPEND` 标志打开一个文件，那么相应的标志也被设置到文件表项的文件状态标志中。每次对文件执行写操作时，文件表项中的当前文件偏移量首先会被设置为 i 节点表项中的文件长度（相对其他进程来说是**原子**操作，不论是两个独立的进程，还是父子进程）。这就使得每次写入的数据都追加到文件的当前尾端处。[这里](https://blog.csdn.net/yangbodong22011/article/details/63064166)有一个测试的例子，文章结论不见得正确，请参考评论的讨论。
+  - 原子操作：如果使用 `O_APPEND` 标志打开一个文件，那么相应的标志也被设置到文件表项的文件状态标志中。每次对文件执行写操作时，文件表项中的当前文件偏移量首先会被设置为 i 节点表项中的文件长度（相对其他进程来说是**原子**操作，不论是两个独立的进程，还是父子进程）。这就使得每次写入的数据都追加到文件的当前尾端处。[这里](https://blog.csdn.net/yangbodong22011/article/details/63064166)有一个测试的例子，文章结论不见得正确，请参考评论的讨论。
+  - `PIPE_BUF`：只保证小于`PIPE_BUF`的内容是原子；如果大于则可能被多次多段写入。PIPE_BUF 是管道（pipe）单次写入保证原子的最大字节数，Linux 上是 4096 字节。
 
-以下是 `man page "write(2)"`：
+    ```bash
+    # 查看 PIPE_BUF 大小
+    # `/tmp' 可以换成任意文件系统路径
+    $ getconf PIPE_BUF /tmp
+    4096
+    # 也可以查看所有文件系统相关的 PIPE_BUF 限制
+    $ getconf -a PIPE_BUF
+    ```
 
-> If the file was open(2)ed with O_APPEND, the file offset is first set to the end of the file before writing.  The adjustment of the file offset and the write operation are performed as an atomic step.
+  以下是 `man 2 write` 关于 `O_APPEND` 的说明：
+
+  > If the file was open(2)ed with O_APPEND, the file offset is first set to the end of the file before writing.  The adjustment of the file offset and the write operation are performed as an atomic step.
 
 - lseek：
 若一个文件用 `lseek` 定位到文件当前的尾端，则文件表项中的当前文件偏移量被设置为 i 节点表项中的当前文件长度（注意，此时，设置偏移量和写操作之间不是原子操作）。
