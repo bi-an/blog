@@ -193,6 +193,869 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/01/concurrency/%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/01/concurrency/%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/" class="post-title-link" itemprop="url">内存模型</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-08-01 19:30:53" itemprop="dateCreated datePublished" datetime="2025-08-01T19:30:53+00:00">2025-08-01</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-17 02:50:37" itemprop="dateModified" datetime="2025-08-17T02:50:37+00:00">2025-08-17</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="内存模型的定义"><a href="#内存模型的定义" class="headerlink" title="内存模型的定义"></a>内存模型的定义</h2><p>内存模型（Memory Model）是定义<strong>数据一致性</strong>与<strong>执行顺序</strong>规则的一组规范。</p>
+<h2 id="备忘录"><a href="#备忘录" class="headerlink" title="备忘录"></a>备忘录</h2><ul>
+<li>编程语言保证单线程的“程序顺序一致性”，比如为了防止CPU乱序执行，甚至主动对有依赖关系的变量插入内存屏障。</li>
+<li></li>
+</ul>
+<h2 id="多核缓存"><a href="#多核缓存" class="headerlink" title="多核缓存"></a>多核缓存</h2><p>分层：</p>
+<ul>
+<li>寄存器：最快，由重命名机制管理</li>
+<li>L1&#x2F;L2&#x2F;L3 Cache：核心本地缓存，按缓存行一致性（MESI）维护共享状态</li>
+<li>主内存（DRAM）：CPU访问需经总线或内存控制器</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>缓存级别</th>
+<th>位置</th>
+<th>速度（快）</th>
+<th>容量（小）</th>
+<th>每核私有&#x2F;共享</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>L1 Cache</td>
+<td>CPU核心内部</td>
+<td>✅最快</td>
+<td>❌最小</td>
+<td>每核私有</td>
+<td>通常分为指令缓存（L1I）和数据缓存（L1D）</td>
+</tr>
+<tr>
+<td>L2 Cache</td>
+<td>核心内部或旁边</td>
+<td>较快</td>
+<td>较小</td>
+<td>每核私有或共享</td>
+<td>有助于减缓L1未命中后的访问压力</td>
+</tr>
+<tr>
+<td>L3 Cache</td>
+<td>核心集群共享</td>
+<td>慢一些</td>
+<td>更大</td>
+<td>多核共享</td>
+<td>减少跨核访问主存的延迟，常位于芯片中心</td>
+</tr>
+<tr>
+<td>L4 Cache</td>
+<td>一些高端CPU或封装外DRAM</td>
+<td>最慢</td>
+<td>最大</td>
+<td>多芯片共享</td>
+<td>非常少见（例如Intel的eDRAM）</td>
+</tr>
+</tbody></table>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">[CPU Core] </span><br><span class="line">   ├── [Load Buffer]  ← 处理 load 指令</span><br><span class="line">   ├── [Store Buffer] ← 处理 store 指令</span><br><span class="line">   ├── [L1 Cache]</span><br><span class="line">   └── [Execution Unit]</span><br><span class="line"></span><br><span class="line">⬇️</span><br><span class="line"></span><br><span class="line">[Shared L2 Cache] / [L3 Cache]</span><br><span class="line"></span><br><span class="line">⬇️</span><br><span class="line"></span><br><span class="line">[Memory Bus] ↔ [Main Memory (DRAM)]</span><br><span class="line"></span><br><span class="line">⬌</span><br><span class="line"></span><br><span class="line">[Other CPU Cores]</span><br></pre></td></tr></table></figure>
+
+<h3 id="Store-Load-Buffer"><a href="#Store-Load-Buffer" class="headerlink" title="Store&#x2F;Load Buffer"></a>Store&#x2F;Load Buffer</h3><ul>
+<li><p>Load Buffer：</p>
+<ul>
+<li>位置：在 CPU 核心内部，靠近 Load&#x2F;Store Unit。</li>
+<li>功能：暂存“load”（读取）指令的结果，等待内存或缓存返回数据。</li>
+<li>使用场景：比如你访问一个变量 x，如果还没拿到内存值，它就被放在 load buffer 等待。</li>
+</ul>
+</li>
+<li><p>Store Buffer：保存尚未提交的 store 写操作（延迟写回），可被后续 load 查询（store-to-load forwarding）。内存屏障（memory fence）可强制“写入完成后再继续”。</p>
+<ul>
+<li>位置：同样在 CPU 核心内部，紧挨 Load Buffer。</li>
+<li>功能：当执行 x &#x3D; 5 这样的写操作时，并不会立刻写入内存，而是先写入 store buffer。</li>
+<li>延迟写回：写操作会被延后，在合适时机批量提交到缓存或主存中。</li>
+<li>注意：这就是为什么需要内存屏障（memory fence）来强制“写入完成后再继续”。</li>
+</ul>
+</li>
+</ul>
+<p>Store&#x2F;Load Buffer是一个具备调度逻辑的指令队列，不是为了“缓存数据”。<br>之所以叫”Buffer”而不是”Queue”，是强调其“乱序 + 并发调度能力”。</p>
+<p>与普通队列的对比：</p>
+<table>
+<thead>
+<tr>
+<th>对比项</th>
+<th>普通队列</th>
+<th>Load Buffer</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>数据结构</td>
+<td>FIFO 队列</td>
+<td>类似 CAM（Content Addressable Memory）或乱序数组</td>
+</tr>
+<tr>
+<td>访问方式</td>
+<td>一次 pop 一个</td>
+<td>任意条目都能被访问、发射、取消</td>
+</tr>
+<tr>
+<td>顺序</td>
+<td>严格顺序</td>
+<td>支持乱序发射、乱序完成、乱序提交</td>
+</tr>
+<tr>
+<td>功能</td>
+<td>暂存数据</td>
+<td>追踪地址、状态、与 Store Buffer 比较、rollback 等</td>
+</tr>
+</tbody></table>
+<p>Intel 和 ARM 的实际叫法</p>
+<ul>
+<li><p>Intel 官方架构手册：</p>
+<ul>
+<li>用词是 Load Buffer &#x2F; Store Buffer</li>
+<li>有时叫 “Memory Ordering Buffer”</li>
+</ul>
+</li>
+<li><p>ARM 架构（如 Cortex-A76）</p>
+<ul>
+<li>常叫：Load-Store Queue（LSQ）</li>
+<li>还会细分为：<ul>
+<li>Load Queue（LQ）</li>
+<li>Store Queue（SQ）</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>但即使叫“Queue”，也不一定是严格的队列行为，而是调度窗口结构。</p>
+<h3 id="缓存行（Cache-Line）"><a href="#缓存行（Cache-Line）" class="headerlink" title="缓存行（Cache Line）"></a>缓存行（Cache Line）</h3><ul>
+<li>位置：在 CPU 的缓存（L1&#x2F;L2&#x2F;L3）中，缓存是以<strong>行（line）</strong>为单位存储的。</li>
+<li>功能：每行通常是 64 字节，它是 CPU 和内存之间最小的同步单位。</li>
+<li>状态（MESI 协议）：<ul>
+<li>M（Modified）: 修改过，主存未同步</li>
+<li>E（Exclusive）: 独占但未修改</li>
+<li>S（Shared）: 可共享读取</li>
+<li>I（Invalid）: 已失效</li>
+</ul>
+</li>
+</ul>
+<h3 id="总线（Memory-Bus-Interconnect）"><a href="#总线（Memory-Bus-Interconnect）" class="headerlink" title="总线（Memory Bus &#x2F; Interconnect）"></a>总线（Memory Bus &#x2F; Interconnect）</h3><ul>
+<li>位置：连接多个 CPU 核心、缓存、主存的通信通道。</li>
+<li>功能：<ul>
+<li>数据在 CPU 和内存之间传输</li>
+<li>执行原子操作时用于发送 <code>LOCK#</code> 或缓存一致性请求</li>
+</ul>
+</li>
+</ul>
+<p>🔗 示例：Intel 使用 Ring Bus、AMD 使用 Infinity Fabric。</p>
+<h3 id="主内存（Main-Memory-DRAM）"><a href="#主内存（Main-Memory-DRAM）" class="headerlink" title="主内存（Main Memory &#x2F; DRAM）"></a>主内存（Main Memory &#x2F; DRAM）</h3><ul>
+<li>位置：通常是系统主板上的 DRAM 芯片。</li>
+<li>功能：存储所有不在 cache 中的数据，访问速度比 cache 慢很多。</li>
+</ul>
+<p>🕓 延迟：访问主存通常需要 100ns ~ 几百ns，而访问 L1 Cache 只需几个 cycle。</p>
+<h3 id="内存控制器通道与总线的区别"><a href="#内存控制器通道与总线的区别" class="headerlink" title="内存控制器通道与总线的区别"></a>内存控制器通道与总线的区别</h3><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>总线（Bus）</th>
+<th>内存控制器通道（Memory Channel）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>硬件层级</td>
+<td>CPU、缓存、内存之间的共享通信总线</td>
+<td>内存控制器内部的通路，直接连接 DRAM 芯片</td>
+</tr>
+<tr>
+<td>作用范围</td>
+<td>跨多核、跨缓存，整个系统范围</td>
+<td>只负责访问主内存的某一部分，细粒度数据路径</td>
+</tr>
+<tr>
+<td>连接对象</td>
+<td>CPU核心、缓存、内存控制器等</td>
+<td>内存控制器与物理内存条之间的接口</td>
+</tr>
+<tr>
+<td>作用</td>
+<td>传递内存访问请求，实现缓存一致性协议</td>
+<td>调度内存读写，执行具体内存命令</td>
+</tr>
+<tr>
+<td>原子操作锁定对象</td>
+<td>锁定总线，阻止其他核访问内存</td>
+<td>锁定内存通道，防止同通道冲突访问</td>
+</tr>
+</tbody></table>
+<h2 id="乱序执行"><a href="#乱序执行" class="headerlink" title="乱序执行"></a>乱序执行</h2><p>现代 CPU 采用乱序执行（Out-of-Order Execution, OoO）优化性能：</p>
+<ul>
+<li>发射顺序有序（程序顺序）</li>
+<li>执行顺序无序（根据数据&#x2F;资源依赖动态调度）</li>
+<li>提交顺序有序（借助 ROB 保证提交的程序语义）</li>
+</ul>
+<p>核心机制：</p>
+<ul>
+<li>指令乱序执行：由调度器和执行单元动态决定执行顺序。</li>
+<li>寄存器重命名：使用临时物理寄存器消除写后写、写后读冲突。</li>
+<li>Load&#x2F;Store Buffer：用于暂存尚未提交的读写操作。</li>
+<li>ROB（Reorder Buffer）：按程序顺序提交指令（写入寄存器&#x2F;内存），确保最终结果可预测。</li>
+</ul>
+<p>程序顺序一致性（program-order consistency）：</p>
+<ul>
+<li>在本线程中观察到的顺序要“看起来像顺序执行”。</li>
+<li><strong>注意：</strong>多线程中可能出现乱序提交。</li>
+</ul>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1.</span> <span class="keyword">Fetch</span>         &lt;<span class="comment">-- ✅ 顺序取指，从指令缓存中取出下一条指令</span></span><br><span class="line"><span class="number">2.</span> Decode        &lt;<span class="comment">-- 顺序解码，分析操作数和目的寄存器</span></span><br><span class="line"><span class="number">3.</span> <span class="keyword">Rename</span>        &lt;<span class="comment">-- 寄存器重命名</span></span><br><span class="line"><span class="number">4.</span> Dispatch      &lt;<span class="comment">-- 投递到调度窗口，等待执行条件满足</span></span><br><span class="line"><span class="number">5.</span> <span class="keyword">Execute</span>       &lt;<span class="comment">-- ✅ 乱序执行（由调度器决定），实际在执行单元上运行指令</span></span><br><span class="line"><span class="number">6.</span> Writeback     &lt;<span class="comment">-- 写结果到 ROB</span></span><br><span class="line"><span class="number">7.</span> <span class="keyword">Commit</span>        &lt;<span class="comment">-- ✅ 按程序顺序提交（retire），更新寄存器状态或进行内存写入</span></span><br></pre></td></tr></table></figure>
+
+<p>TODO: <strong>内存控制器</strong></p>
+<p><strong>扩展：寄存器重命名（Register Renaming）</strong></p>
+<p>现代 CPU 为了支持乱序执行（Out-of-Order Execution）和指令级并行（ILP），会引入比架构寄存器更多的物理寄存器，来存储中间值。</p>
+<p>寄存器重命名：CPU 用一张 寄存器映射表（Register Alias Table, RAT） 来将架构寄存器映射到物理寄存器。</p>
+<ul>
+<li>架构寄存器：由 ISA 定义，固定不变。x86-64 是 16 个通用寄存器。</li>
+<li>物理寄存器：由具体 CPU 实现，通常远多于架构寄存器。例如：<ul>
+<li>Intel 的 Skylake 有 180 个左右物理寄存器（整数+浮点）</li>
+<li>ARM 的 Cortex-A 系列也有几百个物理寄存器（实际数量通常保密）</li>
+</ul>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>物理寄存器</strong>（Physical Register）</td>
+<td>CPU 内部实际使用的、很多个</td>
+</tr>
+<tr>
+<td><strong>架构寄存器</strong>（Architectural Register）</td>
+<td>程序看到的，例如 RAX、RBX 等，一般只有 16~32 个</td>
+</tr>
+</tbody></table>
+<p>举例：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">MOV RAX, 1</span><br><span class="line">MOV RAX, 2</span><br><span class="line">ADD RAX, 3</span><br></pre></td></tr></table></figure>
+
+<p>执行流程：</p>
+<table>
+<thead>
+<tr>
+<th>指令</th>
+<th>分配的物理寄存器</th>
+<th>对应动作</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>RAX → P1</td>
+<td>P1 ← 1</td>
+</tr>
+<tr>
+<td>2</td>
+<td>RAX → P2</td>
+<td>P2 ← 2（与1可并行执行）</td>
+</tr>
+<tr>
+<td>3</td>
+<td>用 P2 + 3</td>
+<td>写入 P3，RAX → P3</td>
+</tr>
+</tbody></table>
+<p>注意：</p>
+<ul>
+<li>三条指令都写的是 RAX，但实际上写的是 不同的物理寄存器（P1、P2、P3）</li>
+<li>只有最后提交阶段才把 RAX 映射为最终结果的寄存器（P3）</li>
+</ul>
+<h2 id="内存屏障"><a href="#内存屏障" class="headerlink" title="内存屏障"></a>内存屏障</h2><table>
+<thead>
+<tr>
+<th>屏障类型</th>
+<th>会阻止</th>
+<th>作用说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>SFENCE</code></td>
+<td>Store → Store 重排序</td>
+<td>前面的写必须完成再执行后面的写</td>
+</tr>
+<tr>
+<td><code>LFENCE</code></td>
+<td>Load → Load 重排序</td>
+<td>后面的读必须等前面的读完成</td>
+</tr>
+<tr>
+<td><code>MFENCE</code></td>
+<td>所有内存访问</td>
+<td>保证前面的 load&#x2F;store 全部完成</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>答案</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>内存屏障是运行时插入的吗？</td>
+<td>❌ 插入时机是编译期，但运行时会执行它</td>
+</tr>
+<tr>
+<td>屏障如何阻止后面指令提前？</td>
+<td>✅ 屏障执行时会强制刷新缓冲区、阻止乱序执行</td>
+</tr>
+</tbody></table>
+<h2 id="缓存一致性协议（MESI）"><a href="#缓存一致性协议（MESI）" class="headerlink" title="缓存一致性协议（MESI）"></a>缓存一致性协议（MESI）</h2><p>MESI 协议的核心操作：</p>
+<ul>
+<li>读（load）：如果某核 cache 没有，就从主内存或其他核拉一份。</li>
+<li>写（store）：必须先让其他核的对应 cache line 失效（invalidate），否则就可能出现数据竞争。</li>
+</ul>
+<p><strong>atomic（哪怕是 relaxed）为什么会触发 invalidate？</strong></p>
+<p>当你写入一个 std::atomic<int>（哪怕是 relaxed）：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">x.<span class="built_in">store</span>(<span class="number">123</span>, std::memory_order_relaxed);</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>这个 store 会编译为一条特殊的汇编指令（如 MOV 带 lock 前缀，或 STLR, STR 等）</li>
+<li>CPU 会发出总线事务（bus transaction）或利用缓存一致性协议 广播这个写入：<ul>
+<li>让其他核心中缓存这个变量所在 cache line 的副本 全部失效（Invalidate）</li>
+</ul>
+</li>
+<li>所有核心必须从这个核心或主内存读取最新的值（下一次 load）</li>
+</ul>
+<h2 id="内存序"><a href="#内存序" class="headerlink" title="内存序"></a>内存序</h2><p>内存序 &#x3D; 程序中读写内存操作的可见顺序。</p>
+<p>在理想世界（顺序一致的架构）中，你写的代码顺序就是 CPU 执行和其他线程观察到的顺序。但现实中：</p>
+<ul>
+<li>CPU 会乱序执行（out-of-order）</li>
+<li>编译器会重排指令</li>
+<li>缓存系统和 store&#x2F;load buffer 会拖延内存访问</li>
+<li>多核之间访问的是缓存，而不是主内存</li>
+</ul>
+<p>👉 所以，需要有一套规则来定义：“内存操作到底是何时、如何被其他线程看见的”，这就是内存序的目标。</p>
+<p>概念 <a target="_blank" rel="noopener" href="https://cppreference.cn/w/cpp/atomic/memory_order">^1</a> <a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/atomic/memory_order.html">^2</a>：</p>
+<ul>
+<li><p><code>load</code>: 从内存<strong>读</strong>变量的值到CPU：内存 ➝ CPU。</p>
+</li>
+<li><p><code>store</code>: 把一个值从 CPU 的寄存器或处理单元中，<strong>写</strong>到内存中的某个地址（变量）：CPU ➝ 内存。</p>
+</li>
+<li><p><code>relaxed</code>: 对其他线程的读写没有同步或顺序约束，仅仅保证本操作的原子性。</p>
+</li>
+<li><p><code>acquire</code>: 对 <code>load</code> 操作的内存序语义约束。</p>
+<ul>
+<li>当前线程中的任何读写都不能重排序到此 <code>load</code> 之前；</li>
+<li>在其他线程中 <code>release</code> 同一原子变量的所有写入在当前线程中可见。</li>
+</ul>
+</li>
+<li><p><code>release</code>: 对 <code>store</code> 操作的内存序语义约束。</p>
+<ul>
+<li>当前线程中的任何读写都不能重排序到此 <code>store</code> 之后；</li>
+<li>当前线程的写入对 <code>acquire</code> 同一原子变量的其他线程可见。</li>
+</ul>
+</li>
+<li><p><code>acquire-release</code>: 对 <code>read-modify-write</code> 操作的内存序语义约束。</p>
+<ul>
+<li>当前线程中的任何读写不能重排序到此 <code>load</code> 之前，也不能重排序到此 <code>store</code> 之后。</li>
+<li>其他线程 <code>release</code> 同一原子变量的写操作，对该 <code>modification</code> 可见；</li>
+<li>该 <code>modification</code> 对 <code>acquire</code> 同一原子变量的其他线程可见。</li>
+</ul>
+</li>
+<li><p><code>sequentially-consistent</code>: </p>
+<ul>
+<li><code>load</code> 操作遵循 <code>acquire</code> 语义；</li>
+<li><code>store</code> 操作遵循 <code>release</code> 语义；</li>
+<li><code>read-modify-write</code> 操作同时遵循 <code>acquire</code> 和 <code>release</code> 语义；</li>
+<li>存在一个全序，其中所有线程都以相同的顺序观察所有修改。</li>
+</ul>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>内存序</th>
+<th>插入屏障</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>relaxed</td>
+<td>❌ 无</td>
+<td>只保证原子性，不保证顺序</td>
+</tr>
+<tr>
+<td>acquire</td>
+<td>✅ 读屏障</td>
+<td>阻止后续操作提前</td>
+</tr>
+<tr>
+<td>release</td>
+<td>✅ 写屏障</td>
+<td>阻止前面操作延后</td>
+</tr>
+<tr>
+<td>acquire-release</td>
+<td>✅ 两者都有</td>
+<td>双向有序</td>
+</tr>
+<tr>
+<td>seq_cst</td>
+<td>✅ 全屏障</td>
+<td>全局顺序一致性</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>步骤</th>
+<th>普通变量</th>
+<th>atomic（relaxed）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>编译器可优化</td>
+<td>编译器必须保留这个操作</td>
+</tr>
+<tr>
+<td>2</td>
+<td>CPU 可能重排</td>
+<td>CPU 仍可能重排（因为是 relaxed）</td>
+</tr>
+<tr>
+<td>3</td>
+<td>缓存写入</td>
+<td>可能停在本核 cache 中，不通知他人</td>
+</tr>
+<tr>
+<td>4</td>
+<td>不触发 invalidate</td>
+<td>✅ 会触发 cache line invalidate</td>
+</tr>
+<tr>
+<td>5</td>
+<td>其他线程可见性低</td>
+<td>✅ 其他线程可读取到最新的值（但时序不保证）</td>
+</tr>
+</tbody></table>
+<p><strong>私注：</strong> </p>
+<ul>
+<li><code>acquire</code>: 当本线程读取后，本线程之后的操作都可以依赖这次读取（“后面的读写不得提前”）；</li>
+<li><code>release</code>: 当本线程允许写后，本线程之前的读写都完成了，即之后的操作都可以依赖此前的写入（“前面的读写不得滞后”）。</li>
+</ul>
+<p><strong>和普通变量相比，atomic<T>（即使是 relaxed）做了哪些额外工作？</strong></p>
+<p>atomic<T>（即使使用 memory_order_relaxed）和普通变量相比，最核心的区别是：原子变量保证原子性（atomicity）和可见性，而普通变量不能。</p>
+<ul>
+<li><p>保证操作的原子性</p>
+<blockquote>
+<p>所谓“原子性”，是指某个操作（如 load、store、CAS）要么全部完成、要么完全不做，不会出现中间状态。</p>
+</blockquote>
+<ul>
+<li><p>atomic<int> x;</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">x.<span class="built_in">store</span>(<span class="number">42</span>, std::memory_order_relaxed);</span><br></pre></td></tr></table></figure>
+
+<p>这个 store 是原子的：不会被打断、不会被分拆。</p>
+</li>
+<li><p>普通变量可能被编译器或 CPU 拆成多条指令（比如低 4 字节和高 4 字节分开发），多线程下可能看到“半成品”状态。</p>
+</li>
+</ul>
+</li>
+<li><p>触发 CPU 的 cache coherence 协议（MESI等）</p>
+<blockquote>
+<p>原子变量的访问会参与硬件层的缓存一致性协议，以保证多核 CPU 看到一致的值。</p>
+</blockquote>
+<ul>
+<li>即使是 relaxed，store 也会触发对应 cache line 的写入通知（invalidate）；</li>
+<li>普通变量（非 volatile、非 atomic）的访问，编译器会缓存到寄存器中，不一定会回写。</li>
+</ul>
+</li>
+<li><p>禁止编译器优化（只针对原子变量本身）</p>
+<blockquote>
+<p>编译器不能将多个 atomic store 合并，也不能删去它（不会当作“死代码”）。</p>
+</blockquote>
+<ul>
+<li><p>x.store(42, relaxed) 每次都必须发出一条指令；</p>
+</li>
+<li><p>对普通变量：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">x = <span class="number">42</span>;</span><br><span class="line">x = <span class="number">43</span>;</span><br></pre></td></tr></table></figure>
+
+<p>可能直接编译为 <code>x = 43;</code>，前一条被优化掉。</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><strong>atomic&lt;T, relaxed&gt; 不做的事：</strong></p>
+<table>
+<thead>
+<tr>
+<th>功能</th>
+<th>atomic(relaxed)</th>
+<th>普通变量</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>保证<strong>原子性</strong></td>
+<td>✅ 是</td>
+<td>❌ 否</td>
+</tr>
+<tr>
+<td>保证<strong>可见性（跨线程）</strong></td>
+<td>✅ 是（通过 cache 协议）</td>
+<td>❌ 否</td>
+</tr>
+<tr>
+<td>禁止<strong>指令重排</strong>（保证顺序）</td>
+<td>❌ 否（只 relaxed）</td>
+<td>❌ 否</td>
+</tr>
+</tbody></table>
+<h3 id="屏障为什么要设置两种？"><a href="#屏障为什么要设置两种？" class="headerlink" title="屏障为什么要设置两种？"></a>屏障为什么要设置两种？</h3><p>性能优化 + 最小化开销 + 精确控制重排序方向。</p>
+<p>屏障的本质是“控制指令重排序”<br>但它并不一刀切地“全部阻止”，而是：</p>
+<table>
+<thead>
+<tr>
+<th>屏障类型</th>
+<th>阻止的方向（简化理解）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>读屏障</strong></td>
+<td>阻止 <strong>读-after-读</strong> 重排序（即前面的读取不能晚于后面的读取）</td>
+</tr>
+<tr>
+<td><strong>写屏障</strong></td>
+<td>阻止 <strong>写-after-写</strong> 重排序（即前面的写不能晚于后面的写）</td>
+</tr>
+<tr>
+<td><strong>全屏障</strong></td>
+<td>阻止 <strong>读&#x2F;写 与 所有后续指令的重排序</strong></td>
+</tr>
+</tbody></table>
+<p>为什么分开这么细？（硬件视角）</p>
+<p>现代 CPU 架构（如 x86, ARM）中：</p>
+<ul>
+<li><p>读和写通路是分离的</p>
+<ul>
+<li>读用 load buffer</li>
+<li>写用 store buffer</li>
+</ul>
+</li>
+<li><p>两者乱序的模式、处理机制、性能代价都不同！</p>
+</li>
+</ul>
+<p>所以，硬件支持你只加读屏障（LFENCE）或写屏障（SFENCE），能以更小代价完成你想要的顺序语义。</p>
+<p>举例：</p>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th>屏障类型</th>
+<th>效果</th>
+<th>例子</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>等 <code>flag==1</code> 后再读取 data</td>
+<td><strong>读屏障</strong></td>
+<td>禁止 <code>data = ?</code> 提前执行</td>
+<td>load-acquire fence</td>
+</tr>
+<tr>
+<td><code>data=42</code> 后，才写 <code>flag=1</code></td>
+<td><strong>写屏障</strong></td>
+<td>禁止 <code>flag=1</code> 提前写出</td>
+<td>store-release fence</td>
+</tr>
+<tr>
+<td>多线程通信中，强一致顺序</td>
+<td><strong>全屏障</strong></td>
+<td>所有读写顺序完全禁止重排</td>
+<td>x86 <code>MFENCE</code></td>
+</tr>
+</tbody></table>
+<ul>
+<li>你可以只阻止读乱序 → 读屏障</li>
+<li>你可以只阻止写乱序 → 写屏障</li>
+<li>你可以全部阻止 → 全屏障</li>
+</ul>
+<h2 id="原子操作"><a href="#原子操作" class="headerlink" title="原子操作"></a>原子操作</h2><table>
+<thead>
+<tr>
+<th>层次</th>
+<th>机制</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>指令层</td>
+<td>原子指令（如 <code>lock cmpxchg</code>、<code>xadd</code>、<code>ldrex/strex</code>）</td>
+<td>提供不可中断的执行</td>
+</tr>
+<tr>
+<td>缓存层</td>
+<td>MESI 协议</td>
+<td>保证多个CPU缓存数据一致</td>
+</tr>
+<tr>
+<td>总线层</td>
+<td>总线锁定（旧方式）</td>
+<td>强制所有核等待该操作完成</td>
+</tr>
+<tr>
+<td>内存层</td>
+<td>内存屏障</td>
+<td>保证内存操作顺序正确可见</td>
+</tr>
+</tbody></table>
+<h3 id="CPU的原子指令如何实现的？"><a href="#CPU的原子指令如何实现的？" class="headerlink" title="CPU的原子指令如何实现的？"></a>CPU的原子指令如何实现的？</h3><p>CPU 的原子指令是在硬件微架构层面通过微操作（micro-ops）调度、缓存控制、总线协议协调等机制联合实现的。我们可以从以下几个层面来详细剖析：</p>
+<h4 id="微架构层面：锁住特定资源"><a href="#微架构层面：锁住特定资源" class="headerlink" title="微架构层面：锁住特定资源"></a>微架构层面：锁住特定资源</h4><p>当执行原子指令时，CPU 内部会采取 锁定机制，确保该操作的所有子步骤在执行时不会被打断。</p>
+<ul>
+<li>对于访问内存的原子操作，CPU 会尝试锁定：<ul>
+<li>缓存行（现代 CPU）</li>
+<li>或内存总线（旧 CPU）</li>
+</ul>
+</li>
+</ul>
+<p>以 x86 的 LOCK CMPXCHG 为例，它内部其实是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (mem == eax) &#123;</span><br><span class="line">    mem = reg;</span><br><span class="line">    ZF = <span class="number">1</span>;</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    eax = mem;</span><br><span class="line">    ZF = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个流程在硬件中不是三条指令，而是一个专门的微操作指令组合包，称为“fused micro-op”，由 CPU 保证“执行期间中断关闭、禁止抢占”。</p>
+<h4 id="缓存一致性协议（MESI）保障原子性"><a href="#缓存一致性协议（MESI）保障原子性" class="headerlink" title="缓存一致性协议（MESI）保障原子性"></a>缓存一致性协议（MESI）保障原子性</h4><p>原子指令通常访问共享变量，这就需要解决缓存一致性问题。</p>
+<p>举例：两个 CPU 都缓存了某个共享变量的值<br>当 CPU1 执行原子写入（例如 lock xadd）时：</p>
+<p>CPU1 会尝试将该缓存行从 Shared → Modified 状态</p>
+<p>MESI 协议要求其他 CPU（如 CPU2）将该缓存行标记为 Invalid</p>
+<p>一旦独占，CPU1 就能安全完成读-改-写过程</p>
+<p>这种方式实现了 原子访问缓存行。</p>
+<h4 id="总线或互联互锁（bus-lock-interconnect-lock）"><a href="#总线或互联互锁（bus-lock-interconnect-lock）" class="headerlink" title="总线或互联互锁（bus lock &#x2F; interconnect lock）"></a>总线或互联互锁（bus lock &#x2F; interconnect lock）</h4><p>对于不在缓存中的内存地址（如非一致内存访问 NUMA、I&#x2F;O 内存等），现代 CPU 仍可能退回到：</p>
+<ul>
+<li>总线锁定（Bus Lock）</li>
+<li>内存控制器互锁（memory interconnect lock）</li>
+</ul>
+<p>比如 x86 的 lock 前缀会让 CPU 发出 LOCK# 信号，告诉其他核暂时禁止访问这段地址。</p>
+<p>这是一种慢但可靠的 fallback 机制，避免跨节点访问带来的竞态。</p>
+<h4 id="禁止乱序与流水线干预"><a href="#禁止乱序与流水线干预" class="headerlink" title="禁止乱序与流水线干预"></a>禁止乱序与流水线干预</h4><p>现代 CPU 为了性能采用乱序执行（Out-of-Order Execution）和流水线（Pipelining）机制。但原子操作必须：</p>
+<ul>
+<li>执行期间不得乱序</li>
+<li>禁止乱序缓存访问（如 Store Buffer 提前写入）</li>
+<li>强制所有早于它的读写完成，之后的读写等待</li>
+</ul>
+<p>这依赖于：</p>
+<ul>
+<li>微指令插入内存屏障（memory fence）</li>
+<li>暂停 load&#x2F;store buffer 的重排</li>
+<li>Flush pipeline &#x2F; reorder buffer</li>
+</ul>
+<p>这就是为什么原子操作通常比普通操作要慢的原因之一。</p>
+<h4 id="例子：lock-cmpxchg-的硬件执行流程"><a href="#例子：lock-cmpxchg-的硬件执行流程" class="headerlink" title="例子：lock cmpxchg 的硬件执行流程"></a>例子：lock cmpxchg 的硬件执行流程</h4><p>假设 CPU1 执行 lock cmpxchg [X], eax，大致流程如下：</p>
+<ul>
+<li>CPU1 发出 LOCK# 信号或锁住缓存行 X（取决于地址是否在 cache）</li>
+<li>向 MESI 控制器发请求，抢占地址 X 的 cache line 独占权限</li>
+<li>在其他核心收到 invalidation 后，CPU1 获得修改权限</li>
+<li>CPU1 比较 X 与 eax 的值，如果相等则更新为新值</li>
+<li>完成后通知 MESI controller，X 的状态设为 Modified</li>
+<li>操作结束，缓存一致性仍然维护</li>
+</ul>
+<p>整个过程是由硬件控制单元（Load&#x2F;Store Queue、Execution Unit、Bus Interface Unit）协调完成的。</p>
+<h4 id="小结：CPU-实现原子操作的关键机制"><a href="#小结：CPU-实现原子操作的关键机制" class="headerlink" title="小结：CPU 实现原子操作的关键机制"></a>小结：CPU 实现原子操作的关键机制</h4><table>
+<thead>
+<tr>
+<th>机制</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>原子指令（如 <code>lock cmpxchg</code>, <code>ldrex/strex</code>）</td>
+<td>提供原子读-改-写</td>
+</tr>
+<tr>
+<td>微操作调度锁定资源</td>
+<td>保证在流水线中不可拆分</td>
+</tr>
+<tr>
+<td>MESI 协议</td>
+<td>多核共享缓存一致性</td>
+</tr>
+<tr>
+<td>总线锁或互联锁</td>
+<td>防止跨核心或I&#x2F;O地址出现竞态</td>
+</tr>
+<tr>
+<td>内存屏障 &amp; 禁止乱序</td>
+<td>防止指令与缓存失序访问</td>
+</tr>
+</tbody></table>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/01/concurrency/%E7%BA%BF%E7%A8%8B%E7%8A%B6%E6%80%81%E8%BD%AC%E6%8D%A2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/01/concurrency/%E7%BA%BF%E7%A8%8B%E7%8A%B6%E6%80%81%E8%BD%AC%E6%8D%A2/" class="post-title-link" itemprop="url">线程状态转换</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-08-01 12:18:07" itemprop="dateCreated datePublished" datetime="2025-08-01T12:18:07+00:00">2025-08-01</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-17 02:50:37" itemprop="dateModified" datetime="2025-08-17T02:50:37+00:00">2025-08-17</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="线程状态"><a href="#线程状态" class="headerlink" title="线程状态"></a>线程状态</h2><ul>
+<li>New（新建）：线程对象刚创建，还未开始执行。</li>
+<li>Ready（就绪）：线程准备好运行，等待调度器分配 CPU。</li>
+<li>Running（运行）：线程正在使用 CPU 执行指令。</li>
+<li>Blocked（阻塞）：线程在等待某个事件（如 I&#x2F;O、锁、条件变量等），不能运行。</li>
+<li>Terminated（终止）：线程执行完毕或被强制结束。</li>
+<li>Sleeping（休眠）：线程主动暂停一段时间（如 sleep()），不能被调度。</li>
+</ul>
+<h2 id="线程状态转换图"><a href="#线程状态转换图" class="headerlink" title="线程状态转换图"></a>线程状态转换图</h2><table>
+<thead>
+<tr>
+<th>当前状态</th>
+<th>触发条件</th>
+<th>转换后状态</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>New</td>
+<td>调用 start() 或 std::thread 构造函数</td>
+<td>Ready</td>
+<td>线程被创建，等待调度</td>
+</tr>
+<tr>
+<td>Ready</td>
+<td>被调度器选中</td>
+<td>Running</td>
+<td>获得 CPU，开始执行</td>
+</tr>
+<tr>
+<td>Running</td>
+<td>时间片耗尽 &#x2F; yield()</td>
+<td>Ready</td>
+<td>主动或被动让出 CPU，重新排队</td>
+</tr>
+<tr>
+<td>Running</td>
+<td>调用 sleep() &#x2F; wait() &#x2F; 等待锁</td>
+<td>Blocked &#x2F; Sleeping</td>
+<td>线程不能继续执行，等待事件或时间</td>
+</tr>
+<tr>
+<td>Blocked &#x2F; Sleeping</td>
+<td>条件满足 &#x2F; 时间到</td>
+<td>Ready</td>
+<td>线程重新具备运行条件，等待调度</td>
+</tr>
+<tr>
+<td>Running</td>
+<td>执行结束或异常</td>
+<td>Terminated</td>
+<td>线程生命周期结束</td>
+</tr>
+</tbody></table>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/07/31/cpp/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +1087,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 14:48:29" itemprop="dateModified" datetime="2025-08-16T14:48:29+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-17 02:50:37" itemprop="dateModified" datetime="2025-08-17T02:50:37+00:00">2025-08-17</time>
               </span>
 
           
@@ -353,7 +1216,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 14:48:29" itemprop="dateModified" datetime="2025-08-16T14:48:29+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-17 02:50:37" itemprop="dateModified" datetime="2025-08-17T02:50:37+00:00">2025-08-17</time>
               </span>
 
           
@@ -515,7 +1378,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 14:48:29" itemprop="dateModified" datetime="2025-08-16T14:48:29+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-17 02:50:37" itemprop="dateModified" datetime="2025-08-17T02:50:37+00:00">2025-08-17</time>
               </span>
 
           
@@ -809,7 +1672,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 14:48:29" itemprop="dateModified" datetime="2025-08-16T14:48:29+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-17 02:50:37" itemprop="dateModified" datetime="2025-08-17T02:50:37+00:00">2025-08-17</time>
               </span>
 
           
@@ -945,7 +1808,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 14:48:29" itemprop="dateModified" datetime="2025-08-16T14:48:29+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-17 02:50:37" itemprop="dateModified" datetime="2025-08-17T02:50:37+00:00">2025-08-17</time>
               </span>
 
           
@@ -1115,7 +1978,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 14:48:29" itemprop="dateModified" datetime="2025-08-16T14:48:29+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-17 02:50:37" itemprop="dateModified" datetime="2025-08-17T02:50:37+00:00">2025-08-17</time>
               </span>
 
           
@@ -1182,7 +2045,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 14:48:29" itemprop="dateModified" datetime="2025-08-16T14:48:29+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-17 02:50:37" itemprop="dateModified" datetime="2025-08-17T02:50:37+00:00">2025-08-17</time>
               </span>
 
           
@@ -1447,7 +2310,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 14:48:29" itemprop="dateModified" datetime="2025-08-16T14:48:29+00:00">2025-08-16</time>
+                <time title="Modified: 2025-08-17 02:50:37" itemprop="dateModified" datetime="2025-08-17T02:50:37+00:00">2025-08-17</time>
               </span>
 
           
@@ -1497,629 +2360,6 @@
 <figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> i <span class="number">20</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> <span class="keyword">eval</span> test &#123;</span><br><span class="line">    <span class="comment">;# variable i</span></span><br><span class="line">    <span class="comment">;# i没有被事先声明为名字空间的变量，则会引用全局变量i</span></span><br><span class="line">    <span class="keyword">for</span> &#123; <span class="keyword">set</span> i <span class="number">1</span>&#125; &#123; <span class="variable">$i</span> &lt;=<span class="number">5</span>&#125; &#123; <span class="keyword">incr</span> i&#125; &#123;</span><br><span class="line">        <span class="keyword">puts</span> -nonewline <span class="string">&quot;i=$i; &quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">puts</span> <span class="string">&quot;\n&quot;</span></span><br><span class="line">    <span class="comment">;# 由于没有全局的j，所以j被默认视作命名空间内部变量，引用时必须加上命名空间为前缀</span></span><br><span class="line">    <span class="keyword">for</span> &#123;<span class="keyword">set</span> j <span class="number">1</span>&#125; &#123; <span class="variable">$j</span>&lt;=<span class="number">5</span>&#125; &#123;<span class="keyword">incr</span> j&#125; &#123;</span><br><span class="line">        <span class="keyword">puts</span> -nonewline <span class="string">&quot;j=$j; &quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">puts</span> <span class="string">&quot;\n&quot;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">puts</span> <span class="variable">$i</span></span><br><span class="line"><span class="keyword">puts</span> <span class="variable">$test::j</span></span><br></pre></td></tr></table></figure>
 
 <figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">;#注意i的定义处被注释了</span></span><br><span class="line"><span class="comment">#set i 20</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> <span class="keyword">eval</span> test &#123;</span><br><span class="line">    <span class="comment">;# 这里的 global 声明无效，因为没有在全局定义i</span></span><br><span class="line">    <span class="keyword">global</span> i</span><br><span class="line">    <span class="comment">;# 此处的i仍然是命令空间内部的</span></span><br><span class="line">    <span class="keyword">for</span> &#123; <span class="keyword">set</span> i <span class="number">1</span>&#125; &#123; <span class="variable">$i</span> &lt;=<span class="number">5</span>&#125; &#123; <span class="keyword">incr</span> i&#125; &#123;</span><br><span class="line">        <span class="keyword">puts</span> -nonewline <span class="string">&quot;i=$i; &quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">;# 错误！</span></span><br><span class="line"><span class="keyword">puts</span> <span class="variable">$i</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;# 正确</span></span><br><span class="line"><span class="keyword">puts</span> <span class="variable">$test::i</span></span><br></pre></td></tr></table></figure>
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/01/17/IC/2.%E5%9F%BA%E4%BA%8EVerilog%E7%9A%84%E6%95%B0%E5%AD%97IC%E8%AE%BE%E8%AE%A1%E6%96%B9%E6%B3%95/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/01/17/IC/2.%E5%9F%BA%E4%BA%8EVerilog%E7%9A%84%E6%95%B0%E5%AD%97IC%E8%AE%BE%E8%AE%A1%E6%96%B9%E6%B3%95/" class="post-title-link" itemprop="url">第2章 基于Verilog的数字IC设计方法</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-01-17 15:37:49" itemprop="dateCreated datePublished" datetime="2025-01-17T15:37:49+00:00">2025-01-17</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 14:48:29" itemprop="dateModified" datetime="2025-08-16T14:48:29+00:00">2025-08-16</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="1-参考"><a href="#1-参考" class="headerlink" title="1. 参考"></a>1. 参考</h2><p>白栎旸. 数字IC设计入门（微课视频版）[M]. 北京: 清华大学出版社，2023-09-01:第2章.</p>
-<h2 id="2-数字器件与Verilog语法"><a href="#2-数字器件与Verilog语法" class="headerlink" title="2. 数字器件与Verilog语法"></a>2. 数字器件与Verilog语法</h2><p>虽然 Foundry 提供的可用元器件种类较多，但数字设计师并不特别在意这些元器件，在其头脑中，只存在 10 种简单元器件：</p>
-<ul>
-<li>与门、或门、非门、异或门、</li>
-<li>加法器、乘法器、移位器、</li>
-<li>选择器、比较器、</li>
-<li>触发器</li>
-</ul>
-<p>注意，虽然加法器、乘法器、比较器等元器件可以由逻辑门生成，但是从Verilog常用的表达式来看，一般直接用“+”这个符号表示加法，而很少用门电路去直接搭建。因为现代芯片规模庞大，功能复杂，工程师应该将主要精力投入到重点难题的实现中，而对于如何实现加法器等最底层的问题，应该交给综合步骤自动完成。</p>
-<p>基本元器件中不包括除法，因为除法的实现不同于乘法，它受到被除数、除数、商的数值范围限制，有时需要用到迭代等复杂方法实现，还有分母为 0 等异常情况需要报告，所以不属于Verilog中常用的直接运算方式。</p>
-<p>务必注意，数字前端写的Verilog仅仅是代码，而非程序，其代码是代替电路图的一种文本语言描述。与或非加乘等指的是元器件。写Verilog时要有电路概貌和时序。</p>
-<p>10种数字器件的符号表示及Verilog表示方法见表格：</p>
-<figure style="text-align:center;">
-<figcaption>10种数字逻辑器件和Verilog表示</figcaption>
-<img src='https://i.postimg.cc/B65vgDMk/20250117214703.jpg' border='0' alt='20250117214703' width="90%"/>
-</figure>
-
-<p>真正的元器件库中有很多复杂的元器件，如图所示：</p>
-<figure style="text-align:center;">
-<img src="https://i.postimg.cc/6QSLdsyT/20250117214659.jpg" alt="20250117214659" width="50%"/>
-<figcaption>复杂元器件示例</figcaption>
-</figure>
-
-<p>但是这些元器件都可以看作以上10种基础元器件的组合，不会超出原有的功能范围。所以设计时，头脑中只需要有以上10种元器件。</p>
-<p>数字IC设计又称为数字逻辑设计，因为其本身就是逻辑的，只有<code>0</code>和<code>1</code>两种逻辑。</p>
-<ul>
-<li>组合逻辑：电平输入和电平输出。元器件结构简单，但问题是如果输入含有毛刺，输出就有毛刺。</li>
-</ul>
-<img src='https://i.postimg.cc/C1s5wkTY/20250117215056.jpg' border='0' alt='20250117215056' width="50%"/>
-
-<figure style="text-align:center;">
-<img src='https://i.postimg.cc/NMH8DNHD/20250117214654.jpg' border='0' alt='20250117214654' width="50%"/>
-<figcaption>组合逻辑电路的毛刺</figcaption>
-</figure>
-
-<ul>
-<li>时序逻辑：以时钟为驱动源。一个触发器，在时钟的驱动（边沿触发）下，将 D 输入端的信号送到 Q 端输出。</li>
-</ul>
-<img src='https://i.postimg.cc/BbfTVx50/20250117214649.jpg' border='0' alt='20250117214649' width="100%"/>
-
-<p>触发器也可以叫寄存器(register, reg)，因为如果没有时钟驱动，那么Q端会保持原有状态不变，也就寄存了上一次触发时的D端信息。而组合逻辑，输出端是无法寄存信息的。</p>
-<p>时序逻辑是数字电路的基础。10 种元器件中，只有触发器属于时序逻辑器件，所以触发器是整个数字电路的基础。从 RTL 的名称可以知晓，RTL 意为寄存器传输层，直译过来就是：从一个触发器的输出到另一个触发器的输入，通过触发器的层层传递，最终实现了一个功能完整的数字电路。</p>
-<p>数字电路的时序分析，主要是分析两个触发器之间的路径延迟。</p>
-<p>进行前仿时，看到的仿真波形会和本图一样，是理想的，而使用版图网表进行后仿时，仿真波形是带延迟的。</p>
-<p>上图中触发器的符号表示，它共有4个引脚，除输入的D端和输出的<code>Q</code>端外，三角形位置表示时钟，下方的<code>rst_n</code>表示复位，其上的圆圈表示<code>0</code>电平有效，即<code>rst_n</code>等于<code>0</code>时，寄存器处于复位状态。此时，<code>Q</code>端保持<code>0</code>，即使时钟和<code>D</code>端有动作，<code>Q</code>端也不会变化，只有当<code>rst_n</code>等于<code>1</code>时，才解除复位状态，寄存器方能正常工作。</p>
-<h2 id="3-可综合的Verilog设计语法"><a href="#3-可综合的Verilog设计语法" class="headerlink" title="3. 可综合的Verilog设计语法"></a>3. 可综合的Verilog设计语法</h2><p>能变成电路的Verilog表达叫做可综合，在设计电路时，只能使用可综合的语法表述。而在仿真时，由于只在计算机上运行，不留片，可使用不能综合的高级语法，以增加语言表达的灵活度和复杂度。</p>
-<p>可综合的电路表述只有两种：</p>
-<ul>
-<li><code>assign</code></li>
-<li><code>always</code></li>
-</ul>
-<p>与门：</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">assign</span> z = a &amp; b;</span><br></pre></td></tr></table></figure>
-
-<p>触发器：</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(<span class="keyword">posedge</span> clk <span class="keyword">or</span> <span class="keyword">negedge</span> rst_n)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (!rst_n)</span><br><span class="line">        Q &lt;= <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        Q &lt;= D;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<p>符号说明：</p>
-<ul>
-<li><code>&lt;=</code>: 非阻塞赋值，凡是时序逻辑，都用非阻塞赋值；</li>
-<li><code>=</code>: 阻塞赋值，凡是组合逻辑，都用阻塞赋值；</li>
-<li><code>@(...)</code>: 括号中的列表叫敏感列表，意思是，<code>always</code>块输出的<code>Q</code>对列表中信号保持敏感，如果敏感信号动，则Q也会动。</li>
-<li><code>posedge clk</code>: 意思是时钟的上升沿；</li>
-<li><code>negedge rst_n</code>: 意思是时钟的下降沿。</li>
-<li><code>begin</code> &#x2F; <code>end</code>: 相当于 C 语言中的 <code>&#123;&#125;</code> ，如果语句只有一条，可以不写 <code>begin</code> &#x2F; <code>end</code> 。</li>
-</ul>
-<p><code>always</code>不仅可以表示时序逻辑，也可以表示组合逻辑。如下是与门的另一种表示：</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    z = a &amp; b;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<p>其中，<code>@(*)</code>中的<code>*</code>是省略表述的敏感列表，综合器会自动在<code>always</code>块中寻找与输出<code>z</code>相关的输入信号，自动填入敏感列表中。本例中，会自动将<code>a</code>和<code>b</code>作为输入填入。这种让工具自动填入的方式是可靠且推荐的。</p>
-<p>Verilog的语法规律：</p>
-<ol>
-<li>时序逻辑，必须使用<code>always</code>块，并同时使用<code>&lt;=</code>非阻塞赋值。在其敏感列表中，必须出现时钟信号的边沿和复位信号的边沿。</li>
-<li>组合逻辑，可以使用<code>assign</code>，也可以使用<code>always</code>块，但是它们的赋值是<code>=</code>阻塞赋值。若使用<code>always</code>块，则敏感列表中使用<code>*</code>。若遇到敏感列表中带有<code>*</code>，则可以直接判定为组合逻辑。</li>
-</ol>
-<p>再次强调，Verilog的语法表达，描述的都是电路，因此例子中的 <code>z</code>、<code>a</code>、<code>b</code>、<code>clk</code>、<code>rst_n</code>、<code>Q</code>、<code>D</code> 都称为信号，在电路中都是实实在在的金属连线，切勿称为变量。</p>
-<h2 id="4-对寄存器的深度解读"><a href="#4-对寄存器的深度解读" class="headerlink" title="4. 对寄存器的深度解读"></a>4. 对寄存器的深度解读</h2><p>一般会使用时钟上升沿来驱动寄存器。对于同样的功能需求，双沿触发需要的时钟慢，但要求时钟是<code>50%</code>占空比，而单沿触发，对时钟的要求快一倍，但对时钟形状的要求降低很多。</p>
-<p>复位信号<code>rst_n</code>，以<code>0</code>电平作为复位电平，1电平解复位，是通用标准，很少有反过来使用的。原因是，数字电路的复位信号是模拟电路给的，通常，模拟电路将其命名为<code>POR(Power On Reset)</code>，即上电复位信号。芯片刚通电时，电压小，逐渐上升到要求的电压，例如<code>1.8V</code>，<code>POR</code>本质上是一个电压上升的标志，模拟电路放一个比较器，将输入电压与<code>0.9V</code>比较，电压小于<code>0.9V</code>，<code>POR</code>为<code>0</code>，电压大于<code>0.9V</code>，<code>POR</code>为<code>1</code>。因而复位信号上电时总是先<code>0</code>后<code>1</code>，数字寄存器需要在复位信号为<code>0</code>的阶段保持复位态，不能运行，因为此时芯片电压不足，不能保证正常运行，而复位信号变成<code>1</code>，说明上电完毕，电压充足，寄存器解除复位进行正常运行是安全的。</p>
-<p>需要特别澄清的是语句<code>negedge rst_n</code>，但是经过仿真和与模拟工程师确认，复位信号对寄存器的作用不是通过信号沿来驱动的，而是通过电平来驱动，也就是 <code>0</code> 信号具有绝对控制权，只要 <code>rst_n</code> 为 <code>0</code> ，那么立即复位。</p>
-<h2 id="5-非阻塞赋值和阻塞赋值的区别"><a href="#5-非阻塞赋值和阻塞赋值的区别" class="headerlink" title="5. 非阻塞赋值和阻塞赋值的区别"></a>5. 非阻塞赋值和阻塞赋值的区别</h2><p>非阻塞赋值的意思是该句表达不会阻塞后续表达的执行。如下例中，<code>X &lt;＝ 0</code>的执行，不会阻碍到<code>Y &lt;＝ 0</code>的执行，它们是同时发生的：</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(<span class="keyword">posedge</span> clk <span class="keyword">or</span> <span class="keyword">negedge</span> rst_n)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (!rst_n)</span><br><span class="line">    <span class="keyword">begin</span></span><br><span class="line">        X &lt;= <span class="number">0</span>;</span><br><span class="line">        Y &lt;= <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    <span class="keyword">begin</span></span><br><span class="line">        X &lt;= A;</span><br><span class="line">        Y &lt;= B;</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<p>而阻塞赋值，意思是如果前一句不执行，后一句就无法执行，前一句会阻塞后一句。对于可综合的Verilog来讲，其实并不会阻塞。在下例中， <code>always</code> 块的目的是创造 <code>z</code> 和 <code>k</code> 两个信号。 <code>k ＝ 3 * z</code> 和 <code>z ＝ a &amp; b</code> 是两个不同的电路， <code>k ＝ 3 * z</code> 电路不会被 <code>z ＝ a &amp; b</code> 阻塞。</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    z = a &amp; b;  <span class="comment">// 与门</span></span><br><span class="line">    k = <span class="number">3</span> * z;  <span class="comment">// 乘法器</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<p>本例对应的原理图如图所示：</p>
-<img src='https://i.postimg.cc/MTs1Dhsh/20250117224729.jpg' border='0' alt='20250117224729' width="50%"/>
-
-<p>可见，对于电路描述来讲，语法只是表示一种连接关系，并没有执行先后顺序的说法，但如果本例使用非阻塞赋值，语法检查会报错，因此，这是一种惯用方法。阻塞赋值在Verilog中真正体现阻塞，是在仿真使用的不可综合语法中，到第3章再做解释。</p>
-<h2 id="6-组合逻辑的表达式"><a href="#6-组合逻辑的表达式" class="headerlink" title="6. 组合逻辑的表达式"></a>6. 组合逻辑的表达式</h2><p>对于一个组合逻辑电路，应该在什么情况下用assign，在什么情况下用always呢？</p>
-<p>比较简单的逻辑适合使用assign方式，较为复杂的逻辑应使用always块。下例给出了一个适合用always块的较复杂例子：</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (s1)</span><br><span class="line">        a = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s2)</span><br><span class="line">        a = <span class="number">2</span>;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s3)</span><br><span class="line">        a = <span class="number">3</span>;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        a = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<p>同样的功能若改用assign，则为下例所示。很明显，用always块表达意思更加清晰。</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">assign</span> a = s1 ? <span class="number">1</span> : (s2 ? <span class="number">2</span> : (s3 ? <span class="number">3</span> : <span class="number">0</span>));</span><br></pre></td></tr></table></figure>
-
-<p>前面解释了敏感列表中的 <code>*</code> 在组合逻辑 <code>always</code> 块中的作用。如果读者使用过一些老IP，则可能还会看到下例所示的表达，这种表达已随着综合器的进步渐渐被淘汰了，不建议初学者使用。</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(s1 <span class="keyword">or</span> s2 <span class="keyword">or</span> s3)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (s1)</span><br><span class="line">        a = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s2)</span><br><span class="line">        a = <span class="number">2</span>;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s3)</span><br><span class="line">        a = <span class="number">3</span>;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        a = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="7-组合逻辑中的选择器"><a href="#7-组合逻辑中的选择器" class="headerlink" title="7. 组合逻辑中的选择器"></a>7. 组合逻辑中的选择器</h2><h3 id="7-1-二选一-MUX-如何表达？"><a href="#7-1-二选一-MUX-如何表达？" class="headerlink" title="7.1. 二选一 MUX 如何表达？"></a>7.1. 二选一 MUX 如何表达？</h3><img src='https://i.postimg.cc/L6vnwrjX/20250117225844.jpg' border='0' alt='20250117225844' width="50%"/>
-
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 第 1 种表达， assign 完整表达</span></span><br><span class="line"><span class="keyword">assign</span> z = (s == <span class="number">1</span>) ? b : a;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 第 2 种表达， assign 简化表达</span></span><br><span class="line"><span class="keyword">assign</span> z = s ? b : a;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 第 3 种表达， always 块表达</span></span><br><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (s)</span><br><span class="line">        z = b;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        z = a;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<h3 id="7-2-多选一MUX，又该如何表示呢？"><a href="#7-2-多选一MUX，又该如何表示呢？" class="headerlink" title="7.2. 多选一MUX，又该如何表示呢？"></a>7.2. 多选一MUX，又该如何表示呢？</h3><p>因为使用 <code>assign</code> 表示显然会过于复杂，所以需要用 <code>always</code> 块表示。表示方法有两种，注意两种表达综合出来的电路是不同的。</p>
-<p>其一如下例所示。</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (s == <span class="number">0</span>)</span><br><span class="line">        z = a;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s == <span class="number">1</span>)</span><br><span class="line">        z = b;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s == <span class="number">2</span>)</span><br><span class="line">        z = c;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s == <span class="number">3</span>)</span><br><span class="line">        z = d;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s == <span class="number">4</span>)</span><br><span class="line">        z = e;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s == <span class="number">5</span>)</span><br><span class="line">        z = f;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        z = a; <span class="comment">// 默认值</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<p>综合出来的电路如图所示：</p>
-<img src='https://i.postimg.cc/x84BbfW8/20250117230859.jpg' border='0' alt='20250117230859' width="100%"/>
-
-<p>可见，使用 <code>if</code> 表述的选择关系，综合的电路是一层一层逐渐展开的，写在 <code>if</code> 最前面的语句，掌握着最终的选择权，因而优先级最高，再往后优先级逐层下降，而使用 <code>case</code> 表述的MUX，每个选择都是并列的，优先级相同，见下文。</p>
-<p>其二如下例所示。</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">case</span> (s)</span><br><span class="line">        <span class="number">0</span>: z = a;</span><br><span class="line">        <span class="number">1</span>: z = b;</span><br><span class="line">        <span class="number">2</span>: z = c;</span><br><span class="line">        <span class="number">3</span>: z = d;</span><br><span class="line">        <span class="number">4</span>: z = e;</span><br><span class="line">        <span class="number">5</span>: z = f;</span><br><span class="line">        <span class="keyword">default</span>: z = a; <span class="comment">// 默认值</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<p>所综合的电路如图所示：</p>
-<img src='https://i.postimg.cc/PrfqW20k/20250117230221.jpg' border='0' alt='20250117230221' width="30%"/>
-
-<p>使用 <code>if</code> 表述，有可能出现隐藏逻辑，即设计者没有考虑到，但实际会被综合出来的逻辑门。隐藏逻辑是设计的隐患，设计者在写代码时应该清楚其逻辑含义，尽量避免出现隐藏逻辑。为了避免设计中出现隐藏逻辑，在实际项目中往往会提倡使用 <code>case</code> 语句来表达。</p>
-<p>下例中反映出 <code>if</code> 的优先级特征，条件 <code>s &lt; 5</code> 包含 <code>s ＝＝ 4</code> 的情况，因为 <code>s &lt; 5</code> 优先，因而当 <code>s＝＝4</code> 时， <code>z</code> 的赋值是 <code>a</code> 而不是 <code>b</code> 。如果设计意图是要在 <code>s ＝＝ 4</code> 时使 <code>z ＝ b</code> ，则应当将其写在 <code>s &lt; 5</code> 之前。</p>
-<!--  -->
-
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (s &lt; <span class="number">5</span>)</span><br><span class="line">        z = a;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s == <span class="number">4</span>)</span><br><span class="line">        z = b;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        z = c;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<p>case有一种变体是 <code>casez</code> ，它可以拓展case的使用范围：</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">casez</span>(s)</span><br><span class="line">        <span class="number">16&#x27;b00011</span>???????????: z = a;</span><br><span class="line">        <span class="number">16&#x27;b10111111</span>????<span class="number">0000</span>: z = b;</span><br><span class="line">        <span class="number">16&#x27;b1111</span>?<span class="number">001000</span>?????: z = c;</span><br><span class="line">        <span class="keyword">default</span>: z = d;</span><br><span class="line">    <span class="keyword">endcase</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
-
-<p>其中，问号的意思是0或1都能匹配，类似计算机语言中的通配符。</p>
-<p>虽然很多项目提倡使用 <code>case</code> 或 <code>casez</code> 来表述选择器，但究竟是使用 <code>if</code> 还是 <code>case</code> ，仍然取决于表达的需要。总体而言， <code>case</code> 便于判断是否相等的情况，而 <code>if</code> 适合判断大于或小于关系，不同情况用不同的表达，可以使Verilog逻辑更加清晰，也更便于维护。</p>
-<p>注意组合逻辑中的 <code>if</code> 和 <code>else if</code> ，最后必须跟一句 <code>else</code> ，使整体逻辑完整。若没有else，则该电路会综合出一个锁存器(<code>Latch</code>)。锁存器不属于10种基本元器件之一。在设计中，凡有寄存需求，应尽量使用触发器，避免使用锁存器，特别要避免不写 <code>else</code> 引起的隐藏逻辑。</p>
-<h2 id="8-Verilog中的for循环"><a href="#8-Verilog中的for循环" class="headerlink" title="8. Verilog中的for循环"></a>8. Verilog中的for循环</h2><p>关键字：</p>
-<ul>
-<li><code>for</code></li>
-<li><code>generate</code> &#x2F; <code>endgenerate</code> &#x2F; <code>genvar</code></li>
-<li><code>integer</code>: 是编译时的变量，不是信号，不会被综合成电路或金属连线。如果变量 <code>ii</code> 声明为 <code>wire</code> 或 <code>reg</code> ，然后用 <code>a[ii]</code> 表示一个信号，则语法不能综合为电路。但是 <code>ii</code> 声明为 <code>integer</code> ，那么 <code>a[ii]</code> 将被综合成信号。</li>
-</ul>
-<h2 id="9-Verilog中的数值表示方法"><a href="#9-Verilog中的数值表示方法" class="headerlink" title="9. Verilog中的数值表示方法"></a>9. Verilog中的数值表示方法</h2><p> 数值一般不直接写，如果直接写，则工具会理解为十进制32比特数，但实际中的信号位宽多种多样，选用哪种进制表示数值也有多种选择，因此需要将这两方面予以规定。</p>
-<table>
-<thead>
-<tr>
-<th>进制制</th>
-<th>符号号</th>
-<th>举例</th>
-<th>解释</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>二进制</td>
-<td>b</td>
-<td>4’b0110</td>
-<td>4 比特数，用二进制表示为 0110</td>
-</tr>
-<tr>
-<td>十进制</td>
-<td>d</td>
-<td>8’d3</td>
-<td>8 比特数，用十进制表示为 3</td>
-</tr>
-<tr>
-<td>十六进制</td>
-<td>h</td>
-<td>15’h1abc</td>
-<td>15 比特数，用十六进制表示为 1abc</td>
-</tr>
-</tbody></table>
-<p> 特殊的数值表示方法： </p>
-<p> <code>&#123;5&#123;1&#39;b0&#125;&#125;</code> 表示5个比特0，再如 <code>&#123;4&#123;1&#39;b1&#125;&#125;</code> 表示4个比特1。这种表示一般不用，但是它有优点，上例中的比特数量5和4可以用参数替代，若Verilog中有一个参数 <code>kkk</code> ，则可以写为 <code>&#123;(kkk)&#123;1&#39;b0&#125;&#125;</code> ，甚至可以写成用计算式表示的位宽，如 <code>&#123;(kkk＋2)&#123;1&#39;b0&#125;&#125;</code> 。注意，kkk是参数，不是信号，它不是电路，而是一种编译时使用的变量。</p>
-<p> 这种表示方法还可以写为 <code>&#123;常数&#123;逻辑表达式&#125;&#125;</code> 的形式，如</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">assign</span> int_clr = &#123;<span class="number">2</span>&#123;(apb_addr = = <span class="number">4&#x27;d7</span>) &amp; wr_en&#125;&#125; &amp; apb_wdat[<span class="number">1</span> : <span class="number">0</span>];</span><br></pre></td></tr></table></figure>
-
-<p>此例的目的是使用APB总线配置两个只写信号（write-only信号）​，这两个信号合称为 <code>int_clr</code> ，等式的右边，仅当地址 <code>apb_addr</code> 等于7，并且在APB总线上发生写操作时，APB写入的两比特数据 <code>apb_wdat[1:0]</code> 才会被配置到int_clr中，否则int_clr就是0。问题在于， <code>(apb_addr＝＝4&#39;d7)&amp;wr_en</code> 是一比特，不能跟 <code>apb_wdat[1:0]</code> 按位求与，因而需要将一比特复制为两比特，即 <code>&#123;2&#123;(apb_addr＝＝4&#39;d7)&amp;wr_en&#125;&#125;</code> 。</p>
-<p>对于其他辅助变量，可以直接写数字，例如在for循环中讲述的 <code>genvar ii</code> ，ii只是个变量，没有对应的电路，那么for循环赋值就不需要带位宽 和进制了，可以像下面这样写</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(ii = <span class="number">0</span>;ii&lt;<span class="number">100</span>;ii = ii + <span class="number">1</span>)</span><br></pre></td></tr></table></figure>
-
-<p>注意Verilog中，如果单写a、b、c、d、e、f、x、z，表示的是信号名，不能作为数值，如果想表示十六进制的数值，则可写为4’ha等，1’bx表示未知态，1’bz表示高阻态。</p>
-<h2 id="10-信号的状态类型"><a href="#10-信号的状态类型" class="headerlink" title="10. 信号的状态类型"></a>10. 信号的状态类型</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0 1 x z</span><br></pre></td></tr></table></figure>
-
-<p>其中，</p>
-<ul>
-<li><p>0和1是数字电路本身的状态，它的本源是零电平和VDD电平。</p>
-<p>  VDD， Voltage Drain, 其中 Drain 表示漏极，是一个电源引脚，用来提供正电压给电路中的元件。由于晶体管的设计通常包含两个漏极（源极和漏极），所以在一些命名规则中，为了区分正电源和负电源，使用了两个 D，并且VDD 代表正电源电压，VSS（Voltage Source）代表地线或负电源。 整个芯片的电源常称为VCC，芯片的地常标注为VSS。</p>
-<p>  不同工艺和元器件库需要的VDD不同，例如0.9V、1.8V、3.3V等，而同一个元器件库中的所有元器件，其需要的供电电压VDD一般相同的，只有I&#x2F;O器件等少数元器件，其输入端和控制端是比较低的电压，而输出端口却是较高的电压。</p>
-<p>  数字0和1对应的电平不会特别严格，而是有一个浮动范围，通常信号电平低于VDD的30%，就被认为是0，高于VDD的70%，就被认为是1。</p>
-</li>
-<li><p>z态是高阻态。</p>
-<p>  如果一颗芯片不通电，则它所有的引脚就都是高阻态。可见，高阻态的实际意义就是不会干扰到其他信号传输的状态，例如某信号A是高阻态，某信号B不是高阻态，那么信号A叠加到信号B上（可以想象为两根信号线被拧在一起）​，结果仍然是B，而A没有任何效果。</p>
-<p>  一般来讲，一个有着双向传输功能的引脚，如果设置为输入模式，就可以认为这个引脚处于高阻态，意思是它对电路板上与它相连的元器件没有任何影响，这些相连元器件如果要对本芯片输出0或1，就可以直接顺着该高阻态引脚输入，而不会被干扰或阻挡。</p>
-<p>  在FPGA的Verilog表述中，可以很形象地将FPGA的引脚描述为如下语句，其中b是FPGA的引脚，所以声明为inout类型，oe是该引脚的方向选择，若oe为1，则b为输出模式，将信号a输出到FPGA外面，而当oe为0时，是高阻态，即输入模式，外面的信号从b引脚可以进来后与信号c形成了组合逻辑，代码如下：</p>
-  <figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">inout</span> b;</span><br><span class="line"></span><br><span class="line"><span class="keyword">assign</span> b = oe ? a : <span class="number">1&#x27;bz</span></span><br><span class="line"><span class="keyword">assign</span> d = b ^ c;</span><br></pre></td></tr></table></figure>
-
-<p>  注意上例中引用FPGA的语法只是为了说明z态的含义。IC设计中对引脚的设计不像FPGA这么简单，需要例化一个引脚模块，在代码中不会出现1’bz数值。</p>
-<p>  <strong>博主注1：</strong></p>
-<p>  在集成电路（IC）中，高阻态（High Impedance State，简称 Hi-Z）是指一个电路输出引脚处于没有输出驱动信号的状态，即该引脚既不提供高电平（VDD）也不提供低电平（GND），而是处于一种“悬空”状态，几乎不消耗电流，像是断开了。高阻态通常用于多路复用（bus）或三态总线（tri-state bus）等应用中，允许多个设备共享同一条总线而不会相互干扰。</p>
-<p>  高阻态的实现<br>  高阻态通常通过 <strong>三态门（Tri-state Gate）</strong> 来实现。三态门是一种特殊类型的逻辑门，它具有三个输出状态：</p>
-<p>  高电平（逻辑 1）<br>  低电平（逻辑 0）<br>  高阻态（Hi-Z）<br>  具体来说，高阻态是通过在输出端增加一个高阻抗的电路来实现的，这个高阻抗值通常非常大，以至于该引脚对外部电路几乎没有影响。三态门的工作原理可以分为以下几种方式：</p>
-<p>  开关型设计：</p>
-<p>  P-Channel MOSFET（PMOS） 和 N-Channel MOSFET（NMOS） 组成的电路可以根据控制信号决定是否接通输出。如果三态门处于“高阻态”时，MOSFET 们并不会导通，从而使输出引脚处于高阻抗状态。<br>  控制信号：</p>
-<p>  三态门的输出通常由一个控制信号来控制。当控制信号为“使能”状态时，输出引脚会驱动高或低电平；而当控制信号为“禁用”状态时，输出引脚进入高阻态，基本与外部电路断开连接。<br>  双向总线：</p>
-<p>  在多路复用的场景中，多个设备可能需要共享同一条数据总线。为了避免多个设备同时驱动总线产生冲突，设备在不输出数据时会进入高阻态，不影响其他设备的信号传输。<br>  高阻态的作用<br>  多路复用：高阻态允许多个电路共享同一总线。只有一个电路在某个时间点输出数据，其他电路进入高阻态，防止冲突。</p>
-<p>  总线冲突保护：通过将不参与通信的设备置于高阻态，避免了多个设备在同一时间尝试驱动总线的冲突。</p>
-<p>  节省电力：通过在不需要输出信号时将输出置于高阻态，可以降低功耗，因为在高阻态下输出引脚几乎不消耗电流。</p>
-<p>  举例说明<br>  一个常见的例子是在 Tri-state Bus（三态总线）中，多个设备通过控制信号来决定是否驱动总线。如果设备不需要发送数据，它会将输出置于高阻态，允许其他设备使用总线。</p>
-<p>  总结来说，高阻态的实现依赖于三态门（Tri-state Gate），它通过控制MOSFET开关来使输出处于非驱动状态，从而让其他电路可以共享同一个引脚或总线。</p>
-<p>  <strong>博主注2：</strong></p>
-<p>  在数字电路中，inout 引脚是指一个既可以作为输入端口，也可以作为输出端口的引脚。它通常用于多路复用（bus）或双向数据传输的场合，允许一个引脚在不同时间根据需要在输入和输出之间切换。为了在同一引脚上同时支持输入和输出，通常使用 三态逻辑（Tri-state logic）来控制数据的流向。</p>
-<p>  inout 引脚的实现方式<br>  inout 引脚的实现依赖于几个关键的设计原则和组件</p>
-<p>  三态缓冲器（Tri-state Buffer）：</p>
-<p>  在 inout 引脚上，通常使用 三态缓冲器（Tri-state buffer）来控制该引脚是处于输入、输出还是高阻态。三态缓冲器的作用是通过控制信号来决定该引脚的状态。<br>  当引脚作为 输出 时，缓冲器将数据传递到引脚。<br>  当引脚作为 输入 时，缓冲器将引脚上的电压信号传送到内部电路。<br>  当引脚处于 高阻态（Hi-Z）时，缓冲器断开与引脚的连接，使得该引脚对外部电路“透明”，即不影响电路。<br>  控制信号：</p>
-<p>  inout 引脚的切换通常由控制信号（例如，方向控制信号）来决定，指示该引脚是作为输入使用还是作为输出使用。<br>  控制信号一般是由逻辑电路生成，当电路需要输出数据时，控制信号会使引脚成为输出；而当电路需要接收数据时，控制信号会使引脚成为输入。<br>  双向总线设计：</p>
-<p>  inout 引脚常用于总线设计，其中多个设备共享同一条总线。每个设备可以在需要时向总线发送数据，而在不需要时通过将输出设为高阻态来避免与其他设备的冲突。<br>  例如，数据总线（Data Bus）可能由多个设备共享。当一个设备不在发送数据时，它会将其 inout 引脚设为高阻态，确保只有发送设备影响总线信号。</p>
-<p>  工作原理</p>
-<p>  输出模式：</p>
-<p>  当inout 引脚作为输出时，相关的三态缓冲器连接到该引脚，并驱动电平（高或低）。此时，控制信号将引脚设置为输出模式，并且其他连接到该引脚的电路会处于断开状态。</p>
-<p>  输入模式：</p>
-<p>  当 inout 引脚作为输入时，缓冲器进入高阻态（Hi-Z），即引脚的状态不再由输出逻辑驱动，转而接收外部信号。此时，只有连接到引脚的其他设备会驱动该引脚的电平。<br>  高阻态：</p>
-<p>  当引脚不需要输出数据时，三态缓冲器将进入 高阻态，使该引脚对其他电路没有影响。这样，多个设备就可以共享同一个引脚或总线而不会发生电平冲突。<br>  应用示例<br>  双向数据总线：</p>
-<p>  假设有多个设备共享一条数据总线。每个设备的 inout 引脚可以作为数据的输入端或输出端。在某个时刻，只有一个设备向总线发送数据，其他设备则将其引脚设为高阻态，避免干扰。<br>  双向信号传输：</p>
-<p>  在通信协议中，inout 引脚可用于双向信号传输。例如，I²C总线就使用 inout 引脚，其中一个设备在某个时刻发送信号，而另一个设备则接收信号。<br>  芯片间通信：</p>
-<p>  在多芯片系统中，inout 引脚可用于芯片之间的数据交换，允许不同芯片在不同时刻控制同一引脚的输入和输出行为。<br>  总结<br>  inout 引脚通过三态缓冲器和控制信号的组合，实现了同一引脚可以在输入和输出之间切换的功能。通过将输出置于高阻态，可以使得该引脚不会干扰其他电路或设备，使其适用于总线系统或双向通信的设计中。</p>
-</li>
-<li><p>x态的含义是未知态。</p>
-<p>  有4种情况会产生未知态：</p>
-<ul>
-<li>其一是芯片已上电但复位信号未进行复位的情况；</li>
-<li>其二是双向引脚信号冲突，因为没控制好，导致有一路信号通过引脚输入，另一路信号通过相同的引脚输出；</li>
-<li>其三是芯片中一个元器件的某个输入端为x态，于是输出就跟着变成了x态，这就是所谓x态的传播；</li>
-<li>第四是触发器的时序不满足，产生了亚稳态，从而表示为x态。</li>
-</ul>
-<p>  上述4种情况在仿真中都能看到，但实际中，第1种情况基本不会出现，除非模拟电路设计有误，其他3种在数字设计有缺陷时会出现，实际在测量其电压时会出现不稳定或非预期的问题。在可综合的Verilog中，不会出现1’bx数值，因为没有一个设计会故意将一个错误引入RTL中，所有的错误都是意外发生的。该符号在仿真脚本和仿真波形中可能出现。</p>
-</li>
-</ul>
-<h2 id="电平信号与脉冲信号"><a href="#电平信号与脉冲信号" class="headerlink" title="电平信号与脉冲信号"></a>电平信号与脉冲信号</h2><p>电平信号也叫Latch信号，即一个信号持续多个时钟周期都一直保持为1的信号。</p>
-<p>脉冲信号就是只持续一个时钟周期的信号。</p>
-<p>工程师在交流时，对于电平信号a常用的说法是“将a给Latch住”​，对于脉冲信号b常用的说法是“打一个脉冲b”​。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/01/15/IC/1.%E6%95%B0%E5%AD%97IC%E8%AE%BE%E8%AE%A1%E6%B5%81%E7%A8%8B/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/01/15/IC/1.%E6%95%B0%E5%AD%97IC%E8%AE%BE%E8%AE%A1%E6%B5%81%E7%A8%8B/" class="post-title-link" itemprop="url">第1章 数字IC设计流程</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-01-15 16:59:30" itemprop="dateCreated datePublished" datetime="2025-01-15T16:59:30+00:00">2025-01-15</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-16 14:48:29" itemprop="dateModified" datetime="2025-08-16T14:48:29+00:00">2025-08-16</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="1-参考"><a href="#1-参考" class="headerlink" title="1. 参考"></a>1. 参考</h2><p>白栎旸. 数字IC设计入门（微课视频版）[M]. 北京: 清华大学出版社，2023-09-01:第1章.</p>
-<h2 id="2-数字IC设计流程"><a href="#2-数字IC设计流程" class="headerlink" title="2. 数字IC设计流程"></a>2. 数字IC设计流程</h2><h3 id="2-1-三个主要流程："><a href="#2-1-三个主要流程：" class="headerlink" title="2.1. 三个主要流程："></a>2.1. 三个主要流程：</h3><ol>
-<li><p>前端设计: 用 Verilog 编写 RTL 设计文件（Register Transfer Level，RTL，寄存器传输层）。</p>
-</li>
-<li><p>综合（Synthesis）：将 RTL 转换位实际电子元器件的连接。输出文件称为网表（netlist），也是纯文本文件。</p>
-</li>
-<li><p>后端布局布线（PR）：将网表变为实际电路图，类似 PCB 图，称为版图（Layout）。版图是晶圆厂（Foundry）能识别的通用格式。</p>
-<p> 版图的绘制：</p>
-<ul>
-<li>布局（Place）：元器件如何摆放；</li>
-<li>布线（Route）：元器件如何连接。</li>
-</ul>
-<p> 数字版图的绘制大部分由计算机自动完成，称为自动布局布线（Automatic Place and Route，APR），很多时候也称为 PR 。</p>
-<p> 流片（TapeOut）：Foundry 根据版图制造芯片。</p>
-</li>
-</ol>
-<h3 id="2-2-验收和验证（SignOff）："><a href="#2-2-验收和验证（SignOff）：" class="headerlink" title="2.2. 验收和验证（SignOff）："></a>2.2. 验收和验证（SignOff）：</h3><p>对质量进行把控和最终验收。</p>
-<p>前仿真：检查 RTL 设计文件；用测试平台（Testbench）文件对实际应用环境仿真。这是在版图成型之前，称为前仿。一旦发现错误，验证人员会反馈给设计者修改，如此反复迭代，直至交付到综合阶段的 RTL 文件都是合格的。</p>
-<p>SignOff 检查：检查版图设计；对时序和功耗检查。如果检查不过，首先是数字后端工程师自己努力，重新绘制版图或微调元器件位置，若无法达到目的，再修改综合策略，重新综合。若仍无法达到目的，则反馈到前端 IC 设计，在 RTL 上调整。</p>
-<p>后仿真：在 SignOff 合格后，需要将网表和延迟信息提交给验证人员，进行后仿。对成型版图的时序进行最后验证和验收。后仿就是版图成型之后的仿真。</p>
-<h3 id="2-3-可测性设计（Design-For-Test，DFT）"><a href="#2-3-可测性设计（Design-For-Test，DFT）" class="headerlink" title="2.3. 可测性设计（Design For Test，DFT）"></a>2.3. 可测性设计（Design For Test，DFT）</h3><p>一个附属工序，原理是在芯片中加入与主要功能无关的附属电路，用于在芯片的生产过程中使用 TestBench 快速判断芯片功能的完好行、内部结构的正常性。</p>
-<p>如果芯片中包含 DFT 电路，则 TestBench 可以向芯片的某些引脚发送事先准备好的测试向量，在芯片的另一些引脚上采样芯片对测试向量的反应。将事先准备好的预期效果与实际采样到的结果进行对比，从而判断内部功能是否正常。</p>
-<p>DFT 功能也常常被称为扫描（Scan），即用 TestBench 扫描芯片内部之意。DFT 的检查对象是生产差错造成的芯片损坏，它不能检查设计问题。设计问题应该交给验证工序。</p>
-<p>DFT 对芯片来说不是必需的，一些低成本的芯片没有插入 DFT 电路，在设计流程中，直接从电路综合过渡到后端设计。</p>
-<h3 id="2-4-前端设计-VS-后端设计"><a href="#2-4-前端设计-VS-后端设计" class="headerlink" title="2.4. 前端设计 VS 后端设计"></a>2.4. 前端设计 VS 后端设计</h3><ul>
-<li>前端设计：抽象电路，只描述功能，不是具体电路。</li>
-<li>后端设计：具体电路，不仅要知道哪些元器件，还要确认这些元器件的摆放位置。</li>
-</ul>
-<p>综合是前端和后端的分界线，综合之前没有元器件而只有功能；综合之后，设计才有了具体化的元器件。</p>
-<p>当然，前端工程师往往强调心中有电路，并非实际电路，而是心中有功能相似的概念性电路。这样可以认清设计架构，并避免潜在的设计隐患。</p>
-<h2 id="3-模拟IC设计流程"><a href="#3-模拟IC设计流程" class="headerlink" title="3. 模拟IC设计流程"></a>3. 模拟IC设计流程</h2><ol>
-<li><p>绘制原理图（Schematic）</p>
-<p> 手动绘制。</p>
-</li>
-<li><p>原理图仿真</p>
-<p> 一般由原理图设计者亲自完成。原因是模拟电路的设计参数选择范围宽泛，需要验证的场景也复杂，仿真验收标准不十分明确。这就需要设计者搭建关键的应用环境和场景，对电路上产生的反应做出判断，随时调整电路结构和参数。</p>
-</li>
-<li><p>绘制版图（根据原理图）</p>
-<p> 手动绘制。</p>
-<p> 模拟版图工程师和模拟IC设计师一般是分开的两个职业。</p>
-<p> 模拟IC设计师一般也都掌握一些绘制版图的方法，单熟练程度以及对一些物理问题的处理方面，需要求助专业的版图工程师。</p>
-<p> 模拟版图工程师可以根据原理图及通用的绘图规则直接绘制。但是对诸如社评电路及高功率管之类有着特殊要求的设计，版图工程师需要与模拟IC设计师进行充分沟通，在模拟IC设计师的协助下进行绘制。</p>
-</li>
-<li><p>抽取寄生参数</p>
-</li>
-<li><p>版图后仿</p>
-</li>
-<li><p>设计规则检查（Design Rule Check，DRC）</p>
-</li>
-<li><p>版图和原理图的一致性检查（Layout Versus Schematics，LVS）</p>
-</li>
-<li><p>流片</p>
-</li>
-</ol>
-<p>模拟IC设计没有那么多自动化成分，需要手动绘制原理图、版图，电阻、电容等元器件需要人工确定。</p>
-<p>模拟IC仿真，无法像数字IC那样通过仿真验证和FPGA验证两种方法来相互印证设计效果。模拟仿真速度慢、情况多，很难覆盖真是使用中可能遇到的全部情况，因此，模拟设计具有很高的不确定，芯片的实际效果与仿真结果存在明显差距是经常发生的。</p>
-<p>但是模拟电路也有一些无法被数字电路取代的特性。</p>
-<p>可以想象，数字电路只需要处理 0 和 1 两种信号，但是模拟电路的数值域是实数域，包括所有连续的整数、浮点数、正负数，数据有无穷个。因此，即使是很小的电路，元器件数量不多，也需要设计者和仿真者从数值域中挑选一部份值作为设计和仿真中用到的值，绝对不可能覆盖所有情况。</p>
-<h2 id="4-芯片整体规划"><a href="#4-芯片整体规划" class="headerlink" title="4. 芯片整体规划"></a>4. 芯片整体规划</h2><p>版图布局规划（FloorPlan）：将芯片整体规划，以及内部数字、模拟电路的位置、面积、形状等特征的规划。</p>
-<figure style="text-align:center;">
-<img TODO width="50%"/>
-<figcaption>FloorPlan示例</figcaption>
-</figure>
-
-<ul>
-<li>Pad: FloorPlan的周围是芯片引脚(Pad)。Pad实际指的是芯片引脚之外的一块金属。</li>
-<li>IO: 包括Pad和内部逻辑在内的整个引脚设计。</li>
-</ul>
-<p>一个完整的引脚设计如图：</p>
-<img src="https://i.postimg.cc/MKfPd9z4/20250116222905.jpg" alt="20250116222905" width="50%"/>
-
-<ul>
-<li>封装: 芯片外面的塑料壳子称为芯片的封装，大体分为两种：插针式（引脚如针）、表贴式（引脚扁平）。</li>
-</ul>
-<h2 id="5-IC设计工具"><a href="#5-IC设计工具" class="headerlink" title="5. IC设计工具"></a>5. IC设计工具</h2><p>EDA 公司：电子设计自动化（Electronic Design Automation）公司，粗略来说，数字设计常用 Synopsys ，模拟设计常用 Cadence ， Mentor 在一些细分领域有优势。</p>
-<table>
-<thead>
-<tr>
-<th>数字&#x2F;模块</th>
-<th>数字流程</th>
-<th>常用软件</th>
-<th>其他软件</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>数字</td>
-<td>RTL 编写</td>
-<td>Vim&#x2F;Gvim</td>
-<td>普通文本编辑器</td>
-</tr>
-<tr>
-<td>数字</td>
-<td>仿真</td>
-<td>VCS (Synopsys)</td>
-<td>Incisive (Cadence)</td>
-</tr>
-<tr>
-<td>数字</td>
-<td>看波形</td>
-<td>Verdi (Synopsys)</td>
-<td>DVE (Synopsys)</td>
-</tr>
-<tr>
-<td>数字</td>
-<td>设计检查</td>
-<td>Spyglass (Synopsys)</td>
-<td>Simvision (Cadence)</td>
-</tr>
-<tr>
-<td>数字</td>
-<td>综合</td>
-<td>DC (Synopsys)</td>
-<td>ModelSim (Mentor)</td>
-</tr>
-<tr>
-<td>数字</td>
-<td>时序仿真</td>
-<td>PT (Synopsys)</td>
-<td>nLint (Cadence)</td>
-</tr>
-<tr>
-<td>数字</td>
-<td>自动布局布线</td>
-<td>ICC2 (Synopsys)</td>
-<td>Genus (Cadence)</td>
-</tr>
-<tr>
-<td>数字</td>
-<td>设计版图形式验证</td>
-<td>Formality (Synopsys)</td>
-<td>Tempus (Cadence)</td>
-</tr>
-<tr>
-<td>数字</td>
-<td>提取寄生参数</td>
-<td>StarRC (Synopsys)</td>
-<td></td>
-</tr>
-<tr>
-<td>模拟</td>
-<td>原理图&#x2F;版图&#x2F;仿真等</td>
-<td>Virtuoso (Cadence)</td>
-<td>Calibre (Mentor)</td>
-</tr>
-<tr>
-<td>模拟</td>
-<td>寄生提取&#x2F;DRC&#x2F;LVS</td>
-<td>Calibre (Mentor)</td>
-<td></td>
-</tr>
-</tbody></table>
-<p>仿真加速器： <strong>Palladium</strong> (Cadence) 、 <strong>ZeBu</strong> (Synopsys) 。</p>
-<h3 id="5-1-数字IC设计工具"><a href="#5-1-数字IC设计工具" class="headerlink" title="5.1. 数字IC设计工具"></a>5.1. 数字IC设计工具</h3><p>RTL 仿真工具：有 Synopsys 的 VCS ，Cadence 的 Incisive （也叫 irun ）。这些工具可以胜任前仿、后仿、UVM 架构（Universal Verification Methodology，通用验证方法学）的仿真。Cadence 的 irun 与模拟设计工具 Virtuoso 工具中集成的 AMS 仿真工具相结合，支持数字模拟电路混合仿真。</p>
-<p>波形查看工具：一般集成在仿真工具中。VCS 的波形软件叫 DVE ， Incisive 的波形软件叫 SimVision 。但在这个领域，一家名为 Novas 的公司的软件，以其明快的界面、方便的功能、快捷的操作，异军突起，得到了广泛的认可，它就是 Verdi （以音乐家威尔第的名字命名，前身叫 Debussy ，以音乐家德彪西的名字命名）。 Verdi 现已被 Synopsys 收购。 Mentor 的仿真和看波形软件叫 ModelSim ，主要用于 FPGA 功能的仿真。</p>
-<p>RTL 语法检查工具： Atrenta 公司的 Sypyglass ，可以检查语法、跨时钟域处理方案的可靠性，甚至可以在内部执行综合、功耗评估和简单的布局布线，使它能全方位地给出设计建议。现已被 Synopsys 收购。 Cadence 的对应检查工具是 nLint 。</p>
-<p>综合工具：即将 RTL 转化为实际电路的工具，常用的的有 Synopsys 的 Design Compiler (DC) ，该工具内部还有一些 Synopsys 开发的库，能够帮助设计者减小面积，提高性能，例如加法器、乘法器等，这些设计好的子模块在 DC 中被称为 DesignWare (DW) 。可以是让工具自动从 RTL 中识别出可用 DW 替换的代码，也可以是设计者手动例化 DW 模块。 Cadence 相应的工具叫 Genus （原名叫 RTL Compiler ）。</p>
-<p>版图自动布局布线软件： Synopsys 有 ICC2 （旧版为 ICC ）， Cadence 有 Innovus （原名 Encounter ），两个软件都被广泛使用。由于两个软件的操作命令不同，后端工程师往往只掌握其中一种。 Synopsys 为了增强客户的黏性，开发了一个银河（ MilkyWay ）流程，从前端到后端，通过专用的二进制文件 (db) 传输，占用空间小，处理效率高，但也有许多公司使用 DC 综合，再将网表导入 Innovus 进行布局布线。</p>
-<p>SignOff 工具：即对整个设计的时序、功耗评估。 Synopsys 的 Prime Time (PT) ， Cadence 的 Tempus 。目前， PT 已经称为业内 SignOff 的标准。实际上，时序分析在 DC 中也能做，但两者在分析方法、细节考虑全面度、分析速度等方面存在差异。在综合时使用 DC 检查，而在 SignOff 时，使用 PT 检查。</p>
-<p>形式验证工具：也称为逻辑等效行检查（ Logic Equivalece Check, LEC ），将 RTL 和网表进行一一对照。因为从 RTL 到综合网表，以及从综合网表到后端网表的过程，可能意外地改变原有功能和设计意图，所以需要进行检查。 Synopsys 的工具时 Formality ， Candence 的工具是 Conformal 。</p>
-<p>寄生参数的提取工具：进入设计版图阶段，可以确定走线的延迟。该值受信号负载、线路长短、粗细、周围线路等多重影响，需要用模型和查表进行计算，才能得到确切的值。该过程称为寄生参数的提取。一般使用 Synopsys 的 StarRC 。提取出来的信息可用于 PT 进行 SignOff 。</p>
-<p>上述工具，最主要的控制语法是 TCL 语言， EDA 工具大多以该语言为基础，扩展出各种专用命令。</p>
-<p>除了以上数字设计工具，还有一些更加细分的工具类型，比如仿真加速器，有 Cadence 的 Palladium 、 Synopsys 的 ZeBu 。</p>
-<h3 id="5-2-模拟IC设计工具"><a href="#5-2-模拟IC设计工具" class="headerlink" title="5.2. 模拟IC设计工具"></a>5.2. 模拟IC设计工具</h3><p>主要是 Cadence 的 Virtuoso 。与数字设计中繁多的工具不同， Virtuoso 能满足大部分设计需求，例如绘制并仿真原理图、绘制并仿真版图、数模混合仿真等。实际上， Virtuoso 更像集成开发环境（ Integrated Development Environment, IDE ），它包含很多独立的设计工具，如仿真工具 Spectre 等。</p>
-<p>SignOff 工具：Mentor 的 Calibre 可以用来提取寄生参数、进行 DRC 和 LVS 检查。</p>
-<h3 id="5-3-职位、分工与工具"><a href="#5-3-职位、分工与工具" class="headerlink" title="5.3. 职位、分工与工具"></a>5.3. 职位、分工与工具</h3><table>
-<thead>
-<tr>
-<th>大职位</th>
-<th>细分职位</th>
-<th>功能</th>
-<th>常用工具</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>数字</td>
-<td>数字 IC 设计</td>
-<td>设计芯片中的数字电路</td>
-<td>Vim, VCS, Verdi, Spyglass, DC 等</td>
-</tr>
-<tr>
-<td>数字</td>
-<td>数字 IC 验证</td>
-<td>验证芯片中的数字电路功能</td>
-<td>VCS, Verdi 等</td>
-</tr>
-<tr>
-<td>数字</td>
-<td>数字 IC 后端</td>
-<td>将抽象电路转换为版图</td>
-<td>ICC2, Innovus, Calibre, PT 等</td>
-</tr>
-<tr>
-<td>数字</td>
-<td>其他职位, 如 SignOff, DFT 等</td>
-<td>负责在数字电路中插入 DFT、对最终的版图进行时序、面积、功耗的检查等</td>
-<td>DC, PT, Formality 等</td>
-</tr>
-<tr>
-<td>模拟</td>
-<td>模拟 IC 设计</td>
-<td>设计芯片中的模拟电路</td>
-<td>Virtuoso 等</td>
-</tr>
-<tr>
-<td>模拟</td>
-<td>模拟版图</td>
-<td>将电路原理图做成版图</td>
-<td>Virtuoso, Calibre 等</td>
-</tr>
-<tr>
-<td>软件</td>
-<td>嵌入式软件工程师</td>
-<td>(1) 参与芯片开发&#x2F;验证 (2) 参与 SDK (3) 参与芯片应用方案</td>
-<td>Keil, SourceInsight, Visual Studio 等</td>
-</tr>
-<tr>
-<td>软件方案</td>
-<td>测试工程师</td>
-<td>(1) 对芯片设计性能的测试 (2) 芯片量产测试</td>
-<td>兼用软件和硬件工具</td>
-</tr>
-<tr>
-<td>硬方案</td>
-<td>应用工程师</td>
-<td>做电路板，为芯片找到合适的应用场景</td>
-<td>Pads, Altium Designer, Cadence 等</td>
-</tr>
-</tbody></table>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">管理</span><br><span class="line">├── 研发</span><br><span class="line">│   ├── 数字IC设计</span><br><span class="line">│   ├── 数字IC验证</span><br><span class="line">│   └── 数字后端</span><br><span class="line">│   └── 模拟IC设计</span><br><span class="line">│       └── 模拟版图</span><br><span class="line">├── 测试</span><br><span class="line">│   ├── 研发类测试</span><br><span class="line">│   │   ├── 方案测试</span><br><span class="line">│   │   └── 量产测试</span><br><span class="line">│   └── 客户测试</span><br><span class="line">├── 销售</span><br><span class="line">└── 方案</span><br><span class="line">    ├── 硬件方案</span><br><span class="line">    └── 软件方案</span><br></pre></td></tr></table></figure>
-
-
-<h3 id="5-4-EDA-与-Foundry-的关系"><a href="#5-4-EDA-与-Foundry-的关系" class="headerlink" title="5.4. EDA 与 Foundry 的关系"></a>5.4. EDA 与 Foundry 的关系</h3><p>普通软件公司无力开发 EDA 软件。因为 EDA 厂商需要和 Foundry 厂商紧密合作，才能获得有关的生产细节数据，从而帮助用户进行更加准确的仿真、寄生参数的提取、规则的检查。不同的 EDA 工具抽取的寄生参数可能不同，原因可能是不同的工具获得的工艺数据不同。</p>
-<p>国内 EDA 厂商要想打破垄断，不仅要靠软件技术，还要与各大 Foundry 厂达成战略合作，共享工艺数据，才能做出有实用价值的 EDA 工具。</p>
-<h2 id="6-概念"><a href="#6-概念" class="headerlink" title="6. 概念"></a>6. 概念</h2><h3 id="6-1-寄存器："><a href="#6-1-寄存器：" class="headerlink" title="6.1. 寄存器："></a>6.1. 寄存器：</h3><p>register，这是对功能强调的名称，其物理实体很多，比如触发器 (Flip-Flop, FF)和锁存器(Latch)等等。在数字设计中，主要提倡触发器。</p>
-<p>寄存器是受控于时钟沿的元器件， Foundry 会在标准单元库中提供多种寄存器。</p>
-<p>触发器是由边沿信号而非电平信号导致数据存储的。触发源一般是时钟信号。</p>
-<p>锁存器较少使用，它一般以非时钟信号为存储控制，靠电平触发。一般不连接时钟，只是连接一根普通的信号线。这种锁存器一般很少被纳入时钟计算中，因为它既不属于组合逻辑，又无法像触发器一样作为时序路径的起终点，所以时序上无法通过工具保证，只能通过工程师来保证。</p>
-<p>本书说的寄存器，基本可以替换为触发器。在数字芯片 EDA 工具链中，两个概念也是混用的，一个 reg 既可以指寄存器，也可以指触发器。另外，所谓时序逻辑门电路，也基本等同于触发器。</p>
-<h3 id="6-2-设计-Design-的边界"><a href="#6-2-设计-Design-的边界" class="headerlink" title="6.2. 设计(Design)的边界"></a>6.2. 设计(Design)的边界</h3><img src="https://i.postimg.cc/gjQMGZHN/20250116211433.jpg" alt="20250116211433" width="50%"/>
-
-<ul>
-<li><p>Pad：芯片（封装）之外的引脚。</p>
-</li>
-<li><p>元器件：指芯片内的组合逻辑门电路及时序逻辑门电路。这些标准的元器件也被称为标准单元(Standard Cell)。元器件也称为逻辑门。</p>
-</li>
-<li><p>标准单元库&#x2F;工艺库：元器件的集合。</p>
-</li>
-<li><p>I&#x2F;O: 如前“FloorPlan”对IO的解释，I&#x2F;O是包括Pad和内部逻辑在内的整个引脚设计。在标准单元库中是一种标准单元，但是它比较特殊，可能与其他标准单元不放在同一个标准单元库中。驱动电平也可能不同。</p>
-</li>
-<li><p>通用单元库: 在综合时，有一个中间步骤是将 RTL 抽象逻辑先映射为<strong>通用单元(Generic Boolean)<strong>，然后映射到</strong>标准单元</strong>。通用单元与工艺无关，也不包含物理特性，只有功能属性，与 RTL 描述类似。而标准单元既有功能属性，又有延迟、电压等工艺属性，与工艺和 Foundry 相关。</p>
-</li>
-<li><p>lef文件: Library Exchange Format. 描述特定流片工艺下元器件的物理属性。</p>
-</li>
-<li><p>lib文件: Library. 描述特定流片工艺下元器件的功能属性。lib文件常常要被编译为二进制的db文件才能在某些EDA工具上使用。 lef 和 lib 文件都是技术库。</p>
-<p>  数字设计只能在 Foundry 提供的已有的选项中挑选元器件。</p>
-</li>
-<li><p>def文件: Design Exchange Format. 设计除了 RTL 外，也可以带有物理信息，保存为 def 文件，基础内容是设计的形状和尺寸，扩展内容包括端口的分布位置、RAM和ROM等硬核的放置位置、内部元器件的放置和布线位置等。 RTL 和 def 统称为设计。</p>
-</li>
-</ul>
-<p>自己写的模块可以称为设备(Device)或模块(Module)。</p>
-<p>用设备一词主要强调它具备相对独立的功能，在介绍SoC架构等上层逻辑时较为常用，设备也经常被替换为单元(Unit)一词，它指人为设计的单元，而非标准单元。一个设计可以包含很多个设备。</p>
-<p>用模块一词，主要强调它在设计文件结构上的独立性，在介绍通用设计和底层逻辑时较为常用。</p>
-
       
     </div>
 
@@ -2205,20 +2445,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">83</span>
+          <span class="site-state-item-count">85</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">9</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">42</span>
+        <span class="site-state-item-count">44</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
