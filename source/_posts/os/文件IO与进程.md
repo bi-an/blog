@@ -343,6 +343,9 @@ read write, append
 | `ls -li`           | inode 号 + 硬链接引用计数  |
 | `lsof -p <PID> \| grep` / `fuser </path/to/so>` | 是否有进程打开文件         |
 | `/proc/<PID>/fd/`  | 查看文件描述符引用         |
+| `/proc/<PID>/maps` | 查看映射                  |
+| `ldd`              |  查看可执行文件依赖的 .so  |
+| `strace`	         |  跟踪运行时加载行为        |
 | 内核字段 `i_count` | 真实引用计数（需内核调试） |
 
 
