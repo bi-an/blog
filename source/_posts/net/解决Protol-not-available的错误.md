@@ -26,6 +26,17 @@ for (const auto *rp = result; rp != nullptr; rp = rp->ai_next) {
 
 ## 排查过程
 
+运行这些命令：
+
+- `hostname`
+- `hostname -f`
+- `hostname -a`
+- `hostname -I`
+- `hostnamectl`
+- `cat /proc/sys/kernel/hostname`
+- `more /etc/host*`
+- `/sbin/ifconfig -a`
+
 ```bash
 $ hostname
 $ cat /etc/hosts
