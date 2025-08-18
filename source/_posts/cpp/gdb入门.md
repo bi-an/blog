@@ -9,6 +9,38 @@ tags: gdb
 
 参考[链接](https://www.zhihu.com/people/bi-an-60-46)。
 
+## 在 vim / emacs 中启动 gdb
+
+为什么在 Emacs/vim 中运行 GDB？
+
+- 统一环境：你可以在 Emacs 中同时查看源代码和调试信息
+- 快捷键支持：使用 Emacs 的快捷键控制 GDB（如设置断点、单步执行）
+- 图形化布局：支持多窗口显示，如断点列表、堆栈信息、变量值等
+- 增强效率：无需离开编辑器即可完成调试任务
+
+Vim 从 8.1 版本开始内置了一个叫做 Termdebug 的插件，它可以直接在 Vim 中运行 GDB，并显示调试信息。
+
+✅ 步骤：
+确保 Vim 版本 ≥ 8.1
+
+编译你的程序（加上 -g 选项）：
+
+```bash
+gcc -g my_program.c -o my_program
+```
+
+在 Vim 中加载插件：
+
+```vim
+:packadd termdebug
+:Termdebug
+```
+
+Vim 会打开一个新的窗口，显示 GDB 控制台，你可以在里面输入 GDB 命令。
+
+📖 教程参考：[Baeldung 的 Vim-GDB 集成指南](https://www.baeldung.com/linux/vim-gdb-integration)
+
+
 ## gdb命令
 
 * `thread apply [threadno] [all] args` - 将命令传递给一个或多个线程，参见[链接](https://developer.apple.com/library/archive/documentation/DeveloperTools/gdb/gdb/gdb_5.html)。
@@ -26,6 +58,47 @@ tags: gdb
     - `info proc files` - 当前进程打开的文件（和文件描述符）。
     - `info args` - 查看函数参数
     - `info locals` - 查看局部变量。
+    - `info reg` 查看寄存器。
+
+常用寄存器：
+
+| 寄存器 |                     用途说明                    |
+|:------:|:-----------------------------------------------:|
+| rax    | 函数返回值，乘除法运算                          |
+| rbx    | 通用寄存器，常用于基址                          |
+| rcx    | 循环计数器                                      |
+| rdx    | I/O 指针或中间数据                              |
+| rdi    | 函数第一个参数                                  |
+| rsi    | 函数第二个参数                                  |
+| rsp    | 栈顶指针                                        |
+| rbp    | 栈底指针，栈帧基址                              |
+| rip    | 当前执行指令地址                                |
+| eflags | 运算状态标志，如 ZF（零标志）、CF（进位标志）等 |
+
+gdb 的寄存器变量
+
+x86（32 位）
+
+| $eax, $ebx, $ecx, $edx | 通用寄存器                       |
+|------------------------|----------------------------------|
+| $esi, $edi             | 源/目标索引寄存器                |
+| $esp                   | 栈顶指针（Stack Pointer）        |
+| $ebp                   | 栈底指针（Base Pointer）         |
+| $eip                   | 指令指针（下一条执行的指令地址） |
+| $eflags                | 标志寄存器（保存条件标志）       |
+
+x86_64（64 位）
+
+|         寄存器         |         说明        |
+|:----------------------:|:-------------------:|
+| $rax, $rbx, $rcx, $rdx | 通用寄存器（64 位） |
+| $rsi, $rdi             | 参数寄存器          |
+| $rsp                   | 栈顶指针            |
+| $rbp                   | 栈底指针            |
+| $rip                   | 指令指针            |
+| $r8~$r15               | 扩展通用寄存器      |
+| $eflags                | 标志寄存器          |
+
 * `show` 
   * `show environment` 查看全局变量
   * `set environment <var>=<value>` 设置环境变量
@@ -40,9 +113,10 @@ tags: gdb
           - 以十六进制打印：`p/x <var>`
 * `ptype <variable name>` - 打印变量类型。
 * `finish` - 从函数中返回，并打印函数返回值（即使函数的return语句很复杂，也可以获取返回值）。
-* `frame <n>` - 跳转到某个栈f帧。
+* `frame <n>` - 跳转到某个栈帧。
+* `up` 跳转到上一个栈帧
 * `x/FMT`: `x` 表示 `examine` ，查看内存。
-  * `/i` 表示 `instruction` ，即汇编指令格式。
+  * `/i` 表示 `instruction` ，即查看汇编指令。
   * `/g` 表示 `giant word` ，即每次查看 8 字节。
     * `x/g 0x400000` 查看地址 0x400000 处的 8 字节内容（以十六进制显示）
     * `x/4g $rsp` 查看当前栈指针 `$rsp` 指向的连续 4 个 8 字节值（共 32 字节）
