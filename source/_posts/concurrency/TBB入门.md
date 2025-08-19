@@ -2,8 +2,36 @@
 title: TBB 入门
 date: 2024-02-24 14:59:52
 categories: c/cpp
-tags: thread
+tags: 线程
 ---
+
+## 安装
+
+使用脚本一键监查系统是否安装了 TBB
+
+{% include_code lang:bash tbb/check_tbb.sh %}
+
+从包管理器安装：
+
+```bash
+sudo apt update
+sudo apt install libtbb-dev
+```
+
+用源码安装
+
+如果需要最新版本，可以从 GitHub 获取 oneTBB
+
+```bash
+git clone https://github.com/oneapi-src/oneTBB.git
+cd oneTBB
+mkdir build && cd build
+cmake ..
+make -j$(nproc)
+sudo make install
+```
+
+默认会安装到 /usr/local/include/ 和 /usr/local/lib/。
 
 ## 1. TBB 调度原理
 
@@ -58,7 +86,7 @@ task_group 的本质
 - 任务会被 提交到当前上下文的线程池，通常是 全局线程池
 - 由线程池中的工作线程去调度和执行
 
-{% include_code lang:cpp TBB/tbb_thread_pool.cpp %}
+{% include_code lang:cpp tbb/examples/tbb_thread_pool.cpp %}
 
 
 测试：
@@ -325,7 +353,7 @@ taskB 生成了两个子任务 Subtask B1 和 Subtask B2。
 假设线程 A 执行了 taskA，线程 B 执行了 taskB。在隔离区域内，线程 A 和线程 B 可以执行彼此生成的子任务。例如，线程 A 可以执行 Subtask B1 或 Subtask B2，而线程 B 可以执行 Subtask A1 或 Subtask A2，只要这些子任务属于同一个隔离区域。
 
 
-## TBB 的无锁设计
+## 6. TBB 的无锁设计
 
 严格来说，TBB 并不是完全无锁，但它尽量采用 无锁（lock-free）设计 来提高性能。下面详细说明：
 
@@ -354,7 +382,7 @@ b. 仍然存在锁的场景
 - 全局管理或 arena 初始化
   - 初始化线程池、任务调度器时可能使用锁，通常只在启动阶段发生
 
-### 总结
+### 6.1. 总结
 
 | 特性                                 | 是否无锁       | 说明            |
 | ---------------------------------- | ---------- | ------------- |
@@ -365,7 +393,7 @@ b. 仍然存在锁的场景
 | 并行容器                               | ⚠️ 部分锁     | 保障线程安全，复杂容器需要 |
 
 
-## TBB 的线程生命期
+## 7. TBB 的线程生命期
 
 是的，即使你只调用一次 TBB 并行函数，线程池创建后在整个程序运行期间也不会自动销毁或减少线程数。具体说明如下：
 
@@ -395,7 +423,7 @@ TBB 线程池线程数固定，不会因长时间不使用而减少。
 这种设计是为了 提高任务再次执行的响应速度，适合服务器或长期运行的高性能程序。
 
 
-## TBB 是 CPU 密集型的
+## 8. TBB 是 CPU 密集型的
 
 如果你的程序有大量 I/O 操作，使用 TBB 的一些特点和注意事项需要特别留意，因为 TBB 是为 CPU 密集型任务 和 任务并行化 设计的。具体分析如下：
 
@@ -450,13 +478,7 @@ TBB 是 CPU 密集型并行框架，不适合大量阻塞 I/O
 使用异步 I/O
 TBB 只处理计算任务
 
-## 典型场景 1：I/O + CPU 密集计算（压缩） + I/O
-
-如果直接用 TBB 并行，会遇到 阻塞 I/O 占用线程 的问题。最合理的做法是 流水线式设计，将任务分层，同时利用 TBB 的并行能力。
-
-
-
-## 6. 推荐阅读
+## 9. 推荐阅读
 
 1. Intel Building Blocks 编程指南. James Reinders.
 2. Patterns for Parallel Pragramming. Timothy Mattson 等.
