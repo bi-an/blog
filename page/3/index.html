@@ -193,6 +193,673 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/07/31/cpp/%E5%86%85%E5%AD%98%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/07/31/cpp/%E5%86%85%E5%AD%98%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">内存分析</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-07-31 14:53:40" itemprop="dateCreated datePublished" datetime="2025-07-31T14:53:40+00:00">2025-07-31</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-19 13:30:13" itemprop="dateModified" datetime="2025-08-19T13:30:13+00:00">2025-08-19</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="工具"><a href="#工具" class="headerlink" title="工具"></a>工具</h2><p>valgrind 是一个强大的内存调试和性能分析工具，它的不同子工具用于不同的分析目的。<code>--memcheck</code> 和 <code>--massif</code> 是其中两个常用的工具。</p>
+<p>ASAN（AddressSanitizer） 和 TSAN（ThreadSanitizer） 都是由现代编译器（如 Clang 和 GCC）提供的 运行时检测工具，用于帮助开发者在开发阶段发现内存错误和线程问题。</p>
+<ul>
+<li>Clang：全面支持 ASAN 和 TSAN</li>
+<li>GCC：也支持，但 TSAN 的支持略逊于 Clang</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://jvns.ca/blog/2018/04/28/debugging-a-segfault-on-linux/">博客：How to get a core dump for a segfault on Linux</a></p>
+<h3 id="Memcheck：内存错误检查工具"><a href="#Memcheck：内存错误检查工具" class="headerlink" title="Memcheck：内存错误检查工具"></a>Memcheck：内存错误检查工具</h3><p>官方文档：<a target="_blank" rel="noopener" href="https://valgrind.org/docs/manual/mc-manual.html">4. Memcheck: a memory error detector</a></p>
+<ul>
+<li>用途：检测内存相关的错误，如内存泄漏、越界访问、未初始化内存读取等。</li>
+<li>适用场景：调试程序中的内存错误，确保程序的内存使用是安全的。</li>
+<li>输出内容：<ul>
+<li>哪些内存没有释放（内存泄漏）</li>
+<li>哪些内存被非法访问（越界、未初始化等）</li>
+<li>哪些内存访问是未定义行为</li>
+</ul>
+</li>
+<li>常用命令：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">valgrind --tool=memcheck ./your_program</span><br></pre></td></tr></table></figure>
+
+<h3 id="Massif：堆内存使用分析工具"><a href="#Massif：堆内存使用分析工具" class="headerlink" title="Massif：堆内存使用分析工具"></a>Massif：堆内存使用分析工具</h3><p>官方文档：<a target="_blank" rel="noopener" href="https://valgrind.org/docs/manual/ms-manual.html">9. Massif: a heap profiler</a></p>
+<ul>
+<li>用途：分析程序在运行过程中堆内存的使用情况，帮助优化内存占用。</li>
+<li>适用场景：性能分析，找出内存占用高的代码路径或数据结构。</li>
+<li>输出内容：<ul>
+<li>堆内存使用随时间的变化（快照）：需用 <code>ms_print</code> 或 <a target="_blank" rel="noopener" href="https://courses.cs.washington.edu/courses/cse326/05wi/valgrind-doc/ms_main.html">PostScript Viewer</a> 查看</li>
+<li>哪些函数或调用路径分配了最多的内存</li>
+<li>常用命令：</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">valgrind --tool=massif ./your_program</span><br><span class="line">ms_print massif.out.&lt;pid&gt;</span><br></pre></td></tr></table></figure>
+
+<p><strong>🆚 Memcheck vs Massif 对比总结</strong></p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th><code>--memcheck</code></th>
+<th><code>--massif</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>工具类型</td>
+<td>内存错误检查工具</td>
+<td>堆内存使用分析工具</td>
+</tr>
+<tr>
+<td>主要用途</td>
+<td>检查内存泄漏、越界访问、未初始化读取等</td>
+<td>分析堆内存使用趋势和峰值</td>
+</tr>
+<tr>
+<td>检测内存泄漏</td>
+<td>✅</td>
+<td>❌（不直接检测）</td>
+</tr>
+<tr>
+<td>分析内存增长趋势</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>输出格式</td>
+<td>错误报告（文本）</td>
+<td>内存快照（需用 <code>ms_print</code> 查看）</td>
+</tr>
+<tr>
+<td>性能开销</td>
+<td>高（运行速度变慢）</td>
+<td>中等</td>
+</tr>
+</tbody></table>
+<h3 id="ThreadSanitizer（TSAN）"><a href="#ThreadSanitizer（TSAN）" class="headerlink" title="ThreadSanitizer（TSAN）"></a>ThreadSanitizer（TSAN）</h3><ul>
+<li>用途：检测多线程程序中的 数据竞争（data race） 和其他线程同步问题。</li>
+<li>适用场景：并发程序调试，尤其是当多个线程访问共享变量时。</li>
+<li>检测内容：<ul>
+<li>数据竞争（两个线程同时访问同一变量，且至少一个是写操作）</li>
+<li>锁使用错误（死锁、双重解锁等）</li>
+</ul>
+</li>
+<li>启用方式（Clang&#x2F;GCC）：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">clang -fsanitize=thread -g your_program.c -o your_program</span><br></pre></td></tr></table></figure>
+
+<h3 id="AddressSanitizer（ASAN）"><a href="#AddressSanitizer（ASAN）" class="headerlink" title="AddressSanitizer（ASAN）"></a>AddressSanitizer（ASAN）</h3><p><a target="_blank" rel="noopener" href="https://github.com/google/sanitizers/wiki/AddressSanitizer">AddressSanitizer 文档</a></p>
+<ul>
+<li>用途：检测内存访问错误。</li>
+<li>适用场景：单线程或多线程程序中调试内存问题。</li>
+<li>检测内容：<ul>
+<li>越界访问（stack&#x2F;heap&#x2F;global）</li>
+<li>use-after-free（释放后使用）</li>
+<li>内存泄漏（可选）</li>
+<li>use-after-scope（作用域结束后使用局部变量）</li>
+</ul>
+</li>
+<li>启用方式：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">clang -fsanitize=address -g your_program.c -o your_program</span><br></pre></td></tr></table></figure>
+
+<p><strong>🆚 TSAN vs ASAN 对比总结</strong></p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>TSAN（ThreadSanitizer）</th>
+<th>ASAN（AddressSanitizer）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>检测目标</td>
+<td>多线程数据竞争</td>
+<td>内存访问错误</td>
+</tr>
+<tr>
+<td>是否支持多线程</td>
+<td>✅（专为多线程设计）</td>
+<td>✅（支持，但不检测数据竞争）</td>
+</tr>
+<tr>
+<td>性能开销</td>
+<td>较高（10x~40x）</td>
+<td>中等（2x~3x）</td>
+</tr>
+<tr>
+<td>内存开销</td>
+<td>中等</td>
+<td>较高（增加约2倍内存使用）</td>
+</tr>
+<tr>
+<td>是否检测内存泄漏</td>
+<td>❌（不检测）</td>
+<td>✅（可选开启）</td>
+</tr>
+<tr>
+<td>是否检测数据竞争</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+</tbody></table>
+<p><strong>🆚 Memcheck vs Massif vs TSAN vs ASAN 对比总结</strong></p>
+<table>
+<thead>
+<tr>
+<th>工具名称</th>
+<th>类型</th>
+<th>主要用途</th>
+<th>检测内容</th>
+<th>是否支持多线程</th>
+<th>性能开销</th>
+<th>内存开销</th>
+<th>是否检测内存泄漏</th>
+<th>是否检测数据竞争</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Memcheck</strong></td>
+<td>Valgrind 工具</td>
+<td>内存错误检测</td>
+<td>内存泄漏、越界访问、未初始化读取、非法释放等</td>
+<td>✅（有限支持）</td>
+<td>高（10x+）</td>
+<td>高</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><strong>Massif</strong></td>
+<td>Valgrind 工具</td>
+<td>堆内存使用分析</td>
+<td>堆内存分配趋势、内存峰值、调用路径分析</td>
+<td>✅</td>
+<td>中等</td>
+<td>中等</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><strong>ASAN</strong></td>
+<td>编译器工具</td>
+<td>内存访问错误检测</td>
+<td>越界访问、use-after-free、use-after-scope、内存泄漏（可选）</td>
+<td>✅</td>
+<td>中等（2x~3x）</td>
+<td>高（约2倍）</td>
+<td>✅（可选）</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><strong>TSAN</strong></td>
+<td>编译器工具</td>
+<td>多线程数据竞争检测</td>
+<td>数据竞争、死锁、错误的锁使用等</td>
+<td>✅（强支持）</td>
+<td>高（5x~40x）</td>
+<td>中等</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+</tbody></table>
+<h2 id="UBSan-Unifined-Behavior-Sanitizer"><a href="#UBSan-Unifined-Behavior-Sanitizer" class="headerlink" title="UBSan (Unifined Behavior Sanitizer)"></a>UBSan (Unifined Behavior Sanitizer)</h2><table>
+<thead>
+<tr>
+<th>Sanitizer</th>
+<th>检测内容</th>
+<th>Google 贡献</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ASAN</td>
+<td>内存访问错误</td>
+<td>✅ 是</td>
+</tr>
+<tr>
+<td>UBSan</td>
+<td>未定义行为</td>
+<td>✅ 是</td>
+</tr>
+<tr>
+<td>TSAN</td>
+<td>数据竞争</td>
+<td>✅ 是</td>
+</tr>
+<tr>
+<td>MSAN</td>
+<td>未初始化内存使用</td>
+<td>✅ 是</td>
+</tr>
+</tbody></table>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/07/25/cpp/gcc%E5%B1%9E%E6%80%A7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/07/25/cpp/gcc%E5%B1%9E%E6%80%A7/" class="post-title-link" itemprop="url">gcc属性</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-07-25 11:53:54" itemprop="dateCreated datePublished" datetime="2025-07-25T11:53:54+00:00">2025-07-25</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-19 13:30:13" itemprop="dateModified" datetime="2025-08-19T13:30:13+00:00">2025-08-19</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="attribute-visibility-default"><a href="#attribute-visibility-default" class="headerlink" title="__attribute__((__visibility__(&quot;default&quot;)))"></a><code>__attribute__((__visibility__(&quot;default&quot;)))</code></h2><p><code>__attribute__((__visibility__(&quot;default&quot;)))</code> 是 GCC 编译器的一个属性，用于控制符号的可见性。它指定了一个符号（如函数或变量）在共享库中的可见性。</p>
+<h3 id="含义："><a href="#含义：" class="headerlink" title="含义："></a>含义：</h3><ul>
+<li><strong><code>default</code> 可见性</strong>：<ul>
+<li>符号可以被其他共享库或可执行文件访问。</li>
+<li>符号会被导出到共享库的符号表中。</li>
+</ul>
+</li>
+</ul>
+<h3 id="用途："><a href="#用途：" class="headerlink" title="用途："></a>用途：</h3><ul>
+<li><p>用于显式导出符号，使其在动态链接时可被其他模块使用。</p>
+</li>
+<li><p>在共享库中，默认情况下符号是 <code>default</code> 可见的，但使用 <code>-fvisibility=hidden</code> 编译选项时，所有符号会被隐藏，只有显式标记为 <code>default</code> 的符号才会导出。</p>
+</li>
+<li><p>编译器优化的影响：即使没有 <code>-fvisibility=hidden</code>，某些编译器优化（如 <code>-flto</code>）可能会影响符号的导出。<br>显式使用 <code>__attribute__((__visibility__(&quot;default&quot;)))</code> 可以避免这些问题。</p>
+</li>
+</ul>
+<h3 id="示例："><a href="#示例：" class="headerlink" title="示例："></a>示例：</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">__attribute__((__visibility__(<span class="string">&quot;default&quot;</span>)))</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">myFunc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Function implementation</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<hr>
+<p>可以通过以下步骤确认 <code>myFunc</code> 是否在被链接时可见：</p>
+<h3 id="方法-1-使用-nm-工具检查符号"><a href="#方法-1-使用-nm-工具检查符号" class="headerlink" title="方法 1: 使用 nm 工具检查符号"></a>方法 1: 使用 <code>nm</code> 工具检查符号</h3><p><code>nm</code> 是一个工具，可以列出目标文件或共享库中的符号表。</p>
+<ol>
+<li><p>检查 <code>libchip.so</code> 中是否导出了 <code>myFunc</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nm -D libchip.so | grep myFunc</span><br></pre></td></tr></table></figure>
+<ul>
+<li>如果 <code>myFunc</code> 出现在输出中，说明它被导出并且可见。</li>
+<li>如果没有出现，可能是符号被隐藏（例如使用了 <code>-fvisibility=hidden</code>）。</li>
+</ul>
+</li>
+<li><p>如果 <code>myFunc</code> 没有导出：</p>
+<ul>
+<li>确认是否在代码中使用了 <code>__attribute__((__visibility__(&quot;default&quot;)))</code>。</li>
+<li>确认编译时是否启用了 <code>-fvisibility=hidden</code>。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="方法-2-使用-readelf-检查动态符号"><a href="#方法-2-使用-readelf-检查动态符号" class="headerlink" title="方法 2: 使用 readelf 检查动态符号"></a>方法 2: 使用 <code>readelf</code> 检查动态符号</h3><p><code>readelf</code> 可以显示共享库的动态符号表。</p>
+<ol>
+<li>检查 <code>libchip.so</code> 的动态符号表：<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">readelf -Ws libchip.so | grep myFunc</span><br></pre></td></tr></table></figure>
+<ul>
+<li>如果 <code>myFunc</code> 出现在输出中，说明它是动态可见的。</li>
+<li>如果没有出现，说明符号被隐藏。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="方法-3-检查链接依赖关系"><a href="#方法-3-检查链接依赖关系" class="headerlink" title="方法 3: 检查链接依赖关系"></a>方法 3: 检查链接依赖关系</h3><ol>
+<li><p>检查 <code>libdbg.so</code> 是否声明了对 <code>libchip.so</code> 的依赖：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">readelf -d libdbg.so | grep NEEDED</span><br></pre></td></tr></table></figure>
+<ul>
+<li>如果 <code>libchip.so</code> 出现在 <code>NEEDED</code> 列表中，说明 <code>libdbg.so</code>依赖 <code>libchip.so</code>。</li>
+</ul>
+</li>
+<li><p>如果 <code>libchip.so</code> 在依赖列表中，但链接时仍然报错：</p>
+<ul>
+<li>确认 <code>myFunc</code> 是否在 <code>libchip.so</code> 中导出（使用 <code>nm</code> 或 <code>readelf</code> 检查）。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="方法-4-检查链接器错误"><a href="#方法-4-检查链接器错误" class="headerlink" title="方法 4: 检查链接器错误"></a>方法 4: 检查链接器错误</h3><p>如果链接器报错 <code>undefined reference to myFunc</code>：</p>
+<ul>
+<li>确认链接命令是否显式包含 <code>libchip.so</code>：<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ -o executable main.o -L/path/to/libs -ldbg -lchip</span><br></pre></td></tr></table></figure></li>
+<li>如果没有显式链接 <code>libchip.so</code>，动态链接器可能无法解析 <code>myFunc</code>。</li>
+</ul>
+<hr>
+<h3 id="总结："><a href="#总结：" class="headerlink" title="总结："></a>总结：</h3><ul>
+<li>使用 <code>nm</code> 或 <code>readelf</code> 检查 <code>libchip.so</code> 是否导出了 <code>myFunc</code>。</li>
+<li>如果符号未导出，确保代码中使用了 <code>__attribute__((__visibility__(&quot;default&quot;)))</code> 并检查编译选项。</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/07/23/cpp/shell%E8%AF%AF%E5%AF%BC%E6%80%A7%E9%94%99%E8%AF%AFNo-such-file-or-directory/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/07/23/cpp/shell%E8%AF%AF%E5%AF%BC%E6%80%A7%E9%94%99%E8%AF%AFNo-such-file-or-directory/" class="post-title-link" itemprop="url">shell 误导性错误 No such file or directory</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-07-23 19:26:26" itemprop="dateCreated datePublished" datetime="2025-07-23T19:26:26+00:00">2025-07-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-19 13:30:13" itemprop="dateModified" datetime="2025-08-19T13:30:13+00:00">2025-08-19</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="📝-现象描述"><a href="#📝-现象描述" class="headerlink" title="📝 现象描述"></a>📝 现象描述</h2><p>当你运行一个 ELF 可执行文件（比如一个 32-bit 的程序），而它依赖的 loader 或共享库找不到 时，Shell 会提示：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bash: ./a.out: No such file or directory</span><br></pre></td></tr></table></figure>
+
+<p>但其实，这个“文件”确实存在，问题出在它 依赖的 loader 文件或库文件找不到，进而导致 execve() 系统调用失败。</p>
+<p>我们从 内核执行路径 角度来解析这背后的原理。</p>
+<h2 id="🧠Linux-内部逻辑解析"><a href="#🧠Linux-内部逻辑解析" class="headerlink" title="🧠Linux 内部逻辑解析"></a>🧠Linux 内部逻辑解析</h2><ol>
+<li>Shell 运行程序的过程</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./my_app</span><br></pre></td></tr></table></figure>
+
+<p>Shell 实际做的是调用 execve() 系统调用：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">execve(<span class="string">&quot;./my_app&quot;</span>, argv, envp);</span><br></pre></td></tr></table></figure>
+
+<p>这是 Linux 加载并运行一个程序的唯一入口。</p>
+<ol start="2">
+<li>execve() 做了什么？</li>
+</ol>
+<p>内核执行 execve() 时，它会：</p>
+<p>🔹 Step 1: 打开并读取 ELF 头（文件的前几个字节）<br>从而判断这是一个 ELF 可执行文件、脚本，还是其他格式。</p>
+<p>🔹 Step 2: 检查 ELF 的架构位数、ABI、动态链接需求<br>对于动态链接程序，它会在 ELF 头中读取如下字段：</p>
+<ul>
+<li>e_ident[EI_CLASS]: 32-bit 或 64-bit</li>
+<li>e_interpreter: 这是最关键的！</li>
+</ul>
+<ol start="3">
+<li>e_interpreter 是什么？</li>
+</ol>
+<p>这是 ELF 文件里定义的 “程序解释器路径”（interpreter path）。即这个程序运行时，系统需要先加载谁来帮它加载剩下的动态库。</p>
+<p>可以通过 <code>readelf -l my_app</code> 查看：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ readelf -l ./my_app | grep interpreter</span><br><span class="line"></span><br><span class="line">[Requesting program interpreter: /lib/ld-linux.so.2]</span><br></pre></td></tr></table></figure>
+
+<p>比如：<code>/lib/ld-linux.so.2</code> 是 32-bit 程序使用的 loader。</p>
+<ol start="4">
+<li>如果这个 loader 不存在，会发生什么？</li>
+</ol>
+<ul>
+<li>execve() 尝试打开 ELF 指定的解释器（&#x2F;lib&#x2F;ld-linux.so.2）</li>
+<li>如果该文件不存在，open() 失败</li>
+<li>整个 execve() 调用失败</li>
+<li>错误代码是 ENOENT（2），代表：</li>
+</ul>
+<blockquote>
+<p>“No such file or directory”</p>
+</blockquote>
+<p>但这并不是说 你运行的那个文件 .&#x2F;my_app 不存在，而是 它依赖的解释器不在系统中，导致整个执行失败。</p>
+<h2 id="🤯-为什么这么误导？"><a href="#🤯-为什么这么误导？" class="headerlink" title="🤯 为什么这么误导？"></a>🤯 为什么这么误导？</h2><p>因为 shell（bash&#x2F;zsh）调用 execve() 失败后，只看到了 errno &#x3D; ENOENT，它默认解释为：</p>
+<blockquote>
+<p>“你指定的那个文件路径不存在”</p>
+</blockquote>
+<p>而不是更深层次的：</p>
+<blockquote>
+<p>“文件存在，但它需要的 loader 不存在”</p>
+</blockquote>
+<p>这是 shell 的 历史遗留行为，没有细分 errno 背后语义。</p>
+<h2 id="🧪-举个实际例子"><a href="#🧪-举个实际例子" class="headerlink" title="🧪 举个实际例子"></a>🧪 举个实际例子</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$ file ./a.out</span><br><span class="line">./a.out: ELF 32-bit LSB executable, Intel 80386, ...</span><br><span class="line"></span><br><span class="line">$ readelf -l ./a.out | grep interpreter</span><br><span class="line">[Requesting program interpreter: /lib/ld-linux.so.2]</span><br><span class="line"></span><br><span class="line">$ <span class="built_in">ls</span> /lib/ld-linux.so.2</span><br><span class="line"><span class="built_in">ls</span>: cannot access <span class="string">&#x27;/lib/ld-linux.so.2&#x27;</span>: No such file or directory</span><br><span class="line"></span><br><span class="line">$ ./a.out</span><br><span class="line">bash: ./a.out: No such file or directory  ❌</span><br></pre></td></tr></table></figure>
+
+<p>实际上是 缺少解释器 <code>/lib/ld-linux.so.2</code>，而不是 a.out 本身。</p>
+<h2 id="✅-总结"><a href="#✅-总结" class="headerlink" title="✅ 总结"></a>✅ 总结</h2><table>
+<thead>
+<tr>
+<th>层级</th>
+<th>行为</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>用户</td>
+<td>输入 <code>./prog</code></td>
+</tr>
+<tr>
+<td>Shell</td>
+<td>调用 <code>execve(&quot;./prog&quot;, ...)</code></td>
+</tr>
+<tr>
+<td>内核</td>
+<td>解析 ELF，发现 <code>interpreter</code> 是 <code>/lib/ld-linux.so.2</code></td>
+</tr>
+<tr>
+<td>内核</td>
+<td>找不到解释器，返回 <code>ENOENT</code></td>
+</tr>
+<tr>
+<td>Shell</td>
+<td>报 <code>No such file or directory</code> ❌（误导性）</td>
+</tr>
+</tbody></table>
+<h2 id="🛠️-Bonus：编译-32-bit-程序"><a href="#🛠️-Bonus：编译-32-bit-程序" class="headerlink" title="🛠️ Bonus：编译 32-bit 程序"></a>🛠️ Bonus：编译 32-bit 程序</h2><ol>
+<li>编写一个简单的 C 程序</li>
+</ol>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// hello.c</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Hello from 32-bit program!\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>编译成 32 bit 程序</li>
+</ol>
+<p>需要先安装 32-bit 编译支持：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install gcc-multilib</span><br></pre></td></tr></table></figure>
+
+<p>然后编译：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -m32 hello.c -o hello32</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>验证是否是 32-bit ELF 可执行文件</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">file hello32</span><br></pre></td></tr></table></figure>
+
+<p>输出应类似：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hello32: ELF 32-bit LSB executable, Intel 80386, ...</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/04/16/dlfcn/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/04/16/dlfcn/" class="post-title-link" itemprop="url">dlfcn</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-04-16 00:20:34" itemprop="dateCreated datePublished" datetime="2025-04-16T00:20:34+00:00">2025-04-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-19 13:30:13" itemprop="dateModified" datetime="2025-08-19T13:30:13+00:00">2025-08-19</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <figure class="highlight cpp"><figcaption><span>Makefile</span><a href="/blog/downloads/code/dlfcn/Makefile">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">CXX = g++</span><br><span class="line">CXXFLAGS = -fPIC -Wall -Wextra</span><br><span class="line">LDFLAGS = -shared</span><br><span class="line"></span><br><span class="line">all: main libhello.so</span><br><span class="line"></span><br><span class="line">main: main.cpp</span><br><span class="line">	$(CXX) main.cpp -o main -ldl</span><br><span class="line"></span><br><span class="line">libhello.so: hello.cpp</span><br><span class="line">	$(CXX) $(CXXFLAGS) $(LDFLAGS) hello.cpp -o libhello.so</span><br><span class="line"></span><br><span class="line">clean:</span><br><span class="line">	rm -f main libhello.</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight cpp"><figcaption><span>main.cpp</span><a href="/blog/downloads/code/dlfcn/main.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;dlfcn.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*HelloFunc)</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="comment">// 打开共享库</span></span><br><span class="line">    <span class="type">void</span>* handle = <span class="built_in">dlopen</span>(<span class="string">&quot;./libhello.so&quot;</span>, RTLD_LAZY);</span><br><span class="line">    <span class="keyword">if</span> (!handle) {</span><br><span class="line">        std::cerr &lt;&lt; <span class="string">&quot;dlopen failed: &quot;</span> &lt;&lt; <span class="built_in">dlerror</span>() &lt;&lt; std::endl;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 清除之前的错误</span></span><br><span class="line">    <span class="built_in">dlerror</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取函数指针</span></span><br><span class="line">    HelloFunc hello = (HelloFunc)<span class="built_in">dlsym</span>(handle, <span class="string">&quot;hello&quot;</span>);</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>* dlsym_error = <span class="built_in">dlerror</span>();</span><br><span class="line">    <span class="keyword">if</span> (dlsym_error) {</span><br><span class="line">        std::cerr &lt;&lt; <span class="string">&quot;dlsym failed: &quot;</span> &lt;&lt; dlsym_error &lt;&lt; std::endl;</span><br><span class="line">        <span class="built_in">dlclose</span>(handle);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 打印函数地址</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Address of hello function: &quot;</span> &lt;&lt; <span class="built_in">reinterpret_cast</span>&lt;<span class="type">void</span>*&gt;(hello) &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调用函数</span></span><br><span class="line">    <span class="built_in">hello</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 关闭共享库</span></span><br><span class="line">    <span class="built_in">dlclose</span>(handle);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/03/19/cpp/%E5%8E%9F%E5%AD%90%E5%8F%98%E9%87%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +891,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-18 15:11:00" itemprop="dateModified" datetime="2025-08-18T15:11:00+00:00">2025-08-18</time>
+                <time title="Modified: 2025-08-19 13:30:13" itemprop="dateModified" datetime="2025-08-19T13:30:13+00:00">2025-08-19</time>
               </span>
 
           
@@ -489,7 +1156,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-18 15:11:00" itemprop="dateModified" datetime="2025-08-18T15:11:00+00:00">2025-08-18</time>
+                <time title="Modified: 2025-08-19 13:30:13" itemprop="dateModified" datetime="2025-08-19T13:30:13+00:00">2025-08-19</time>
               </span>
 
           
@@ -588,7 +1255,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-18 15:11:00" itemprop="dateModified" datetime="2025-08-18T15:11:00+00:00">2025-08-18</time>
+                <time title="Modified: 2025-08-19 13:30:13" itemprop="dateModified" datetime="2025-08-19T13:30:13+00:00">2025-08-19</time>
               </span>
 
           
@@ -885,7 +1552,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-18 15:11:00" itemprop="dateModified" datetime="2025-08-18T15:11:00+00:00">2025-08-18</time>
+                <time title="Modified: 2025-08-19 13:30:13" itemprop="dateModified" datetime="2025-08-19T13:30:13+00:00">2025-08-19</time>
               </span>
 
           
@@ -1211,7 +1878,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-18 15:11:00" itemprop="dateModified" datetime="2025-08-18T15:11:00+00:00">2025-08-18</time>
+                <time title="Modified: 2025-08-19 13:30:13" itemprop="dateModified" datetime="2025-08-19T13:30:13+00:00">2025-08-19</time>
               </span>
 
           
@@ -1351,7 +2018,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-18 15:11:00" itemprop="dateModified" datetime="2025-08-18T15:11:00+00:00">2025-08-18</time>
+                <time title="Modified: 2025-08-19 13:30:13" itemprop="dateModified" datetime="2025-08-19T13:30:13+00:00">2025-08-19</time>
               </span>
 
           
@@ -1384,405 +2051,10 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/26/Implementation-of-shared-ptr/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/09/26/Implementation-of-shared-ptr/" class="post-title-link" itemprop="url">shared_ptr 的实现</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-09-26 16:44:29" itemprop="dateCreated datePublished" datetime="2024-09-26T16:44:29+00:00">2024-09-26</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-18 15:11:00" itemprop="dateModified" datetime="2025-08-18T15:11:00+00:00">2025-08-18</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="参考源码"><a href="#参考源码" class="headerlink" title="参考源码"></a>参考源码</h2><blockquote>
-<p>&#x2F;usr&#x2F;include&#x2F;c++&#x2F;11&#x2F;bits&#x2F;shared_ptr_base.h<br>&#x2F;usr&#x2F;include&#x2F;c++&#x2F;11&#x2F;bits&#x2F;shared_ptr.h</p>
-</blockquote>
-<p>博客：<a target="_blank" rel="noopener" href="https://zhiqiang.org/coding/std-shared-ptr.html">https://zhiqiang.org/coding/std-shared-ptr.html</a></p>
-<h2 id="std-shared-ptr-的性质"><a href="#std-shared-ptr-的性质" class="headerlink" title="std::shared_ptr 的性质"></a><code>std::shared_ptr</code> 的性质</h2><ol>
-<li>复制构造、析构是线程安全的。</li>
-</ol>
-<p>标准库使用原子操作实现无锁的线程安全性。</p>
-<ol start="2">
-<li>写操作（例如 <code>reset</code> 、 赋值 <code>operator=</code> ）是线程不安全的。</li>
-</ol>
-<p>写操作和复制构造、析构的主要区别是：</p>
-<ul>
-<li>复制构造、析构函数中，单个线程只处理一个对象，复制构造函数将其他对象复制过来之后，不会改动其他对象的资源（引用计数、所管理的内存）。</li>
-<li>但是写操作可能多个线程都在处理该 shared_ptr 。例如多个线程都对同一个 shared_ptr 进行赋值：</li>
-</ul>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">shared_ptr&lt;<span class="type">int</span>&gt; sp1 = <span class="built_in">make_shared</span>&lt;<span class="type">int</span>&gt;(<span class="number">1</span>);</span><br><span class="line">sp1 = sp2; <span class="comment">// 线程 1</span></span><br><span class="line">sp1 = sp3; <span class="comment">// 线程 2</span></span><br></pre></td></tr></table></figure>
-
-<p>对比源码分析：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">     __shared_count&amp;</span><br><span class="line">     <span class="keyword">operator</span>=(<span class="type">const</span> __shared_count&amp; __r) <span class="keyword">noexcept</span></span><br><span class="line">     &#123;</span><br><span class="line">_Sp_counted_base&lt;_Lp&gt;* __tmp = __r._M_pi;</span><br><span class="line"><span class="keyword">if</span> (__tmp != _M_pi)</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> (__tmp != <span class="literal">nullptr</span>)</span><br><span class="line">      __tmp-&gt;_M_add_ref_copy();</span><br><span class="line">    <span class="keyword">if</span> (_M_pi != <span class="literal">nullptr</span>)</span><br><span class="line">      _M_pi-&gt;_M_release(); <span class="comment">// 注意：线程 1 和线程 2 持有相同的 _M_pi！</span></span><br><span class="line">    _M_pi = __tmp; <span class="comment">// 注意：线程 1 和线程 2 持有相同的 _M_pi！</span></span><br><span class="line">  &#125;</span><br><span class="line"><span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">     &#125;</span><br></pre></td></tr></table></figure>
-
-<p>以上代码中两个“注意”可能同时在发生，例如：<br>线程 1 release 的时候，线程 2 在给 _M_pi 赋值；<br>或者两个线程同时在 release 或同时在给 _M_pi 赋值。</p>
-<h2 id="要点"><a href="#要点" class="headerlink" title="要点"></a>要点</h2><ol>
-<li>管理的内存和引用计数都应该动态分配到堆（ heap ）上，这样多个 shared_ptr 对象才能更新同一份数据。</li>
-<li>需要同时维护强引用计数和弱引用计数。</li>
-<li>引用计数本身应该是一个控制块类，使用 <code>delete this</code> 来自动删除（析构）引用计数。</li>
-</ol>
-<p>永远不要手动 <code>delete use_count</code>，因为其他线程可能此时正在使用该资源，例如解引用 <code>*use_count</code>。</p>
-<figure class="highlight cpp"><figcaption><span>SharedPtr.hpp</span><a href="/blog/downloads/code/SharedPtr.hpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;_Lock_policy _Lp = __default_lock_policy&gt;</span><br><span class="line">    <span class="keyword">class</span> _Sp_counted_base</span><br><span class="line">    : <span class="keyword">public</span> _Mutex_base&lt;_Lp&gt;</span><br><span class="line">    {</span><br><span class="line">      <span class="type">void</span></span><br><span class="line">      _M_add_ref_copy()</span><br><span class="line">      { __gnu_cxx::__atomic_add_dispatch(&amp;_M_use_count, <span class="number">1</span>); }</span><br><span class="line"></span><br><span class="line">      <span class="type">void</span></span><br><span class="line">      _M_release() <span class="keyword">noexcept</span></span><br><span class="line">      {</span><br><span class="line">        <span class="comment">// Be race-detector-friendly.  For more info see bits/c++config.</span></span><br><span class="line">        _GLIBCXX_SYNCHRONIZATION_HAPPENS_BEFORE(&amp;_M_use_count);</span><br><span class="line">	<span class="keyword">if</span> (__gnu_cxx::__exchange_and_add_dispatch(&amp;_M_use_count, <span class="number">-1</span>) == <span class="number">1</span>)</span><br><span class="line">	  {</span><br><span class="line">            _GLIBCXX_SYNCHRONIZATION_HAPPENS_AFTER(&amp;_M_use_count);</span><br><span class="line">	    _M_dispose();</span><br><span class="line">	    <span class="comment">// There must be a memory barrier between dispose() and destroy()</span></span><br><span class="line">	    <span class="comment">// to ensure that the effects of dispose() are observed in the</span></span><br><span class="line">	    <span class="comment">// thread that runs destroy().</span></span><br><span class="line">	    <span class="comment">// See http://gcc.gnu.org/ml/libstdc++/2005-11/msg00136.html</span></span><br><span class="line">	    <span class="keyword">if</span> (_Mutex_base&lt;_Lp&gt;::_S_need_barriers)</span><br><span class="line">	      {</span><br><span class="line">		__atomic_thread_fence (__ATOMIC_ACQ_REL);</span><br><span class="line">	      }</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Be race-detector-friendly.  For more info see bits/c++config.</span></span><br><span class="line">            _GLIBCXX_SYNCHRONIZATION_HAPPENS_BEFORE(&amp;_M_weak_count);</span><br><span class="line">	    <span class="keyword">if</span> (__gnu_cxx::__exchange_and_add_dispatch(&amp;_M_weak_count,</span><br><span class="line">						       <span class="number">-1</span>) == <span class="number">1</span>)</span><br><span class="line">              {</span><br><span class="line">                _GLIBCXX_SYNCHRONIZATION_HAPPENS_AFTER(&amp;_M_weak_count);</span><br><span class="line">	        _M_destroy();</span><br><span class="line">              }</span><br><span class="line">	  }</span><br><span class="line">      }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">      _Sp_counted_base(_Sp_counted_base <span class="type">const</span>&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">      _Sp_counted_base&amp; <span class="keyword">operator</span>=(_Sp_counted_base <span class="type">const</span>&amp;) = <span class="keyword">delete</span>;</span><br><span class="line"></span><br><span class="line">      <span class="comment">// using _Atomic_word = int;</span></span><br><span class="line">      _Atomic_word  _M_use_count;     <span class="comment">// #shared</span></span><br><span class="line">      _Atomic_word  _M_weak_count;    <span class="comment">// #weak + (#shared != 0)</span></span><br><span class="line">    };</span><br><span class="line"></span><br><span class="line">  <span class="keyword">template</span>&lt;_Lock_policy _Lp&gt;</span><br><span class="line">    <span class="keyword">class</span> <span class="title class_">__shared_count</span></span><br><span class="line">    {</span><br><span class="line">      _Sp_counted_base&lt;_Lp&gt;*  _M_pi; <span class="comment">// 引用计数的指针</span></span><br><span class="line"></span><br><span class="line">      __shared_count(<span class="type">const</span> __shared_count&amp; __r) <span class="keyword">noexcept</span></span><br><span class="line">      : _M_pi(__r._M_pi)</span><br><span class="line">      {</span><br><span class="line">	<span class="keyword">if</span> (_M_pi != <span class="literal">nullptr</span>)</span><br><span class="line">	  _M_pi-&gt;_M_add_ref_copy(); <span class="comment">// <span class="doctag">TODO:</span> 有没有可能此时的 _M_pi 所引对象已经被释放了呢</span></span><br><span class="line">      }</span><br><span class="line"></span><br><span class="line">      ~__shared_count() <span class="keyword">noexcept</span></span><br><span class="line">      {</span><br><span class="line">	<span class="keyword">if</span> (_M_pi != <span class="literal">nullptr</span>)</span><br><span class="line">	  _M_pi-&gt;_M_release(); <span class="comment">// 没有直接 delete _M_pi，</span></span><br><span class="line">                           <span class="comment">// 而是使用 _M_pi 的成员函数来释放它。</span></span><br><span class="line">      }</span><br><span class="line"></span><br><span class="line">      __shared_count&amp;</span><br><span class="line">      <span class="keyword">operator</span>=(<span class="type">const</span> __shared_count&amp; __r) <span class="keyword">noexcept</span></span><br><span class="line">      {</span><br><span class="line">	_Sp_counted_base&lt;_Lp&gt;* __tmp = __r._M_pi;</span><br><span class="line">	<span class="keyword">if</span> (__tmp != _M_pi)</span><br><span class="line">	  {</span><br><span class="line">	    <span class="keyword">if</span> (__tmp != <span class="literal">nullptr</span>)</span><br><span class="line">	      __tmp-&gt;_M_add_ref_copy();</span><br><span class="line">	    <span class="keyword">if</span> (_M_pi != <span class="literal">nullptr</span>)</span><br><span class="line">	      _M_pi-&gt;_M_release(); <span class="comment">// 没有直接 delete _M_pi，</span></span><br><span class="line">                               <span class="comment">// 而是使用 _M_pi 的成员函数来释放它。</span></span><br><span class="line">	    _M_pi = __tmp;</span><br><span class="line">	  }</span><br><span class="line">	<span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">      }</span><br><span class="line">    };</span><br></pre></td></tr></table></figure>
-
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/libstdc++/manual/ext_concurrency.html">https://gcc.gnu.org/onlinedocs/libstdc++/manual/ext_concurrency.html</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/17/cpp/C++%E7%9A%84bool%E5%92%8Cint/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/09/17/cpp/C++%E7%9A%84bool%E5%92%8Cint/" class="post-title-link" itemprop="url">C++ 的 bool 和 int</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-09-17 21:19:50" itemprop="dateCreated datePublished" datetime="2024-09-17T21:19:50+00:00">2024-09-17</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-18 15:11:00" itemprop="dateModified" datetime="2025-08-18T15:11:00+00:00">2025-08-18</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>在测试leetcode的 <a target="_blank" rel="noopener" href="https://leetcode.cn/problems/bus-routes/description/">815.公交路线</a> 一题时，发现一个现象，当我使用<code>vector&lt;vector&lt;bool&gt;&gt;</code>作为图的邻接矩阵的类型时，运行速度比使用<code>vector&lt;vector&lt;int&gt;&gt;</code>慢了近1倍。使用<code>bool</code>运行速度为600ms左右，使用<code>int</code>时运行速度为300ms左右。</p>
-<p>以下是ChatGPT的回答：</p>
-<p>在C++中，bool类型并不一定比int类型慢，但在某些情况下，它们的性能表现可能有所不同。以下是一些与性能差异相关的考虑：</p>
-<ol>
-<li>内存大小<br>bool类型在标准中只需要表示 true（非0）和 false（0），通常占用1个字节（8位），而 int 通常占用4个字节（32位）。因此，bool类型可以节省内存，在某些情况下会带来缓存效率的提升，尤其是在处理大量布尔值时（例如布尔数组）。</li>
-<li>对齐和内存访问<br>在某些架构上，处理单字节的bool类型时，可能会有额外的开销，因为处理器通常优化对齐访问。如果内存没有正确对齐，处理器可能需要额外的操作来处理非对齐的字节，导致性能下降。相比之下，int的对齐通常与系统的内存总线对齐更好（如32位或64位系统上），因此读取和写入可能更高效。</li>
-<li>指令集和操作<br>现代处理器在处理布尔值时通常会将其扩展为完整的寄存器大小（例如32位或64位）。因此，虽然bool类型的存储可能更小，但在实际操作中，处理器可能将它提升为int或更大的类型来执行逻辑操作。处理布尔值可能涉及隐式类型转换，这在某些极端情况下可能带来开销。</li>
-<li>寄存器使用<br>int 类型可以直接映射到处理器寄存器中进行操作，而 bool 类型的操作有时可能会涉及额外的逻辑运算（如掩码操作）以确保布尔值的正确性。</li>
-<li>编译器优化<br>现代编译器在优化时会考虑到bool与int的差异，并尽量优化代码，因此在大多数应用场景下，你不会感受到显著的性能差异。但在一些特定的场合（如大规模数组、频繁内存访问等），bool类型的使用确实可能带来性能影响，尤其是在处理器需要对齐或执行额外的操作时。<br>总结<br>bool类型通常并不会比int慢，实际的性能差异取决于平台、内存对齐、编译器优化以及应用场景。在大多数情况下，差异是微不足道的，但在对性能非常敏感的程序中，这种差异可能会显现。</li>
-</ol>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/06/linux/bash%E8%B0%83%E8%AF%95/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/09/06/linux/bash%E8%B0%83%E8%AF%95/" class="post-title-link" itemprop="url">Bash Debugging</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-09-06 18:10:12" itemprop="dateCreated datePublished" datetime="2024-09-06T18:10:12+00:00">2024-09-06</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-18 15:11:00" itemprop="dateModified" datetime="2025-08-18T15:11:00+00:00">2025-08-18</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="启用调试模式"><a href="#启用调试模式" class="headerlink" title="启用调试模式"></a>启用调试模式</h2><ol>
-<li>命令行启用调试：</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#使用 -x 和 -v 选项运行 main.sh 脚本。</span></span><br><span class="line">bash -xv main.sh</span><br></pre></td></tr></table></figure>
-
-<p>注意：调试输出是通过 <code>stderr</code> ，在试图重定向时要注意。</p>
-<ol start="2">
-<li>在脚本中启用调试：</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">set</span> -xv</span><br></pre></td></tr></table></figure>
-
-<table>
-<thead>
-<tr>
-<th>Short notation</th>
-<th>Long notation</th>
-<th>Result</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>set -f</td>
-<td>set -o noglob</td>
-<td>Disable file name generation using metacharacters (globbing).</td>
-</tr>
-<tr>
-<td>set -v</td>
-<td>set -o verbose</td>
-<td>Prints shell input lines as they are read.</td>
-</tr>
-<tr>
-<td>set -x</td>
-<td>set -o xtrace</td>
-<td>Print command traces before executing command.</td>
-</tr>
-</tbody></table>
-<p>参考<a target="_blank" rel="noopener" href="https://tldp.org/LDP/Bash-Beginners-Guide/html/sect_02_03.html">链接</a></p>
-<p>其他选项：</p>
-<ul>
-<li><code>set +e</code>：忽略错误继续运行（bash）。</li>
-<li><code>set -e</code>：遇错停止执行（bash）。</li>
-</ul>
-<ol start="3">
-<li>环境变量 <code>PS4</code></li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PS4=<span class="string">&#x27;+ $&#123;LINENO&#125;: &#x27;</span></span><br></pre></td></tr></table></figure>
-
-<p>可以搭配使用 <code>PS4</code> 环境变量，以在调试输出中打印命令所在的文件行号。</p>
-<p><code>PS4</code> 是一个 Bash 环境变量，用于定义调试模式下的提示符格式。<br>当你启用调试模式（通过 <code>set -x</code>）时，Bash 会在每一行执行之前打印调试信息，而 PS4 决定了这些调试信息的格式。<br><code>$LINENO</code>表示打印行号。</p>
-<h2 id="trap-DEBUG"><a href="#trap-DEBUG" class="headerlink" title="trap DEBUG"></a><code>trap DEBUG</code></h2><p>设置DEBUG陷阱，该陷阱在每一条“简单语句”执行完毕之后会被调用一次。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">set</span> -o functrace</span><br><span class="line">track_var=<span class="string">&quot;my_var&quot;</span></span><br><span class="line">old_value=<span class="string">&quot;&quot;</span></span><br><span class="line"><span class="function"><span class="title">check_var_change</span></span>() &#123;</span><br><span class="line">    new_value=<span class="string">&quot;<span class="variable">$&#123;!track_var&#125;</span>&quot;</span></span><br><span class="line">    <span class="keyword">if</span> [[ <span class="string">&quot;<span class="variable">$new_value</span>&quot;</span> != <span class="string">&quot;<span class="variable">$old_value</span>&quot;</span> ]]; <span class="keyword">then</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$track_var</span> changed to \&quot;<span class="variable">$new_value</span>\&quot; at <span class="variable">$BASH_LINENO</span>&quot;</span></span><br><span class="line">        old_value=<span class="string">&quot;<span class="variable">$new_value</span>&quot;</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">trap</span> check_var_change DEBUG</span><br></pre></td></tr></table></figure>
-
-<p>说明：监控<code>my_var</code>变量的变化，如果变化，则打印新值。</p>
-<p>注意：实际测试中，我们发现<code>trap</code>监控变量变化似乎会延迟，而<code>set -x</code>打印的信息是可靠的。</p>
-<h2 id="特殊变量"><a href="#特殊变量" class="headerlink" title="特殊变量"></a>特殊变量</h2><p>参考：<a target="_blank" rel="noopener" href="https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html">https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html</a></p>
-<ul>
-<li><code>BASH_LINENO</code>: 这是一个数组变量，‌用于表示当前执行的脚本或函数中每一行的行号。‌它特别适用于调试，‌因为它可以追踪到函数调用栈中每一层的行号。‌通过访问BASH_LINENO数组的不同索引，‌可以获取到不同函数调用层级对应的行号信息‌。</li>
-<li><code>LINENO</code>: 获取当前脚本行号‌，‌而不涉及函数调用栈的追踪‌。</li>
-<li><code>FUNCNAME</code>: 函数名</li>
-<li><code>BASH_SOURCE</code></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/06/linux/File-Exists/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/09/06/linux/File-Exists/" class="post-title-link" itemprop="url">File Exists</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-09-06 18:09:03" itemprop="dateCreated datePublished" datetime="2024-09-06T18:09:03+00:00">2024-09-06</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-18 15:11:00" itemprop="dateModified" datetime="2025-08-18T15:11:00+00:00">2025-08-18</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="判断文件是否存在"><a href="#判断文件是否存在" class="headerlink" title="判断文件是否存在"></a>判断文件是否存在</h1><h2 id="相关函数"><a href="#相关函数" class="headerlink" title="相关函数"></a>相关函数</h2><ul>
-<li><code>access</code></li>
-<li><code>stat</code></li>
-<li><code>inotify_node</code></li>
-<li><code>opendir</code></li>
-<li><code>readdir</code></li>
-</ul>
-<h2 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h2><p>文件系统并不会实时刷新缓存，尤其是在网络文件系统中。这会导致文件即使已经创建，<code>access</code>或<code>stat</code>函数依然返回”No such file”。<br>但是<code>ls</code>可以看到文件，这是因为<code>ls</code>和<code>access</code>函数的实现机制不同。</p>
-<p>例如：</p>
-<p>在<code>NFS</code>文件系统中，创建文件之后立即调用<code>stat</code>命令查看文件，<code>stat</code>会报告“文件不存在”。<br>删除文件之后立即调用<code>stat</code>命令查看文件，发现<code>stat</code>依然可以看到该文件。</p>
-<p>我们可以改用<code>readdir</code>来读取目录，因为目录会被更快地更新缓存。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/blog/page/2/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><a class="page-number" href="/blog/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/blog/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/9/">9</a><a class="extend next" rel="next" href="/blog/page/4/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+    <a class="extend prev" rel="prev" href="/blog/page/2/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><a class="page-number" href="/blog/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/blog/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/10/">10</a><a class="extend next" rel="next" href="/blog/page/4/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -1850,14 +2122,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">87</span>
+          <span class="site-state-item-count">91</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-count">8</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">

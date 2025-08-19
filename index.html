@@ -193,6 +193,702 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/19/os/%E5%BC%82%E6%AD%A5IO/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/19/os/%E5%BC%82%E6%AD%A5IO/" class="post-title-link" itemprop="url">异步IO</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2025-08-19 20:26:00 / Modified: 13:30:13" itemprop="dateCreated datePublished" datetime="2025-08-19T20:26:00+00:00">2025-08-19</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="IO模型概念"><a href="#IO模型概念" class="headerlink" title="IO模型概念"></a>IO模型概念</h2><p>IO 模型通常按两条维度划分：</p>
+<ol>
+<li><p>阻塞 vs 非阻塞</p>
+<ul>
+<li>阻塞 IO（Blocking IO）：调用 read&#x2F;recv 等函数时，如果数据没准备好，进程会被挂起，直到数据就绪。</li>
+<li>非阻塞 IO（Non-blocking IO）：调用 read&#x2F;recv 时，如果数据没准备好，直接返回 EAGAIN 或 EWOULDBLOCK，进程继续做别的事情。</li>
+</ul>
+</li>
+<li><p>同步 vs 异步</p>
+<ul>
+<li><p>同步（Synchronous）：调用者要等待操作完成才能继续。</p>
+<ul>
+<li>阻塞 IO + 同步：最常见，比如普通 read(fd, buf, n)</li>
+<li>非阻塞 IO + 同步：调用立即返回，如果没数据则报错或返回 0</li>
+</ul>
+</li>
+<li><p>异步（Asynchronous）：调用者发起操作后，不需要等待，操作完成时通过回调、信号、事件通知等告知结果。</p>
+</li>
+</ul>
+</li>
+</ol>
+<p>⚡ 关键：异步 IO 的核心是不阻塞当前线程，而结果通知是通过事件或回调完成的。</p>
+<h2 id="Linux-常见异步-IO-方式"><a href="#Linux-常见异步-IO-方式" class="headerlink" title="Linux 常见异步 IO 方式"></a>Linux 常见异步 IO 方式</h2><p>Linux 下主要有四种机制：</p>
+<ol>
+<li><p>POSIX AIO（aio_* 系列）</p>
+<ul>
+<li><p>系统调用：aio_read(), aio_write()</p>
+</li>
+<li><p>完成通知方式：</p>
+<ul>
+<li>轮询 aio_error()</li>
+<li>信号通知 SIGIO</li>
+<li>回调函数 sigevent.sigev_notify &#x3D; SIGEV_THREAD</li>
+</ul>
+</li>
+<li><p>使用场景：文件 IO，可以在后台发起读写请求，主线程继续工作。</p>
+</li>
+<li><p>⚠️ 目前性能不如 epoll + 线程池模拟异步。</p>
+</li>
+</ul>
+</li>
+<li><p>信号驱动 IO（SIGIO）</p>
+<ul>
+<li>进程或文件描述符注册 F_SETOWN，开启 O_ASYNC</li>
+<li>当 fd 可读写时，内核发信号给进程</li>
+<li>通常用于少量 fd 的异步事件</li>
+</ul>
+</li>
+<li><p>I&#x2F;O 多路复用（select, poll, epoll）</p>
+<ul>
+<li><p>本质是非阻塞 + 事件通知</p>
+</li>
+<li><p>Epoll + 非阻塞 IO 可以模拟高效的异步 IO</p>
+</li>
+<li><p>适合网络服务器、socket 编程</p>
+</li>
+<li><p>典型流程：</p>
+<ul>
+<li>设置 fd 为非阻塞（否则 read&#x2F;write 可能阻塞，因为 epoll 本质是同步的）</li>
+<li>注册 fd 到 epoll，关注 EPOLLIN &#x2F; EPOLLOUT</li>
+<li>调用 epoll_wait 等待事件</li>
+<li>事件触发时读取或写入数据</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Linux AIO（io_uring）</p>
+<ul>
+<li>新一代高性能异步 IO 接口</li>
+<li>支持文件、网络 IO</li>
+<li>提供 提交队列 + 完成队列，几乎零系统调用开销</li>
+<li>可以真正做到线程几乎不阻塞等待</li>
+</ul>
+</li>
+</ol>
+<h3 id="异步-IO-的优点"><a href="#异步-IO-的优点" class="headerlink" title="异步 IO 的优点"></a>异步 IO 的优点</h3><ul>
+<li>不阻塞主线程，提高吞吐量</li>
+<li>可同时处理大量 IO（特别是网络&#x2F;文件服务器）</li>
+<li>与多线程相比，降低线程上下文切换开销</li>
+</ul>
+<h3 id="异步-IO-的缺点"><a href="#异步-IO-的缺点" class="headerlink" title="异步 IO 的缺点"></a>异步 IO 的缺点</h3><ul>
+<li>编程复杂度高（需要事件驱动、回调或状态机）</li>
+<li>错误处理和信号安全问题复杂</li>
+<li>文件异步 IO 性能在传统 AIO 下不一定比多线程高</li>
+</ul>
+<h3 id="Linux-下常见异步-I-O-机制对比"><a href="#Linux-下常见异步-I-O-机制对比" class="headerlink" title="Linux 下常见异步 I&#x2F;O 机制对比"></a>Linux 下常见异步 I&#x2F;O 机制对比</h3><table>
+<thead>
+<tr>
+<th>特性 &#x2F; 机制</th>
+<th>POSIX AIO</th>
+<th>epoll + 非阻塞 IO</th>
+<th>io_uring</th>
+<th>信号驱动 IO (SIGIO)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>类型</strong></td>
+<td>异步文件 IO</td>
+<td>多路复用 + 非阻塞网络 IO</td>
+<td>高性能异步 IO</td>
+<td>异步事件通知</td>
+</tr>
+<tr>
+<td><strong>支持对象</strong></td>
+<td>文件</td>
+<td>文件描述符（socket、管道等）</td>
+<td>文件 + 网络 + 其他 IO</td>
+<td>文件描述符（socket、pipe）</td>
+</tr>
+<tr>
+<td><strong>用户态&#x2F;内核态</strong></td>
+<td>系统调用提交，内核异步处理</td>
+<td>用户态轮询&#x2F;等待事件，内核检查 fd</td>
+<td>用户态 SQ + 内核 CQ</td>
+<td>用户注册 fd，内核通过信号通知</td>
+</tr>
+<tr>
+<td><strong>提交方式</strong></td>
+<td>aio_read&#x2F;aio_write</td>
+<td>写入 fd 并通过 epoll_wait 检查</td>
+<td>写入 SQ（批量可提交）</td>
+<td>设置 O_ASYNC + F_SETOWN</td>
+</tr>
+<tr>
+<td><strong>完成通知</strong></td>
+<td>信号 &#x2F; 回调 &#x2F; aio_error轮询</td>
+<td>epoll_wait 返回就绪事件</td>
+<td>完成队列 (CQ)，阻塞或非阻塞读取</td>
+<td>信号处理函数 (SIGIO)</td>
+</tr>
+<tr>
+<td><strong>性能</strong></td>
+<td>中等，系统调用多</td>
+<td>高，单线程处理大量 fd</td>
+<td>很高，几乎零系统调用，批量提交</td>
+<td>较低，信号开销大，适合少量 fd</td>
+</tr>
+<tr>
+<td><strong>编程复杂度</strong></td>
+<td>中等偏复杂</td>
+<td>中等，需要状态机处理</td>
+<td>高，但灵活，可批量和链式操作</td>
+<td>高，信号处理函数限制多，必须信号安全</td>
+</tr>
+<tr>
+<td><strong>适合场景</strong></td>
+<td>文件异步读写</td>
+<td>高并发网络服务器</td>
+<td>高性能文件和网络 IO</td>
+<td>少量异步事件或控制信号触发场景</td>
+</tr>
+</tbody></table>
+<h2 id="Linux-io-uring"><a href="#Linux-io-uring" class="headerlink" title="Linux io_uring"></a>Linux io_uring</h2><p>io_uring 是 Linux 内核自 5.1 版本引入的一个异步 I&#x2F;O 框架，它提供了 低延迟、高吞吐的异步文件和网络 I&#x2F;O。它的特点是：</p>
+<ul>
+<li>零拷贝提交：应用程序可以直接向内核提交 I&#x2F;O 请求，无需系统调用每次阻塞。</li>
+<li>环形队列机制：通过共享内存的 提交队列（Submission Queue, SQ） 和 完成队列（Completion Queue, CQ），用户态和内核态可以高效交互。</li>
+<li>支持多种 I&#x2F;O 类型：文件读写、网络收发、文件同步、缓冲区操作等。</li>
+<li>批量提交和完成：可以一次提交多个 I&#x2F;O 请求，并批量获取完成结果。</li>
+</ul>
+<p>简单理解：它把传统阻塞 I&#x2F;O 的 “系统调用来回” 改成了 共享环形队列 + 异步通知。</p>
+<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><ol>
+<li>方法一：从 APT 安装</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install liburing-dev</span><br></pre></td></tr></table></figure>
+
+<p>检查安装路径</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ls</span> /usr/include/liburing.h</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>方法二：从源码安装</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/axboe/liburing.git</span><br><span class="line"><span class="built_in">cd</span> liburing</span><br><span class="line">make</span><br><span class="line">sudo make install</span><br></pre></td></tr></table></figure>
+
+<h3 id="io-uring-的核心数据结构"><a href="#io-uring-的核心数据结构" class="headerlink" title="io_uring 的核心数据结构"></a>io_uring 的核心数据结构</h3><p>Submission Queue（SQ）</p>
+<ul>
+<li>用户态将 I&#x2F;O 请求放入 SQ。</li>
+<li>SQ 是一个环形数组，存放 io_uring_sqe（I&#x2F;O 请求条目）。</li>
+<li>用户通过 系统调用 io_uring_enter 将 SQ 中的新请求通知内核。</li>
+<li>内核会按顺序处理 SQ 中的 I&#x2F;O 请求。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>opcode</code></td>
+<td>I&#x2F;O 类型，如读、写、fsync、accept、sendmsg</td>
+</tr>
+<tr>
+<td><code>fd</code></td>
+<td>文件描述符</td>
+</tr>
+<tr>
+<td><code>off</code></td>
+<td>偏移量（文件 I&#x2F;O）</td>
+</tr>
+<tr>
+<td><code>addr</code></td>
+<td>用户缓冲区地址</td>
+</tr>
+<tr>
+<td><code>len</code></td>
+<td>I&#x2F;O 数据长度</td>
+</tr>
+<tr>
+<td><code>flags</code></td>
+<td>请求标志，如 <code>IOSQE_FIXED_FILE</code>、<code>IOSQE_IO_LINK</code></td>
+</tr>
+</tbody></table>
+<p>Completion Queue（CQ）</p>
+<ul>
+<li>内核完成 I&#x2F;O 后，将结果写入 CQ。</li>
+<li>CQ 也是一个环形数组，存放 io_uring_cqe（完成条目）。</li>
+<li>用户可以轮询或等待 CQ 获取完成结果。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>res</code></td>
+<td>I&#x2F;O 结果，成功为正数（读写字节数），失败为负错误码</td>
+</tr>
+<tr>
+<td><code>user_data</code></td>
+<td>用户自定义数据，方便识别请求</td>
+</tr>
+</tbody></table>
+<h3 id="io-uring-工作流程"><a href="#io-uring-工作流程" class="headerlink" title="io_uring 工作流程"></a>io_uring 工作流程</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">+-----------+          +-----------+</span><br><span class="line">| User App  | &lt;-----&gt;  |  Kernel  |</span><br><span class="line">+-----------+          +-----------+</span><br><span class="line">      |                     |</span><br><span class="line">      |  write SQE to SQ    | &lt;- Submission Queue</span><br><span class="line">      |--------------------&gt;|</span><br><span class="line">      |                     |</span><br><span class="line">      |   io_uring_enter    | &lt;- 通知内核处理</span><br><span class="line">      |--------------------&gt;|</span><br><span class="line">      |                     |</span><br><span class="line">      | &lt;------------------ | &lt;- CQE 放入 CQ</span><br><span class="line">      |  read CQE from CQ   |</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>用户态填充 SQE（Submission Queue Entry）。</li>
+<li>调用 io_uring_enter() 提交 SQE （不阻塞）。</li>
+<li>内核处理 I&#x2F;O 请求。</li>
+<li>内核把完成结果写入 CQ。</li>
+<li>用户态可以：<ul>
+<li>轮询 CQ：主动读取 CQE（Completion Queue Entry）</li>
+<li>注册回调（liburing 新版本支持 IORING_SETUP_IOPOLL + IORING_SETUP_SQPOLL 或自己封装）</li>
+</ul>
+</li>
+</ul>
+<p>注意：</p>
+<ul>
+<li>异步 I&#x2F;O ≠ 必须用回调。关键是提交后不阻塞等待，可以同步轮询完成结果，也可以异步触发回调。</li>
+<li>回调是一种可选的使用方式。</li>
+<li>最核心的是 共享环形队列 + 完成队列，用户可以同步取结果也可以异步通知。</li>
+</ul>
+<h3 id="为什么-io-uring-没有强制回调"><a href="#为什么-io-uring-没有强制回调" class="headerlink" title="为什么 io_uring 没有强制回调"></a>为什么 io_uring 没有强制回调</h3><p>传统异步 I&#x2F;O（比如 Windows IOCP）必须注册回调或事件句柄，因为内核不会给你“主动通知”。</p>
+<p>Linux io_uring 的设计哲学是：</p>
+<ul>
+<li>用户态和内核共享内存 → 用户态可以自己轮询完成队列。</li>
+<li>减少系统调用次数 → 不依赖信号或回调触发。</li>
+<li>需要回调时，用户可以自己封装一个事件循环。</li>
+</ul>
+<p>所以你看到 io_uring 的官方示例都是 顺序写代码，但是仍然是异步 I&#x2F;O，因为：</p>
+<ul>
+<li>提交后内核可以并行处理多个 I&#x2F;O。</li>
+<li>用户态无需阻塞等待内核完成处理（可以去做别的事）。</li>
+</ul>
+<h3 id="io-uring-的使用示例（C-语言）"><a href="#io-uring-的使用示例（C-语言）" class="headerlink" title="io_uring 的使用示例（C 语言）"></a>io_uring 的使用示例（C 语言）</h3><figure class="highlight cpp"><figcaption><span>io_uring_hello.c</span><a href="/blog/downloads/code/io/io_uring_hello.c">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;liburing.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> QUEUE_DEPTH  8</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> BUFFER_SIZE  1024</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">io_uring</span> ring;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">io_uring_sqe</span> *sqe;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">io_uring_cqe</span> *cqe;</span><br><span class="line">    <span class="type">int</span> ret, fd;</span><br><span class="line">    <span class="type">char</span> buf[BUFFER_SIZE];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 打开文件</span></span><br><span class="line">    fd = <span class="built_in">open</span>(<span class="string">&quot;test.txt&quot;</span>, O_RDONLY);</span><br><span class="line">    <span class="keyword">if</span> (fd &lt; <span class="number">0</span>) {</span><br><span class="line">        <span class="built_in">perror</span>(<span class="string">&quot;open&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 初始化 io_uring</span></span><br><span class="line">    ret = <span class="built_in">io_uring_queue_init</span>(QUEUE_DEPTH, &amp;ring, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) {</span><br><span class="line">        <span class="built_in">perror</span>(<span class="string">&quot;io_uring_queue_init&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取提交队列条目</span></span><br><span class="line">    sqe = <span class="built_in">io_uring_get_sqe</span>(&amp;ring);</span><br><span class="line">    <span class="keyword">if</span> (!sqe) {</span><br><span class="line">        <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;io_uring_get_sqe failed\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 准备读取操作</span></span><br><span class="line">    <span class="built_in">io_uring_prep_read</span>(sqe, fd, buf, BUFFER_SIZE, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 提交到内核</span></span><br><span class="line">    ret = <span class="built_in">io_uring_submit</span>(&amp;ring);</span><br><span class="line">    <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) {</span><br><span class="line">        <span class="built_in">perror</span>(<span class="string">&quot;io_uring_submit&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 等待完成</span></span><br><span class="line">    ret = <span class="built_in">io_uring_wait_cqe</span>(&amp;ring, &amp;cqe);</span><br><span class="line">    <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) {</span><br><span class="line">        <span class="built_in">perror</span>(<span class="string">&quot;io_uring_wait_cqe&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 读取结果</span></span><br><span class="line">    <span class="keyword">if</span> (cqe-&gt;res &lt; <span class="number">0</span>) {</span><br><span class="line">        <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;Async read failed: %d\n&quot;</span>, cqe-&gt;res);</span><br><span class="line">    } <span class="keyword">else</span> {</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Read %d bytes: %.*s\n&quot;</span>, cqe-&gt;res, cqe-&gt;res, buf);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 通知内核完成</span></span><br><span class="line">    <span class="built_in">io_uring_cqe_seen</span>(&amp;ring, cqe);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 关闭</span></span><br><span class="line">    <span class="built_in">io_uring_queue_exit</span>(&amp;ring);</span><br><span class="line">    <span class="built_in">close</span>(fd);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p>这个例子展示了 最基本的异步文件读取：</p>
+<ul>
+<li>初始化 ring。</li>
+<li>获取一个 SQE 并填充读请求。</li>
+<li>提交 SQE。</li>
+<li>等待 CQE 获取结果。</li>
+<li>标记完成并清理。</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/19/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/19/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/" class="post-title-link" itemprop="url">内存管理</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2025-08-19 20:12:58 / Modified: 13:30:13" itemprop="dateCreated datePublished" datetime="2025-08-19T20:12:58+00:00">2025-08-19</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="线程安全性"><a href="#线程安全性" class="headerlink" title="线程安全性"></a>线程安全性</h2><p>malloc 是线程安全的，但有一些细节需要注意。</p>
+<ol>
+<li>线程安全含义</li>
+</ol>
+<p>线程安全：多个线程同时调用 malloc&#x2F;free 不会破坏堆管理结构，也不会导致内存管理崩溃。</p>
+<p>实现方法：</p>
+<p>glibc malloc 在内部使用 锁（mutex 或 spinlock） 保护全局堆管理数据结构</p>
+<p>不同线程同时申请或释放内存，内核保证堆表一致</p>
+<ol start="2">
+<li>限制与注意事项</li>
+</ol>
+<p>性能问题</p>
+<p>多线程频繁 malloc&#x2F;free，锁竞争可能成为瓶颈</p>
+<p>对性能敏感的程序可能使用：</p>
+<p>线程本地缓存（thread-local cache） 的 jemalloc &#x2F; tcmalloc</p>
+<p>避免全局锁竞争</p>
+<p>信号处理上下文不安全</p>
+<p>虽然线程安全，但 malloc 在信号处理函数里不安全</p>
+<p>原因：</p>
+<p>信号可能打断正在执行的 malloc</p>
+<p>malloc 内部锁可能被持有 → 再次调用可能死锁</p>
+<p>所以 signal handler 中不能直接调用 malloc&#x2F;free</p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>malloc&#x2F;glibc</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>多线程调用安全</td>
+<td>✅ 是线程安全的</td>
+</tr>
+<tr>
+<td>信号处理函数调用安全</td>
+<td>❌ 不安全</td>
+</tr>
+<tr>
+<td>性能</td>
+<td>可能锁竞争，需要优化（jemalloc&#x2F;tcmalloc）</td>
+</tr>
+</tbody></table>
+<h2 id="信号安全"><a href="#信号安全" class="headerlink" title="信号安全"></a>信号安全</h2><p>malloc &#x2F; free 内部会修改全局堆管理结构（如 free list）</p>
+<p>如果信号到达时主程序正在调用 malloc 或 free，信号处理函数里再次调用 malloc&#x2F;free → 堆数据结构可能被破坏，<br>可能导致崩溃或内存泄漏</p>
+<p>虽然线程安全，但 malloc 在信号处理函数里不安全</p>
+<p>原因：</p>
+<ul>
+<li>信号可能打断正在执行的 malloc</li>
+<li>malloc 内部锁可能被持有 → 再次调用可能死锁</li>
+</ul>
+<p>所以 signal handler 中不能直接调用 malloc&#x2F;free</p>
+<h3 id="安全做法"><a href="#安全做法" class="headerlink" title="安全做法"></a>安全做法</h3><p>信号处理函数里只做：</p>
+<ul>
+<li>设置标志位（sig_atomic_t flag &#x3D; 1;）</li>
+<li>写入 pipe &#x2F; eventfd</li>
+<li>调用 async-signal-safe 系统调用（write(), _exit()）</li>
+</ul>
+<p>之后由主程序在安全上下文处理 malloc&#x2F;free 或其他复杂操作</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/19/os/%E4%BF%A1%E5%8F%B7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/19/os/%E4%BF%A1%E5%8F%B7/" class="post-title-link" itemprop="url">信号</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2025-08-19 20:08:39 / Modified: 13:30:13" itemprop="dateCreated datePublished" datetime="2025-08-19T20:08:39+00:00">2025-08-19</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="异步信号"><a href="#异步信号" class="headerlink" title="异步信号"></a>异步信号</h2><p>锁、malloc 等不能在信号处理函数里用。这里涉及到 异步信号安全 (async-signal-safe) 的概念。</p>
+<ol>
+<li>信号处理函数的执行环境</li>
+</ol>
+<p>当一个信号到达进程时，内核 异步中断当前执行流，立即跳转到信号处理函数执行。</p>
+<p>这意味着：</p>
+<p>当前线程可能 正在持有锁（mutex、spinlock 等）</p>
+<p>当前线程可能 正在使用 malloc&#x2F;free，操作堆数据结构</p>
+<ol start="2">
+<li>为什么不能调用这些函数</li>
+</ol>
+<p>锁（mutex 等）</p>
+<p>如果信号处理函数里调用 pthread_mutex_lock()：</p>
+<p>线程可能已经在信号到达前持有这个锁</p>
+<p>信号处理函数再次尝试加锁 → 死锁</p>
+<p>malloc &#x2F; free</p>
+<p>malloc 内部会修改全局堆管理结构（如 free list）</p>
+<p>如果信号到达时主程序正在调用 malloc 或 free，信号处理函数里再次调用 malloc&#x2F;free → 堆数据结构可能被破坏</p>
+<p>可能导致崩溃或内存泄漏</p>
+<ol start="3">
+<li>async-signal-safe 函数</li>
+</ol>
+<p>POSIX 定义了一组 “异步信号安全函数”（async-signal-safe functions）</p>
+<p>信号处理函数中 只允许调用这些函数</p>
+<p>常用安全函数示例：</p>
+<p>_exit()</p>
+<p>write()（低级系统调用，不会锁堆）</p>
+<p>sig_atomic_t 类型变量赋值</p>
+<p>总结</p>
+<table>
+<thead>
+<tr>
+<th>函数类型</th>
+<th>可在信号处理函数里用？</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>pthread_mutex_lock</td>
+<td>❌</td>
+<td>可能已持锁 → 死锁</td>
+</tr>
+<tr>
+<td>malloc&#x2F;free</td>
+<td>❌</td>
+<td>可能正在操作堆 → 数据结构破坏</td>
+</tr>
+<tr>
+<td>write(fd, buf, n)</td>
+<td>✅</td>
+<td>系统调用，不会破坏用户态结构</td>
+</tr>
+<tr>
+<td>_exit()</td>
+<td>✅</td>
+<td>安全终止进程</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>核心思想：信号是异步的，中断当前执行流，调用非 async-signal-safe 函数可能破坏正在执行的操作，导致不可预测的行为。</p>
+</blockquote>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/19/concurrency/thread_local%E7%9A%84%E5%AE%9E%E7%8E%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/19/concurrency/thread_local%E7%9A%84%E5%AE%9E%E7%8E%B0/" class="post-title-link" itemprop="url">thread_local的实现</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2025-08-19 19:41:37 / Modified: 13:30:13" itemprop="dateCreated datePublished" datetime="2025-08-19T19:41:37+00:00">2025-08-19</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <ol>
+<li>thread_local 的基本语义</li>
+</ol>
+<p>C++11 引入的存储类型说明符：</p>
+<p>thread_local int x &#x3D; 0;</p>
+<p>表示 每个线程都有一份独立的 x，互不干扰。</p>
+<p>生命周期：跟普通静态变量类似（全局存活直到线程退出）。</p>
+<ol start="2">
+<li>底层实现原理</li>
+</ol>
+<p>它的实现依赖于 TLS (Thread Local Storage, 线程局部存储) 机制。</p>
+<p>在 ELF&#x2F;Linux 下：</p>
+<p>编译器在 .tdata &#x2F; .tbss 段里为 thread_local 变量分配空间（就像全局变量在 .data &#x2F; .bss 段里）。</p>
+<p>程序加载时，动态链接器（ld.so）会记录这些 TLS 变量的“模板布局”。</p>
+<p>每个线程启动时，线程库（glibc&#x2F;pthread）会：</p>
+<p>给这个线程分配一块 TLS 块（通常放在线程栈附近，或者专门的内存页）。</p>
+<p>把 .tdata 里的初始值拷贝到这个线程的 TLS 块。</p>
+<p>.tbss 部分（未初始化的 thread_local）则清零。</p>
+<p>线程访问 thread_local 时，编译器生成的代码会通过 TLS 寄存器（如 x86-64 的 FS&#x2F;GS 段寄存器）+ 偏移量，找到对应线程的存储单元。</p>
+<p>例如 x86-64 Linux 上，errno 就是：</p>
+<p>#define errno (*__errno_location())</p>
+<p>而 __errno_location() 内部就是通过 %fs:offset 找到 TLS 块里的 errno。</p>
+<ol start="3">
+<li>存放在哪里？</li>
+</ol>
+<p>Windows：在 TEB (Thread Environment Block) 里有 TLS 指针，__declspec(thread) 就用它。</p>
+<p>Linux&#x2F;ELF：在每个线程的 TLS 块里（通常分配在线程栈附近的一片内存区域）。访问通过 FS&#x2F;GS 寄存器。</p>
+<p>编译器细节：</p>
+<p>GCC&#x2F;Clang 默认用 “动态 TLS 模型”（访问时通过动态链接器查询 TLS 偏移）。</p>
+<p>如果加 -ftls-model&#x3D;initial-exec，编译器会直接用固定偏移访问 TLS，速度更快（但要求变量在主程序或静态库里）。</p>
+<ol start="4">
+<li>示例</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="keyword">thread_local</span> <span class="type">int</span> counter = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">worker</span><span class="params">(<span class="type">int</span> id)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">3</span>; i++) &#123;</span><br><span class="line">        counter++;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Thread &quot;</span> &lt;&lt; id &lt;&lt; <span class="string">&quot;: counter = &quot;</span> &lt;&lt; counter &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="function">std::thread <span class="title">t1</span><span class="params">(worker, <span class="number">1</span>)</span></span>;</span><br><span class="line">    <span class="function">std::thread <span class="title">t2</span><span class="params">(worker, <span class="number">2</span>)</span></span>;</span><br><span class="line">    t1.<span class="built_in">join</span>();</span><br><span class="line">    t2.<span class="built_in">join</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出大致是：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Thread 1: counter = 1</span><br><span class="line">Thread 1: counter = 2</span><br><span class="line">Thread 1: counter = 3</span><br><span class="line">Thread 2: counter = 1</span><br><span class="line">Thread 2: counter = 2</span><br><span class="line">Thread 2: counter = 3</span><br></pre></td></tr></table></figure>
+
+<p>说明 counter 在不同线程里独立。</p>
+<p>✅ 总结：</p>
+<p>thread_local 变量放在 TLS 段，每个线程有自己的拷贝。</p>
+<p>访问是通过 线程局部存储寄存器（FS&#x2F;GS）+ 偏移量 实现的。</p>
+<p>存储空间由线程库在创建线程时分配和初始化。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/18/%E5%AE%9E%E7%94%A8%E4%B9%A6%E7%B1%8D%E5%88%97%E8%A1%A8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -216,10 +912,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2025-08-18 21:25:16 / Modified: 15:11:00" itemprop="dateCreated datePublished" datetime="2025-08-18T21:25:16+00:00">2025-08-18</time>
+              <time title="Created: 2025-08-18 21:25:16" itemprop="dateCreated datePublished" datetime="2025-08-18T21:25:16+00:00">2025-08-18</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-19 13:30:13" itemprop="dateModified" datetime="2025-08-19T13:30:13+00:00">2025-08-19</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -292,7 +994,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-18 15:11:00" itemprop="dateModified" datetime="2025-08-18T15:11:00+00:00">2025-08-18</time>
+                <time title="Modified: 2025-08-19 13:30:13" itemprop="dateModified" datetime="2025-08-19T13:30:13+00:00">2025-08-19</time>
               </span>
 
           
@@ -425,7 +1127,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-18 15:11:00" itemprop="dateModified" datetime="2025-08-18T15:11:00+00:00">2025-08-18</time>
+                <time title="Modified: 2025-08-19 13:30:13" itemprop="dateModified" datetime="2025-08-19T13:30:13+00:00">2025-08-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -557,7 +1259,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/16/net/%E9%AB%98%E6%95%88IO/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/16/os/%E9%AB%98%E6%95%88IO/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -571,7 +1273,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2025/08/16/net/%E9%AB%98%E6%95%88IO/" class="post-title-link" itemprop="url">高效 IO</a>
+            <a href="/blog/2025/08/16/os/%E9%AB%98%E6%95%88IO/" class="post-title-link" itemprop="url">高效 IO</a>
         </h2>
 
         <div class="post-meta">
@@ -588,7 +1290,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-18 15:11:00" itemprop="dateModified" datetime="2025-08-18T15:11:00+00:00">2025-08-18</time>
+                <time title="Modified: 2025-08-19 13:30:13" itemprop="dateModified" datetime="2025-08-19T13:30:13+00:00">2025-08-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -596,7 +1298,7 @@
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">网络</span></a>
+                  <a href="/blog/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
                 </span>
             </span>
 
@@ -715,7 +1417,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-18 15:11:00" itemprop="dateModified" datetime="2025-08-18T15:11:00+00:00">2025-08-18</time>
+                <time title="Modified: 2025-08-19 13:30:13" itemprop="dateModified" datetime="2025-08-19T13:30:13+00:00">2025-08-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1102,7 +1804,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-18 15:11:00" itemprop="dateModified" datetime="2025-08-18T15:11:00+00:00">2025-08-18</time>
+                <time title="Modified: 2025-08-19 13:30:13" itemprop="dateModified" datetime="2025-08-19T13:30:13+00:00">2025-08-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1374,616 +2076,10 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/16/net/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/16/net/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/" class="post-title-link" itemprop="url">网络编程</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-16 20:01:24" itemprop="dateCreated datePublished" datetime="2025-08-16T20:01:24+00:00">2025-08-16</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-18 15:11:00" itemprop="dateModified" datetime="2025-08-18T15:11:00+00:00">2025-08-18</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="系统文件"><a href="#系统文件" class="headerlink" title="系统文件"></a>系统文件</h2><p><code>/etc/services</code>: 端口列表<br><code>/etc/protocols</code>: 协议列表</p>
-<h2 id="socket-参数"><a href="#socket-参数" class="headerlink" title="socket 参数"></a>socket 参数</h2><h3 id="SO-REUSEADDR"><a href="#SO-REUSEADDR" class="headerlink" title="SO_REUSEADDR"></a>SO_REUSEADDR</h3><p>主要功能：允许端口重用。客户端一般不用，只在服务端常见。<br>更准确地说，它有几个具体效果（以 TCP 为例）：</p>
-<p>TIME_WAIT 状态下可重绑定</p>
-<p>正常情况下，当服务端关闭套接字，端口进入 TIME_WAIT 状态（持续 ~1-4 分钟）</p>
-<p>如果不设置 SO_REUSEADDR，你必须等 TIME_WAIT 结束才能再次 bind() 相同端口</p>
-<p>设置后，可以立即重新 bind()</p>
-<p>多个套接字绑定到同一个端口（但 IP 必须不同）</p>
-<p>常见于多播、广播，或者一台机器上多个不同地址绑定同一个端口</p>
-<p>Linux 特性：允许 相同 IP 和端口 多个套接字同时监听（结合 SO_REUSEPORT 使用更常见，nginx 就依赖这个做负载均衡）。</p>
-<h4 id="TIME-WAIT"><a href="#TIME-WAIT" class="headerlink" title="TIME_WAIT"></a>TIME_WAIT</h4><p>TIME_WAIT 只会出现在主动关闭连接的一方。</p>
-<p>一般情况：客户端主动关闭 → 客户端 TIME_WAIT，服务端不需要考虑</p>
-<p>特殊情况：如果服务端主动关闭 listen_fd（例如服务进程退出后重启），就会产生 TIME_WAIT，需要优化手段。</p>
-<h3 id="SO-REUSEPORT"><a href="#SO-REUSEPORT" class="headerlink" title="SO_REUSEPORT"></a>SO_REUSEPORT</h3><p>多进程&#x2F;线程共享端口（同一IP+端口），避免 TIME_WAIT 堆积影响单个进程。前提是都设置了 SO_REUSEPORT）。</p>
-<p>内核会 均匀分发新连接 到这些套接字（负载均衡）。</p>
-<p>常见用途：</p>
-<ul>
-<li>高性能网络服务（nginx、redis、haproxy 等）</li>
-<li>利用多进程&#x2F;多线程提升网络吞吐量</li>
-</ul>
-<p>与 SO_REUSEADDR 的区别</p>
-<table>
-<thead>
-<tr>
-<th>选项</th>
-<th>功能</th>
-<th>使用场景</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>SO_REUSEADDR</td>
-<td>允许端口在 TIME_WAIT 状态下重用</td>
-<td>服务端重启，避免 “Address already in use”</td>
-</tr>
-<tr>
-<td>SO_REUSEPORT</td>
-<td>允许同一端口被多个进程&#x2F;线程同时绑定，内核负载均衡</td>
-<td>高性能多进程网络服务</td>
-</tr>
-</tbody></table>
-<ul>
-<li>SO_REUSEADDR → 解决 TIME_WAIT 问题</li>
-<li>SO_REUSEPORT → 解决 多进程监听同一端口的负载均衡</li>
-</ul>
-<h3 id="TCP-NODELAY"><a href="#TCP-NODELAY" class="headerlink" title="TCP_NODELAY"></a>TCP_NODELAY</h3><p>用于关闭 Nagle 算法。</p>
-<ul>
-<li><p>背景：Nagle 算法</p>
-<ul>
-<li><p>Nagle 算法的作用：</p>
-<p>把很多小的 TCP 包合并成一个大包再发送，以减少网络中小包的数量，提高效率。</p>
-<blockquote>
-<p>规则：如果前一个包还没被确认（ACK），新的小包不要立刻发送，而是先缓存，等到收到 ACK 或者缓冲区积累够大时再发。</p>
-<ol>
-<li>如果要发送的数据很大（≥ MSS，最大报文段长度），直接发。</li>
-<li>如果应用要发小数据：<ul>
-<li>有未确认的包 → 暂时把新数据放在缓冲区里，不发。</li>
-<li>收到了 ACK → 把缓存的数据打包一起发送。</li>
-</ul>
-</li>
-</ol>
-</blockquote>
-</li>
-<li><p>代价：</p>
-<p>会造成 延迟（例如即时通信、RPC 请求这种场景，一次 send() 可能会等下一个小包一起发）。</p>
-</li>
-</ul>
-</li>
-</ul>
-<p>✅ 建议使用的场景：</p>
-<ul>
-<li>RPC 框架</li>
-<li>即时通讯（IM）</li>
-<li>游戏服务器（低延迟要求）</li>
-<li>高频短小消息的交互</li>
-</ul>
-<p>❌ 不建议使用的场景：</p>
-<ul>
-<li>大文件传输（比如 HTTP 下载）</li>
-<li>视频流、音频流（关闭 Nagle 反而降低效率）</li>
-</ul>
-<h3 id="SO-KEEPALIVE"><a href="#SO-KEEPALIVE" class="headerlink" title="SO_KEEPALIVE"></a>SO_KEEPALIVE</h3><p>开启 SO_KEEPALIVE 后，内核在后台做三件事（以 Linux 默认值为例，可能因系统不同而不同）：</p>
-<ul>
-<li><p>tcp_keepalive_time（默认 7200s &#x3D; 2小时）<br>如果一个连接在 tcp_keepalive_time 时间内都没有任何数据往来，内核会开始发送探测包。</p>
-</li>
-<li><p>tcp_keepalive_intvl（默认 75s）<br>探测包之间的间隔。</p>
-</li>
-<li><p>tcp_keepalive_probes（默认 9次）<br>如果连续 tcp_keepalive_probes 次探测都没有回应，内核会认为连接已经断开，并通知应用层 read()&#x2F;recv() 返回 0 或 ECONNRESET。</p>
-</li>
-</ul>
-<p>可以通过 &#x2F;proc&#x2F;sys&#x2F;net&#x2F;ipv4&#x2F;tcp_keepalive_* 修改这些参数：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> /proc/sys/net/ipv4/tcp_keepalive_time</span><br><span class="line"><span class="built_in">cat</span> /proc/sys/net/ipv4/tcp_keepalive_intvl</span><br><span class="line"><span class="built_in">cat</span> /proc/sys/net/ipv4/tcp_keepalive_probes</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改方式</span></span><br><span class="line">sysctl -w net.ipv4.tcp_keepalive_time=600</span><br></pre></td></tr></table></figure>
-
-<p>应用场景</p>
-<ul>
-<li>长连接 RPC、心跳检测：避免死连接无限挂着。</li>
-<li>服务端防止资源泄漏：客户端异常掉线时，服务端能最终释放连接。</li>
-<li>中间设备 NAT&#x2F;防火墙：如果链路长时间无流量，可能被踢掉，Keepalive能保持活动状态（但注意默认周期太长，往往要调低）。</li>
-</ul>
-<p>RESET vs KeepAlive</p>
-<ul>
-<li><p>客户端正常断开</p>
-<ul>
-<li><p>客户端调用 close() 或 shutdown()</p>
-</li>
-<li><p>会向服务端发送 FIN，服务端的 read() 返回 0</p>
-</li>
-<li><p>这是“主动优雅关闭”，服务端能马上感知</p>
-<p>✅ 这种情况下不需要 SO_KEEPALIVE</p>
-</li>
-</ul>
-</li>
-<li><p>客户端异常掉线（断电、拔网线、进程挂掉）</p>
-<ul>
-<li><p>TCP 不能立即知道对方掉线</p>
-</li>
-<li><p>为什么？</p>
-<ul>
-<li>TCP 是端到端协议，除非收到 RST 或 FIN，否则内核认为连接仍然存在</li>
-<li>异常掉线不会发送 FIN</li>
-<li>网络异常（如网线拔掉）也不会发送 RST</li>
-<li>这时服务端的 read() &#x2F; write() 不会马上报错</li>
-<li>写时可能阻塞</li>
-<li>读时可能一直阻塞</li>
-</ul>
-<p>✅ 所以需要 SO_KEEPALIVE 来让内核周期性探测，最终发现对方掉线</p>
-</li>
-</ul>
-</li>
-<li><p>客户端发送 RST 的情况</p>
-<ul>
-<li>RST 只在一些场景出现：<ul>
-<li>客户端向已经关闭的套接字写数据</li>
-<li>本地进程调用 abort()</li>
-</ul>
-</li>
-<li>但 异常掉线（掉电、断网、进程被 kill -9）不会发 RST</li>
-<li>因此 服务端不能依赖 RST 来发现死连接</li>
-</ul>
-</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th>场景</th>
-<th>服务端能否立即发现</th>
-<th>是否需要 Keepalive</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>客户端正常 close()</td>
-<td>是</td>
-<td>否</td>
-</tr>
-<tr>
-<td>客户端异常掉线（断电、拔网线）</td>
-<td>否</td>
-<td>是</td>
-</tr>
-<tr>
-<td>客户端本地 abort() 或 write 已关闭套接字</td>
-<td>是（会收到 RST）</td>
-<td>否</td>
-</tr>
-</tbody></table>
-<p>所以 SO_KEEPALIVE 主要用于发现客户端异常掉线。没有它，长连接可能永远挂在 ESTABLISHED，资源泄漏。</p>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/392820963">端口0的作用</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/16/os/%E7%94%A8%E6%88%B7%E6%80%81%E5%92%8C%E5%86%85%E6%A0%B8%E6%80%81/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/16/os/%E7%94%A8%E6%88%B7%E6%80%81%E5%92%8C%E5%86%85%E6%A0%B8%E6%80%81/" class="post-title-link" itemprop="url">用户态和内核态</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-16 13:31:26" itemprop="dateCreated datePublished" datetime="2025-08-16T13:31:26+00:00">2025-08-16</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-18 15:11:00" itemprop="dateModified" datetime="2025-08-18T15:11:00+00:00">2025-08-18</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="用户空间和内核空间是隔离的"><a href="#用户空间和内核空间是隔离的" class="headerlink" title="用户空间和内核空间是隔离的"></a>用户空间和内核空间是隔离的</h2><p>切换内核态和用户态为什么要内存复制？</p>
-<table>
-<thead>
-<tr>
-<th>问题</th>
-<th>描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>安全性</td>
-<td>用户程序可能传入非法地址，导致内核崩溃或被利用攻击</td>
-</tr>
-<tr>
-<td>稳定性</td>
-<td>用户程序可能在 <code>poll()</code> 返回前修改数组，导致内核读取不一致</td>
-</tr>
-<tr>
-<td>内存管理</td>
-<td>用户空间内存可能被 swap 出或者释放，内核无法保证访问有效</td>
-</tr>
-</tbody></table>
-<h2 id="内核态"><a href="#内核态" class="headerlink" title="内核态"></a>内核态</h2><p>我们在说“切换到内核态”时，其实指的是 CPU 特权级别从用户态（ring3）切换到内核态（ring0） 的过程。</p>
-<p>用户态 vs 内核态</p>
-<p>用户态（user mode）</p>
-<p>应用程序（比如你写的 C++ 程序）运行的环境。</p>
-<p>权限受限，不能直接操作硬件（如磁盘、网卡），也不能随便访问内核内存。</p>
-<p>只能通过 系统调用 (syscall) 向内核请求服务。</p>
-<p>内核态（kernel mode）</p>
-<p>操作系统内核运行的环境。</p>
-<p>拥有最高权限（ring0），可以操作 CPU 指令集、内存管理、驱动、硬件寄存器。</p>
-<p>系统调用的实现代码就在内核态里。</p>
-<p>“切换到内核态”的过程</p>
-<p>当你调用一个系统调用，比如：</p>
-<p>read(fd, buf, size);</p>
-<p>你的程序在 用户态，调用 read()。</p>
-<p>实际上 read() 会触发一条特殊指令（例如 Linux x86-64 用 syscall 指令）。</p>
-<p>CPU 捕捉到这个指令，自动：</p>
-<p>从用户态切换到内核态。</p>
-<p>切换到内核栈。</p>
-<p>保存用户态寄存器上下文。</p>
-<p>跳到系统调用处理函数（比如 sys_read）。</p>
-<p>内核态代码执行 sys_read，比如访问文件系统、检查 socket buffer。</p>
-<p>处理完后返回，CPU 再切回用户态，恢复上下文，继续执行应用代码。</p>
-<p>🔹 为什么要区分用户态&#x2F;内核态？</p>
-<p>安全：用户程序不能直接操作硬件。</p>
-<p>稳定性：即使用户程序崩溃，内核和其他进程不会受影响。</p>
-<p>性能隔离：内核提供抽象（系统调用接口），避免应用直接干扰底层资源。</p>
-<p>✅ 所以，总结一句：<br>“切换到内核态”就是 CPU 从运行普通用户代码（权限受限）切换到执行内核代码（最高权限）的过程，常常发生在系统调用、异常、硬件中断时。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/16/cpp/C++%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/16/cpp/C++%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8/" class="post-title-link" itemprop="url">C++右值引用</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-16 10:54:08" itemprop="dateCreated datePublished" datetime="2025-08-16T10:54:08+00:00">2025-08-16</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-18 15:11:00" itemprop="dateModified" datetime="2025-08-18T15:11:00+00:00">2025-08-18</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="1-左值、将亡值、纯右值"><a href="#1-左值、将亡值、纯右值" class="headerlink" title="1. 左值、将亡值、纯右值"></a>1. 左值、将亡值、纯右值</h2><p>C++11的值必定属于：左值、右值（将亡值、纯右值）三者之一。不是左值就是右值。详见值类别。</p>
-<ul>
-<li><strong>左值</strong>的特点：“有名字、可以取址”。没有名字或者不能取址，则必定是右值。</li>
-<li><strong>右值</strong>的特点：即将消亡，也就是说“会被析构”。<ul>
-<li><strong>纯右值</strong>：一定没有名字。比如除去<code>string</code>之外字面值常量、函数返回值、运算表达式。</li>
-<li><strong>将亡值</strong>：即将消亡的值：比如临时变量，一旦离开作用域就会被销毁；可能没有名字，例如函数的返回值（非引用）。</li>
-</ul>
-</li>
-</ul>
-<p>示例：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">A</span>(); <span class="comment">// 匿名对象的作用域仅限于语句中，一旦离开当前语句，就会析构。</span></span><br><span class="line">    <span class="built_in">getchar</span>(); <span class="comment">// 暂停</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="2-引用、右值引用"><a href="#2-引用、右值引用" class="headerlink" title="2. 引用、右值引用"></a>2. 引用、右值引用</h2><p>右值引用涉及“右值”和“引用”两个概念。</p>
-<ul>
-<li><strong>引用</strong>不是对象，所以定义一个“右值引用”不会调用构造函数，避免了多余的构造过程。</li>
-<li><strong>右值</strong>是即将析构的值，把右值绑定到右值引用上，延长了右值的生命期，所以右值对象没有析构。</li>
-</ul>
-<h3 id="右值引用规则："><a href="#右值引用规则：" class="headerlink" title="右值引用规则："></a>右值引用规则：</h3><ul>
-<li>可以把左值绑定到左值引用。</li>
-<li>可以把右值绑定到右值引用。</li>
-<li>不允许把左值绑定到右值引用。</li>
-<li>不允许把右值绑定到左值引用。</li>
-<li><code>const</code>左值引用可以接受左值或右值。</li>
-</ul>
-<p>示例：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> a1 = <span class="number">10</span>; <span class="comment">// 10是纯右值</span></span><br><span class="line"><span class="type">const</span> <span class="type">int</span>&amp; aa = <span class="number">10</span>; <span class="comment">// 常量引用可以接受右值</span></span><br><span class="line"><span class="type">int</span>&amp;&amp; aaa = <span class="number">10</span>; <span class="comment">// 右值引用接受右值</span></span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="3-引用和右值引用是左值"><a href="#3-引用和右值引用是左值" class="headerlink" title="3. 引用和右值引用是左值"></a>3. 引用和右值引用是左值</h2><p>引用（包括右值引用）本身是左值，可以取址，但不能对右值取址。</p>
-<p>示例：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;utility&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun1</span><span class="params">(<span class="type">int</span>&amp; t)</span> </span>&#123; <span class="comment">// 接受一个左值参数</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun2</span><span class="params">(<span class="type">int</span>&amp;&amp; t)</span> </span>&#123; <span class="comment">// 接受一个右值参数，但t本身是左值</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> a = <span class="number">10</span>;</span><br><span class="line">    <span class="type">int</span>&amp;&amp; ra = <span class="built_in">move</span>(a); <span class="comment">// move(a)返回一个右值，ra却是一个左值</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">fun1</span>(ra); <span class="comment">// 正确：ra是左值，可以绑定到左值引用</span></span><br><span class="line">    <span class="built_in">fun2</span>(<span class="built_in">move</span>(a)); <span class="comment">// 正确：move(a)返回一个右值</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="4-复制构造函数和移动构造函数"><a href="#4-复制构造函数和移动构造函数" class="headerlink" title="4. 复制构造函数和移动构造函数"></a>4. 复制构造函数和移动构造函数</h2><h3 id="为什么右值引用的构造函数被视为“移动”语义？"><a href="#为什么右值引用的构造函数被视为“移动”语义？" class="headerlink" title="为什么右值引用的构造函数被视为“移动”语义？"></a>为什么右值引用的构造函数被视为“移动”语义？</h3><p>因为输入参数是一个引用（右值引用也是引用），可以直接访问所引对象的资源并接管它，同时将源对象的资源置空。</p>
-<p>示例：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">A</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">A</span>() &#123; cout &lt;&lt; <span class="string">&quot;A()&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line">    <span class="built_in">A</span>(<span class="type">const</span> A&amp;) &#123; cout &lt;&lt; <span class="string">&quot;A(const A&amp;)&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line">    <span class="built_in">A</span>(A&amp;&amp;) &#123; cout &lt;&lt; <span class="string">&quot;A(A&amp;&amp;)&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    A a;</span><br><span class="line">    <span class="function">A <span class="title">b</span><span class="params">(std::move(a))</span></span>; <span class="comment">// 调用移动构造函数</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="5-完美转发"><a href="#5-完美转发" class="headerlink" title="5. 完美转发"></a>5. 完美转发</h2><p>完美转发是指对模板参数实现完美转发：即输入什么类型（左值、右值）的参数，就是什么类型的参数。</p>
-<h3 id="引用折叠规则："><a href="#引用折叠规则：" class="headerlink" title="引用折叠规则："></a>引用折叠规则：</h3><ul>
-<li>如果有左值引用，优先折叠成左值引用。</li>
-<li>如果只有右值引用，参数推导成右值引用。</li>
-</ul>
-<p>示例：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">RunCode</span><span class="params">(<span class="type">int</span>&amp; m)</span> </span>&#123; cout &lt;&lt; <span class="string">&quot;lvalue ref&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">RunCode</span><span class="params">(<span class="type">int</span>&amp;&amp; m)</span> </span>&#123; cout &lt;&lt; <span class="string">&quot;rvalue ref&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">PerfectForward</span><span class="params">(T&amp;&amp; t)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">RunCode</span>(<span class="built_in">static_cast</span>&lt;T&amp;&amp;&gt;(t)); <span class="comment">// 保证完美转发</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> a = <span class="number">10</span>;</span><br><span class="line">    <span class="built_in">PerfectForward</span>(a); <span class="comment">// lvalue ref</span></span><br><span class="line">    <span class="built_in">PerfectForward</span>(<span class="built_in">move</span>(a)); <span class="comment">// rvalue ref</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="6-移动构造函数、移动赋值函数、复制构造函数、复制赋值函数"><a href="#6-移动构造函数、移动赋值函数、复制构造函数、复制赋值函数" class="headerlink" title="6. 移动构造函数、移动赋值函数、复制构造函数、复制赋值函数"></a>6. 移动构造函数、移动赋值函数、复制构造函数、复制赋值函数</h2><h3 id="移动构造函数的注意事项："><a href="#移动构造函数的注意事项：" class="headerlink" title="移动构造函数的注意事项："></a>移动构造函数的注意事项：</h3><ul>
-<li>移动构造函数不允许抛出异常，建议添加<code>noexcept</code>关键字。</li>
-<li>使用<code>std::move_if_noexcept</code>可以在移动构造函数抛出异常时回退到复制构造函数。</li>
-</ul>
-<p>示例：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">A</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">A</span>() &#123; cout &lt;&lt; <span class="string">&quot;A()&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line">    <span class="built_in">A</span>(<span class="type">const</span> A&amp;) &#123; cout &lt;&lt; <span class="string">&quot;A(const A&amp;)&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line">    <span class="built_in">A</span>(A&amp;&amp;) <span class="keyword">noexcept</span> &#123; cout &lt;&lt; <span class="string">&quot;A(A&amp;&amp;)&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    A a;</span><br><span class="line">    <span class="function">A <span class="title">b</span><span class="params">(std::move(a))</span></span>; <span class="comment">// 调用移动构造函数</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="7-编译器优化"><a href="#7-编译器优化" class="headerlink" title="7. 编译器优化"></a>7. 编译器优化</h2><p>编译器默认会采用“返回值优化”（RVO或NRVO）。要观察移动语义与复制语义的不同，应该关闭编译器优化。</p>
-<p>关闭优化命令：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ -o <span class="built_in">test</span> main.cc -fno-elide-constructors</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="8-合成的移动操作"><a href="#8-合成的移动操作" class="headerlink" title="8. 合成的移动操作"></a>8. 合成的移动操作</h2><p>如果没有定义复制构造&#x2F;赋值函数，编译器会为我们合成（浅复制）。但如果自定义了复制构造函数、复制赋值运算符或析构函数，编译器将不会合成移动构造&#x2F;赋值函数。</p>
-<p>示例：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">A</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">A</span>() &#123; cout &lt;&lt; <span class="string">&quot;A()&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line">    <span class="built_in">A</span>(<span class="type">const</span> A&amp;) &#123; cout &lt;&lt; <span class="string">&quot;A(const A&amp;)&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line">    <span class="built_in">A</span>(A&amp;&amp;) &#123; cout &lt;&lt; <span class="string">&quot;A(A&amp;&amp;)&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    A a;</span><br><span class="line">    <span class="function">A <span class="title">b</span><span class="params">(std::move(a))</span></span>; <span class="comment">// 调用移动构造函数</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="9-std-move的实现"><a href="#9-std-move的实现" class="headerlink" title="9. std::move的实现"></a>9. <code>std::move</code>的实现</h2><p><code>std::move</code>是一个类型转换，没有完成其他工作。</p>
-<p>实现：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="keyword">typename</span> std::remove_reference&lt;T&gt;::<span class="function">type&amp;&amp; <span class="title">move</span><span class="params">(T&amp;&amp; t)</span> <span class="keyword">noexcept</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">static_cast</span>&lt;<span class="keyword">typename</span> std::remove_reference&lt;T&gt;::type&amp;&amp;&gt;(t);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="10-unique-ptr与std-move"><a href="#10-unique-ptr与std-move" class="headerlink" title="10. unique_ptr与std::move"></a>10. <code>unique_ptr</code>与<code>std::move</code></h2><p>示例：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;memory&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="function">unique_ptr&lt;<span class="type">int</span>&gt; <span class="title">up</span><span class="params">(<span class="keyword">new</span> <span class="type">int</span>(<span class="number">10</span>))</span></span>;</span><br><span class="line">    unique_ptr&lt;<span class="type">int</span>&gt; p = std::<span class="built_in">move</span>(up); <span class="comment">// 现在up为空</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>解释：<code>std::move</code>调用<code>unique_ptr</code>的移动构造函数，转移<code>up</code>所拥有的资源，并将<code>up</code>置为空。</p>
-<hr>
-<h2 id="11-右值与sizeof"><a href="#11-右值与sizeof" class="headerlink" title="11. 右值与sizeof"></a>11. 右值与<code>sizeof</code></h2><p>示例：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">A</span> &#123;</span><br><span class="line">    <span class="type">int</span> x, y;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">f</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    cout &lt;&lt; <span class="built_in">sizeof</span>(<span class="built_in">int</span>()) &lt;&lt; endl; <span class="comment">// 1</span></span><br><span class="line">    cout &lt;&lt; <span class="built_in">sizeof</span>(<span class="number">10</span>) &lt;&lt; endl; <span class="comment">// 4</span></span><br><span class="line">    cout &lt;&lt; <span class="built_in">sizeof</span>(A) &lt;&lt; endl; <span class="comment">// 8</span></span><br><span class="line">    cout &lt;&lt; <span class="built_in">sizeof</span>(<span class="built_in">A</span>()) &lt;&lt; endl; <span class="comment">// 1</span></span><br><span class="line">    cout &lt;&lt; <span class="built_in">sizeof</span>(<span class="built_in">f</span>()) &lt;&lt; endl; <span class="comment">// 4</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
-<li>《深入理解C++11: C++新特性解析与应用》</li>
-<li>《C++ Primer 第五版》</li>
-<li>C++中文 - API参考文档</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/15/net/%E8%A7%A3%E5%86%B3Protol-not-available%E7%9A%84%E9%94%99%E8%AF%AF/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/15/net/%E8%A7%A3%E5%86%B3Protol-not-available%E7%9A%84%E9%94%99%E8%AF%AF/" class="post-title-link" itemprop="url">解决Protol not available的错误</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-15 10:45:33" itemprop="dateCreated datePublished" datetime="2025-08-15T10:45:33+00:00">2025-08-15</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-18 15:11:00" itemprop="dateModified" datetime="2025-08-18T15:11:00+00:00">2025-08-18</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h2><p>代码：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">getaddrinfo</span>(localhost, <span class="string">&quot;sunrpc&quot;</span>, &amp;hints, &amp;result); <span class="comment">// &quot;sunrpc&quot; 或 端口 111 都可以</span></span><br><span class="line"><span class="keyword">for</span> (<span class="type">const</span> <span class="keyword">auto</span> *rp = result; rp != <span class="literal">nullptr</span>; rp = rp-&gt;ai_next) &#123;</span><br><span class="line">    sock = <span class="built_in">socket</span>(rp-&gt;ai_family, rp-&gt;ai_socktype, rp-&gt;ai_protocol);</span><br><span class="line">    <span class="keyword">if</span> (sock == <span class="number">-1</span>) <span class="keyword">continue</span>;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">connect</span>(sock, rp-&gt;ai_addr, rp-&gt;ai_addrlen) != <span class="number">-1</span>) <span class="keyword">break</span>;  <span class="comment">// Success</span></span><br><span class="line">    <span class="built_in">perror</span>(<span class="string">&quot;connect failed&quot;</span>);</span><br><span class="line">    <span class="built_in">close</span>(sock);</span><br><span class="line">    sock = <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>这段代码，<code>connect()</code> 返回 <code>-1</code> ，报错为 <code>Protol not available</code> 。</p>
-<ul>
-<li>但是我们明明是通过 <code>getaddrinfo()</code> 查询到的地址信息，为什么报错？</li>
-<li>这个报错也很具有误导性，我们开启了 <code>IPv4</code> ，没有开启 <code>IPv6</code>，如果开启 <code>IPv6</code>，这个错误会消失，不支持 <code>IPv4</code> ？</li>
-</ul>
-<h2 id="排查过程"><a href="#排查过程" class="headerlink" title="排查过程"></a>排查过程</h2><p>运行这些命令：</p>
-<ul>
-<li><code>hostname</code></li>
-<li><code>hostname -f</code></li>
-<li><code>hostname -a</code></li>
-<li><code>hostname -I</code></li>
-<li><code>hostnamectl</code></li>
-<li><code>cat /proc/sys/kernel/hostname</code></li>
-<li><code>more /etc/host*</code></li>
-<li><code>/sbin/ifconfig -a</code></li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ hostname</span><br><span class="line">$ <span class="built_in">cat</span> /etc/hosts</span><br><span class="line"><span class="comment"># Created by chnetinfo.sh.</span></span><br><span class="line"><span class="comment"># Do not remove the following line, or various programs</span></span><br><span class="line"><span class="comment"># that require network functionality will fail.</span></span><br><span class="line">::1       localhost.localdomain   localhost</span><br><span class="line">xx.xxx.xxx.xx   xiaoming-PC      xiaoming-PC.xiaoming-company.com</span><br></pre></td></tr></table></figure>
-
-<p>注：上面 <code>cat /etc/hosts</code> 的第二个 IP 进行了个人信息隐藏。<code>xx</code> 代表数字。</p>
-<p>说明：</p>
-<table>
-<thead>
-<tr>
-<th align="center">地址</th>
-<th align="center">协议版本</th>
-<th align="center">作用</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">127.0.0.1</td>
-<td align="center">IPv4</td>
-<td align="center">本地回环地址，用于本机内部通信</td>
-</tr>
-<tr>
-<td align="center">::1</td>
-<td align="center">IPv6</td>
-<td align="center">本地回环地址，用于本机内部通信</td>
-</tr>
-</tbody></table>
-<p>于是问题找到了：<code>/etc/hosts/</code> 只配置了 <code>::1</code> ，那么使用 IPv4 协议尝试 connect localhost 就会返回 -1 。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/blog/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/9/">9</a><a class="extend next" rel="next" href="/blog/page/2/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/blog/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/10/">10</a><a class="extend next" rel="next" href="/blog/page/2/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -2051,14 +2147,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">87</span>
+          <span class="site-state-item-count">91</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-count">8</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
