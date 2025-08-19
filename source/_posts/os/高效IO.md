@@ -1,10 +1,8 @@
 ---
 title: 高效 IO
 date: 2025-08-16 23:40:06
-categories: 网络
-tags:
-    - 网络
-    - 文件
+categories: 操作系统
+tags: IO
 ---
 
 ## 高效的 IO 函数
