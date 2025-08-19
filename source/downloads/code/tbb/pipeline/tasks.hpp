@@ -8,27 +8,36 @@
 
 struct DataChunk {
     std::vector<char> data;
-};
-struct CompressedChunk {
-    std::vector<char> data;
+    DataChunk() = default;
+    explicit DataChunk(size_t size) : data(size) {}
 };
 
-// 阻塞网络 I/O
+struct CompressedChunk {
+    std::vector<char> data;
+    CompressedChunk() = default;
+    explicit CompressedChunk(size_t size) : data(size) {}
+};
+
+// 模拟数据读取函数
 bool read_from_network(DataChunk& chunk) {
-    std::vector<char> buffer(1024, '8');
-    chunk.data = buffer;
-    sleep(3);  // 模拟延迟
+    static int count = 0;
+    if (count++ >= 10) return false;  // 模拟读取10个数据块后结束
+
+    std::generate(chunk.data.begin(), chunk.data.end(),
+                  []() { return rand() % 256; });
+    sleep(3);  // 模拟 IO 延迟
     return true;
 }
 
-// CPU 任务： 假设单字节压缩
-char compress_byte(char c) {
-    for (int i = 0; i < 1'000'0ll; ++i)
-        ;  // 模拟 CPU 运行
-    return c;
+// 模拟压缩函数
+char compress_byte(char byte) {
+    for (int i = 0; i < 10'000ll; ++i)
+        ;               // 模拟 CPU busy
+    return byte % 128;  // 简单压缩算法示例
 }
 
-// 文件 I/O
-void write_to_file(const std::vector<char>& compressed) {
-    sleep(3);  // 模拟延迟
+// 模拟写入函数
+void write_to_file(const CompressedChunk& chunk) {
+    sleep(3);  // 模拟 IO 延迟
+    std::cout << "Writing chunk of size " << chunk.data.size() << "\n";
 }
