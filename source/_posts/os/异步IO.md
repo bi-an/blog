@@ -215,3 +215,74 @@ Linux io_uring 的设计哲学是：
 - 提交 SQE。
 - 等待 CQE 获取结果。
 - 标记完成并清理。
+
+
+## Boost asio
+
+要区分 操作系统级别的异步 I/O 和 asio 的抽象，因为 asio 并不是单一机制，而是根据平台选择最优实现。具体分析如下：
+
+### asio 的工作原理
+
+asio 提供 异步接口（async_read, async_write 等），程序不会阻塞线程
+
+内部实现方式根据平台不同而不同：
+
+| 平台        | 异步方式                                                    |
+| --------- | ------------------------------------------------------- |
+| Linux     | 基于 **epoll / io\_uring / AIO**，是真正的内核异步 I/O（零拷贝，内核通知完成） |
+| Windows   | 基于 **IOCP**（I/O Completion Ports），内核异步 I/O              |
+| Mac / BSD | 基于 **kqueue / poll**，有些情况下是模拟异步（多线程或事件轮询）               |
+
+要确认 asio 在你的 Linux 机器上选择了哪种底层 I/O 机制，可以按下面几个方法操作：
+
+1. 查看 asio 使用的 I/O 对象
+
+asio 有两个主要 I/O 后端：
+
+- 旧版 AIO / epoll（select_reactor / epoll_reactor）
+- io_uring（在新版本 Boost.Asio 或 standalone Asio 支持）
+
+在 编译时，asio 会检测系统特性：
+
+- 如果 Linux 内核 ≥ 5.1，asio 默认启用 io_uring
+- 否则使用 epoll
+
+2. 通过宏或配置查看
+
+在你的 asio 头文件中，可能有如下宏：
+
+```cpp
+#if defined(BOOST_ASIO_HAS_IOURING)
+    std::cout << "asio will use io_uring\n";
+#elif defined(BOOST_ASIO_HAS_EPOLL)
+    std::cout << "asio will use epoll\n";
+#endif
+```
+
+这些宏在 boost/asio/detail/config.hpp 或 asio/config.hpp 中定义，表示底层机制。
+
+
+3. 运行时确认
+
+asio 本身没有公开 API 显示底层 I/O 类型，但可以通过系统调用监控判断：
+
+使用 strace 观察程序 I/O：
+
+```bash
+strace -f ./your_program 2>&1 | grep io_uring
+```
+
+- 如果看到 io_uring_setup、io_uring_enter 系统调用，就说明启用了 io_uring
+- 如果没有，只看到 epoll_wait / epoll_ctl，说明使用的是 epoll
+
+对 epoll，strace 会显示 epoll_create1 / epoll_ctl / epoll_wait
+
+### 阻塞 vs 异步
+
+| 类型       | 描述                     | asio 中的表现                           |
+| -------- | ---------------------- | ----------------------------------- |
+| 阻塞 I/O   | 调用时线程被挂起，等待 I/O 完成     | 不使用，线程会被阻塞，TBB 线程占用                 |
+| 模拟异步     | 内核不支持真正异步，用线程轮询或线程池实现  | Mac/BSD 某些场景下可能是模拟                  |
+| 真正异步 I/O | 内核支持，操作提交后立即返回，完成由内核通知 | Linux/io\_uring、Windows IOCP 就是真正异步 |
+
+
