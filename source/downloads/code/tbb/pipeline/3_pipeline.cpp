@@ -1,5 +1,5 @@
 /**
- * TBB 流水线
+ * 方案 3: TBB 流水线
  */
 
 #include <tbb/tbb.h>
