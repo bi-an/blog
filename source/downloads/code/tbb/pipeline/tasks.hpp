@@ -4,6 +4,7 @@
 
 #include <unistd.h>
 
+#include <iostream>
 #include <vector>
 
 struct DataChunk {
@@ -20,12 +21,15 @@ struct CompressedChunk {
 
 // 模拟数据读取函数
 bool read_from_network(DataChunk& chunk) {
+    sleep(3);  // 模拟 IO 延迟
+
+    chunk.data.resize(100);  // 模拟每个数据块有 100 个字节
+
     static int count = 0;
-    if (count++ >= 10) return false;  // 模拟读取10个数据块后结束
+    if (count++ >= 10) return false;  // 模拟读取 10 个数据块后结束
 
     std::generate(chunk.data.begin(), chunk.data.end(),
                   []() { return rand() % 256; });
-    sleep(3);  // 模拟 IO 延迟
     return true;
 }
 
