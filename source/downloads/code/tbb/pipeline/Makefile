@@ -19,6 +19,9 @@ TARGETS := $(SRCS:%.cpp=$(BUILD_DIR)/%)
 # 对应的 .o 文件
 OBJS := $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
 
+# 添加头文件依赖
+DEPS := tasks.hpp
+
 all: $(TARGETS)
 
 $(BUILD_DIR):
@@ -29,7 +32,7 @@ $(BUILD_DIR)/%: $(BUILD_DIR)/%.o | $(BUILD_DIR)
 	$(CXX) $< -o $@ $(LDFLAGS)
 
 # 规则：编译 .cpp -> .o
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEPS) | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:

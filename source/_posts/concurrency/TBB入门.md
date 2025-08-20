@@ -33,6 +33,10 @@ sudo make install
 
 默认会安装到 /usr/local/include/ 和 /usr/local/lib/。
 
+## 文档
+
+官方文档：https://uxlfoundation.github.io/oneTBB/
+
 ## 1. TBB 调度原理
 
 ###  1.1. TBB 的任务调度模型
