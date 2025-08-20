@@ -193,6 +193,135 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/07/31/cpp/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/07/31/cpp/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">性能分析</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-07-31 15:43:15" itemprop="dateCreated datePublished" datetime="2025-07-31T15:43:15+00:00">2025-07-31</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-20 15:59:07" itemprop="dateModified" datetime="2025-08-20T15:59:07+00:00">2025-08-20</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="性能指标"><a href="#性能指标" class="headerlink" title="性能指标"></a>性能指标</h2><h3 id="CPU时间"><a href="#CPU时间" class="headerlink" title="CPU时间"></a>CPU时间</h3><p><strong>函数调用的 CPU 时间:</strong></p>
+<ul>
+<li><code>Inclusive time</code>: total cpu time, include all functions it calls.</li>
+<li><code>Exclusive time</code>: only the time used by the function itself, exclusive all its children.</li>
+</ul>
+<p>Refer to <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/15760447/what-is-the-meaning-of-incl-cpu-time-excl-cpu-time-incl-real-cpu-time-excl-re/74426370">here</a>.</p>
+<ol>
+<li><p>Wall time: total time the process used, containing IO time.</p>
+</li>
+<li><p>CPU usage (CPU利用率) &#x3D; CPU time &#x2F; Wall time.</p>
+</li>
+<li><p>real&#x2F;user&#x2F;system time</p>
+<ul>
+<li><strong>Real</strong> is wall clock time - time from start to finish of the call. This is all elapsed time including time slices used by other processes and time the process spends blocked (for example if it is waiting for I&#x2F;O to complete).</li>
+<li><strong>User</strong> is the amount of CPU time spent in user-mode code (outside the kernel) within the process. This is only actual CPU time used in executing the process. Other processes and time the process spends blocked do not count towards this figure.</li>
+<li><strong>Sys</strong> is the amount of CPU time spent in the kernel within the process. This means executing CPU time spent in system calls within the kernel, as opposed to library code, which is still running in user-space. Like ‘user’, this is only CPU time used by the process. See below for a brief description of kernel mode (also known as ‘supervisor’ mode) and the system call mechanism.</li>
+</ul>
+<p> Refer to <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1">here</a>.</p>
+</li>
+<li><p>CPU 时间可能大于墙上时间：</p>
+<p>这是因为 CPU 时间是所有 CPU 核的运行时间的累加和，墙上时间则是实际的时间。此时 CPU 利用率大于 100%. （这是自己的理解）</p>
+</li>
+<li><p>TODO: Is CPU time in <em>flame graph</em> sum of all the CPU time? Or is it the wall time when CPU works?</p>
+</li>
+</ol>
+<h3 id="计时工具：timer"><a href="#计时工具：timer" class="headerlink" title="计时工具：timer"></a>计时工具：<code>timer</code></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ /usr/bin/time -p <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
+
+<p>Or,</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ time <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
+
+<p>其中（参考<a target="_blank" rel="noopener" href="https://ostechnix.com/how-to-find-the-execution-time-of-a-command-or-process-in-linux/">链接</a>），</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">type</span> -a time</span><br><span class="line">time is a shell keyword</span><br><span class="line">time is /usr/bin/time</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="分析工具"><a href="#分析工具" class="headerlink" title="分析工具"></a>分析工具</h2><ul>
+<li>Performance Analyzer</li>
+<li>Thread Analyzer</li>
+<li>gprof</li>
+<li>DDT&#x2F;gdb</li>
+</ul>
+<h3 id="Performance-Analyzer"><a href="#Performance-Analyzer" class="headerlink" title="Performance Analyzer"></a>Performance Analyzer</h3><p>Oracle Developer Studio 提供了多种工具：Performance Analyzer、Thread Analyzer。</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afagg.html#OSSPAgrkam">Performance Analyzer 官方文档</a></p>
+</blockquote>
+<p><strong>1. 收集数据</strong></p>
+<p>使用 <code>collect</code> 命令收集数据（<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afadn.html#scrolltoc">官方文档</a>）。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">collect collect-options program program-arguments</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 开始性能分析</strong></p>
+<p>使用 <code>analyzer</code> 命令进行性能分析（<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afafs.html#scrolltoc">官方文档</a>）。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">analyzer [control-options] [experiment | experiment-list]</span><br></pre></td></tr></table></figure>
+
+<p>例如：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">analyzer -c test.1.er test.4.er</span><br></pre></td></tr></table></figure>
+
+<h3 id="Thread-Analyzer"><a href="#Thread-Analyzer" class="headerlink" title="Thread Analyzer"></a>Thread Analyzer</h3><blockquote>
+<p><a target="_blank" rel="noopener" href="https://www.oracle.com/application-development/technologies/developerstudio-features.html#thread-analyzer-tab">Thread Analyzer 官方文档</a></p>
+</blockquote>
+<h3 id="gprof"><a href="#gprof" class="headerlink" title="gprof"></a>gprof</h3><p>gprof(GNU profiler)是GNU binutils工具集中的一个工具，linux系统当中会自带这个工具。它可以分析程序的性能，能给出函数调用时间、调用次数和调用关系，找出程序的瓶颈所在。在编译和链接选项中都加入-pg之后，gcc会在每个函数中插入代码片段，用于记录函数间的调用关系和调用次数，并采集函数的调用时间。</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://ftp.gnu.org/old-gnu/Manuals/gprof-2.9.1/html_mono/gprof.html">gprof官方文档</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/luronggui/article/-details/118141262">使用方法</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/385842627">博客</a></li>
+</ul>
+<h3 id="DDT"><a href="#DDT" class="headerlink" title="DDT"></a>DDT</h3><p><a target="_blank" rel="noopener" href="https://www.linaroforge.com/linaroDdt">DDT</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/07/31/cpp/%E6%B7%B7%E5%90%88%E7%BC%96%E8%AF%91/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +353,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-20 11:25:01" itemprop="dateModified" datetime="2025-08-20T11:25:01+00:00">2025-08-20</time>
+                <time title="Modified: 2025-08-20 15:59:07" itemprop="dateModified" datetime="2025-08-20T15:59:07+00:00">2025-08-20</time>
               </span>
 
           
@@ -386,7 +515,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-20 11:25:01" itemprop="dateModified" datetime="2025-08-20T11:25:01+00:00">2025-08-20</time>
+                <time title="Modified: 2025-08-20 15:59:07" itemprop="dateModified" datetime="2025-08-20T15:59:07+00:00">2025-08-20</time>
               </span>
 
           
@@ -680,7 +809,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-20 11:25:01" itemprop="dateModified" datetime="2025-08-20T11:25:01+00:00">2025-08-20</time>
+                <time title="Modified: 2025-08-20 15:59:07" itemprop="dateModified" datetime="2025-08-20T15:59:07+00:00">2025-08-20</time>
               </span>
 
           
@@ -816,7 +945,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-20 11:25:01" itemprop="dateModified" datetime="2025-08-20T11:25:01+00:00">2025-08-20</time>
+                <time title="Modified: 2025-08-20 15:59:07" itemprop="dateModified" datetime="2025-08-20T15:59:07+00:00">2025-08-20</time>
               </span>
 
           
@@ -986,7 +1115,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-20 11:25:01" itemprop="dateModified" datetime="2025-08-20T11:25:01+00:00">2025-08-20</time>
+                <time title="Modified: 2025-08-20 15:59:07" itemprop="dateModified" datetime="2025-08-20T15:59:07+00:00">2025-08-20</time>
               </span>
 
           
@@ -1053,7 +1182,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-20 11:25:01" itemprop="dateModified" datetime="2025-08-20T11:25:01+00:00">2025-08-20</time>
+                <time title="Modified: 2025-08-20 15:59:07" itemprop="dateModified" datetime="2025-08-20T15:59:07+00:00">2025-08-20</time>
               </span>
 
           
@@ -1318,7 +1447,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-20 11:25:01" itemprop="dateModified" datetime="2025-08-20T11:25:01+00:00">2025-08-20</time>
+                <time title="Modified: 2025-08-20 15:59:07" itemprop="dateModified" datetime="2025-08-20T15:59:07+00:00">2025-08-20</time>
               </span>
 
           
@@ -1417,7 +1546,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-20 11:25:01" itemprop="dateModified" datetime="2025-08-20T11:25:01+00:00">2025-08-20</time>
+                <time title="Modified: 2025-08-20 15:59:07" itemprop="dateModified" datetime="2025-08-20T15:59:07+00:00">2025-08-20</time>
               </span>
 
           
@@ -1714,7 +1843,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-20 11:25:01" itemprop="dateModified" datetime="2025-08-20T11:25:01+00:00">2025-08-20</time>
+                <time title="Modified: 2025-08-20 15:59:07" itemprop="dateModified" datetime="2025-08-20T15:59:07+00:00">2025-08-20</time>
               </span>
 
           
@@ -2005,146 +2134,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/01/14/VPN%E8%AE%BE%E7%BD%AE/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/01/14/VPN%E8%AE%BE%E7%BD%AE/" class="post-title-link" itemprop="url">VPN设置</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-01-14 20:44:40" itemprop="dateCreated datePublished" datetime="2025-01-14T20:44:40+00:00">2025-01-14</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-20 11:25:01" itemprop="dateModified" datetime="2025-08-20T11:25:01+00:00">2025-08-20</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="VMWare-的-Linux-虚拟机共享-Windows-主机的-VPN"><a href="#VMWare-的-Linux-虚拟机共享-Windows-主机的-VPN" class="headerlink" title="VMWare 的 Linux 虚拟机共享 Windows 主机的 VPN"></a>VMWare 的 Linux 虚拟机共享 Windows 主机的 VPN</h2><p>方案 2：NAT 模式 + Windows 网络共享<br>另一种方式是保持 VMware 使用 NAT 模式，并通过 Windows 主机的网络共享功能，将 VPN 流量共享给虚拟机。</p>
-<p>步骤：<br>在 Windows 上启用网络共享：</p>
-<p>确保 Clash 在 Windows 主机上运行，并已连接到 VPN。<br>打开 控制面板 &gt; 网络和共享中心 &gt; 更改适配器设置。<br>右键点击你的 VPN 连接（通常是一个以 Ethernet 开头的适配器），选择 属性。<br>在 共享 标签页，勾选 允许其他网络用户通过此计算机的 Internet 连接连接。<br>选择虚拟机使用的网络适配器（例如 VMware 的 VMnet8 适配器），然后点击确定。<br>配置虚拟机网络为 NAT：</p>
-<p>在 VMware 中，确保虚拟机的网络适配器设置为 NAT（这通常是默认设置）。<br>在 NAT 模式下，虚拟机会通过 Windows 主机访问网络，但流量会被路由到共享的网络适配器。<br>验证虚拟机是否可以通过 VPN 访问网络：</p>
-<p>启动虚拟机，测试网络连接。<br>如果虚拟机连接成功并通过 VPN 访问互联网，那么配置就完成了。</p>
-<h2 id="WSL1-通过主机的-clash-客户端访问网络"><a href="#WSL1-通过主机的-clash-客户端访问网络" class="headerlink" title="WSL1 通过主机的 clash 客户端访问网络"></a>WSL1 通过主机的 clash 客户端访问网络</h2><h3 id="方法一：配置环境变量（适用于普通网络请求）"><a href="#方法一：配置环境变量（适用于普通网络请求）" class="headerlink" title="方法一：配置环境变量（适用于普通网络请求）"></a>方法一：配置环境变量（适用于普通网络请求）</h3><p>适合 curl、wget、apt、pip、git 等命令行工具走代理。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;export http_proxy=http://127.0.0.1:7890&#x27;</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;export https_proxy=http://127.0.0.1:7890&#x27;</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;export all_proxy=socks5://127.0.0.1:7890&#x27;</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">source</span> ~/.bashrc</span><br></pre></td></tr></table></figure>
-
-<p>验证代理是否有效：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl cip.cc</span><br></pre></td></tr></table></figure>
-
-<p>这个网站会返回你的公网 IP。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl https://www.google.com</span><br></pre></td></tr></table></figure>
-
-<p>应该会返回网页。</p>
-<p><strong>临时开启：</strong></p>
-<p>如果你只想暂时走代理一次，不想改 .bashrc，你可以直接这样运行：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 方法1</span></span><br><span class="line">http_proxy=http://127.0.0.1:7890 https_proxy=http://127.0.0.1:7890 curl https://www.google.com</span><br><span class="line"><span class="comment"># 方法2</span></span><br><span class="line">curl -I https://www.google.com -x http://127.0.0.1:7890</span><br><span class="line"><span class="comment"># 方法3：走socks5代理</span></span><br><span class="line">curl -I --socks5 127.0.0.1:7890 https://www.google.com</span><br></pre></td></tr></table></figure>
-
-
-<h3 id="方法二：使用-proxychains-全局转发（适用于所有程序，包括二进制）"><a href="#方法二：使用-proxychains-全局转发（适用于所有程序，包括二进制）" class="headerlink" title="方法二：使用 proxychains 全局转发（适用于所有程序，包括二进制）"></a>方法二：使用 proxychains 全局转发（适用于所有程序，包括二进制）</h3><p>安装 proxychains，让任意程序走 Clash 的代理。</p>
-<ol>
-<li>安装 proxychains</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install proxychains -y</span><br></pre></td></tr></table></figure>
-
-<ol start="2">
-<li>编辑配置 &#x2F;etc&#x2F;proxychains.conf</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /etc/proxychains.conf</span><br></pre></td></tr></table></figure>
-
-<p>在文件末尾加一行或修改为：</p>
-<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">socks5</span>  <span class="number">127.0.0.1</span> <span class="number">7890</span></span><br></pre></td></tr></table></figure>
-
-<p>注意：不要改成 http，要用 socks5。</p>
-<p>使用 proxychains（只代理你想代理的程序）：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains curl https://www.google.com</span><br></pre></td></tr></table></figure>
-
-<p>优点：</p>
-<ul>
-<li>精准控制哪些程序走代理。</li>
-<li>不影响系统其他设置。</li>
-</ul>
-<p>缺点：</p>
-<ul>
-<li>每次都要手动加 proxychains。</li>
-</ul>
-<h3 id="方法三：为单独的程序配置代理"><a href="#方法三：为单独的程序配置代理" class="headerlink" title="方法三：为单独的程序配置代理"></a>方法三：为单独的程序配置代理</h3><ol>
-<li>配置 git 使用代理</li>
-</ol>
-<p>执行以下命令设置全局代理（只设置一次即可）：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git config --global http.proxy http://127.0.0.1:7890</span><br><span class="line">git config --global https.proxy http://127.0.0.1:7890</span><br></pre></td></tr></table></figure>
-
-<p>若你之后想关闭 git 代理，可运行：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git config --global --<span class="built_in">unset</span> http.proxy</span><br><span class="line">git config --global --<span class="built_in">unset</span> https.proxy</span><br></pre></td></tr></table></figure>
-
-<ol start="2">
-<li>配置 pip 使用代理</li>
-</ol>
-<p>在主目录创建 pip 配置文件：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> -p ~/.config/pip</span><br><span class="line">vim ~/.config/pip/pip.conf</span><br></pre></td></tr></table></figure>
-
-<p>添加内容：</p>
-<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[global]</span></span><br><span class="line"><span class="attr">proxy</span> = http://<span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">7890</span></span><br></pre></td></tr></table></figure>
-
-<ol start="3">
-<li>配置 apt 使用代理</li>
-</ol>
-<p>编辑 apt 的配置文件：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo <span class="built_in">mkdir</span> -p /etc/apt/apt.conf.d</span><br><span class="line">sudo nano /etc/apt/apt.conf.d/99proxy</span><br></pre></td></tr></table></figure>
-
-<p>粘贴以下内容（假设 HTTP 代理端口是 7890）：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Acquire::http::Proxy <span class="string">&quot;http://127.0.0.1:7890&quot;</span>;</span><br><span class="line">Acquire::https::Proxy <span class="string">&quot;http://127.0.0.1:7890&quot;</span>;</span><br></pre></td></tr></table></figure>
-
-
-<h3 id="方法四：配置-iptables-redsocks（实现真正的全局转发）"><a href="#方法四：配置-iptables-redsocks（实现真正的全局转发）" class="headerlink" title="方法四：配置 iptables + redsocks（实现真正的全局转发）"></a>方法四：配置 iptables + redsocks（实现真正的全局转发）</h3><p>适合高级用户，WSL2 使用 TUN 模式实现系统级全局代理。这比较复杂，建议在需要所有流量强制走代理时使用。TODO</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2216,14 +2205,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">92</span>
+          <span class="site-state-item-count">93</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">9</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">

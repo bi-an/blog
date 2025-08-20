@@ -193,6 +193,116 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/20/EDA/EAD%E4%BB%BF%E7%9C%9F%E4%B9%8BMemory/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/20/EDA/EAD%E4%BB%BF%E7%9C%9F%E4%B9%8BMemory/" class="post-title-link" itemprop="url">EDA 仿真之 Memory</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2025-08-20 22:25:49 / Modified: 15:59:07" itemprop="dateCreated datePublished" datetime="2025-08-20T22:25:49+00:00">2025-08-20</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/EDA/" itemprop="url" rel="index"><span itemprop="name">EDA</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="memory"><a href="#memory" class="headerlink" title="memory"></a>memory</h2><p>Memory &#x3D; 存储 + 访问逻辑</p>
+<p>存储</p>
+<ul>
+<li>在仿真里，memory 本质上就是一个数组（Array）或者向量（Vector），每个元素对应一个存储单元（bit&#x2F;byte&#x2F;word）。</li>
+<li>例：一个 8 位 × 1024 深度的 RAM，可以在仿真里用 uint8_t mem[1024]; 表示。</li>
+</ul>
+<p>访问逻辑</p>
+<ul>
+<li>读（Read）：根据地址返回对应的数据。</li>
+<li>写（Write）：根据地址和写使能信号，将数据写入存储单元。</li>
+<li>可能涉及 时序：同步（clock 边沿写入）或异步（立即生效）。</li>
+</ul>
+<p>时序和延迟</p>
+<ul>
+<li>在硬件里，memory 访问不是瞬间的：存在 读延迟、写延迟。</li>
+<li>仿真时，可以用 延时事件 或 clock 边沿触发 来模拟。</li>
+</ul>
+<h2 id="仿真代码"><a href="#仿真代码" class="headerlink" title="仿真代码"></a>仿真代码</h2><p>功能说明</p>
+<ul>
+<li>多端口读写：支持同时多个端口访问 memory</li>
+<li>写冲突仲裁：写优先策略或延迟写，可扩展读优先 &#x2F; 轮询</li>
+<li>读延迟 pipeline：延迟由 read_delay 控制</li>
+<li>Burst &#x2F; wrap-around：访问超出末尾自动回绕</li>
+<li>简单 Cache&#x2F;Tag：模拟命中 &#x2F; 未命中</li>
+<li>异步端口：不同端口调用 read&#x2F;write 可在不同 tick，模拟异步时钟</li>
+<li>随机 bit flip &#x2F; SEU：1% 概率错误注入</li>
+<li>统计与功耗估算基础：记录读写次数、命中数、平均延迟</li>
+</ul>
+
+
+<p>输出的 memory_power.csv 文件内容示例：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Cycle,DynamicPower,StaticPower,TotalPower</span><br><span class="line">1,3,128,131</span><br><span class="line">2,0,128,128</span><br><span class="line">3,5,128,133</span><br><span class="line">4,2,128,130</span><br><span class="line">5,7,128,135</span><br><span class="line">6,1,128,129</span><br><span class="line">7,4,128,132</span><br><span class="line">8,0,128,128</span><br><span class="line">9,2,128,130</span><br><span class="line">10,3,128,131</span><br></pre></td></tr></table></figure>
+
+<p>每列含义：</p>
+<ul>
+<li>Cycle：周期号</li>
+<li>DynamicPower：每周期动态功耗单位</li>
+<li>StaticPower：静态功耗单位（固定）</li>
+<li>TotalPower：总功耗单位</li>
+</ul>
+<p>功耗分析</p>
+<figure class="highlight python"><figcaption><span>report_power.py</span><a href="/blog/downloads/code/eda/memory/report_power.py">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"></span><br><span class="line"><span class="comment"># 读取 CSV</span></span><br><span class="line">df = pd.read_csv(<span class="string">&#x27;memory_power.csv&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 找到动态功耗峰值周期</span></span><br><span class="line">peak_cycle = df[<span class="string">&#x27;DynamicPower&#x27;</span>].idxmax() + <span class="number">1</span></span><br><span class="line">peak_value = df[<span class="string">&#x27;DynamicPower&#x27;</span>].<span class="built_in">max</span>()</span><br><span class="line"></span><br><span class="line">plt.figure(figsize=(<span class="number">12</span>,<span class="number">6</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment"># 绘制条形背景（ASCII风格效果）</span></span><br><span class="line"><span class="keyword">for</span> i, val <span class="keyword">in</span> <span class="built_in">enumerate</span>(df[<span class="string">&#x27;DynamicPower&#x27;</span>]):</span><br><span class="line">    bar_len = <span class="built_in">int</span>(val / peak_value * <span class="number">50</span>)  <span class="comment"># 50字符最大长度</span></span><br><span class="line">    plt.text(i+<span class="number">1</span>, <span class="number">0</span>, <span class="string">&#x27;#&#x27;</span> * bar_len, fontsize=<span class="number">8</span>, color=<span class="string">&#x27;grey&#x27;</span>, va=<span class="string">&#x27;bottom&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 绘制曲线</span></span><br><span class="line">plt.plot(df[<span class="string">&#x27;Cycle&#x27;</span>], df[<span class="string">&#x27;DynamicPower&#x27;</span>], label=<span class="string">&#x27;Dynamic Power&#x27;</span>, marker=<span class="string">&#x27;o&#x27;</span>, color=<span class="string">&#x27;blue&#x27;</span>)</span><br><span class="line">plt.plot(df[<span class="string">&#x27;Cycle&#x27;</span>], df[<span class="string">&#x27;StaticPower&#x27;</span>], label=<span class="string">&#x27;Static Power&#x27;</span>, linestyle=<span class="string">&#x27;--&#x27;</span>, color=<span class="string">&#x27;orange&#x27;</span>)</span><br><span class="line">plt.plot(df[<span class="string">&#x27;Cycle&#x27;</span>], df[<span class="string">&#x27;TotalPower&#x27;</span>], label=<span class="string">&#x27;Total Power&#x27;</span>, linestyle=<span class="string">&#x27;-.&#x27;</span>, color=<span class="string">&#x27;green&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 高亮峰值</span></span><br><span class="line">plt.scatter(peak_cycle, peak_value, color=<span class="string">&#x27;red&#x27;</span>, s=<span class="number">100</span>, label=<span class="string">&#x27;Peak Dynamic Power&#x27;</span>)</span><br><span class="line"></span><br><span class="line">plt.title(<span class="string">&#x27;Memory Power Simulation with Peak Highlight &amp; ASCII-style Bars&#x27;</span>)</span><br><span class="line">plt.xlabel(<span class="string">&#x27;Cycle&#x27;</span>)</span><br><span class="line">plt.ylabel(<span class="string">&#x27;Power Units&#x27;</span>)</span><br><span class="line">plt.grid(<span class="literal">True</span>, linestyle=<span class="string">&#x27;:&#x27;</span>)</span><br><span class="line">plt.legend()</span><br><span class="line">plt.tight_layout()</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/19/concurrency/TBB%E5%85%B8%E5%9E%8B%E5%9C%BA%E6%99%AF/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +334,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-20 11:25:01" itemprop="dateModified" datetime="2025-08-20T11:25:01+00:00">2025-08-20</time>
+                <time title="Modified: 2025-08-20 15:59:07" itemprop="dateModified" datetime="2025-08-20T15:59:07+00:00">2025-08-20</time>
               </span>
 
           
@@ -299,7 +409,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-20 11:25:01" itemprop="dateModified" datetime="2025-08-20T11:25:01+00:00">2025-08-20</time>
+                <time title="Modified: 2025-08-20 15:59:07" itemprop="dateModified" datetime="2025-08-20T15:59:07+00:00">2025-08-20</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -727,7 +837,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-20 11:25:01" itemprop="dateModified" datetime="2025-08-20T11:25:01+00:00">2025-08-20</time>
+                <time title="Modified: 2025-08-20 15:59:07" itemprop="dateModified" datetime="2025-08-20T15:59:07+00:00">2025-08-20</time>
               </span>
 
           
@@ -849,7 +959,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-20 11:25:01" itemprop="dateModified" datetime="2025-08-20T11:25:01+00:00">2025-08-20</time>
+                <time title="Modified: 2025-08-20 15:59:07" itemprop="dateModified" datetime="2025-08-20T15:59:07+00:00">2025-08-20</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -983,7 +1093,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-20 11:25:01" itemprop="dateModified" datetime="2025-08-20T11:25:01+00:00">2025-08-20</time>
+                <time title="Modified: 2025-08-20 15:59:07" itemprop="dateModified" datetime="2025-08-20T15:59:07+00:00">2025-08-20</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1099,7 +1209,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-20 11:25:01" itemprop="dateModified" datetime="2025-08-20T11:25:01+00:00">2025-08-20</time>
+                <time title="Modified: 2025-08-20 15:59:07" itemprop="dateModified" datetime="2025-08-20T15:59:07+00:00">2025-08-20</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1173,7 +1283,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-20 11:25:01" itemprop="dateModified" datetime="2025-08-20T11:25:01+00:00">2025-08-20</time>
+                <time title="Modified: 2025-08-20 15:59:07" itemprop="dateModified" datetime="2025-08-20T15:59:07+00:00">2025-08-20</time>
               </span>
 
           
@@ -1306,7 +1416,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-20 11:25:01" itemprop="dateModified" datetime="2025-08-20T11:25:01+00:00">2025-08-20</time>
+                <time title="Modified: 2025-08-20 15:59:07" itemprop="dateModified" datetime="2025-08-20T15:59:07+00:00">2025-08-20</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1469,7 +1579,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-20 11:25:01" itemprop="dateModified" datetime="2025-08-20T11:25:01+00:00">2025-08-20</time>
+                <time title="Modified: 2025-08-20 15:59:07" itemprop="dateModified" datetime="2025-08-20T15:59:07+00:00">2025-08-20</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1561,393 +1671,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/16/os/%E6%96%87%E4%BB%B6IO%E4%B8%8E%E8%BF%9B%E7%A8%8B/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/16/os/%E6%96%87%E4%BB%B6IO%E4%B8%8E%E8%BF%9B%E7%A8%8B/" class="post-title-link" itemprop="url">文件IO与进程</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-16 20:50:37" itemprop="dateCreated datePublished" datetime="2025-08-16T20:50:37+00:00">2025-08-16</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-20 11:25:01" itemprop="dateModified" datetime="2025-08-20T11:25:01+00:00">2025-08-20</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="进程打开文件"><a href="#进程打开文件" class="headerlink" title="进程打开文件"></a>进程打开文件</h2><p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/50jyHyjJ/image.png" alt="image"/></a></p>
-<ul>
-<li><code>struct task_struct</code> (进程控制块)<ul>
-<li>每个进程有一个 <code>task_struct</code>结构体，内核用它来描述进程。</li>
-<li>里面有一个指针 <code>files</code> ，执行该进程的 <code>files_struct</code> 。</li>
-</ul>
-</li>
-</ul>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// https://elixir.bootlin.com/linux/v6.16/source/include/linux/sched.h</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* 进程控制块 */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">task_struct</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">files_struct</span> *<span class="title">files</span>;</span> <span class="comment">// 进程当前打开的文件</span></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><code>files_struct</code> (进程的文件表)<ul>
-<li>这里保存了一个指向 fd 数组 的指针。</li>
-<li>fd 数组的下标就是 0, 1, 2…，每个元素指向一个 <code>file *</code> 结构体。</li>
-</ul>
-</li>
-</ul>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// https://elixir.bootlin.com/linux/v6.16/source/include/linux/fdtable.h</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">files_struct</span> &#123;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">fdtable</span> __rcu *fdt;                          <span class="comment">// fd 表（动态管理）</span></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">file</span> __rcu    *fd_array[NR_OPEN_DEFAULT];    <span class="comment">// 固定大小数组（早期 fd 数组）</span></span><br><span class="line">                                                        <span class="comment">// NR_OPEN_DEFAULT 通常为 1024</span></span><br><span class="line">                                                        <span class="comment">// 早期没有设置 FD_CLOEXEC 新特性</span></span><br><span class="line">    <span class="comment">// 为什么 fdt 与 fd_array 同时存在？</span></span><br><span class="line">    <span class="comment">// 1. 性能优化：大多数程序，fd 都在 0~1023，直接访问数组更快</span></span><br><span class="line">    <span class="comment">// 2. 向后兼容：早期接口会访问fd_array</span></span><br><span class="line">    <span class="comment">// 3. 动态扩展：如果 fd 超过 NR_OPEN_DEFAULT，内核会复制 fd_array 到 fdt-&gt;fd 来保证一致性。</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// ... `struct files_struct&#x27; 还有其他成员</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// fd 表（动态管理）</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">fdtable</span> &#123;</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span>        max_fds;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">file</span> __rcu **fd;             <span class="comment">/* 当前打开的 fd 指针数组 */</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span>      *close_on_exec;  <span class="comment">// fd 标志，目前只有一个</span></span><br><span class="line">                                        <span class="comment">// FD_CLOEXEC 定义在 &lt;fcntl.h&gt; 中</span></span><br><span class="line">                                        <span class="comment">// close_on_exec 指向一个位图(bitmap)，每个bit代表一个fd</span></span><br><span class="line">                                        <span class="comment">// 如果bit=1，表示该fd设置了FD_CLOEXEC</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span>      *open_fds;       <span class="comment">// 标记哪些fd是打开的，也是位图</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span>      *full_fds_bits;  <span class="comment">// 辅助位图，用于快速找到空闲fd</span></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">rcu_head</span>     rcu;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><code>struct file</code> (打开文件表项)<ul>
-<li>内核为每次 <code>open()</code>、<code>pipe()</code>、<code>socket()</code> 创建一个 <code>struct file</code>。</li>
-<li>它记录了文件状态（读写偏移、flag、引用计数等）。</li>
-</ul>
-</li>
-</ul>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// https://elixir.bootlin.com/linux/v6.16/source/include/linux/fs.h</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">file</span> &#123;</span></span><br><span class="line">    <span class="type">spinlock_t</span>                    f_lock;</span><br><span class="line">    <span class="type">fmode_t</span>                       f_mode;</span><br><span class="line">    <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">file_operations</span> *<span class="title">f_op</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">address_space</span>         *<span class="title">f_mapping</span>;</span></span><br><span class="line">    <span class="type">void</span>                         *private_data;  <span class="comment">// 比如 socket</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">inode</span>                 *<span class="title">f_inode</span>;</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span>                  f_flags;  <span class="comment">// 文件状态标志，如 O_RDONLY, O_NONBLOCK, O_APPEND 等</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span>                  f_iocb_flags;</span><br><span class="line">    <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">cred</span>            *<span class="title">f_cred</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">fown_struct</span>           *<span class="title">f_owner</span>;</span></span><br><span class="line">    <span class="comment">/* --- cacheline 1 boundary (64 bytes) --- */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">path</span> <span class="title">f_path</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">        <span class="comment">/* regular files (with FMODE_ATOMIC_POS) and directories */</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">mutex</span> <span class="title">f_pos_lock</span>;</span></span><br><span class="line">        <span class="comment">/* pipes */</span></span><br><span class="line">        u64 f_pipe;  <span class="comment">// 管道</span></span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>inode &#x2F; pipe &#x2F; socket 内核对象<ul>
-<li><p><code>struct file</code> 再指向更底层的对象，比如 inode（磁盘文件）、socket 缓冲区、pipe 缓冲区。</p>
-</li>
-<li><p>i-node 包含以下内容</p>
-<ul>
-<li>链接计数（指向该i节点的目录项数）；</li>
-<li>文件类型、文件访问权限位、文件长度、指向文件数据块的指针等。<code>stat</code>结构中的大多数信息都取自i节点。</li>
-<li>只有两项重要数据放在目录项中：文件名和i-node编号。</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<div style="text-align: center">
-<figure>
-  <img src="https://i.postimg.cc/rFRyX7Rh/image.png" alt="磁盘、分区和文件系统">
-  <figcaption>磁盘、分区和文件系统</figcaption>
-</figure>
-</div>
-
-<div style="text-align: center">
-<figure>
-  <img src="https://i.postimg.cc/3xM8K9g3/i.png" alt="i节点和数据块">
-  <figcaption>i节点和数据块</figcaption>
-</figure>
-</div>
-
-
-<p>软链接与硬链接</p>
-<table>
-<thead>
-<tr>
-<th>类型</th>
-<th>定义</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><strong>硬链接 (Hard Link)</strong></td>
-<td>表示有多少目录项（文件名）指向同一个 <strong>inode</strong> 。它们指向同一个文件内容。</td>
-</tr>
-<tr>
-<td><strong>软链接 (Symbolic Link &#x2F; Symlink)</strong></td>
-<td>类似快捷方式，是一个 <strong>独立文件</strong>，内容是指向目标文件的路径。</td>
-</tr>
-</tbody></table>
-<ul>
-<li>硬链接：当硬链接数降为0时，才从磁盘的数据块中删除该文件，所以删除文件（即目录项）称为<code>unlink</code>，而不是<code>delete</code>。</li>
-<li>软链接：i-node中的文件类型是<code>S_IFLINK</code>，表明是符号链接。</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th>特性</th>
-<th>硬链接</th>
-<th>软链接</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>是否指向 inode</td>
-<td>是，直接指向同一 inode</td>
-<td>否，指向目标路径</td>
-</tr>
-<tr>
-<td>是否可以跨文件系统</td>
-<td>否，只能在同一分区</td>
-<td>可以跨分区</td>
-</tr>
-<tr>
-<td>是否可以链接目录</td>
-<td>通常不能（除非 root）</td>
-<td>可以</td>
-</tr>
-<tr>
-<td>删除目标文件后</td>
-<td>文件内容仍可访问</td>
-<td>链接会失效（称为“悬挂链接”）</td>
-</tr>
-<tr>
-<td>占用空间</td>
-<td>不占用额外数据空间（只是多了一个目录项）</td>
-<td>占用少量空间存储路径信息</td>
-</tr>
-<tr>
-<td>更新文件内容</td>
-<td>所有硬链接同步可见</td>
-<td>通过软链接修改目标文件内容时可见，软链接本身只是路径</td>
-</tr>
-</tbody></table>
-<h2 id="两个独立进程各自打开同一个文件"><a href="#两个独立进程各自打开同一个文件" class="headerlink" title="两个独立进程各自打开同一个文件"></a>两个独立进程各自打开同一个文件</h2><p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/hG2hPTDM/image.png" alt="两个独立进程各自打开同一个文件"/></a></p>
-<ul>
-<li>O_APPEND：<ul>
-<li>原子操作：如果使用 <code>O_APPEND</code> 标志打开一个文件，那么相应的标志也被设置到文件表项的文件状态标志中。每次对文件执行写操作时，文件表项中的当前文件偏移量首先会被设置为 i 节点表项中的文件长度（相对其他进程来说是<strong>原子</strong>操作，不论是两个独立的进程，还是父子进程）。这就使得每次写入的数据都追加到文件的当前尾端处。<a target="_blank" rel="noopener" href="https://blog.csdn.net/yangbodong22011/article/details/63064166">这里</a>有一个测试的例子，文章结论不见得正确，请参考评论的讨论。</li>
-<li><code>PIPE_BUF</code>：只保证小于<code>PIPE_BUF</code>的内容是原子；如果大于则可能被多次多段写入。PIPE_BUF 是管道（pipe）单次写入保证原子的最大字节数，Linux 上是 4096 字节。</li>
-</ul>
-</li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看 PIPE_BUF 大小</span></span><br><span class="line"><span class="comment"># `/tmp&#x27; 可以换成任意文件系统路径</span></span><br><span class="line">$ getconf PIPE_BUF /tmp</span><br><span class="line">4096</span><br><span class="line"><span class="comment"># 也可以查看所有文件系统相关的 PIPE_BUF 限制</span></span><br><span class="line">$ getconf -a PIPE_BUF</span><br></pre></td></tr></table></figure>
-
-<p>  以下是 <code>man 2 write</code> 关于 <code>O_APPEND</code> 的说明：</p>
-<blockquote>
-<p>If the file was open(2)ed with O_APPEND, the file offset is first set to the end of the file before writing.  The adjustment of the file offset and the write operation are performed as an atomic step.</p>
-</blockquote>
-<ul>
-<li>lseek：</li>
-</ul>
-<p>若一个文件用 <code>lseek</code> 定位到文件当前的尾端，则文件表项中的当前文件偏移量被设置为 i 节点表项中的当前文件长度（注意，此时，设置偏移量和写操作之间不是原子操作）。</p>
-<hr>
-<h2 id="dup-后的内核数据结构"><a href="#dup-后的内核数据结构" class="headerlink" title="dup()后的内核数据结构"></a><code>dup()</code>后的内核数据结构</h2><p><code>dup()</code> &#x2F; <code>dup2()</code> 只复制 fd ，也就是在 fd 数组中新增了一个 fd 项。一般用来重定向。</p>
-<p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/s2mGQbcY/dup-1.png" alt="dup(1)"/></a></p>
-<hr>
-<h2 id="fork与文件共享"><a href="#fork与文件共享" class="headerlink" title="fork与文件共享"></a>fork与文件共享</h2><ul>
-<li>进程每打开一个文件，都会新建一个 <code>struct file</code> ，并添加到 fd 数组或 fd 表中。<ul>
-<li>对同一个文件，不同进程拥有各自的文件表项。</li>
-<li>但是对每个文件，v节点表项在整个操作系统中只有一份。</li>
-</ul>
-</li>
-<li><code>fork()</code> 后的子进程直接复制父进程的 fd 数组，<code>exec()</code> 也不能将其替换；<ul>
-<li>子进程对 <code>struct task_struct</code> 是深拷贝，所以 fd 数组被复制；</li>
-<li>但是子进程对 fd 数组是浅拷贝，fd 数组中的 <code>struct file*</code> 仍然指向父进程创建的 <code>struct file </code> （共享）；</li>
-<li>所以子进程共享了文件状态标志 (O_APPEND, O_NONBLOCK, O_RDONLY 等)、当前文件偏移量。</li>
-</ul>
-</li>
-<li>除非该文件描述符使用<code>fcntl()</code>设置了<code>FD_CLOEXEC</code>标志，此时 <code>exec</code> 会关闭继承的文件描述符。</li>
-</ul>
-<p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/TYbyqK0Y/fork.png" alt="fork"/></a></p>
-<p><strong>子进程对文件表项的修改，会不会影响父进程？</strong></p>
-<ul>
-<li>shell进程启动时，会自动打开这三个文件描述符（可能由配置项决定）；</li>
-<li>shell利用<code>fork()</code>开启用户进程（子进程），该子进程复制父进程shell的所有文件描述符，于是0, 1, 2文件描述符被打开；</li>
-<li>由于子进程<strong>共享</strong>父进程的<strong>文件表项</strong>，子进程对文件状态标志（读、写、同步或非阻塞等）、文件偏移量的修改，将<strong>会影响父进程</strong>。</li>
-</ul>
-<p>测试代码：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> err_sys(x)                                                             \</span></span><br><span class="line"><span class="meta">  &#123;                                                                            \</span></span><br><span class="line"><span class="meta">    perror(x);                                                                 \</span></span><br><span class="line"><span class="meta">    exit(1);                                                                   \</span></span><br><span class="line"><span class="meta">  &#125;</span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">pr_fl</span><span class="params">(<span class="type">int</span> fd)</span>;             <span class="comment">// 自定义函数：打印文件状态标志</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">set_fl</span><span class="params">(<span class="type">int</span> fd, <span class="type">int</span> flags)</span>; <span class="comment">// 自定义函数：设置文件状态标志</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">  pr_fl(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  set_fl(<span class="number">0</span>, O_APPEND);</span><br><span class="line">  pr_fl(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">set_fl</span><span class="params">(<span class="type">int</span> fd, <span class="type">int</span> flags)</span> &#123;</span><br><span class="line">  <span class="type">int</span> val;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> ((val = fcntl(fd, F_GETFL, <span class="number">0</span>)) &lt; <span class="number">0</span>)</span><br><span class="line">    err_sys(<span class="string">&quot;fcntl F_GETFL error&quot;</span>);</span><br><span class="line"></span><br><span class="line">  val |= flags;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (fcntl(fd, F_SETFL, val) &lt; <span class="number">0</span>)</span><br><span class="line">    err_sys(<span class="string">&quot;fcntl F_SETFL error&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">pr_fl</span><span class="params">(<span class="type">int</span> fd)</span> &#123;</span><br><span class="line">  <span class="type">int</span> val;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// do not guarantee success on certain system, check EINVAL first</span></span><br><span class="line">  <span class="keyword">if</span> ((val = fcntl(fd, F_GETFL, <span class="number">0</span>)) &lt; <span class="number">0</span>)</span><br><span class="line">    err_sys(<span class="string">&quot;fcntl F_GETFL error&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">switch</span> (val &amp; O_ACCMODE) &#123;</span><br><span class="line">  <span class="keyword">case</span> O_RDONLY:</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;read only&quot;</span>);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> O_WRONLY:</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;write only&quot;</span>);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> O_RDWR:</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;read write&quot;</span>);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">default</span>:</span><br><span class="line">    err_sys(<span class="string">&quot;unknown open type&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (val &amp; O_CREAT)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;, create&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> (val &amp; O_APPEND)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;, append&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> (val &amp; O_NONBLOCK)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;, non-block&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> (val &amp; O_SYNC)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;, synchronized file&quot;</span>);</span><br><span class="line">  <span class="comment">// if (val &amp; O_DSYNC)</span></span><br><span class="line">  <span class="comment">//   printf(&quot;, synchronize data&quot;);</span></span><br><span class="line"></span><br><span class="line">  <span class="built_in">putchar</span>(<span class="string">&#x27;\n&#x27;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>第一次运行：</li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ ./a.out</span><br><span class="line"><span class="built_in">read</span> write</span><br><span class="line"><span class="built_in">read</span> write, append</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>第二次运行：</li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ ./a.out</span><br><span class="line"><span class="built_in">read</span> write, append</span><br><span class="line"><span class="built_in">read</span> write, append</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><p>分析</p>
-<ul>
-<li>第二次运行时，文件描述符0的初始状态保持了第一次运行的结果！</li>
-<li>这是因为父进程shell的文件表项的文件状态标志被子进程<code>a.out</code>改变了。</li>
-</ul>
-</li>
-<li><p>第三次运行：</p>
-<p>重新启动shell，并运行<code>a.out</code></p>
-</li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ ./a.out</span><br><span class="line"><span class="built_in">read</span> write</span><br><span class="line"><span class="built_in">read</span> write, append</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><p>分析</p>
-<ul>
-<li>第三次运行，结果与第一次一致，这说明我们的猜测正确。</li>
-<li>父进程shell关闭之后，所有文件描述符被关闭，文件IO被关闭，文件表被释放。重启shell也就重置了文件表。</li>
-</ul>
-</li>
-<li><p>引申：<br>在此我们注意到，文件描述符0, 1, 2（标准输入、标准输出、标准错误）在一个shell及其所有子进程中，对应的文件（设备）是同一个。由于共享了文件表项，指向了同一个v-node表项，故都指向同一个虚拟终端。这与我们的平时观察一致，不然shell运行程序时，输入输出的入口在哪里呢？</p>
-</li>
-</ul>
-<p><strong>如果进程打开文件，此时我们使用 rm &#x2F; unlink 删除文件，会发生什么？</strong></p>
-<p>什么也不会发生。因为 Linux 文件系统的设计允许文件名（目录项）和文件内容（inode）分离。只有当所有引用（包括文件描述符和内存映射）都关闭后，inode 才会被删除。</p>
-<p>在 Linux 中，一个文件由三部分组成：</p>
-<ul>
-<li>目录项（filename）：比如 <code>/lib/libexample.so</code></li>
-<li>inode（元数据）：记录权限、大小、时间戳等</li>
-<li>数据块（内容）：实际的文件内容</li>
-</ul>
-<p><code>rm</code> 只是删除了目录项（文件名），并没有删除 inode 或数据块，只要还有进程引用它。</p>
-<p>引用 inode 的方式包括：</p>
-<ul>
-<li>打开文件（open()）</li>
-<li>映射文件（mmap()）</li>
-<li>动态链接器加载 .so 文件</li>
-</ul>
-<p>这些引用会让内核知道：这个 inode 仍然在使用中，不能释放。</p>
-<p>这是为了支持非常重要的行为：</p>
-<blockquote>
-<p>✅ 允许进程继续使用已打开或已映射的文件，即使文件名被删除。</p>
-</blockquote>
-<p>这在很多场景下非常有用：</p>
-<ul>
-<li>日志轮转：删除旧日志文件，进程仍在写入</li>
-<li>安全性：防止其他进程访问文件名，但当前进程仍可使用</li>
-<li>临时文件：创建后立即删除，只让当前进程使用</li>
-</ul>
-<p>在 Linux 内核中，每个 inode 结构体有一个字段 <code>i_count</code>，表示该 inode 当前被引用的次数。这个引用包括：</p>
-<ul>
-<li>被文件系统挂载</li>
-<li>被进程打开</li>
-<li>被内核缓存使用</li>
-</ul>
-<p>这个字段不是用户空间可以直接查看的，但你可以通过以下方式间接观察：</p>
-<table>
-<thead>
-<tr>
-<th align="center">方法</th>
-<th align="center">能看到什么</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center"><code>ls -li</code></td>
-<td align="center">inode 号 + 硬链接引用计数</td>
-</tr>
-<tr>
-<td align="center"><code>lsof -p &lt;PID&gt; | grep</code> &#x2F; <code>fuser &lt;/path/to/so&gt;</code></td>
-<td align="center">是否有进程打开文件</td>
-</tr>
-<tr>
-<td align="center"><code>/proc/&lt;PID&gt;/fd/</code></td>
-<td align="center">查看文件描述符引用</td>
-</tr>
-<tr>
-<td align="center"><code>/proc/&lt;PID&gt;/maps</code></td>
-<td align="center">查看映射</td>
-</tr>
-<tr>
-<td align="center"><code>ldd</code></td>
-<td align="center">查看可执行文件依赖的 .so</td>
-</tr>
-<tr>
-<td align="center"><code>strace</code></td>
-<td align="center">跟踪运行时加载行为</td>
-</tr>
-<tr>
-<td align="center">内核字段 <code>i_count</code></td>
-<td align="center">真实引用计数（需内核调试）</td>
-</tr>
-</tbody></table>
-<p>在本地文件系统（如 ext4）中：</p>
-<ul>
-<li>即使文件正在使用，<code>rm</code> 也能删除目录项</li>
-<li>文件内容仍保留在 inode 中，直到所有引用关闭</li>
-</ul>
-<p>但在 NFS 文件系统 中：</p>
-<ul>
-<li>客户端不能立即删除正在被使用的文件</li>
-<li>所以它会将文件重命名为 <code>.nfsXXXX</code></li>
-<li>等引用释放后，自动删除该临时文件</li>
-</ul>
-<p>所以此时如果 <code>rm -rf</code> 目录，但是目录下某文件被使用，会提示 <code>xxx/.nfs000000004ec2d5e70000da89</code> 。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ lsof -p &lt;PID&gt; | grep .nfs</span><br><span class="line">my_executable 283964 my_name  mem    REG  0,183  18371240 1321391591 /XXX/.nfs000000004ec2d5e70000da89 (xxx:/yyy/zzz)</span><br></pre></td></tr></table></figure>
-
-<p>因为 so 被手动删除，此时引用的 so 被重命名成 <code>.nfsXXXX</code> 。</p>
-<p>手动删除 .so 文件后，系统生成了 .nfsXXXX 文件，但进程仍然能继续使用它。进程怎么知道新文件名？</p>
-<p>答案是：进程根本不知道新文件名，也不需要知道。</p>
-<p>当一个进程打开一个文件（比如 <code>libexample.so</code>），它获得的是一个 文件描述符（fd），这个描述符指向的是内核中的 inode，而不是文件名。</p>
-<p>那 <code>.nfsXXXX</code> 文件名是给谁看的？</p>
-<p>它是 NFS 客户端自动创建的临时文件名，用于：</p>
-<ul>
-<li>保留 inode 内容，直到所有引用关闭</li>
-<li>让系统知道这个文件还不能真正删除</li>
-<li>让你可以用 lsof 或 fuser 查找谁在使用它</li>
-</ul>
-<p>📌 这个文件名不会被通知给进程，也不会影响进程的运行。</p>
-<p>正常情况下：进程关闭后 .nfsXXXX 自动消失</p>
-<ul>
-<li>.nfsXXXX 文件是由 NFS客户端 创建的临时文件</li>
-<li>当某个文件被打开后删除，客户端会将其重命名为 .nfsXXXX</li>
-<li>一旦该文件的 打开引用计数为 0（即所有进程都关闭了该文件），客户端会自动删除 .nfsXXXX</li>
-</ul>
-<p>⚠️ 异常情况：文件可能残留</p>
-<p>如果出现以下情况，.nfsXXXX 文件可能不会自动删除：</p>
-<ul>
-<li>客户端 crash 或断网，未能完成清理动作</li>
-<li>使用 kill -9 强制终止进程，绕过了正常关闭流程</li>
-<li>NFS 客户端或服务器之间同步延迟</li>
-<li>文件被多个进程同时打开，只有部分进程关闭</li>
-</ul>
-<p>在这些情况下，.nfsXXXX 文件会残留在文件系统中，直到手动清理。</p>
-<h3 id="管道"><a href="#管道" class="headerlink" title="管道"></a>管道</h3><p>通过上文的叙述，我们很容易想到管道本质上也是一种特殊的文件，所以管道机制之所以可以进程间通信也是根据共享文件表项保证的。<br>管道和文件进行进程间通信的本质相同。</p>
-<h2 id="Linux-文件锁与记录锁"><a href="#Linux-文件锁与记录锁" class="headerlink" title="Linux 文件锁与记录锁"></a>Linux 文件锁与记录锁</h2><p>TODO</p>
-<p>参考链接：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/xuyh/p/3278881.html">链接1</a>、<a target="_blank" rel="noopener" href="https://www.cnblogs.com/fortunely/p/15219611.html">链接2</a>。</p>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
-<li>《UNIX 环境高级编程》</li>
-<li>《Linux 内核设计与实现（原书第 3 版） - Linux Kernel Development, Third Edition》，（美）拉芙（Love, R.）著；陈莉君，康华译. ——北京：机械工业出版社，2011.9（2021.5 重印）</li>
-<li><a target="_blank" rel="noopener" href="https://github.com/antsHub/task_struct/tree/main">图解进程控制块stask_struct</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2019,14 +1742,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">92</span>
+          <span class="site-state-item-count">93</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">9</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
