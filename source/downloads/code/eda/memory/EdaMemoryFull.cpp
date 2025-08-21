@@ -34,6 +34,24 @@ class EdaMemoryFull {
     int static_power; // 静态功耗
     std::vector<int> dynamic_power_per_cycle; // 每周期动态功耗
 
+    // 动态功耗公式（单位：动态功耗单位 = 每bit切换一次算1）
+    //
+    // P_dyn = α * C * V^2 * f
+    // 其中，α 开关活动因子（switching activity）
+    //      C 负载电容
+    //      V 电源电压
+    //      f 时钟频率
+    // 简化为每次 bit 改变增加一个单位动态功耗
+    //
+    // 静态功耗公式（单位：静态功耗单位 = 每8bit存储单元算1）
+    //
+    // P_static = I_leak * V * N
+    // 简化为每8bit存储单元增加1单位静态功耗
+    //
+    // 总功耗
+    //
+    // P_total = P_dyn + P_static
+
 public:
     enum WritePriority { WRITE_FIRST, READ_FIRST, ROUND_ROBIN } write_prio;
 
@@ -57,7 +75,7 @@ public:
         } else {
             event_queue.push({sim_time+1,[this,addr,data](){ apply_write(addr,data); }});
         }
-        update_cache(addr,data,true);
+        update_cache(port, addr,data,true);
     }
 
     void read(int port,int addr,size_t length,std::function<void(std::vector<uint8_t>)> callback){
@@ -68,7 +86,7 @@ public:
         }
         current_cycle_access++;
         int trigger_time = sim_time+read_delay;
-        bool hit = check_cache(addr,length);
+        bool hit = check_cache(port, addr,length);
         if(hit) read_hits[port]++;
         event_queue.push({trigger_time,[this,addr,length,callback,port,trigger_time]() {
             std::vector<uint8_t> data;
@@ -150,18 +168,18 @@ private:
         return count;
     }
 
-    bool check_cache(int addr,size_t length){
+    bool check_cache(int port, int addr,size_t length){
         int line = addr % cache_size;
         int tag = addr / cache_size;
         return cache[line].valid && cache[line].tag==tag;
     }
 
-    void update_cache(int addr,const std::vector<uint8_t>& data,bool write=false){
+    void update_cache(int port, int addr,const std::vector<uint8_t>& data,bool write=false){
         int line = addr % cache_size;
         int tag = addr / cache_size;
         cache[line].valid=true;
         cache[line].tag=tag;
-        if(write) write_hits[0]++;
+        if(write) write_hits[port]++;
     }
 
     void apply_write(int addr,const std::vector<uint8_t>& data){
