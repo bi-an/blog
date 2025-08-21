@@ -1,5 +1,5 @@
 CXX := g++
-CXXFLAGS := -O2 -Wall -std=c++17
+CXXFLAGS := -Wall -std=c++17 -g -O0
 
 # TBB 路径 (根据需要修改，若系统已安装 libtbb-dev 可省略)
 TBB_INC := /usr/include
