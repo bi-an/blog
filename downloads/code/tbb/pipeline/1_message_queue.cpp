@@ -26,7 +26,7 @@ void networkReader() {
 
         if (!read_from_network(chunk))  // 阻塞 I/O
         {
-            stop = true;
+            stop.store(true, memory_order::releaxed);
             return;
         }
 

@@ -193,6 +193,296 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/17/concurrency/%E8%AF%A6%E8%A7%A3RCU%E6%9C%BA%E5%88%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/17/concurrency/%E8%AF%A6%E8%A7%A3RCU%E6%9C%BA%E5%88%B6/" class="post-title-link" itemprop="url">详解RCU机制</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-08-17 10:39:19" itemprop="dateCreated datePublished" datetime="2025-08-17T10:39:19+00:00">2025-08-17</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-22 15:06:28" itemprop="dateModified" datetime="2025-08-22T15:06:28+00:00">2025-08-22</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="RCU-读-复制-更新"><a href="#RCU-读-复制-更新" class="headerlink" title="RCU (读-复制-更新)"></a>RCU (读-复制-更新)</h2><p>RCU（Read-Copy-Update，读-拷贝-更新）是 Linux 内核中一种高效的 并发读-写同步机制，专门用于在多核系统下实现 大量读、少量写 的场景。它的核心思想是：读操作完全无锁，写操作通过复制更新，最后再安全地回收旧版本。</p>
+<p>RCU 的核心思想</p>
+<ul>
+<li>读操作直接访问数据结构，不加锁</li>
+<li>写操作：<ul>
+<li>先 复制原数据 → 修改副本</li>
+<li>更新指针，使新数据生效</li>
+<li>延迟回收旧数据，保证当前正在读取旧数据的线程不受影响</li>
+</ul>
+</li>
+</ul>
+<h3 id="rcu"><a href="#rcu" class="headerlink" title="__rcu"></a><code>__rcu</code></h3><p>它是 RCU 机制中非常关键的一环，用来让 编译器和内核知道某个指针是 RCU 保护的。</p>
+<ol>
+<li><code>__rcu</code> 的定义</li>
+</ol>
+<p>在 Linux 内核中（以 x86_64 为例）：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> __rcu</span></span><br></pre></td></tr></table></figure>
+
+<p>实际上，它 本身对编译器不产生直接影响</p>
+<p>主要用途是 标记类型，告诉 Sparse 静态分析工具 或 内核开发者：这个指针受 RCU 保护，不能随意直接读&#x2F;写</p>
+<p>也就是说，<code>__rcu</code> 是 一个注释性质的宏，编译器编译时忽略，但静态分析工具会检查 RCU 访问规则。</p>
+<ol start="2">
+<li><code>__rcu</code> 的作用</li>
+</ol>
+<p>标记 RCU 保护的指针，常见用法：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">files_struct</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">fdtable</span> __<span class="title">rcu</span> *<span class="title">fdt</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">file</span> __<span class="title">rcu</span> *<span class="title">fd_array</span>[<span class="title">NR_OPEN_DEFAULT</span>];</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>含义：</p>
+<ul>
+<li><code>fdt</code> 是 RCU 指针</li>
+<li>不能直接写 <code>fdt = new_ptr</code>; 或直接解引用 <code>fdt-&gt;xxx</code></li>
+<li>必须通过 RCU API，如：<ul>
+<li><code>rcu_assign_pointer(fdt, new_fdt);</code> → 安全更新指针</li>
+<li><code>rcu_dereference(fdt)</code> → 安全读取指针</li>
+</ul>
+</li>
+<li>这样可以保证：<ul>
+<li>写线程更新指针时不会破坏读线程的访问</li>
+<li>读线程可以无锁访问旧数据</li>
+</ul>
+</li>
+</ul>
+<ol start="3">
+<li><code>__rcu</code> 与编译器和内核</li>
+</ol>
+<ul>
+<li>静态检查（Sparse）<ul>
+<li>Sparse 是 Linux 内核推荐的静态分析工具</li>
+<li>它会检查：<ul>
+<li>所有 <code>__rcu</code> 指针的写操作是否用 <code>rcu_assign_pointer</code></li>
+<li>所有读取是否用 <code>rcu_dereference</code></li>
+</ul>
+</li>
+<li>如果直接访问，就会报错，避免 RCU 访问错误</li>
+</ul>
+</li>
+<li>内存屏障和优化<ul>
+<li><code>rcu_assign_pointer</code> 内部会加上 适当的写屏障 (<code>smp_wmb()</code>)</li>
+<li><code>rcu_dereference</code> 内部会加 读取屏障 (<code>smp_rmb()</code>)</li>
+<li>防止编译器&#x2F;CPU 重排导致读写顺序错误</li>
+</ul>
+</li>
+</ul>
+<ol start="4">
+<li><code>__rcu</code> 的核心原理总结</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>方面</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>编译器作用</td>
+<td>本身是空宏，不改变代码</td>
+</tr>
+<tr>
+<td>静态分析</td>
+<td>Sparse 检查 RCU 指针的安全读写</td>
+</tr>
+<tr>
+<td>内存屏障</td>
+<td>通过 <code>rcu_assign_pointer</code> &#x2F; <code>rcu_dereference</code> 添加屏障，保证并发安全</td>
+</tr>
+<tr>
+<td>运行时</td>
+<td>指针仍然是普通指针，实际存储和访问和普通指针一样</td>
+</tr>
+</tbody></table>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/16/os/%E9%AB%98%E6%95%88IO/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/16/os/%E9%AB%98%E6%95%88IO/" class="post-title-link" itemprop="url">高效 IO</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-08-16 23:40:06" itemprop="dateCreated datePublished" datetime="2025-08-16T23:40:06+00:00">2025-08-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-22 15:06:28" itemprop="dateModified" datetime="2025-08-22T15:06:28+00:00">2025-08-22</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="高效的-IO-函数"><a href="#高效的-IO-函数" class="headerlink" title="高效的 IO 函数"></a>高效的 IO 函数</h2><ul>
+<li>sendfile</li>
+<li>mmap + write</li>
+<li>splice</li>
+<li>readv</li>
+</ul>
+<h3 id="零拷贝-Zero-copy"><a href="#零拷贝-Zero-copy" class="headerlink" title="零拷贝 (Zero copy)"></a>零拷贝 (Zero copy)</h3><ul>
+<li>mmap + write</li>
+<li>sendfile</li>
+<li>splice</li>
+</ul>
+<h3 id="Page-cache-和异步-IO"><a href="#Page-cache-和异步-IO" class="headerlink" title="Page cache 和异步 IO"></a>Page cache 和异步 IO</h3><p><a target="_blank" rel="noopener" href="https://www.xiaolincoding.com/os/8_network_system/zero_copy.html#%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9B%B6%E6%8B%B7%E8%B4%9D">https://www.xiaolincoding.com/os/8_network_system/zero_copy.html#%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9B%B6%E6%8B%B7%E8%B4%9D</a></p>
+<ul>
+<li>O_DIRECT: 绕过操作系统缓存，直接读写磁盘，可以避免缓存延迟，提高性能。可用于：<ul>
+<li>数据库系统：对性能要求极高，且直接操作磁盘数据。</li>
+<li>存储设置：如 SSD、硬盘，直接与硬件设备进行高效的 I&#x2F;O 操作。</li>
+<li>注意：由于绕过了缓存，所以 read 如果小于当前数据包的大小，则本次 read 后，内核会直接丢弃多余的数据。这是为了避免多余的数据在内存中驻留。</li>
+</ul>
+</li>
+</ul>
+<h3 id="散布读写-Scatter-read-write"><a href="#散布读写-Scatter-read-write" class="headerlink" title="散布读写 (Scatter read&#x2F;write)"></a>散布读写 (Scatter read&#x2F;write)</h3><ul>
+<li>readv</li>
+<li>writev</li>
+</ul>
+<p>散布读写支持一次性将数据从文件描述符读写到多个缓冲区：</p>
+<ul>
+<li>避免多次系统调用；</li>
+<li>直接分块读取，不需要额外用户态 memcpy 到不同的块。</li>
+</ul>
+<h2 id="IO-复用"><a href="#IO-复用" class="headerlink" title="IO 复用"></a>IO 复用</h2><ul>
+<li>select</li>
+<li>poll</li>
+<li>epoll</li>
+<li>非阻塞 IO</li>
+</ul>
+<p>如果 select &#x2F; poll &#x2F; epoll 通知可读写，那么一定可读写吗？<br>答案是不一定。因为内核不是 ** 实时地 ** 检查内核缓冲区是否有空间或有数据，所以内核的通知有时间差和虚假性。<br>而 epoll 等函数只关注事件变化，不检查缓冲区。这样可以提高效率。<br>最终的结果就是鼓励用户程序尝试，但是不保证一定成功，也就是可能阻塞。所以需要非阻塞 IO 来进一步提高性能。</p>
+<h3 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h3><ul>
+<li>减少数据拷贝：select &#x2F; poll 只有一个函数，这会要求每次调用都必须将描述事件的数据从用户空间复制到内核空间；所以 epoll 拆分成三个函数，用户可以向内核直接注册事件数据；</li>
+<li>红黑树：epoll 事件数据是用红黑树来记录，增删查改的时间复杂度为 O(logn) ；select &#x2F; poll 是线性扫描，时间复杂度 O(n) 。红黑树需要额外的空间，所以这是空间换时间的办法。</li>
+</ul>
+<h4 id="EPOLLONESHOT"><a href="#EPOLLONESHOT" class="headerlink" title="EPOLLONESHOT"></a><code>EPOLLONESHOT</code></h4><p>阅读 manual：</p>
+<blockquote>
+<p>Since  even  with  edge-triggered  epoll,  multiple events can be generated upon receipt of multiple chunks of data, the caller has the option to specify the EPOLLONESHOT flag, to tell epoll to disable the associated file descriptor after the receipt of an event  with  epoll_wait(2).   When the EPOLLONESHOT flag is specified, it is the caller’s responsibility to rearm the file descriptor using epoll_ctl(2) with EPOLL_CTL_MOD.</p>
+</blockquote>
+<p>如果某个文件描述符上有多个数据块到达，那么即使是边沿触发也无法保证事件只通知一次。这可能是由于数据包过大被分片，或者是新数据到达。</p>
+<ul>
+<li>这在单线程程序上不会有太大影响，因为对同一个 fd 不会造成重复读写。</li>
+<li>多线程程序中，fd 准备好后，我们常常将这个 fd 交给某个线程去处理。此时如果 fd 有新的事件，会造成多线程处理同一个 fd 的情况。<ul>
+<li>为了避免竞争，要么加锁；要么使用内核的 ONESHOT 机制。后者由内核保证，无锁，更高效。</li>
+</ul>
+</li>
+<li><code>EPOLLONSHOT</code> 需要调用者自行 reset 这个标志。</li>
+</ul>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/salmonwilliam/article/details/112347938">https://blog.csdn.net/salmonwilliam/article/details/112347938</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/16/os/%E6%96%87%E4%BB%B6IO%E4%B8%8E%E8%BF%9B%E7%A8%8B/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +514,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-21 17:21:04" itemprop="dateModified" datetime="2025-08-21T17:21:04+00:00">2025-08-21</time>
+                <time title="Modified: 2025-08-22 15:06:28" itemprop="dateModified" datetime="2025-08-22T15:06:28+00:00">2025-08-22</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -611,7 +901,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-21 17:21:04" itemprop="dateModified" datetime="2025-08-21T17:21:04+00:00">2025-08-21</time>
+                <time title="Modified: 2025-08-22 15:06:28" itemprop="dateModified" datetime="2025-08-22T15:06:28+00:00">2025-08-22</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -918,7 +1208,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-21 17:21:04" itemprop="dateModified" datetime="2025-08-21T17:21:04+00:00">2025-08-21</time>
+                <time title="Modified: 2025-08-22 15:06:28" itemprop="dateModified" datetime="2025-08-22T15:06:28+00:00">2025-08-22</time>
               </span>
 
           
@@ -1147,7 +1437,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-21 17:21:04" itemprop="dateModified" datetime="2025-08-21T17:21:04+00:00">2025-08-21</time>
+                <time title="Modified: 2025-08-22 15:06:28" itemprop="dateModified" datetime="2025-08-22T15:06:28+00:00">2025-08-22</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1268,7 +1558,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-21 17:21:04" itemprop="dateModified" datetime="2025-08-21T17:21:04+00:00">2025-08-21</time>
+                <time title="Modified: 2025-08-22 15:06:28" itemprop="dateModified" datetime="2025-08-22T15:06:28+00:00">2025-08-22</time>
               </span>
 
           
@@ -1417,7 +1707,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-21 17:21:04" itemprop="dateModified" datetime="2025-08-21T17:21:04+00:00">2025-08-21</time>
+                <time title="Modified: 2025-08-22 15:06:28" itemprop="dateModified" datetime="2025-08-22T15:06:28+00:00">2025-08-22</time>
               </span>
 
           
@@ -1524,7 +1814,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-21 17:21:04" itemprop="dateModified" datetime="2025-08-21T17:21:04+00:00">2025-08-21</time>
+                <time title="Modified: 2025-08-22 15:06:28" itemprop="dateModified" datetime="2025-08-22T15:06:28+00:00">2025-08-22</time>
               </span>
 
           
@@ -1662,7 +1952,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-21 17:21:04" itemprop="dateModified" datetime="2025-08-21T17:21:04+00:00">2025-08-21</time>
+                <time title="Modified: 2025-08-22 15:06:28" itemprop="dateModified" datetime="2025-08-22T15:06:28+00:00">2025-08-22</time>
               </span>
 
           
@@ -1802,869 +2092,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/01/concurrency/%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/01/concurrency/%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/" class="post-title-link" itemprop="url">内存模型</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-01 19:30:53" itemprop="dateCreated datePublished" datetime="2025-08-01T19:30:53+00:00">2025-08-01</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-21 17:21:04" itemprop="dateModified" datetime="2025-08-21T17:21:04+00:00">2025-08-21</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="内存模型的定义"><a href="#内存模型的定义" class="headerlink" title="内存模型的定义"></a>内存模型的定义</h2><p>内存模型（Memory Model）是定义<strong>数据一致性</strong>与<strong>执行顺序</strong>规则的一组规范。</p>
-<h2 id="备忘录"><a href="#备忘录" class="headerlink" title="备忘录"></a>备忘录</h2><ul>
-<li>编程语言保证单线程的“程序顺序一致性”，比如为了防止CPU乱序执行，甚至主动对有依赖关系的变量插入内存屏障。</li>
-<li></li>
-</ul>
-<h2 id="多核缓存"><a href="#多核缓存" class="headerlink" title="多核缓存"></a>多核缓存</h2><p>分层：</p>
-<ul>
-<li>寄存器：最快，由重命名机制管理</li>
-<li>L1&#x2F;L2&#x2F;L3 Cache：核心本地缓存，按缓存行一致性（MESI）维护共享状态</li>
-<li>主内存（DRAM）：CPU访问需经总线或内存控制器</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th>缓存级别</th>
-<th>位置</th>
-<th>速度（快）</th>
-<th>容量（小）</th>
-<th>每核私有&#x2F;共享</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>L1 Cache</td>
-<td>CPU核心内部</td>
-<td>✅最快</td>
-<td>❌最小</td>
-<td>每核私有</td>
-<td>通常分为指令缓存（L1I）和数据缓存（L1D）</td>
-</tr>
-<tr>
-<td>L2 Cache</td>
-<td>核心内部或旁边</td>
-<td>较快</td>
-<td>较小</td>
-<td>每核私有或共享</td>
-<td>有助于减缓L1未命中后的访问压力</td>
-</tr>
-<tr>
-<td>L3 Cache</td>
-<td>核心集群共享</td>
-<td>慢一些</td>
-<td>更大</td>
-<td>多核共享</td>
-<td>减少跨核访问主存的延迟，常位于芯片中心</td>
-</tr>
-<tr>
-<td>L4 Cache</td>
-<td>一些高端CPU或封装外DRAM</td>
-<td>最慢</td>
-<td>最大</td>
-<td>多芯片共享</td>
-<td>非常少见（例如Intel的eDRAM）</td>
-</tr>
-</tbody></table>
-<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">[CPU Core] </span><br><span class="line">   ├── [Load Buffer]  ← 处理 load 指令</span><br><span class="line">   ├── [Store Buffer] ← 处理 store 指令</span><br><span class="line">   ├── [L1 Cache]</span><br><span class="line">   └── [Execution Unit]</span><br><span class="line"></span><br><span class="line">⬇️</span><br><span class="line"></span><br><span class="line">[Shared L2 Cache] / [L3 Cache]</span><br><span class="line"></span><br><span class="line">⬇️</span><br><span class="line"></span><br><span class="line">[Memory Bus] ↔ [Main Memory (DRAM)]</span><br><span class="line"></span><br><span class="line">⬌</span><br><span class="line"></span><br><span class="line">[Other CPU Cores]</span><br></pre></td></tr></table></figure>
-
-<h3 id="Store-Load-Buffer"><a href="#Store-Load-Buffer" class="headerlink" title="Store&#x2F;Load Buffer"></a>Store&#x2F;Load Buffer</h3><ul>
-<li><p>Load Buffer：</p>
-<ul>
-<li>位置：在 CPU 核心内部，靠近 Load&#x2F;Store Unit。</li>
-<li>功能：暂存“load”（读取）指令的结果，等待内存或缓存返回数据。</li>
-<li>使用场景：比如你访问一个变量 x，如果还没拿到内存值，它就被放在 load buffer 等待。</li>
-</ul>
-</li>
-<li><p>Store Buffer：保存尚未提交的 store 写操作（延迟写回），可被后续 load 查询（store-to-load forwarding）。内存屏障（memory fence）可强制“写入完成后再继续”。</p>
-<ul>
-<li>位置：同样在 CPU 核心内部，紧挨 Load Buffer。</li>
-<li>功能：当执行 x &#x3D; 5 这样的写操作时，并不会立刻写入内存，而是先写入 store buffer。</li>
-<li>延迟写回：写操作会被延后，在合适时机批量提交到缓存或主存中。</li>
-<li>注意：这就是为什么需要内存屏障（memory fence）来强制“写入完成后再继续”。</li>
-</ul>
-</li>
-</ul>
-<p>Store&#x2F;Load Buffer是一个具备调度逻辑的指令队列，不是为了“缓存数据”。<br>之所以叫”Buffer”而不是”Queue”，是强调其“乱序 + 并发调度能力”。</p>
-<p>与普通队列的对比：</p>
-<table>
-<thead>
-<tr>
-<th>对比项</th>
-<th>普通队列</th>
-<th>Load Buffer</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>数据结构</td>
-<td>FIFO 队列</td>
-<td>类似 CAM（Content Addressable Memory）或乱序数组</td>
-</tr>
-<tr>
-<td>访问方式</td>
-<td>一次 pop 一个</td>
-<td>任意条目都能被访问、发射、取消</td>
-</tr>
-<tr>
-<td>顺序</td>
-<td>严格顺序</td>
-<td>支持乱序发射、乱序完成、乱序提交</td>
-</tr>
-<tr>
-<td>功能</td>
-<td>暂存数据</td>
-<td>追踪地址、状态、与 Store Buffer 比较、rollback 等</td>
-</tr>
-</tbody></table>
-<p>Intel 和 ARM 的实际叫法</p>
-<ul>
-<li><p>Intel 官方架构手册：</p>
-<ul>
-<li>用词是 Load Buffer &#x2F; Store Buffer</li>
-<li>有时叫 “Memory Ordering Buffer”</li>
-</ul>
-</li>
-<li><p>ARM 架构（如 Cortex-A76）</p>
-<ul>
-<li>常叫：Load-Store Queue（LSQ）</li>
-<li>还会细分为：<ul>
-<li>Load Queue（LQ）</li>
-<li>Store Queue（SQ）</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<p>但即使叫“Queue”，也不一定是严格的队列行为，而是调度窗口结构。</p>
-<h3 id="缓存行（Cache-Line）"><a href="#缓存行（Cache-Line）" class="headerlink" title="缓存行（Cache Line）"></a>缓存行（Cache Line）</h3><ul>
-<li>位置：在 CPU 的缓存（L1&#x2F;L2&#x2F;L3）中，缓存是以<strong>行（line）</strong>为单位存储的。</li>
-<li>功能：每行通常是 64 字节，它是 CPU 和内存之间最小的同步单位。</li>
-<li>状态（MESI 协议）：<ul>
-<li>M（Modified）: 修改过，主存未同步</li>
-<li>E（Exclusive）: 独占但未修改</li>
-<li>S（Shared）: 可共享读取</li>
-<li>I（Invalid）: 已失效</li>
-</ul>
-</li>
-</ul>
-<h3 id="总线（Memory-Bus-Interconnect）"><a href="#总线（Memory-Bus-Interconnect）" class="headerlink" title="总线（Memory Bus &#x2F; Interconnect）"></a>总线（Memory Bus &#x2F; Interconnect）</h3><ul>
-<li>位置：连接多个 CPU 核心、缓存、主存的通信通道。</li>
-<li>功能：<ul>
-<li>数据在 CPU 和内存之间传输</li>
-<li>执行原子操作时用于发送 <code>LOCK#</code> 或缓存一致性请求</li>
-</ul>
-</li>
-</ul>
-<p>🔗 示例：Intel 使用 Ring Bus、AMD 使用 Infinity Fabric。</p>
-<h3 id="主内存（Main-Memory-DRAM）"><a href="#主内存（Main-Memory-DRAM）" class="headerlink" title="主内存（Main Memory &#x2F; DRAM）"></a>主内存（Main Memory &#x2F; DRAM）</h3><ul>
-<li>位置：通常是系统主板上的 DRAM 芯片。</li>
-<li>功能：存储所有不在 cache 中的数据，访问速度比 cache 慢很多。</li>
-</ul>
-<p>🕓 延迟：访问主存通常需要 100ns ~ 几百ns，而访问 L1 Cache 只需几个 cycle。</p>
-<h3 id="内存控制器通道与总线的区别"><a href="#内存控制器通道与总线的区别" class="headerlink" title="内存控制器通道与总线的区别"></a>内存控制器通道与总线的区别</h3><table>
-<thead>
-<tr>
-<th>维度</th>
-<th>总线（Bus）</th>
-<th>内存控制器通道（Memory Channel）</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>硬件层级</td>
-<td>CPU、缓存、内存之间的共享通信总线</td>
-<td>内存控制器内部的通路，直接连接 DRAM 芯片</td>
-</tr>
-<tr>
-<td>作用范围</td>
-<td>跨多核、跨缓存，整个系统范围</td>
-<td>只负责访问主内存的某一部分，细粒度数据路径</td>
-</tr>
-<tr>
-<td>连接对象</td>
-<td>CPU核心、缓存、内存控制器等</td>
-<td>内存控制器与物理内存条之间的接口</td>
-</tr>
-<tr>
-<td>作用</td>
-<td>传递内存访问请求，实现缓存一致性协议</td>
-<td>调度内存读写，执行具体内存命令</td>
-</tr>
-<tr>
-<td>原子操作锁定对象</td>
-<td>锁定总线，阻止其他核访问内存</td>
-<td>锁定内存通道，防止同通道冲突访问</td>
-</tr>
-</tbody></table>
-<h2 id="乱序执行"><a href="#乱序执行" class="headerlink" title="乱序执行"></a>乱序执行</h2><p>现代 CPU 采用乱序执行（Out-of-Order Execution, OoO）优化性能：</p>
-<ul>
-<li>发射顺序有序（程序顺序）</li>
-<li>执行顺序无序（根据数据&#x2F;资源依赖动态调度）</li>
-<li>提交顺序有序（借助 ROB 保证提交的程序语义）</li>
-</ul>
-<p>核心机制：</p>
-<ul>
-<li>指令乱序执行：由调度器和执行单元动态决定执行顺序。</li>
-<li>寄存器重命名：使用临时物理寄存器消除写后写、写后读冲突。</li>
-<li>Load&#x2F;Store Buffer：用于暂存尚未提交的读写操作。</li>
-<li>ROB（Reorder Buffer）：按程序顺序提交指令（写入寄存器&#x2F;内存），确保最终结果可预测。</li>
-</ul>
-<p>程序顺序一致性（program-order consistency）：</p>
-<ul>
-<li>在本线程中观察到的顺序要“看起来像顺序执行”。</li>
-<li><strong>注意：</strong>多线程中可能出现乱序提交。</li>
-</ul>
-<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1.</span> <span class="keyword">Fetch</span>         &lt;<span class="comment">-- ✅ 顺序取指，从指令缓存中取出下一条指令</span></span><br><span class="line"><span class="number">2.</span> Decode        &lt;<span class="comment">-- 顺序解码，分析操作数和目的寄存器</span></span><br><span class="line"><span class="number">3.</span> <span class="keyword">Rename</span>        &lt;<span class="comment">-- 寄存器重命名</span></span><br><span class="line"><span class="number">4.</span> Dispatch      &lt;<span class="comment">-- 投递到调度窗口，等待执行条件满足</span></span><br><span class="line"><span class="number">5.</span> <span class="keyword">Execute</span>       &lt;<span class="comment">-- ✅ 乱序执行（由调度器决定），实际在执行单元上运行指令</span></span><br><span class="line"><span class="number">6.</span> Writeback     &lt;<span class="comment">-- 写结果到 ROB</span></span><br><span class="line"><span class="number">7.</span> <span class="keyword">Commit</span>        &lt;<span class="comment">-- ✅ 按程序顺序提交（retire），更新寄存器状态或进行内存写入</span></span><br></pre></td></tr></table></figure>
-
-<p>TODO: <strong>内存控制器</strong></p>
-<p><strong>扩展：寄存器重命名（Register Renaming）</strong></p>
-<p>现代 CPU 为了支持乱序执行（Out-of-Order Execution）和指令级并行（ILP），会引入比架构寄存器更多的物理寄存器，来存储中间值。</p>
-<p>寄存器重命名：CPU 用一张 寄存器映射表（Register Alias Table, RAT） 来将架构寄存器映射到物理寄存器。</p>
-<ul>
-<li>架构寄存器：由 ISA 定义，固定不变。x86-64 是 16 个通用寄存器。</li>
-<li>物理寄存器：由具体 CPU 实现，通常远多于架构寄存器。例如：<ul>
-<li>Intel 的 Skylake 有 180 个左右物理寄存器（整数+浮点）</li>
-<li>ARM 的 Cortex-A 系列也有几百个物理寄存器（实际数量通常保密）</li>
-</ul>
-</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th>类型</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><strong>物理寄存器</strong>（Physical Register）</td>
-<td>CPU 内部实际使用的、很多个</td>
-</tr>
-<tr>
-<td><strong>架构寄存器</strong>（Architectural Register）</td>
-<td>程序看到的，例如 RAX、RBX 等，一般只有 16~32 个</td>
-</tr>
-</tbody></table>
-<p>举例：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">MOV RAX, 1</span><br><span class="line">MOV RAX, 2</span><br><span class="line">ADD RAX, 3</span><br></pre></td></tr></table></figure>
-
-<p>执行流程：</p>
-<table>
-<thead>
-<tr>
-<th>指令</th>
-<th>分配的物理寄存器</th>
-<th>对应动作</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>1</td>
-<td>RAX → P1</td>
-<td>P1 ← 1</td>
-</tr>
-<tr>
-<td>2</td>
-<td>RAX → P2</td>
-<td>P2 ← 2（与1可并行执行）</td>
-</tr>
-<tr>
-<td>3</td>
-<td>用 P2 + 3</td>
-<td>写入 P3，RAX → P3</td>
-</tr>
-</tbody></table>
-<p>注意：</p>
-<ul>
-<li>三条指令都写的是 RAX，但实际上写的是 不同的物理寄存器（P1、P2、P3）</li>
-<li>只有最后提交阶段才把 RAX 映射为最终结果的寄存器（P3）</li>
-</ul>
-<h2 id="内存屏障"><a href="#内存屏障" class="headerlink" title="内存屏障"></a>内存屏障</h2><table>
-<thead>
-<tr>
-<th>屏障类型</th>
-<th>会阻止</th>
-<th>作用说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><code>SFENCE</code></td>
-<td>Store → Store 重排序</td>
-<td>前面的写必须完成再执行后面的写</td>
-</tr>
-<tr>
-<td><code>LFENCE</code></td>
-<td>Load → Load 重排序</td>
-<td>后面的读必须等前面的读完成</td>
-</tr>
-<tr>
-<td><code>MFENCE</code></td>
-<td>所有内存访问</td>
-<td>保证前面的 load&#x2F;store 全部完成</td>
-</tr>
-</tbody></table>
-<table>
-<thead>
-<tr>
-<th>问题</th>
-<th>答案</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>内存屏障是运行时插入的吗？</td>
-<td>❌ 插入时机是编译期，但运行时会执行它</td>
-</tr>
-<tr>
-<td>屏障如何阻止后面指令提前？</td>
-<td>✅ 屏障执行时会强制刷新缓冲区、阻止乱序执行</td>
-</tr>
-</tbody></table>
-<h2 id="缓存一致性协议（MESI）"><a href="#缓存一致性协议（MESI）" class="headerlink" title="缓存一致性协议（MESI）"></a>缓存一致性协议（MESI）</h2><p>MESI 协议的核心操作：</p>
-<ul>
-<li>读（load）：如果某核 cache 没有，就从主内存或其他核拉一份。</li>
-<li>写（store）：必须先让其他核的对应 cache line 失效（invalidate），否则就可能出现数据竞争。</li>
-</ul>
-<p><strong>atomic（哪怕是 relaxed）为什么会触发 invalidate？</strong></p>
-<p>当你写入一个 std::atomic<int>（哪怕是 relaxed）：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">x.<span class="built_in">store</span>(<span class="number">123</span>, std::memory_order_relaxed);</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>这个 store 会编译为一条特殊的汇编指令（如 MOV 带 lock 前缀，或 STLR, STR 等）</li>
-<li>CPU 会发出总线事务（bus transaction）或利用缓存一致性协议 广播这个写入：<ul>
-<li>让其他核心中缓存这个变量所在 cache line 的副本 全部失效（Invalidate）</li>
-</ul>
-</li>
-<li>所有核心必须从这个核心或主内存读取最新的值（下一次 load）</li>
-</ul>
-<h2 id="内存序"><a href="#内存序" class="headerlink" title="内存序"></a>内存序</h2><p>内存序 &#x3D; 程序中读写内存操作的可见顺序。</p>
-<p>在理想世界（顺序一致的架构）中，你写的代码顺序就是 CPU 执行和其他线程观察到的顺序。但现实中：</p>
-<ul>
-<li>CPU 会乱序执行（out-of-order）</li>
-<li>编译器会重排指令</li>
-<li>缓存系统和 store&#x2F;load buffer 会拖延内存访问</li>
-<li>多核之间访问的是缓存，而不是主内存</li>
-</ul>
-<p>👉 所以，需要有一套规则来定义：“内存操作到底是何时、如何被其他线程看见的”，这就是内存序的目标。</p>
-<p>概念 <a target="_blank" rel="noopener" href="https://cppreference.cn/w/cpp/atomic/memory_order">^1</a> <a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/atomic/memory_order.html">^2</a>：</p>
-<ul>
-<li><p><code>load</code>: 从内存<strong>读</strong>变量的值到CPU：内存 ➝ CPU。</p>
-</li>
-<li><p><code>store</code>: 把一个值从 CPU 的寄存器或处理单元中，<strong>写</strong>到内存中的某个地址（变量）：CPU ➝ 内存。</p>
-</li>
-<li><p><code>relaxed</code>: 对其他线程的读写没有同步或顺序约束，仅仅保证本操作的原子性。</p>
-</li>
-<li><p><code>acquire</code>: 对 <code>load</code> 操作的内存序语义约束。</p>
-<ul>
-<li>当前线程中的任何读写都不能重排序到此 <code>load</code> 之前；</li>
-<li>在其他线程中 <code>release</code> 同一原子变量的所有写入在当前线程中可见。</li>
-</ul>
-</li>
-<li><p><code>release</code>: 对 <code>store</code> 操作的内存序语义约束。</p>
-<ul>
-<li>当前线程中的任何读写都不能重排序到此 <code>store</code> 之后；</li>
-<li>当前线程的写入对 <code>acquire</code> 同一原子变量的其他线程可见。</li>
-</ul>
-</li>
-<li><p><code>acquire-release</code>: 对 <code>read-modify-write</code> 操作的内存序语义约束。</p>
-<ul>
-<li>当前线程中的任何读写不能重排序到此 <code>load</code> 之前，也不能重排序到此 <code>store</code> 之后。</li>
-<li>其他线程 <code>release</code> 同一原子变量的写操作，对该 <code>modification</code> 可见；</li>
-<li>该 <code>modification</code> 对 <code>acquire</code> 同一原子变量的其他线程可见。</li>
-</ul>
-</li>
-<li><p><code>sequentially-consistent</code>: </p>
-<ul>
-<li><code>load</code> 操作遵循 <code>acquire</code> 语义；</li>
-<li><code>store</code> 操作遵循 <code>release</code> 语义；</li>
-<li><code>read-modify-write</code> 操作同时遵循 <code>acquire</code> 和 <code>release</code> 语义；</li>
-<li>存在一个全序，其中所有线程都以相同的顺序观察所有修改。</li>
-</ul>
-</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th>内存序</th>
-<th>插入屏障</th>
-<th>特点</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>relaxed</td>
-<td>❌ 无</td>
-<td>只保证原子性，不保证顺序</td>
-</tr>
-<tr>
-<td>acquire</td>
-<td>✅ 读屏障</td>
-<td>阻止后续操作提前</td>
-</tr>
-<tr>
-<td>release</td>
-<td>✅ 写屏障</td>
-<td>阻止前面操作延后</td>
-</tr>
-<tr>
-<td>acquire-release</td>
-<td>✅ 两者都有</td>
-<td>双向有序</td>
-</tr>
-<tr>
-<td>seq_cst</td>
-<td>✅ 全屏障</td>
-<td>全局顺序一致性</td>
-</tr>
-</tbody></table>
-<table>
-<thead>
-<tr>
-<th>步骤</th>
-<th>普通变量</th>
-<th>atomic（relaxed）</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>1</td>
-<td>编译器可优化</td>
-<td>编译器必须保留这个操作</td>
-</tr>
-<tr>
-<td>2</td>
-<td>CPU 可能重排</td>
-<td>CPU 仍可能重排（因为是 relaxed）</td>
-</tr>
-<tr>
-<td>3</td>
-<td>缓存写入</td>
-<td>可能停在本核 cache 中，不通知他人</td>
-</tr>
-<tr>
-<td>4</td>
-<td>不触发 invalidate</td>
-<td>✅ 会触发 cache line invalidate</td>
-</tr>
-<tr>
-<td>5</td>
-<td>其他线程可见性低</td>
-<td>✅ 其他线程可读取到最新的值（但时序不保证）</td>
-</tr>
-</tbody></table>
-<p><strong>私注：</strong> </p>
-<ul>
-<li><code>acquire</code>: 当本线程读取后，本线程之后的操作都可以依赖这次读取（“后面的读写不得提前”）；</li>
-<li><code>release</code>: 当本线程允许写后，本线程之前的读写都完成了，即之后的操作都可以依赖此前的写入（“前面的读写不得滞后”）。</li>
-</ul>
-<p><strong>和普通变量相比，atomic<T>（即使是 relaxed）做了哪些额外工作？</strong></p>
-<p>atomic<T>（即使使用 memory_order_relaxed）和普通变量相比，最核心的区别是：原子变量保证原子性（atomicity）和可见性，而普通变量不能。</p>
-<ul>
-<li><p>保证操作的原子性</p>
-<blockquote>
-<p>所谓“原子性”，是指某个操作（如 load、store、CAS）要么全部完成、要么完全不做，不会出现中间状态。</p>
-</blockquote>
-<ul>
-<li><p>atomic<int> x;</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">x.<span class="built_in">store</span>(<span class="number">42</span>, std::memory_order_relaxed);</span><br></pre></td></tr></table></figure>
-
-<p>这个 store 是原子的：不会被打断、不会被分拆。</p>
-</li>
-<li><p>普通变量可能被编译器或 CPU 拆成多条指令（比如低 4 字节和高 4 字节分开发），多线程下可能看到“半成品”状态。</p>
-</li>
-</ul>
-</li>
-<li><p>触发 CPU 的 cache coherence 协议（MESI等）</p>
-<blockquote>
-<p>原子变量的访问会参与硬件层的缓存一致性协议，以保证多核 CPU 看到一致的值。</p>
-</blockquote>
-<ul>
-<li>即使是 relaxed，store 也会触发对应 cache line 的写入通知（invalidate）；</li>
-<li>普通变量（非 volatile、非 atomic）的访问，编译器会缓存到寄存器中，不一定会回写。</li>
-</ul>
-</li>
-<li><p>禁止编译器优化（只针对原子变量本身）</p>
-<blockquote>
-<p>编译器不能将多个 atomic store 合并，也不能删去它（不会当作“死代码”）。</p>
-</blockquote>
-<ul>
-<li><p>x.store(42, relaxed) 每次都必须发出一条指令；</p>
-</li>
-<li><p>对普通变量：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">x = <span class="number">42</span>;</span><br><span class="line">x = <span class="number">43</span>;</span><br></pre></td></tr></table></figure>
-
-<p>可能直接编译为 <code>x = 43;</code>，前一条被优化掉。</p>
-</li>
-</ul>
-</li>
-</ul>
-<p><strong>atomic&lt;T, relaxed&gt; 不做的事：</strong></p>
-<table>
-<thead>
-<tr>
-<th>功能</th>
-<th>atomic(relaxed)</th>
-<th>普通变量</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>保证<strong>原子性</strong></td>
-<td>✅ 是</td>
-<td>❌ 否</td>
-</tr>
-<tr>
-<td>保证<strong>可见性（跨线程）</strong></td>
-<td>✅ 是（通过 cache 协议）</td>
-<td>❌ 否</td>
-</tr>
-<tr>
-<td>禁止<strong>指令重排</strong>（保证顺序）</td>
-<td>❌ 否（只 relaxed）</td>
-<td>❌ 否</td>
-</tr>
-</tbody></table>
-<h3 id="屏障为什么要设置两种？"><a href="#屏障为什么要设置两种？" class="headerlink" title="屏障为什么要设置两种？"></a>屏障为什么要设置两种？</h3><p>性能优化 + 最小化开销 + 精确控制重排序方向。</p>
-<p>屏障的本质是“控制指令重排序”<br>但它并不一刀切地“全部阻止”，而是：</p>
-<table>
-<thead>
-<tr>
-<th>屏障类型</th>
-<th>阻止的方向（简化理解）</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><strong>读屏障</strong></td>
-<td>阻止 <strong>读-after-读</strong> 重排序（即前面的读取不能晚于后面的读取）</td>
-</tr>
-<tr>
-<td><strong>写屏障</strong></td>
-<td>阻止 <strong>写-after-写</strong> 重排序（即前面的写不能晚于后面的写）</td>
-</tr>
-<tr>
-<td><strong>全屏障</strong></td>
-<td>阻止 <strong>读&#x2F;写 与 所有后续指令的重排序</strong></td>
-</tr>
-</tbody></table>
-<p>为什么分开这么细？（硬件视角）</p>
-<p>现代 CPU 架构（如 x86, ARM）中：</p>
-<ul>
-<li><p>读和写通路是分离的</p>
-<ul>
-<li>读用 load buffer</li>
-<li>写用 store buffer</li>
-</ul>
-</li>
-<li><p>两者乱序的模式、处理机制、性能代价都不同！</p>
-</li>
-</ul>
-<p>所以，硬件支持你只加读屏障（LFENCE）或写屏障（SFENCE），能以更小代价完成你想要的顺序语义。</p>
-<p>举例：</p>
-<table>
-<thead>
-<tr>
-<th>操作</th>
-<th>屏障类型</th>
-<th>效果</th>
-<th>例子</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>等 <code>flag==1</code> 后再读取 data</td>
-<td><strong>读屏障</strong></td>
-<td>禁止 <code>data = ?</code> 提前执行</td>
-<td>load-acquire fence</td>
-</tr>
-<tr>
-<td><code>data=42</code> 后，才写 <code>flag=1</code></td>
-<td><strong>写屏障</strong></td>
-<td>禁止 <code>flag=1</code> 提前写出</td>
-<td>store-release fence</td>
-</tr>
-<tr>
-<td>多线程通信中，强一致顺序</td>
-<td><strong>全屏障</strong></td>
-<td>所有读写顺序完全禁止重排</td>
-<td>x86 <code>MFENCE</code></td>
-</tr>
-</tbody></table>
-<ul>
-<li>你可以只阻止读乱序 → 读屏障</li>
-<li>你可以只阻止写乱序 → 写屏障</li>
-<li>你可以全部阻止 → 全屏障</li>
-</ul>
-<h2 id="原子操作"><a href="#原子操作" class="headerlink" title="原子操作"></a>原子操作</h2><table>
-<thead>
-<tr>
-<th>层次</th>
-<th>机制</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>指令层</td>
-<td>原子指令（如 <code>lock cmpxchg</code>、<code>xadd</code>、<code>ldrex/strex</code>）</td>
-<td>提供不可中断的执行</td>
-</tr>
-<tr>
-<td>缓存层</td>
-<td>MESI 协议</td>
-<td>保证多个CPU缓存数据一致</td>
-</tr>
-<tr>
-<td>总线层</td>
-<td>总线锁定（旧方式）</td>
-<td>强制所有核等待该操作完成</td>
-</tr>
-<tr>
-<td>内存层</td>
-<td>内存屏障</td>
-<td>保证内存操作顺序正确可见</td>
-</tr>
-</tbody></table>
-<h3 id="CPU的原子指令如何实现的？"><a href="#CPU的原子指令如何实现的？" class="headerlink" title="CPU的原子指令如何实现的？"></a>CPU的原子指令如何实现的？</h3><p>CPU 的原子指令是在硬件微架构层面通过微操作（micro-ops）调度、缓存控制、总线协议协调等机制联合实现的。我们可以从以下几个层面来详细剖析：</p>
-<h4 id="微架构层面：锁住特定资源"><a href="#微架构层面：锁住特定资源" class="headerlink" title="微架构层面：锁住特定资源"></a>微架构层面：锁住特定资源</h4><p>当执行原子指令时，CPU 内部会采取 锁定机制，确保该操作的所有子步骤在执行时不会被打断。</p>
-<ul>
-<li>对于访问内存的原子操作，CPU 会尝试锁定：<ul>
-<li>缓存行（现代 CPU）</li>
-<li>或内存总线（旧 CPU）</li>
-</ul>
-</li>
-</ul>
-<p>以 x86 的 LOCK CMPXCHG 为例，它内部其实是：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (mem == eax) &#123;</span><br><span class="line">    mem = reg;</span><br><span class="line">    ZF = <span class="number">1</span>;</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    eax = mem;</span><br><span class="line">    ZF = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>这个流程在硬件中不是三条指令，而是一个专门的微操作指令组合包，称为“fused micro-op”，由 CPU 保证“执行期间中断关闭、禁止抢占”。</p>
-<h4 id="缓存一致性协议（MESI）保障原子性"><a href="#缓存一致性协议（MESI）保障原子性" class="headerlink" title="缓存一致性协议（MESI）保障原子性"></a>缓存一致性协议（MESI）保障原子性</h4><p>原子指令通常访问共享变量，这就需要解决缓存一致性问题。</p>
-<p>举例：两个 CPU 都缓存了某个共享变量的值<br>当 CPU1 执行原子写入（例如 lock xadd）时：</p>
-<p>CPU1 会尝试将该缓存行从 Shared → Modified 状态</p>
-<p>MESI 协议要求其他 CPU（如 CPU2）将该缓存行标记为 Invalid</p>
-<p>一旦独占，CPU1 就能安全完成读-改-写过程</p>
-<p>这种方式实现了 原子访问缓存行。</p>
-<h4 id="总线或互联互锁（bus-lock-interconnect-lock）"><a href="#总线或互联互锁（bus-lock-interconnect-lock）" class="headerlink" title="总线或互联互锁（bus lock &#x2F; interconnect lock）"></a>总线或互联互锁（bus lock &#x2F; interconnect lock）</h4><p>对于不在缓存中的内存地址（如非一致内存访问 NUMA、I&#x2F;O 内存等），现代 CPU 仍可能退回到：</p>
-<ul>
-<li>总线锁定（Bus Lock）</li>
-<li>内存控制器互锁（memory interconnect lock）</li>
-</ul>
-<p>比如 x86 的 lock 前缀会让 CPU 发出 LOCK# 信号，告诉其他核暂时禁止访问这段地址。</p>
-<p>这是一种慢但可靠的 fallback 机制，避免跨节点访问带来的竞态。</p>
-<h4 id="禁止乱序与流水线干预"><a href="#禁止乱序与流水线干预" class="headerlink" title="禁止乱序与流水线干预"></a>禁止乱序与流水线干预</h4><p>现代 CPU 为了性能采用乱序执行（Out-of-Order Execution）和流水线（Pipelining）机制。但原子操作必须：</p>
-<ul>
-<li>执行期间不得乱序</li>
-<li>禁止乱序缓存访问（如 Store Buffer 提前写入）</li>
-<li>强制所有早于它的读写完成，之后的读写等待</li>
-</ul>
-<p>这依赖于：</p>
-<ul>
-<li>微指令插入内存屏障（memory fence）</li>
-<li>暂停 load&#x2F;store buffer 的重排</li>
-<li>Flush pipeline &#x2F; reorder buffer</li>
-</ul>
-<p>这就是为什么原子操作通常比普通操作要慢的原因之一。</p>
-<h4 id="例子：lock-cmpxchg-的硬件执行流程"><a href="#例子：lock-cmpxchg-的硬件执行流程" class="headerlink" title="例子：lock cmpxchg 的硬件执行流程"></a>例子：lock cmpxchg 的硬件执行流程</h4><p>假设 CPU1 执行 lock cmpxchg [X], eax，大致流程如下：</p>
-<ul>
-<li>CPU1 发出 LOCK# 信号或锁住缓存行 X（取决于地址是否在 cache）</li>
-<li>向 MESI 控制器发请求，抢占地址 X 的 cache line 独占权限</li>
-<li>在其他核心收到 invalidation 后，CPU1 获得修改权限</li>
-<li>CPU1 比较 X 与 eax 的值，如果相等则更新为新值</li>
-<li>完成后通知 MESI controller，X 的状态设为 Modified</li>
-<li>操作结束，缓存一致性仍然维护</li>
-</ul>
-<p>整个过程是由硬件控制单元（Load&#x2F;Store Queue、Execution Unit、Bus Interface Unit）协调完成的。</p>
-<h4 id="小结：CPU-实现原子操作的关键机制"><a href="#小结：CPU-实现原子操作的关键机制" class="headerlink" title="小结：CPU 实现原子操作的关键机制"></a>小结：CPU 实现原子操作的关键机制</h4><table>
-<thead>
-<tr>
-<th>机制</th>
-<th>功能</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>原子指令（如 <code>lock cmpxchg</code>, <code>ldrex/strex</code>）</td>
-<td>提供原子读-改-写</td>
-</tr>
-<tr>
-<td>微操作调度锁定资源</td>
-<td>保证在流水线中不可拆分</td>
-</tr>
-<tr>
-<td>MESI 协议</td>
-<td>多核共享缓存一致性</td>
-</tr>
-<tr>
-<td>总线锁或互联锁</td>
-<td>防止跨核心或I&#x2F;O地址出现竞态</td>
-</tr>
-<tr>
-<td>内存屏障 &amp; 禁止乱序</td>
-<td>防止指令与缓存失序访问</td>
-</tr>
-</tbody></table>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/01/concurrency/%E7%BA%BF%E7%A8%8B%E7%8A%B6%E6%80%81%E8%BD%AC%E6%8D%A2/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/01/concurrency/%E7%BA%BF%E7%A8%8B%E7%8A%B6%E6%80%81%E8%BD%AC%E6%8D%A2/" class="post-title-link" itemprop="url">线程状态转换</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-01 12:18:07" itemprop="dateCreated datePublished" datetime="2025-08-01T12:18:07+00:00">2025-08-01</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-21 17:21:04" itemprop="dateModified" datetime="2025-08-21T17:21:04+00:00">2025-08-21</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="线程状态"><a href="#线程状态" class="headerlink" title="线程状态"></a>线程状态</h2><ul>
-<li>New（新建）：线程对象刚创建，还未开始执行。</li>
-<li>Ready（就绪）：线程准备好运行，等待调度器分配 CPU。</li>
-<li>Running（运行）：线程正在使用 CPU 执行指令。</li>
-<li>Blocked（阻塞）：线程在等待某个事件（如 I&#x2F;O、锁、条件变量等），不能运行。</li>
-<li>Terminated（终止）：线程执行完毕或被强制结束。</li>
-<li>Sleeping（休眠）：线程主动暂停一段时间（如 sleep()），不能被调度。</li>
-</ul>
-<h2 id="线程状态转换图"><a href="#线程状态转换图" class="headerlink" title="线程状态转换图"></a>线程状态转换图</h2><table>
-<thead>
-<tr>
-<th>当前状态</th>
-<th>触发条件</th>
-<th>转换后状态</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>New</td>
-<td>调用 start() 或 std::thread 构造函数</td>
-<td>Ready</td>
-<td>线程被创建，等待调度</td>
-</tr>
-<tr>
-<td>Ready</td>
-<td>被调度器选中</td>
-<td>Running</td>
-<td>获得 CPU，开始执行</td>
-</tr>
-<tr>
-<td>Running</td>
-<td>时间片耗尽 &#x2F; yield()</td>
-<td>Ready</td>
-<td>主动或被动让出 CPU，重新排队</td>
-</tr>
-<tr>
-<td>Running</td>
-<td>调用 sleep() &#x2F; wait() &#x2F; 等待锁</td>
-<td>Blocked &#x2F; Sleeping</td>
-<td>线程不能继续执行，等待事件或时间</td>
-</tr>
-<tr>
-<td>Blocked &#x2F; Sleeping</td>
-<td>条件满足 &#x2F; 时间到</td>
-<td>Ready</td>
-<td>线程重新具备运行条件，等待调度</td>
-</tr>
-<tr>
-<td>Running</td>
-<td>执行结束或异常</td>
-<td>Terminated</td>
-<td>线程生命周期结束</td>
-</tr>
-</tbody></table>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2736,20 +2163,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">93</span>
+          <span class="site-state-item-count">95</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">43</span>
+        <span class="site-state-item-count">44</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

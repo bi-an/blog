@@ -193,6 +193,648 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/22/%E6%B1%87%E7%BC%96%E4%B8%8Egdb/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/22/%E6%B1%87%E7%BC%96%E4%B8%8Egdb/" class="post-title-link" itemprop="url">汇编与 gdb</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2025-08-22 15:42:27 / Modified: 15:06:28" itemprop="dateCreated datePublished" datetime="2025-08-22T15:42:27+00:00">2025-08-22</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>我们在调试 release 版本的程序时，由于缺乏符号信息，所以需要通过寄存器来查看函数的参数、返回值等。</p>
+<h2 id="寄存器"><a href="#寄存器" class="headerlink" title="寄存器"></a>寄存器</h2><p>x86_64 架构常用寄存器</p>
+<table>
+<thead>
+<tr>
+<th align="center">寄存器</th>
+<th align="center">用途说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">rip</td>
+<td align="center">当前指令地址（程序计数器）</td>
+</tr>
+<tr>
+<td align="center">rsp</td>
+<td align="center">栈顶指针</td>
+</tr>
+<tr>
+<td align="center">rbp</td>
+<td align="center">栈帧基址</td>
+</tr>
+<tr>
+<td align="center">rax</td>
+<td align="center">函数返回值</td>
+</tr>
+<tr>
+<td align="center">rdi~r9</td>
+<td align="center">函数参数（前六个整数 &#x2F; 指针类型参数）</td>
+</tr>
+<tr>
+<td align="center">r10~r15</td>
+<td align="center">临时寄存器或扩展参数</td>
+</tr>
+<tr>
+<td align="center">xmm0~xmm7</td>
+<td align="center">浮点参数（如 double, float）</td>
+</tr>
+</tbody></table>
+<p>其中，函数参数寄存器：</p>
+<table>
+<thead>
+<tr>
+<th align="center">寄存器</th>
+<th align="center">参数位置</th>
+<th align="center">用途说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">rdi</td>
+<td align="center">第一个参数</td>
+<td align="center">通常用于传递指针或整数，如字符串地址、结构体指针等</td>
+</tr>
+<tr>
+<td align="center">rsi</td>
+<td align="center">第二个参数</td>
+<td align="center">常用于传递长度、标志位、或第二个数据指针</td>
+</tr>
+<tr>
+<td align="center">rdx</td>
+<td align="center">第三个参数</td>
+<td align="center">可用于传递大小、偏移量、或第三个数据值</td>
+</tr>
+<tr>
+<td align="center">rcx</td>
+<td align="center">第四个参数</td>
+<td align="center">常用于计数器、索引或第四个参数</td>
+</tr>
+<tr>
+<td align="center">r8</td>
+<td align="center">第五个参数</td>
+<td align="center">扩展参数，用于传递更多数据或标志位</td>
+</tr>
+<tr>
+<td align="center">r9</td>
+<td align="center">第六个参数</td>
+<td align="center">同样用于扩展参数，如结构体成员或函数指针</td>
+</tr>
+</tbody></table>
+<h2 id="gdb-查看寄存器命令"><a href="#gdb-查看寄存器命令" class="headerlink" title="gdb 查看寄存器命令"></a>gdb 查看寄存器命令</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看所有寄存器</span></span><br><span class="line">info registers</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看指定寄存器</span></span><br><span class="line">info registers rdi</span><br><span class="line"><span class="comment"># 或简写</span></span><br><span class="line">i r rdi</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看十六进制</span></span><br><span class="line">p/x <span class="variable">$rdx</span>    <span class="comment"># 十六进制</span></span><br><span class="line">p/d <span class="variable">$rdx</span>    <span class="comment"># 十进制</span></span><br><span class="line"><span class="comment"># 或简写</span></span><br><span class="line">p <span class="variable">$rdx</span></span><br></pre></td></tr></table></figure>
+
+<p>其中，<code>info registers</code> 会打印三列：</p>
+<ul>
+<li>第一列：寄存器名称</li>
+<li>第二列：寄存器的值（十六进制）</li>
+<li>第三列：寄存器的值（十进制；也可能是十六进制，用 <code>0x</code> 开头）</li>
+</ul>
+<p><code>info registers rdi</code> 与 <code>p $rdi</code> 效果相同。</p>
+<p>从寄存器查到的内存地址，可以用 <code>x</code> （examinze）命令来查看内存的值：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看指令</span></span><br><span class="line">x/i <span class="variable">$rip</span></span><br><span class="line"><span class="comment"># 查看栈顶</span></span><br><span class="line">x/16x <span class="variable">$rsp</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看内存</span></span><br><span class="line">p <span class="variable">$rdi</span></span><br><span class="line">x/2gx <span class="variable">$rdi</span></span><br><span class="line"><span class="comment"># 或先用 $rdi 查出内存地址，直接用地址访问</span></span><br><span class="line">x/2gx 47926411878160</span><br></pre></td></tr></table></figure>
+
+<p><code>x</code> 命令的说明：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">x/FMT ADDRESS</span><br></pre></td></tr></table></figure>
+
+<p>其中：</p>
+<ul>
+<li><code>x</code>：表示 “examine memory”（查看内存）</li>
+<li><code>2</code>：数字，表示要查看的单元数</li>
+<li><code>g</code>：表示每个单元的 size ，有 b(byte), h(halfword), w(word), g(giant, 8 bytes)</li>
+<li><code>x</code>：表示值的格式，有 o(octal), x(hex), d(decimal), u(unsigned decimal), t(binary), f(float), a(address), i(instruction), c(char), s(string)<br>and z(hex, zero padded on the left).</li>
+</ul>
+<p>在 gdb 命令行中使用 <code>help</code> 命令，可以查看命令的说明。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">(gdb) <span class="built_in">help</span> x</span><br><span class="line">Examine memory: x/FMT ADDRESS.</span><br><span class="line">ADDRESS is an expression <span class="keyword">for</span> the memory address to examine.</span><br><span class="line">FMT is a repeat count followed by a format letter and a size letter.</span><br><span class="line">Format letters are o(octal), x(hex), d(decimal), u(unsigned decimal),</span><br><span class="line">  t(binary), f(<span class="built_in">float</span>), a(address), i(instruction), c(char), s(string)</span><br><span class="line">  and z(hex, zero padded on the left).</span><br><span class="line">Size letters are b(byte), h(halfword), w(word), g(giant, 8 bytes).</span><br><span class="line">The specified number of objects of the specified size are printed</span><br><span class="line">according to the format.  If a negative number is specified, memory is</span><br><span class="line">examined backward from the address.</span><br><span class="line"></span><br><span class="line">Defaults <span class="keyword">for</span> format and size letters are those previously used.</span><br><span class="line">Default count is 1.  Default address is following last thing printed</span><br><span class="line">with this <span class="built_in">command</span> or <span class="string">&quot;print&quot;</span>.</span><br></pre></td></tr></table></figure>
+
+<h2 id="frame-与寄存器的值"><a href="#frame-与寄存器的值" class="headerlink" title="frame 与寄存器的值"></a><code>frame</code> 与寄存器的值</h2><ul>
+<li>GDB 中的寄存器值（如 <code>$rax</code>, <code>$rdi</code>, <code>$rsp</code> 等）是当前 CPU 执行上下文的快照。</li>
+<li>当你切换到 <code>frame 0</code>（最内层栈帧） 时，寄存器值是最真实的，因为这是程序当前正在执行的地方。</li>
+<li>当你切换到 外层栈帧（frame 1, 2, …） 时，GDB 会尝试还原当时的寄存器状态，但这依赖于：<ul>
+<li>编译器是否保存了寄存器值（如 callee-saved）</li>
+<li>是否有调试符号或 unwind 信息</li>
+<li>GDB 是否能推断出寄存器的保存位置</li>
+</ul>
+</li>
+</ul>
+<p>寄存器值可能出现的情况</p>
+<table>
+<thead>
+<tr>
+<th align="center">情况</th>
+<th align="center">表现</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">寄存器是 caller-saved（如 rdi, rsi, rax）</td>
+<td align="center">可能显示 <not saved> 或错误值</td>
+</tr>
+<tr>
+<td align="center">寄存器是 callee-saved（如 rbx, rbp, r12~r15）</td>
+<td align="center">通常能正确还原</td>
+</tr>
+<tr>
+<td align="center">没有调试信息或优化严重</td>
+<td align="center">GDB 无法还原，显示当前值或 <not saved></td>
+</tr>
+</tbody></table>
+<p>建议</p>
+<ul>
+<li>如果你要分析寄存器状态，最好在 frame 0 或断点处进行。</li>
+<li>如果你在分析 core dump 或栈破坏问题，寄存器值只能作为参考，不要完全依赖外层 frame 的寄存器快照。</li>
+<li>使用 info args 和 info locals 更可靠地查看参数和局部变量（如果有符号信息）。</li>
+</ul>
+<h2 id="在特定线程中设置断点"><a href="#在特定线程中设置断点" class="headerlink" title="在特定线程中设置断点"></a>在特定线程中设置断点</h2><h3 id="断点只作用于某线程"><a href="#断点只作用于某线程" class="headerlink" title="断点只作用于某线程"></a>断点只作用于某线程</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看所有线程 ID 和当前线程 ID（gdb 中会使用 * 标注当前线程）</span></span><br><span class="line">(gdb) info threads</span><br><span class="line"><span class="comment"># 切换当前上下文到指定线程</span></span><br><span class="line">(gdb) thread &lt;THREAD_ID&gt;</span><br><span class="line"><span class="comment"># 通过查看当前堆栈是不是自己要断点的线程</span></span><br><span class="line">(gdb) bt</span><br><span class="line">(gdb) <span class="built_in">break</span> LOCATION thread THREADNUM</span><br><span class="line"><span class="comment"># 条件断点</span></span><br><span class="line">(gdb) <span class="built_in">break</span> source.c:123 thread 5 <span class="keyword">if</span> fds[0].fd == 7</span><br><span class="line"><span class="comment"># 如果没有 debug 符号，可以利用函数返回值寄存器断点</span></span><br><span class="line">(gdb) <span class="built_in">break</span> poll thread 2 <span class="keyword">if</span> <span class="variable">$rdx</span> &gt; 0</span><br><span class="line"><span class="comment"># 完整格式</span></span><br><span class="line"><span class="built_in">break</span> [PROBE_MODIFIER] [LOCATION] [thread THREADNUM] [<span class="keyword">if</span> CONDITION]</span><br></pre></td></tr></table></figure>
+
+<h3 id="锁定调度器，只让当前线程运行"><a href="#锁定调度器，只让当前线程运行" class="headerlink" title="锁定调度器，只让当前线程运行"></a>锁定调度器，只让当前线程运行</h3><p>默认情况下，GDB 会让所有线程一起运行（比如你执行 continue 时）。如果你只想让当前线程运行，其它线程保持暂停，可以使用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) <span class="built_in">set</span> scheduler-locking on</span><br></pre></td></tr></table></figure>
+
+<p>这表示：只有当前线程会执行，其他线程全部暂停。</p>
+<p>其中模式还有：</p>
+<table>
+<thead>
+<tr>
+<th align="center">模式</th>
+<th align="center">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">off</td>
+<td align="center">默认值，所有线程都可以运行</td>
+</tr>
+<tr>
+<td align="center">on</td>
+<td align="center">只有当前线程运行，其他线程暂停</td>
+</tr>
+<tr>
+<td align="center">step</td>
+<td align="center">单步调试时只运行当前线程，continue 时其他线程也会运行</td>
+</tr>
+</tbody></table>
+<p>你可以随时切换：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) <span class="built_in">set</span> scheduler-locking step</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>如果你在调试死锁、竞态或线程间通信问题，锁定调度器是非常有效的方式。</li>
+<li>如果你在调试某个 poll() 或 epoll_wait() 调用，只想观察某个线程的行为，可以结合 catch syscall 和 thread 命令一起使用。</li>
+</ul>
+<h2 id="查看汇编代码"><a href="#查看汇编代码" class="headerlink" title="查看汇编代码"></a>查看汇编代码</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看汇编代码，其中 &quot;=&gt;&quot; 标记的是当前执行位置</span></span><br><span class="line">(gdb) disassemble</span><br><span class="line"><span class="comment"># 反汇编指定地址范围</span></span><br><span class="line"><span class="comment"># 这会显示从当前指令开始的 32 字节范围内的汇编代码。</span></span><br><span class="line">(gdb) disassemble <span class="variable">$rip</span>, <span class="variable">$rip</span>+32</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看当前指令（x86）</span></span><br><span class="line">(gdb) x/i <span class="variable">$pc</span></span><br><span class="line"><span class="comment"># 或在 x86-64 架构下：</span></span><br><span class="line">(gdb) x/i <span class="variable">$rip</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Bonus: 默认 GDB 使用 AT&amp;T 风格（如 %rax），你可以切换为 Intel 风格</span></span><br><span class="line"><span class="comment"># 这样输出会更接近你在汇编教材或 IDA Pro 中看到的格式</span></span><br><span class="line">(gdb) <span class="built_in">set</span> disassembly-flavor intel</span><br></pre></td></tr></table></figure>
+
+<h2 id="位置无关代码（PIC）"><a href="#位置无关代码（PIC）" class="headerlink" title="位置无关代码（PIC）"></a>位置无关代码（PIC）</h2><ul>
+<li>位置无关代码（<code>PIC</code>）：程序可以在内存中的任意位置运行，不需要修改代码中的绝对地址。</li>
+<li>节省空间：相比使用 64 位绝对地址，RIP 相对寻址只需要一个 32 位偏移量。</li>
+<li>更安全：支持地址随机化（ASLR），提高程序的安全性。</li>
+</ul>
+<p>在 x86-64 架构中，传统的绝对地址寻址方式不再适用于位置无关代码。于是引入了 RIP（指令指针）相对寻址：</p>
+<p>假设你有一个全局变量 int x &#x3D; 42;，在汇编中访问它可能会变成：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">asm</span><br><span class="line">mov eax, DWORD PTR [rip + offset_to_x]</span><br></pre></td></tr></table></figure>
+
+<p>这里的 offset_to_x 是编译器计算出来的 x 相对于当前指令的偏移量。</p>
+<table>
+<thead>
+<tr>
+<th align="center">寻址方式</th>
+<th align="center">描述</th>
+<th align="center">是否位置无关</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">绝对地址寻址</td>
+<td align="center">使用固定地址，如 [0x400123]</td>
+<td align="center">❌ 否</td>
+</tr>
+<tr>
+<td align="center">寄存器间接寻址</td>
+<td align="center">如 [rax]，地址由寄存器决定</td>
+<td align="center">✅ 是</td>
+</tr>
+<tr>
+<td align="center">RIP 相对寻址</td>
+<td align="center">如 [rip + offset]，相对当前指令位置</td>
+<td align="center">✅ 是</td>
+</tr>
+</tbody></table>
+<p>但并不是所有 PIC 都用 RIP 相对寻址，PIC 的实现方式取决于：</p>
+<ul>
+<li>架构：在 x86（32 位）中没有 RIP 寄存器，PIC 通常通过 call 指令获取当前地址，再加偏移量。</li>
+<li>编译器策略：有些编译器会使用全局偏移表（GOT）或过程链接表（PLT）来实现位置无关性。</li>
+<li>访问目标：访问函数地址时可能通过 PLT；访问外部变量时可能通过 GOT；访问静态数据时可能用 RIP 相对寻址。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="center">架构</th>
+<th align="center">是否使用 RIP 相对寻址</th>
+<th align="center">是否支持位置无关代码</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">x86-64</td>
+<td align="center">✅ 常用，尤其访问数据段</td>
+<td align="center">✅ 强力支持（默认启用）</td>
+</tr>
+<tr>
+<td align="center">x86 (32位)</td>
+<td align="center">❌ 无 RIP，用其他方式实现</td>
+<td align="center">✅ 但需要特殊技巧</td>
+</tr>
+</tbody></table>
+<p>举个 gdb 调试的例子：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(gdb) x/i <span class="variable">$rip</span></span><br><span class="line">=&gt; 0x2ac084b5ec10 &lt;poll&gt;:       cmpl   <span class="variable">$0x0</span>,0x2d939d(%rip)        <span class="comment"># 0x2ac084e37fb4 &lt;__libc_multiple_threads&gt;</span></span><br><span class="line">(gdb) p (bool)<span class="variable">$__libc_multiple_threads</span></span><br><span class="line"><span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>cmpl $0x0, 0x2d939d(%rip)</code> 是一条比较指令（<code>cmp</code>），用于将某个内存地址中的值与立即数 <code>0</code> 进行比较。</li>
+<li><code>(%rip)</code> 表示使用 RIP 相对寻址，这是 x86-64 架构中常见的一种寻址方式。</li>
+<li>实际比较的是地址 <code>0x2ac084e37fb4</code> 处的值，也就是 <code>__libc_multiple_threads</code> 这个变量。</li>
+</ul>
+<p><code>__libc_multiple_threads</code> 是什么？</p>
+<ul>
+<li>这是 GNU C 库（glibc）中的一个内部变量，用来标记当前进程是否启用了多线程。</li>
+<li>如果这个值是 0，说明当前进程是单线程。</li>
+<li>如果是非零，说明进程中有多个线程。</li>
+</ul>
+<p>所以这条指令的作用是：判断当前进程是否是多线程环境，可能用于决定是否启用线程安全的行为。</p>
+<h3 id="为什么使用-RIP-相对寻址？"><a href="#为什么使用-RIP-相对寻址？" class="headerlink" title="为什么使用 RIP 相对寻址？"></a>为什么使用 RIP 相对寻址？</h3><ol>
+<li>RIP 是唯一始终已知的寄存器</li>
+</ol>
+<ul>
+<li>在执行指令时，CPU总是知道当前指令的地址（即 RIP）。</li>
+<li>所以可以在编译时计算出目标数据与当前指令之间的偏移量，而不需要知道数据的绝对地址。</li>
+</ul>
+<p>这就允许编译器生成位置无关代码，即使程序被加载到不同的内存地址，偏移量仍然有效。</p>
+<ol start="2">
+<li>其他寄存器值是动态的，不可预测</li>
+</ol>
+<ul>
+<li>比如 RBX、RAX、RDI 等寄存器，它们的值在运行时可能被程序修改。</li>
+<li>如果用这些寄存器做基址寻址，编译器就无法提前知道它们的值，也就无法生成稳定的偏移量。</li>
+</ul>
+<ol start="3">
+<li>支持共享库和地址空间布局随机化（ASLR）</li>
+</ol>
+<ul>
+<li>RIP 相对寻址让代码段不依赖固定地址，可以被多个进程共享。</li>
+<li>也支持操作系统在运行时随机加载地址，提高安全性（ASLR）。</li>
+</ul>
+<ol start="4">
+<li>节省指令空间</li>
+</ol>
+<ul>
+<li>使用 RIP 相对寻址只需要一个 32 位偏移量。</li>
+<li>如果使用绝对地址，需要嵌入完整的 64 位地址，指令长度更长，效率更低。</li>
+</ul>
+<h3 id="为什么使用-RIP-相对寻址只需要一个-32-位偏移量"><a href="#为什么使用-RIP-相对寻址只需要一个-32-位偏移量" class="headerlink" title="为什么使用 RIP 相对寻址只需要一个 32 位偏移量"></a>为什么使用 RIP 相对寻址只需要一个 32 位偏移量</h3><p>在 x86-64 架构中，RIP 相对寻址的偏移量被设计为一个有符号的 32 位整数，也就是一个 displacement（位移）字段，它在机器码中只占用 4 个字节。</p>
+<ul>
+<li><p>RIP 是 64 位的指令指针，表示当前指令的地址。</p>
+</li>
+<li><p>RIP 相对寻址的目标地址是通过：</p>
+<p><code>目标地址 = 下一条指令地址（RIP） + 32 位偏移量</code></p>
+</li>
+<li><p>这个偏移量是一个 有符号整数，所以它的范围是：</p>
+<p>从 −2³¹ 到 +2³¹−1，即 <strong>±2GB</strong> 的寻址范围。</p>
+</li>
+</ul>
+<p>这意味着，当前指令附近 ±2GB 范围内的任何数据都可以通过 RIP 相对寻址访问。</p>
+<table>
+<thead>
+<tr>
+<th align="center">优点</th>
+<th align="center">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">✅ 节省空间</td>
+<td align="center">只用 4 字节表示偏移，比使用完整 64 位地址节省指令长度</td>
+</tr>
+<tr>
+<td align="center">✅ 支持位置无关代码</td>
+<td align="center">编译器只需计算偏移，不依赖绝对地址</td>
+</tr>
+<tr>
+<td align="center">✅ 高效</td>
+<td align="center">CPU 执行时只需加法运算，无需查表或重定位</td>
+</tr>
+<tr>
+<td align="center">✅ 安全</td>
+<td align="center">支持地址空间布局随机化（ASLR），提高安全性</td>
+</tr>
+</tbody></table>
+<h3 id="为什么可以被多个进程共享？"><a href="#为什么可以被多个进程共享？" class="headerlink" title="为什么可以被多个进程共享？"></a>为什么可以被多个进程共享？</h3><p>因为代码中不再硬编码具体地址，多个进程可以：</p>
+<ul>
+<li>使用同一份物理内存中的代码段。</li>
+<li>每个进程有自己的数据段，但共享同一份只读代码。</li>
+</ul>
+<p>这大大节省了内存，提高了系统效率。</p>
+<p>举个例子：</p>
+<table>
+<thead>
+<tr>
+<th align="center">进程</th>
+<th align="center">加载地址</th>
+<th align="center">使用的代码段</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">A</td>
+<td align="center">0x400000</td>
+<td align="center">使用共享代码段</td>
+</tr>
+<tr>
+<td align="center">B</td>
+<td align="center">0x500000</td>
+<td align="center">使用共享代码段</td>
+</tr>
+</tbody></table>
+<p>两者的代码段内容完全一样，因为里面的寻址是相对 RIP 的，不依赖于加载地址。</p>
+<p>为什么绝对寻址不可以被多进程共享？</p>
+<ul>
+<li>每个进程的虚拟地址空间是独立的<ul>
+<li>操作系统为每个进程分配独立的虚拟地址空间。</li>
+<li>即使两个进程都加载了同一个程序，它们的地址空间可能完全不同。</li>
+<li>如果代码中使用绝对地址，加载到不同地址空间后，这些地址就不再有效。</li>
+</ul>
+</li>
+</ul>
+<p>所以，绝对地址在一个进程中是有效的，在另一个进程中可能就指向错误的地方或根本不存在。</p>
+<ul>
+<li><p>需要重定位，无法直接共享物理页</p>
+<ul>
+<li>如果使用绝对地址，操作系统必须在每个进程加载时对代码进行“重定位”，修改指令中的地址。</li>
+<li>一旦修改，代码段就变成了进程私有，不能共享同一份物理内存。</li>
+<li>而位置无关代码（如使用 RIP 相对寻址）不需要修改，可以直接映射到多个进程的地址空间。</li>
+</ul>
+</li>
+<li><p>违反共享库的设计原则</p>
+<ul>
+<li>动态链接库（如 <code>.so</code> 或 <code>.dll</code>）的核心优势就是可以被多个进程共享。</li>
+<li>如果库中使用绝对地址，每个进程都要有自己的副本，失去了共享的意义。</li>
+<li>正确做法是使用位置无关代码（PIC），让库在任意地址都能运行。</li>
+</ul>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="center">区域</th>
+<th align="center">是否可共享</th>
+<th align="center">原因说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">代码段</td>
+<td align="center">✅ 是</td>
+<td align="center">只读 + 位置无关，多个进程可映射同一物理页</td>
+</tr>
+<tr>
+<td align="center">数据段</td>
+<td align="center">❌ 否</td>
+<td align="center">每个进程的数据不同，需独立副本</td>
+</tr>
+<tr>
+<td align="center">堆</td>
+<td align="center">❌ 否</td>
+<td align="center">动态分配，地址空间不同</td>
+</tr>
+<tr>
+<td align="center">栈</td>
+<td align="center">❌ 否</td>
+<td align="center">私有调用栈，不能混用</td>
+</tr>
+<tr>
+<td align="center">共享内存段</td>
+<td align="center">✅ 是</td>
+<td align="center">显式创建，专门用于共享</td>
+</tr>
+</tbody></table>
+<p>如果你想深入了解某个进程的内存布局，可以分析 <code>/proc/[pid]/maps</code> 或用工具如 <code>pmap</code>、<code>vmmap</code>。</p>
+<h2 id="实际-debug-例子：在多线程中查看-poll-的事件"><a href="#实际-debug-例子：在多线程中查看-poll-的事件" class="headerlink" title="实际 debug 例子：在多线程中查看 poll 的事件"></a>实际 debug 例子：在多线程中查看 poll 的事件</h2><p>先复习下 <code>poll</code> 函数：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">poll</span><span class="params">(<span class="keyword">struct</span> pollfd *fds, <span class="type">nfds_t</span> nfds, <span class="type">int</span> timeout)</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 第一个参数 fds 的类型</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">pollfd</span> &#123;</span></span><br><span class="line">    <span class="type">int</span>   fd;         <span class="comment">/* file descriptor */</span></span><br><span class="line">    <span class="type">short</span> events;     <span class="comment">/* requested events */</span></span><br><span class="line">    <span class="type">short</span> revents;    <span class="comment">/* returned events */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看 polll 的汇编代码</span></span><br><span class="line">(gdb) disass poll</span><br><span class="line">Dump of assembler code <span class="keyword">for</span> <span class="keyword">function</span> poll:</span><br><span class="line">   0x00002ac084b5ec10 &lt;+0&gt;:     cmpl   <span class="variable">$0x0</span>,0x2d939d(%rip)        <span class="comment"># 0x2ac084e37fb4 &lt;__libc_multiple_threads&gt;</span></span><br><span class="line">   0x00002ac084b5ec17 &lt;+7&gt;:     jne    0x2ac084b5ec29 &lt;poll+25&gt;</span><br><span class="line">   0x00002ac084b5ec19 &lt;+0&gt;:     mov    <span class="variable">$0x7</span>,%eax</span><br><span class="line">   0x00002ac084b5ec1e &lt;+5&gt;:     syscall </span><br><span class="line">   0x00002ac084b5ec20 &lt;+7&gt;:     cmp    <span class="variable">$0xfffffffffffff001</span>,%rax</span><br><span class="line">   0x00002ac084b5ec26 &lt;+13&gt;:    jae    0x2ac084b5ec59 &lt;poll+73&gt;</span><br><span class="line">   0x00002ac084b5ec28 &lt;+15&gt;:    ret    </span><br><span class="line">   0x00002ac084b5ec29 &lt;+25&gt;:    sub    <span class="variable">$0x8</span>,%rsp</span><br><span class="line">   0x00002ac084b5ec2d &lt;+29&gt;:    call   0x2ac084b77600 &lt;__libc_enable_asynccancel&gt;</span><br><span class="line">   0x00002ac084b5ec32 &lt;+34&gt;:    mov    %rax,(%rsp)</span><br><span class="line">   0x00002ac084b5ec36 &lt;+38&gt;:    mov    <span class="variable">$0x7</span>,%eax</span><br><span class="line">   0x00002ac084b5ec3b &lt;+43&gt;:    syscall </span><br><span class="line">   0x00002ac084b5ec3d &lt;+45&gt;:    mov    (%rsp),%rdi</span><br><span class="line">   0x00002ac084b5ec41 &lt;+49&gt;:    mov    %rax,%rdx</span><br><span class="line">   0x00002ac084b5ec44 &lt;+52&gt;:    call   0x2ac084b77660 &lt;__libc_disable_asynccancel&gt;</span><br><span class="line">   0x00002ac084b5ec49 &lt;+57&gt;:    mov    %rdx,%rax</span><br><span class="line">   0x00002ac084b5ec4c &lt;+60&gt;:    add    <span class="variable">$0x8</span>,%rsp</span><br><span class="line">   0x00002ac084b5ec50 &lt;+64&gt;:    cmp    <span class="variable">$0xfffffffffffff001</span>,%rax</span><br><span class="line">   0x00002ac084b5ec56 &lt;+70&gt;:    jae    0x2ac084b5ec59 &lt;poll+73&gt;</span><br><span class="line">=&gt; 0x00002ac084b5ec58 &lt;+72&gt;:    ret    </span><br><span class="line">   0x00002ac084b5ec59 &lt;+73&gt;:    mov    0x2d31f0(%rip),%rcx        <span class="comment"># 0x2ac084e31e50</span></span><br><span class="line">   0x00002ac084b5ec60 &lt;+80&gt;:    neg    %eax</span><br><span class="line">   0x00002ac084b5ec62 &lt;+82&gt;:    mov    %eax,%fs:(%rcx)</span><br><span class="line">   0x00002ac084b5ec65 &lt;+85&gt;:    or     <span class="variable">$0xffffffffffffffff</span>,%rax</span><br><span class="line">   0x00002ac084b5ec69 &lt;+89&gt;:    ret</span><br><span class="line"></span><br><span class="line"><span class="comment"># 找到所有的 ret 指令，设置条件断点</span></span><br><span class="line"><span class="comment"># 注意：最好是在 ret 指令之前的指令上也加上断点，</span></span><br><span class="line"><span class="comment"># 因为 ret 的时候，可能已经把当前栈（除 rsp / rbp 外）都弹出了，寄存器中将看不到当前栈的信息</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># $rax 是返回值寄存器，也就是返回大于 0 时，让进程暂停</span></span><br><span class="line"><span class="comment"># 这里的 * 表示取内存的值（存放的是指令），* 断不可少，不然会被认为是 Function name</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line">(gdb) b *0x00002ac084b5ec26 thread 4 <span class="keyword">if</span> <span class="variable">$rax</span> &gt; 0</span><br><span class="line">(gdb) b *0x00002ac084b5ec28 thread 4 <span class="keyword">if</span> <span class="variable">$rax</span> &gt; 0</span><br><span class="line">(gdb) b *0x00002ac084b5ec56 thread 4 <span class="keyword">if</span> <span class="variable">$rax</span> &gt; 0</span><br><span class="line">(gdb) b *0x00002ac084b5ec58 thread 4 <span class="keyword">if</span> <span class="variable">$rax</span> &gt; 0</span><br><span class="line">(gdb) b *0x00002ac084b5ec65 thread 4 <span class="keyword">if</span> <span class="variable">$rax</span> &gt; 0</span><br><span class="line">(gdb) b *0x00002ac084b5ec69 thread 4 <span class="keyword">if</span> <span class="variable">$rax</span> &gt; 0</span><br><span class="line"></span><br><span class="line"><span class="comment"># 继续运行</span></span><br><span class="line">(gdb) c</span><br><span class="line"></span><br><span class="line"><span class="comment"># 当 IO 事件发生，程序会被暂停</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/21/dmtcp/DMTCP%E4%B9%8B%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86jalib/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/21/dmtcp/DMTCP%E4%B9%8B%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86jalib/" class="post-title-link" itemprop="url">DMTCP 之内存管理 (jalib)</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-08-21 09:59:55" itemprop="dateCreated datePublished" datetime="2025-08-21T09:59:55+00:00">2025-08-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-22 15:06:28" itemprop="dateModified" datetime="2025-08-22T15:06:28+00:00">2025-08-22</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/DMTCP/" itemprop="url" rel="index"><span itemprop="name">DMTCP</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="源码"><a href="#源码" class="headerlink" title="源码"></a>源码</h2><p><a target="_blank" rel="noopener" href="https://github.com/dmtcp/dmtcp/tree/main/jalib">https://github.com/dmtcp/dmtcp/tree/main/jalib</a></p>
+<h2 id="malloc-的特性和局限"><a href="#malloc-的特性和局限" class="headerlink" title="malloc 的特性和局限"></a>malloc 的特性和局限</h2><p><code>malloc</code>&#x2F;<code>free</code> 是操作系统（或 C 库）提供的通用堆分配器。</p>
+<ul>
+<li>它通常会采用 “内存池 + 分块 + 空闲链表” 等技术，但它为了通用性和线程安全，设计得很复杂，开销较大。</li>
+<li>在高并发 &#x2F; 频繁小块分配释放的场景下，<code>malloc</code> 的性能和碎片控制未必理想。</li>
+</ul>
+<p><code>malloc</code> 很难让你：</p>
+<ul>
+<li>控制分配内存的位置（如 DMTCP 需要特殊内存区域）</li>
+<li>统计 &#x2F; 追踪所有分配的内存块</li>
+<li>实现定制的分配策略（如无锁、分层小块池、预扩展等）</li>
+<li>轻松调试和隔离内存问题</li>
+</ul>
+<h3 id="内存碎片"><a href="#内存碎片" class="headerlink" title="内存碎片"></a>内存碎片</h3><p>malloc 的确在其实现内部也维护着自己的 “内存池”，并且会对小块内存（small bins&#x2F;tcache&#x2F;fast bins 等）做优化和分组管理。比如在 glibc 的 malloc（ptmalloc）中，就有针对小块内存的快速分配机制。</p>
+<ol>
+<li><p>malloc 是 “通用分配器”<br>malloc 需要支持所有应用场景，包括大 &#x2F; 小 &#x2F; 奇异尺寸的分配、跨多线程、兼容各种系统调用和 ABI。<br>为了兼容性和健壮性，malloc 实现复杂，包含很多额外的元数据和检查，导致分配 &#x2F; 释放开销更大。</p>
+</li>
+<li><p>malloc 的小块管理是 “全局的”<br>malloc 管理的小块是全进程共享的，所有线程 &#x2F; 模块都会竞争同一套管理结构（如 fastbin、tcache、small bin）。<br>在高并发、频繁小块分配 &#x2F; 释放的场景下，锁竞争和同步成本变高，可能成为性能瓶颈。</p>
+</li>
+<li><p>自定义分配器（如 jalib）“更窄、更专用”<br>jalib 只服务 DMTCP 内部的特殊内存分配需求，只关注固定几种典型的小块尺寸（如 64&#x2F;256&#x2F;1024…）。<br>可以用更简单、更高效的 “无锁链表 + 内存对齐块” 来管理池，分配和释放几乎都是 O(1)的原子操作。<br>不需要兼容所有 malloc 的场景（如 realloc、跨模块释放等），所以能极致优化。</p>
+</li>
+<li><p>控制权和可观测性<br>jalib 可以完全掌控池的生命周期、分配区域、分配策略（如预扩展、定制回收），还可以追踪统计、调试。<br>malloc 的内部状态你无法直接控制或感知，也无法方便地和 DMTCP 的 checkpoint、回滚等功能集成。</p>
+</li>
+<li><p>内存碎片和确定性<br>专用分配器能保证分配块 “定长、对齐”，几乎无碎片，分配和回收都是确定性的。<br>malloc 需要兼容各种尺寸，碎片和内存抖动不可避免。</p>
+</li>
+</ol>
+<h2 id="jalib（自定义分配器）的设计动机"><a href="#jalib（自定义分配器）的设计动机" class="headerlink" title="jalib（自定义分配器）的设计动机"></a>jalib（自定义分配器）的设计动机</h2><h3 id="性能优化"><a href="#性能优化" class="headerlink" title="性能优化"></a>性能优化</h3><ul>
+<li>DMTCP 频繁地分配和释放小块内存（如元数据、临时缓存等），如果每次都用 malloc，性能损耗大。</li>
+<li>jalib 采用分级固定块池，每次分配 &#x2F; 释放只需操作链表和原子变量，比 malloc 更快、更少碎片。</li>
+</ul>
+<h3 id="线程安全的高效实现"><a href="#线程安全的高效实现" class="headerlink" title="线程安全的高效实现"></a>线程安全的高效实现</h3><ul>
+<li>jalib 用无锁（128 位 CAS）或轻量级互斥方案，适合高并发分配 &#x2F; 释放。</li>
+<li>malloc 虽然线程安全，但实现方式更重，适用范围更广，未必最优。</li>
+</ul>
+<h3 id="可控性和可追踪性"><a href="#可控性和可追踪性" class="headerlink" title="可控性和可追踪性"></a>可控性和可追踪性</h3><ul>
+<li>jalib 可以统计分配次数、追踪所有内存池区，方便调试、分析和 checkpoint 恢复。</li>
+<li>可根据实际需求预分配或批量扩展，避免运行时大规模内存抖动。</li>
+</ul>
+<h3 id="适应-DMTCP-的特殊需求"><a href="#适应-DMTCP-的特殊需求" class="headerlink" title="适应 DMTCP 的特殊需求"></a>适应 DMTCP 的特殊需求</h3><ul>
+<li>DMTCP 需要在 checkpoint&#x2F;restore 时管理所有内存区域，jalib 可以定制分配区域、分配方式，malloc 无法满足。</li>
+<li>可实现特定平台的优化，如 mmap 固定地址分配等。</li>
+</ul>
+<h3 id="故障隔离和调试"><a href="#故障隔离和调试" class="headerlink" title="故障隔离和调试"></a>故障隔离和调试</h3><ul>
+<li>jalib 可以在有 bug 或内存泄漏时，帮助定位具体的分配 &#x2F; 释放流程。</li>
+<li>可以方便地记录所有 arena 信息，甚至实现特殊的调试模式。</li>
+</ul>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>虽然 malloc 也是内存池管理，但它是为通用用途设计的，不能满足 DMTCP 这类高性能、高可控性、特殊内存管理需求场景。自定义 jalib 分配器可以更高效地管理小块内存，优化多线程性能，便于调试和适配特定需求。</p>
+<p>可以归纳为三点：</p>
+<ul>
+<li>性能更高，碎片更少</li>
+<li>更好地适应 DMTCP 的需求</li>
+<li>更易于调试和控制</li>
+</ul>
+<h2 id="jalloc-设计思路"><a href="#jalloc-设计思路" class="headerlink" title="jalloc 设计思路"></a>jalloc 设计思路</h2><h3 id="多层级固定大小块分配（层级分配器）"><a href="#多层级固定大小块分配（层级分配器）" class="headerlink" title="多层级固定大小块分配（层级分配器）"></a>多层级固定大小块分配（层级分配器）</h3><ul>
+<li>设计了 5 个分配层级（lvl1~lvl5），每层负责不同大小的定长内存块（如 64、256、1024、4096、16384 字节）。</li>
+<li>小于等于这 5 个等级的分配请求，会被分配到各自的层级。</li>
+<li>超过最大层级的请求，则直接调用 <code>_alloc_raw</code>（通常是 <code>mmap</code>）。</li>
+</ul>
+<p>优点：</p>
+<ul>
+<li>小块内存可以复用，减少系统调用和碎片。</li>
+<li>大块内存仍可直接用系统接口，兼顾通用性。</li>
+</ul>
+<h3 id="固定块分配器-JFixedAllocStack"><a href="#固定块分配器-JFixedAllocStack" class="headerlink" title="固定块分配器 JFixedAllocStack"></a>固定块分配器 JFixedAllocStack</h3><p>每个层级对应一个 <code>JFixedAllocStack&lt;N&gt;</code>，其核心是无锁栈式管理：</p>
+<ul>
+<li>内部维护一个空闲块栈（LIFO 链表）。</li>
+<li>allocate 时从栈取出一个空闲块，栈空时调用 expand 申请一批新块。</li>
+<li>deallocate 时将块归还到栈顶。</li>
+</ul>
+<p>核心技术点</p>
+<ul>
+<li><p>原子双字比较交换（128 位 CAS）</p>
+<p>为了线程安全，栈顶指针 _top 需要原子更新。这里用到了 128 位 CAS（Compare-And-Swap），保证 node 指针和计数器同时更新，避免 ABA 问题。</p>
+</li>
+<li><p>CAS 不可用时的降级方案</p>
+<p>对于不支持 128 位原子操作的平台，采用 futex+memcpy 的方式手动实现互斥和原子性。</p>
+</li>
+</ul>
+<h3 id="线程安全设计"><a href="#线程安全设计" class="headerlink" title="线程安全设计"></a>线程安全设计</h3><p>分配和释放都用原子操作保护，无需锁，性能高。<br>多线程环境下不会出现竞争条件或内存破坏。</p>
+<h3 id="Arena-记录和调试"><a href="#Arena-记录和调试" class="headerlink" title="Arena 记录和调试"></a>Arena 记录和调试</h3><p>分配的内存区域（arena）可以记录到全局数组中，方便调试和统计。<br>通过 <code>JAlloc::getAllocArenas()</code> 可获得分配区域列表。</p>
+<h3 id="全局-new-delete-重载（可选）"><a href="#全局-new-delete-重载（可选）" class="headerlink" title="全局 new&#x2F;delete 重载（可选）"></a>全局 new&#x2F;delete 重载（可选）</h3><p>如果定义了 <code>OVERRIDE_GLOBAL_ALLOCATOR</code>，会重载 <code>operator new</code> 和 <code>operator delete</code>，让全局 <code>new</code>&#x2F;<code>delete</code> 也用这个分配器。</p>
+<h3 id="灵活切换"><a href="#灵活切换" class="headerlink" title="灵活切换"></a>灵活切换</h3><p>可以通过宏 <code>JALIB_ALLOCATOR</code> 切换：</p>
+<ul>
+<li>启用时用自定义分配器</li>
+<li>否则回退为标准 malloc&#x2F;free</li>
+</ul>
+<h3 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h3><p>本内存分配器的设计核心在于：</p>
+<ul>
+<li>采用多级固定块内存池 + 无锁算法，高效服务于小块高频分配 &#x2F; 释放；</li>
+<li>通过 128 位原子操作或 futex 确保并发安全，适用多平台；</li>
+<li>提供 arena 管理和统计，方便调试与维护；</li>
+<li>兼容传统分配方式，易于集成和切换。</li>
+</ul>
+<p>这种设计非常适合像 DMTCP 这样对性能和内存管理有特殊要求的系统级软件。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/20/EDA/EAD%E4%BB%BF%E7%9C%9F%E4%B9%8BMemory/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +866,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-21 17:21:04" itemprop="dateModified" datetime="2025-08-21T17:21:04+00:00">2025-08-21</time>
+                <time title="Modified: 2025-08-22 15:06:28" itemprop="dateModified" datetime="2025-08-22T15:06:28+00:00">2025-08-22</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -387,7 +1029,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-21 17:21:04" itemprop="dateModified" datetime="2025-08-21T17:21:04+00:00">2025-08-21</time>
+                <time title="Modified: 2025-08-22 15:06:28" itemprop="dateModified" datetime="2025-08-22T15:06:28+00:00">2025-08-22</time>
               </span>
 
           
@@ -405,7 +1047,7 @@
 <figure class="highlight cpp"><figcaption><span>tasks.hpp</span><a href="/blog/downloads/code/tbb/pipeline/tasks.hpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 模拟 IO 和 CPU 任务</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">DataChunk</span> {</span><br><span class="line">    std::vector&lt;<span class="type">char</span>&gt; data;</span><br><span class="line">    <span class="built_in">DataChunk</span>() = <span class="keyword">default</span>;</span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="title">DataChunk</span><span class="params">(<span class="type">size_t</span> size)</span> : data(size) {</span>}</span><br><span class="line">};</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">CompressedChunk</span> {</span><br><span class="line">    std::vector&lt;<span class="type">char</span>&gt; data;</span><br><span class="line">    <span class="built_in">CompressedChunk</span>() = <span class="keyword">default</span>;</span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="title">CompressedChunk</span><span class="params">(<span class="type">size_t</span> size)</span> : data(size) {</span>}</span><br><span class="line">};</span><br><span class="line"></span><br><span class="line"><span class="comment">// 模拟数据读取函数</span></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">read_from_network</span><span class="params">(DataChunk&amp; chunk)</span> </span>{</span><br><span class="line">    <span class="built_in">sleep</span>(<span class="number">3</span>);  <span class="comment">// 模拟 IO 延迟</span></span><br><span class="line"></span><br><span class="line">    chunk.data.<span class="built_in">resize</span>(<span class="number">100</span>);  <span class="comment">// 模拟每个数据块有 100 个字节</span></span><br><span class="line"></span><br><span class="line">    <span class="type">static</span> <span class="type">int</span> count = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> (count++ &gt;= <span class="number">10</span>) <span class="keyword">return</span> <span class="literal">false</span>;  <span class="comment">// 模拟读取 10 个数据块后结束</span></span><br><span class="line"></span><br><span class="line">    std::<span class="built_in">generate</span>(chunk.data.<span class="built_in">begin</span>(), chunk.data.<span class="built_in">end</span>(),</span><br><span class="line">                  []() { <span class="keyword">return</span> <span class="built_in">rand</span>() % <span class="number">256</span>; });</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// 模拟压缩函数</span></span><br><span class="line"><span class="function"><span class="type">char</span> <span class="title">compress_byte</span><span class="params">(<span class="type">char</span> byte)</span> </span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10&#x27;000ll</span>; ++i)</span><br><span class="line">        ;               <span class="comment">// 模拟 CPU busy</span></span><br><span class="line">    <span class="keyword">return</span> byte % <span class="number">128</span>;  <span class="comment">// 简单压缩算法示例</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// 模拟写入函数</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">write_to_file</span><span class="params">(<span class="type">const</span> CompressedChunk&amp; chunk)</span> </span>{</span><br><span class="line">    <span class="built_in">sleep</span>(<span class="number">3</span>);  <span class="comment">// 模拟 IO 延迟</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Writing chunk of size &quot;</span> &lt;&lt; chunk.data.<span class="built_in">size</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
 
 <p>方案一</p>
-<figure class="highlight cpp"><figcaption><span>1_message_queue.cpp</span><a href="/blog/downloads/code/tbb/pipeline/1_message_queue.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 方案 1：异步队列 + TBB 流水线</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tbb/tbb.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;condition_variable&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;mutex&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;queue&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;tasks.hpp&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 全局队列</span></span><br><span class="line">std::queue&lt;std::vector&lt;<span class="type">char</span>&gt;&gt; readQueue;</span><br><span class="line">std::mutex mtx;</span><br><span class="line">std::condition_variable cv;</span><br><span class="line">std::atomic_bool stop = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 读线程</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">networkReader</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">while</span> (!stop) {</span><br><span class="line">        DataChunk chunk;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (!<span class="built_in">read_from_network</span>(chunk))  <span class="comment">// 阻塞 I/O</span></span><br><span class="line">        {</span><br><span class="line">            stop = <span class="literal">true</span>;</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        {</span><br><span class="line">            <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(mtx)</span></span>;</span><br><span class="line">            readQueue.<span class="built_in">push</span>(std::<span class="built_in">move</span>(chunk.data));</span><br><span class="line">        }</span><br><span class="line">        cv.<span class="built_in">notify_one</span>();</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// 压缩任务</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">compressor</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">while</span> (!stop) {</span><br><span class="line">        DataChunk chunk;</span><br><span class="line">        {</span><br><span class="line">            <span class="function">std::unique_lock&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(mtx)</span></span>;</span><br><span class="line">            cv.<span class="built_in">wait</span>(lock, [] { <span class="keyword">return</span> !readQueue.<span class="built_in">empty</span>(); });</span><br><span class="line">            chunk.data = std::<span class="built_in">move</span>(readQueue.<span class="built_in">front</span>());</span><br><span class="line">            readQueue.<span class="built_in">pop</span>();</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        <span class="comment">// CPU 密集计算，使用 TBB 并行</span></span><br><span class="line">        <span class="function">CompressedChunk <span class="title">compressed</span><span class="params">(chunk.data.size())</span></span>;</span><br><span class="line">        tbb::<span class="built_in">parallel_for</span>(<span class="built_in">size_t</span>(<span class="number">0</span>), chunk.data.<span class="built_in">size</span>(), [&amp;](<span class="type">size_t</span> i) {</span><br><span class="line">            compressed.data[i] = <span class="built_in">compress_byte</span>(chunk.data[i]);  <span class="comment">// 假设单字节压缩</span></span><br><span class="line">        });</span><br><span class="line"></span><br><span class="line">        <span class="built_in">write_to_file</span>(compressed);  <span class="comment">// 可以异步</span></span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="function">std::thread <span class="title">reader</span><span class="params">(networkReader)</span></span>;</span><br><span class="line">    <span class="function">std::thread <span class="title">worker</span><span class="params">(compressor)</span></span>;</span><br><span class="line"></span><br><span class="line">    reader.<span class="built_in">join</span>();</span><br><span class="line">    worker.<span class="built_in">join</span>();</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><figcaption><span>1_message_queue.cpp</span><a href="/blog/downloads/code/tbb/pipeline/1_message_queue.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 方案 1：异步队列 + TBB 流水线</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tbb/tbb.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;condition_variable&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;mutex&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;queue&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;tasks.hpp&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 全局队列</span></span><br><span class="line">std::queue&lt;std::vector&lt;<span class="type">char</span>&gt;&gt; readQueue;</span><br><span class="line">std::mutex mtx;</span><br><span class="line">std::condition_variable cv;</span><br><span class="line">std::atomic_bool stop = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 读线程</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">networkReader</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">while</span> (!stop) {</span><br><span class="line">        DataChunk chunk;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (!<span class="built_in">read_from_network</span>(chunk))  <span class="comment">// 阻塞 I/O</span></span><br><span class="line">        {</span><br><span class="line">            stop.<span class="built_in">store</span>(<span class="literal">true</span>, memory_order::releaxed);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        {</span><br><span class="line">            <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(mtx)</span></span>;</span><br><span class="line">            readQueue.<span class="built_in">push</span>(std::<span class="built_in">move</span>(chunk.data));</span><br><span class="line">        }</span><br><span class="line">        cv.<span class="built_in">notify_one</span>();</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// 压缩任务</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">compressor</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">while</span> (!stop) {</span><br><span class="line">        DataChunk chunk;</span><br><span class="line">        {</span><br><span class="line">            <span class="function">std::unique_lock&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(mtx)</span></span>;</span><br><span class="line">            cv.<span class="built_in">wait</span>(lock, [] { <span class="keyword">return</span> !readQueue.<span class="built_in">empty</span>(); });</span><br><span class="line">            chunk.data = std::<span class="built_in">move</span>(readQueue.<span class="built_in">front</span>());</span><br><span class="line">            readQueue.<span class="built_in">pop</span>();</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        <span class="comment">// CPU 密集计算，使用 TBB 并行</span></span><br><span class="line">        <span class="function">CompressedChunk <span class="title">compressed</span><span class="params">(chunk.data.size())</span></span>;</span><br><span class="line">        tbb::<span class="built_in">parallel_for</span>(<span class="built_in">size_t</span>(<span class="number">0</span>), chunk.data.<span class="built_in">size</span>(), [&amp;](<span class="type">size_t</span> i) {</span><br><span class="line">            compressed.data[i] = <span class="built_in">compress_byte</span>(chunk.data[i]);  <span class="comment">// 假设单字节压缩</span></span><br><span class="line">        });</span><br><span class="line"></span><br><span class="line">        <span class="built_in">write_to_file</span>(compressed);  <span class="comment">// 可以异步</span></span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="function">std::thread <span class="title">reader</span><span class="params">(networkReader)</span></span>;</span><br><span class="line">    <span class="function">std::thread <span class="title">worker</span><span class="params">(compressor)</span></span>;</span><br><span class="line"></span><br><span class="line">    reader.<span class="built_in">join</span>();</span><br><span class="line">    worker.<span class="built_in">join</span>();</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
 
 <p>方案二</p>
 <figure class="highlight cpp"><figcaption><span>2_flow_graph.cpp</span><a href="/blog/downloads/code/tbb/pipeline/2_flow_graph.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 方案 2：TBB Flow Graph</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tbb/flow_graph.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tbb/tbb.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;tasks.hpp&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> tbb;</span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> tbb::flow;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    graph g;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 1. 读取节点（串行）</span></span><br><span class="line">    <span class="function">input_node&lt;DataChunk&gt; <span class="title">reader</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        g,</span></span></span><br><span class="line"><span class="params"><span class="function">        [](flow_control&amp; fc) -&gt; DataChunk {</span></span></span><br><span class="line"><span class="params"><span class="function">            DataChunk chunk(<span class="number">1024</span>);  <span class="comment">// 1KB数据块</span></span></span></span><br><span class="line"><span class="params"><span class="function">            <span class="keyword">if</span> (!read_from_network(chunk)) {</span></span></span><br><span class="line"><span class="params"><span class="function">                fc.stop();</span></span></span><br><span class="line"><span class="params"><span class="function">                <span class="keyword">return</span> DataChunk();</span></span></span><br><span class="line"><span class="params"><span class="function">            }</span></span></span><br><span class="line"><span class="params"><span class="function">            <span class="keyword">return</span> chunk;</span></span></span><br><span class="line"><span class="params"><span class="function">        })</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 并行处理节点（无限制并发）</span></span><br><span class="line">    <span class="function">function_node&lt;DataChunk, CompressedChunk&gt; <span class="title">processor</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        g, unlimited,</span></span></span><br><span class="line"><span class="params"><span class="function">        [](<span class="type">const</span> DataChunk&amp; input) -&gt; CompressedChunk {</span></span></span><br><span class="line"><span class="params"><span class="function">            CompressedChunk output(input.data.size());</span></span></span><br><span class="line"><span class="params"><span class="function"></span></span></span><br><span class="line"><span class="params"><span class="function">            tbb::parallel_for(</span></span></span><br><span class="line"><span class="params"><span class="function">                tbb::blocked_range&lt;<span class="type">size_t</span>&gt;(<span class="number">0</span>, input.data.size()),</span></span></span><br><span class="line"><span class="params"><span class="function">                [&amp;](<span class="type">const</span> tbb::blocked_range&lt;<span class="type">size_t</span>&gt;&amp; r) {</span></span></span><br><span class="line"><span class="params"><span class="function">                    <span class="keyword">for</span> (<span class="type">size_t</span> i = r.begin(); i != r.end(); ++i) {</span></span></span><br><span class="line"><span class="params"><span class="function">                        output.data[i] = compress_byte(input.data[i]);</span></span></span><br><span class="line"><span class="params"><span class="function">                    }</span></span></span><br><span class="line"><span class="params"><span class="function">                });</span></span></span><br><span class="line"><span class="params"><span class="function"></span></span></span><br><span class="line"><span class="params"><span class="function">            <span class="keyword">return</span> output;</span></span></span><br><span class="line"><span class="params"><span class="function">        })</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. 写入节点（串行保证写入顺序）</span></span><br><span class="line">    <span class="function">function_node&lt;CompressedChunk&gt; <span class="title">writer</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        g, serial,</span></span></span><br><span class="line"><span class="params"><span class="function">        [](<span class="type">const</span> CompressedChunk&amp; output) {</span></span></span><br><span class="line"><span class="params"><span class="function">            write_to_file(output);</span></span></span><br><span class="line"><span class="params"><span class="function">        })</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 构建数据流管道</span></span><br><span class="line">    <span class="built_in">make_edge</span>(reader, processor);</span><br><span class="line">    <span class="built_in">make_edge</span>(processor, writer);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 启动管道</span></span><br><span class="line">    reader.<span class="built_in">activate</span>();</span><br><span class="line">    g.<span class="built_in">wait_for_all</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
@@ -462,7 +1104,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-21 17:21:04" itemprop="dateModified" datetime="2025-08-21T17:21:04+00:00">2025-08-21</time>
+                <time title="Modified: 2025-08-22 15:06:28" itemprop="dateModified" datetime="2025-08-22T15:06:28+00:00">2025-08-22</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -890,7 +1532,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-21 17:21:04" itemprop="dateModified" datetime="2025-08-21T17:21:04+00:00">2025-08-21</time>
+                <time title="Modified: 2025-08-22 15:06:28" itemprop="dateModified" datetime="2025-08-22T15:06:28+00:00">2025-08-22</time>
               </span>
 
           
@@ -1012,7 +1654,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-21 17:21:04" itemprop="dateModified" datetime="2025-08-21T17:21:04+00:00">2025-08-21</time>
+                <time title="Modified: 2025-08-22 15:06:28" itemprop="dateModified" datetime="2025-08-22T15:06:28+00:00">2025-08-22</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1146,7 +1788,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-21 17:21:04" itemprop="dateModified" datetime="2025-08-21T17:21:04+00:00">2025-08-21</time>
+                <time title="Modified: 2025-08-22 15:06:28" itemprop="dateModified" datetime="2025-08-22T15:06:28+00:00">2025-08-22</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1262,7 +1904,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-21 17:21:04" itemprop="dateModified" datetime="2025-08-21T17:21:04+00:00">2025-08-21</time>
+                <time title="Modified: 2025-08-22 15:06:28" itemprop="dateModified" datetime="2025-08-22T15:06:28+00:00">2025-08-22</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1336,7 +1978,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-21 17:21:04" itemprop="dateModified" datetime="2025-08-21T17:21:04+00:00">2025-08-21</time>
+                <time title="Modified: 2025-08-22 15:06:28" itemprop="dateModified" datetime="2025-08-22T15:06:28+00:00">2025-08-22</time>
               </span>
 
           
@@ -1434,296 +2076,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/17/concurrency/%E8%AF%A6%E8%A7%A3RCU%E6%9C%BA%E5%88%B6/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/17/concurrency/%E8%AF%A6%E8%A7%A3RCU%E6%9C%BA%E5%88%B6/" class="post-title-link" itemprop="url">详解RCU机制</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-17 10:39:19" itemprop="dateCreated datePublished" datetime="2025-08-17T10:39:19+00:00">2025-08-17</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-21 17:21:04" itemprop="dateModified" datetime="2025-08-21T17:21:04+00:00">2025-08-21</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="RCU-读-复制-更新"><a href="#RCU-读-复制-更新" class="headerlink" title="RCU (读-复制-更新)"></a>RCU (读-复制-更新)</h2><p>RCU（Read-Copy-Update，读-拷贝-更新）是 Linux 内核中一种高效的 并发读-写同步机制，专门用于在多核系统下实现 大量读、少量写 的场景。它的核心思想是：读操作完全无锁，写操作通过复制更新，最后再安全地回收旧版本。</p>
-<p>RCU 的核心思想</p>
-<ul>
-<li>读操作直接访问数据结构，不加锁</li>
-<li>写操作：<ul>
-<li>先 复制原数据 → 修改副本</li>
-<li>更新指针，使新数据生效</li>
-<li>延迟回收旧数据，保证当前正在读取旧数据的线程不受影响</li>
-</ul>
-</li>
-</ul>
-<h3 id="rcu"><a href="#rcu" class="headerlink" title="__rcu"></a><code>__rcu</code></h3><p>它是 RCU 机制中非常关键的一环，用来让 编译器和内核知道某个指针是 RCU 保护的。</p>
-<ol>
-<li><code>__rcu</code> 的定义</li>
-</ol>
-<p>在 Linux 内核中（以 x86_64 为例）：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> __rcu</span></span><br></pre></td></tr></table></figure>
-
-<p>实际上，它 本身对编译器不产生直接影响</p>
-<p>主要用途是 标记类型，告诉 Sparse 静态分析工具 或 内核开发者：这个指针受 RCU 保护，不能随意直接读&#x2F;写</p>
-<p>也就是说，<code>__rcu</code> 是 一个注释性质的宏，编译器编译时忽略，但静态分析工具会检查 RCU 访问规则。</p>
-<ol start="2">
-<li><code>__rcu</code> 的作用</li>
-</ol>
-<p>标记 RCU 保护的指针，常见用法：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">files_struct</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">fdtable</span> __<span class="title">rcu</span> *<span class="title">fdt</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">file</span> __<span class="title">rcu</span> *<span class="title">fd_array</span>[<span class="title">NR_OPEN_DEFAULT</span>];</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<p>含义：</p>
-<ul>
-<li><code>fdt</code> 是 RCU 指针</li>
-<li>不能直接写 <code>fdt = new_ptr</code>; 或直接解引用 <code>fdt-&gt;xxx</code></li>
-<li>必须通过 RCU API，如：<ul>
-<li><code>rcu_assign_pointer(fdt, new_fdt);</code> → 安全更新指针</li>
-<li><code>rcu_dereference(fdt)</code> → 安全读取指针</li>
-</ul>
-</li>
-<li>这样可以保证：<ul>
-<li>写线程更新指针时不会破坏读线程的访问</li>
-<li>读线程可以无锁访问旧数据</li>
-</ul>
-</li>
-</ul>
-<ol start="3">
-<li><code>__rcu</code> 与编译器和内核</li>
-</ol>
-<ul>
-<li>静态检查（Sparse）<ul>
-<li>Sparse 是 Linux 内核推荐的静态分析工具</li>
-<li>它会检查：<ul>
-<li>所有 <code>__rcu</code> 指针的写操作是否用 <code>rcu_assign_pointer</code></li>
-<li>所有读取是否用 <code>rcu_dereference</code></li>
-</ul>
-</li>
-<li>如果直接访问，就会报错，避免 RCU 访问错误</li>
-</ul>
-</li>
-<li>内存屏障和优化<ul>
-<li><code>rcu_assign_pointer</code> 内部会加上 适当的写屏障 (<code>smp_wmb()</code>)</li>
-<li><code>rcu_dereference</code> 内部会加 读取屏障 (<code>smp_rmb()</code>)</li>
-<li>防止编译器&#x2F;CPU 重排导致读写顺序错误</li>
-</ul>
-</li>
-</ul>
-<ol start="4">
-<li><code>__rcu</code> 的核心原理总结</li>
-</ol>
-<table>
-<thead>
-<tr>
-<th>方面</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>编译器作用</td>
-<td>本身是空宏，不改变代码</td>
-</tr>
-<tr>
-<td>静态分析</td>
-<td>Sparse 检查 RCU 指针的安全读写</td>
-</tr>
-<tr>
-<td>内存屏障</td>
-<td>通过 <code>rcu_assign_pointer</code> &#x2F; <code>rcu_dereference</code> 添加屏障，保证并发安全</td>
-</tr>
-<tr>
-<td>运行时</td>
-<td>指针仍然是普通指针，实际存储和访问和普通指针一样</td>
-</tr>
-</tbody></table>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/16/os/%E9%AB%98%E6%95%88IO/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/16/os/%E9%AB%98%E6%95%88IO/" class="post-title-link" itemprop="url">高效 IO</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-16 23:40:06" itemprop="dateCreated datePublished" datetime="2025-08-16T23:40:06+00:00">2025-08-16</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-21 17:21:04" itemprop="dateModified" datetime="2025-08-21T17:21:04+00:00">2025-08-21</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="高效的-IO-函数"><a href="#高效的-IO-函数" class="headerlink" title="高效的 IO 函数"></a>高效的 IO 函数</h2><ul>
-<li>sendfile</li>
-<li>mmap + write</li>
-<li>splice</li>
-<li>readv</li>
-</ul>
-<h3 id="零拷贝-Zero-copy"><a href="#零拷贝-Zero-copy" class="headerlink" title="零拷贝 (Zero copy)"></a>零拷贝 (Zero copy)</h3><ul>
-<li>mmap + write</li>
-<li>sendfile</li>
-<li>splice</li>
-</ul>
-<h3 id="Page-cache-和异步-IO"><a href="#Page-cache-和异步-IO" class="headerlink" title="Page cache 和异步 IO"></a>Page cache 和异步 IO</h3><p><a target="_blank" rel="noopener" href="https://www.xiaolincoding.com/os/8_network_system/zero_copy.html#%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9B%B6%E6%8B%B7%E8%B4%9D">https://www.xiaolincoding.com/os/8_network_system/zero_copy.html#%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9B%B6%E6%8B%B7%E8%B4%9D</a></p>
-<ul>
-<li>O_DIRECT: 绕过操作系统缓存，直接读写磁盘，可以避免缓存延迟，提高性能。可用于：<ul>
-<li>数据库系统：对性能要求极高，且直接操作磁盘数据。</li>
-<li>存储设置：如 SSD、硬盘，直接与硬件设备进行高效的 I&#x2F;O 操作。</li>
-<li>注意：由于绕过了缓存，所以 read 如果小于当前数据包的大小，则本次 read 后，内核会直接丢弃多余的数据。这是为了避免多余的数据在内存中驻留。</li>
-</ul>
-</li>
-</ul>
-<h3 id="散布读写-Scatter-read-write"><a href="#散布读写-Scatter-read-write" class="headerlink" title="散布读写 (Scatter read&#x2F;write)"></a>散布读写 (Scatter read&#x2F;write)</h3><ul>
-<li>readv</li>
-<li>writev</li>
-</ul>
-<p>散布读写支持一次性将数据从文件描述符读写到多个缓冲区：</p>
-<ul>
-<li>避免多次系统调用；</li>
-<li>直接分块读取，不需要额外用户态 memcpy 到不同的块。</li>
-</ul>
-<h2 id="IO-复用"><a href="#IO-复用" class="headerlink" title="IO 复用"></a>IO 复用</h2><ul>
-<li>select</li>
-<li>poll</li>
-<li>epoll</li>
-<li>非阻塞 IO</li>
-</ul>
-<p>如果 select &#x2F; poll &#x2F; epoll 通知可读写，那么一定可读写吗？<br>答案是不一定。因为内核不是 ** 实时地 ** 检查内核缓冲区是否有空间或有数据，所以内核的通知有时间差和虚假性。<br>而 epoll 等函数只关注事件变化，不检查缓冲区。这样可以提高效率。<br>最终的结果就是鼓励用户程序尝试，但是不保证一定成功，也就是可能阻塞。所以需要非阻塞 IO 来进一步提高性能。</p>
-<h3 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h3><ul>
-<li>减少数据拷贝：select &#x2F; poll 只有一个函数，这会要求每次调用都必须将描述事件的数据从用户空间复制到内核空间；所以 epoll 拆分成三个函数，用户可以向内核直接注册事件数据；</li>
-<li>红黑树：epoll 事件数据是用红黑树来记录，增删查改的时间复杂度为 O(logn) ；select &#x2F; poll 是线性扫描，时间复杂度 O(n) 。红黑树需要额外的空间，所以这是空间换时间的办法。</li>
-</ul>
-<h4 id="EPOLLONESHOT"><a href="#EPOLLONESHOT" class="headerlink" title="EPOLLONESHOT"></a><code>EPOLLONESHOT</code></h4><p>阅读 manual：</p>
-<blockquote>
-<p>Since  even  with  edge-triggered  epoll,  multiple events can be generated upon receipt of multiple chunks of data, the caller has the option to specify the EPOLLONESHOT flag, to tell epoll to disable the associated file descriptor after the receipt of an event  with  epoll_wait(2).   When the EPOLLONESHOT flag is specified, it is the caller’s responsibility to rearm the file descriptor using epoll_ctl(2) with EPOLL_CTL_MOD.</p>
-</blockquote>
-<p>如果某个文件描述符上有多个数据块到达，那么即使是边沿触发也无法保证事件只通知一次。这可能是由于数据包过大被分片，或者是新数据到达。</p>
-<ul>
-<li>这在单线程程序上不会有太大影响，因为对同一个 fd 不会造成重复读写。</li>
-<li>多线程程序中，fd 准备好后，我们常常将这个 fd 交给某个线程去处理。此时如果 fd 有新的事件，会造成多线程处理同一个 fd 的情况。<ul>
-<li>为了避免竞争，要么加锁；要么使用内核的 ONESHOT 机制。后者由内核保证，无锁，更高效。</li>
-</ul>
-</li>
-<li><code>EPOLLONSHOT</code> 需要调用者自行 reset 这个标志。</li>
-</ul>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/salmonwilliam/article/details/112347938">https://blog.csdn.net/salmonwilliam/article/details/112347938</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1795,20 +2147,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">93</span>
+          <span class="site-state-item-count">95</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">43</span>
+        <span class="site-state-item-count">44</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

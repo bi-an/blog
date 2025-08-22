@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="源码https:&#x2F;&#x2F;github.com&#x2F;dmtcp&#x2F;dmtcp&#x2F;tree&#x2F;main&#x2F;jalib malloc 的特性和局限malloc&#x2F;free 是操作系统（或 C 库）提供的通用堆分配器。  它通常会采用 “内存池 + 分块 + 空闲链表” 等技术，但它为了通用性和线程安全，设计得很复杂，开销较大。 在高并发 &#x2F; 频繁小块分配释放的场景下，malloc 的性能和碎片控制未必">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DMTCP 之内存管理 (jalib)">
+<meta property="og:url" content="https://bi-an.github.io/blog/2025/08/21/dmtcp/DMTCP%E4%B9%8B%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86jalib/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="源码https:&#x2F;&#x2F;github.com&#x2F;dmtcp&#x2F;dmtcp&#x2F;tree&#x2F;main&#x2F;jalib malloc 的特性和局限malloc&#x2F;free 是操作系统（或 C 库）提供的通用堆分配器。  它通常会采用 “内存池 + 分块 + 空闲链表” 等技术，但它为了通用性和线程安全，设计得很复杂，开销较大。 在高并发 &#x2F; 频繁小块分配释放的场景下，malloc 的性能和碎片控制未必">
+<meta property="og:locale">
+<meta property="article:published_time" content="2025-08-21T09:59:55.000Z">
+<meta property="article:modified_time" content="2025-08-22T15:06:28.378Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="内存">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2025/08/21/dmtcp/DMTCP%E4%B9%8B%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86jalib/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>DMTCP 之内存管理 (jalib) | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-resource">
+
+    <a href="/blog/resources/" rel="section"><i class="fa fa-paperclip fa-fw"></i>Resource</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/21/dmtcp/DMTCP%E4%B9%8B%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86jalib/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          DMTCP 之内存管理 (jalib)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-08-21 09:59:55" itemprop="dateCreated datePublished" datetime="2025-08-21T09:59:55+00:00">2025-08-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-08-22 15:06:28" itemprop="dateModified" datetime="2025-08-22T15:06:28+00:00">2025-08-22</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/DMTCP/" itemprop="url" rel="index"><span itemprop="name">DMTCP</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="源码"><a href="#源码" class="headerlink" title="源码"></a>源码</h2><p><a target="_blank" rel="noopener" href="https://github.com/dmtcp/dmtcp/tree/main/jalib">https://github.com/dmtcp/dmtcp/tree/main/jalib</a></p>
+<h2 id="malloc-的特性和局限"><a href="#malloc-的特性和局限" class="headerlink" title="malloc 的特性和局限"></a>malloc 的特性和局限</h2><p><code>malloc</code>&#x2F;<code>free</code> 是操作系统（或 C 库）提供的通用堆分配器。</p>
+<ul>
+<li>它通常会采用 “内存池 + 分块 + 空闲链表” 等技术，但它为了通用性和线程安全，设计得很复杂，开销较大。</li>
+<li>在高并发 &#x2F; 频繁小块分配释放的场景下，<code>malloc</code> 的性能和碎片控制未必理想。</li>
+</ul>
+<p><code>malloc</code> 很难让你：</p>
+<ul>
+<li>控制分配内存的位置（如 DMTCP 需要特殊内存区域）</li>
+<li>统计 &#x2F; 追踪所有分配的内存块</li>
+<li>实现定制的分配策略（如无锁、分层小块池、预扩展等）</li>
+<li>轻松调试和隔离内存问题</li>
+</ul>
+<h3 id="内存碎片"><a href="#内存碎片" class="headerlink" title="内存碎片"></a>内存碎片</h3><p>malloc 的确在其实现内部也维护着自己的 “内存池”，并且会对小块内存（small bins&#x2F;tcache&#x2F;fast bins 等）做优化和分组管理。比如在 glibc 的 malloc（ptmalloc）中，就有针对小块内存的快速分配机制。</p>
+<ol>
+<li><p>malloc 是 “通用分配器”<br>malloc 需要支持所有应用场景，包括大 &#x2F; 小 &#x2F; 奇异尺寸的分配、跨多线程、兼容各种系统调用和 ABI。<br>为了兼容性和健壮性，malloc 实现复杂，包含很多额外的元数据和检查，导致分配 &#x2F; 释放开销更大。</p>
+</li>
+<li><p>malloc 的小块管理是 “全局的”<br>malloc 管理的小块是全进程共享的，所有线程 &#x2F; 模块都会竞争同一套管理结构（如 fastbin、tcache、small bin）。<br>在高并发、频繁小块分配 &#x2F; 释放的场景下，锁竞争和同步成本变高，可能成为性能瓶颈。</p>
+</li>
+<li><p>自定义分配器（如 jalib）“更窄、更专用”<br>jalib 只服务 DMTCP 内部的特殊内存分配需求，只关注固定几种典型的小块尺寸（如 64&#x2F;256&#x2F;1024…）。<br>可以用更简单、更高效的 “无锁链表 + 内存对齐块” 来管理池，分配和释放几乎都是 O(1)的原子操作。<br>不需要兼容所有 malloc 的场景（如 realloc、跨模块释放等），所以能极致优化。</p>
+</li>
+<li><p>控制权和可观测性<br>jalib 可以完全掌控池的生命周期、分配区域、分配策略（如预扩展、定制回收），还可以追踪统计、调试。<br>malloc 的内部状态你无法直接控制或感知，也无法方便地和 DMTCP 的 checkpoint、回滚等功能集成。</p>
+</li>
+<li><p>内存碎片和确定性<br>专用分配器能保证分配块 “定长、对齐”，几乎无碎片，分配和回收都是确定性的。<br>malloc 需要兼容各种尺寸，碎片和内存抖动不可避免。</p>
+</li>
+</ol>
+<h2 id="jalib（自定义分配器）的设计动机"><a href="#jalib（自定义分配器）的设计动机" class="headerlink" title="jalib（自定义分配器）的设计动机"></a>jalib（自定义分配器）的设计动机</h2><h3 id="性能优化"><a href="#性能优化" class="headerlink" title="性能优化"></a>性能优化</h3><ul>
+<li>DMTCP 频繁地分配和释放小块内存（如元数据、临时缓存等），如果每次都用 malloc，性能损耗大。</li>
+<li>jalib 采用分级固定块池，每次分配 &#x2F; 释放只需操作链表和原子变量，比 malloc 更快、更少碎片。</li>
+</ul>
+<h3 id="线程安全的高效实现"><a href="#线程安全的高效实现" class="headerlink" title="线程安全的高效实现"></a>线程安全的高效实现</h3><ul>
+<li>jalib 用无锁（128 位 CAS）或轻量级互斥方案，适合高并发分配 &#x2F; 释放。</li>
+<li>malloc 虽然线程安全，但实现方式更重，适用范围更广，未必最优。</li>
+</ul>
+<h3 id="可控性和可追踪性"><a href="#可控性和可追踪性" class="headerlink" title="可控性和可追踪性"></a>可控性和可追踪性</h3><ul>
+<li>jalib 可以统计分配次数、追踪所有内存池区，方便调试、分析和 checkpoint 恢复。</li>
+<li>可根据实际需求预分配或批量扩展，避免运行时大规模内存抖动。</li>
+</ul>
+<h3 id="适应-DMTCP-的特殊需求"><a href="#适应-DMTCP-的特殊需求" class="headerlink" title="适应 DMTCP 的特殊需求"></a>适应 DMTCP 的特殊需求</h3><ul>
+<li>DMTCP 需要在 checkpoint&#x2F;restore 时管理所有内存区域，jalib 可以定制分配区域、分配方式，malloc 无法满足。</li>
+<li>可实现特定平台的优化，如 mmap 固定地址分配等。</li>
+</ul>
+<h3 id="故障隔离和调试"><a href="#故障隔离和调试" class="headerlink" title="故障隔离和调试"></a>故障隔离和调试</h3><ul>
+<li>jalib 可以在有 bug 或内存泄漏时，帮助定位具体的分配 &#x2F; 释放流程。</li>
+<li>可以方便地记录所有 arena 信息，甚至实现特殊的调试模式。</li>
+</ul>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>虽然 malloc 也是内存池管理，但它是为通用用途设计的，不能满足 DMTCP 这类高性能、高可控性、特殊内存管理需求场景。自定义 jalib 分配器可以更高效地管理小块内存，优化多线程性能，便于调试和适配特定需求。</p>
+<p>可以归纳为三点：</p>
+<ul>
+<li>性能更高，碎片更少</li>
+<li>更好地适应 DMTCP 的需求</li>
+<li>更易于调试和控制</li>
+</ul>
+<h2 id="jalloc-设计思路"><a href="#jalloc-设计思路" class="headerlink" title="jalloc 设计思路"></a>jalloc 设计思路</h2><h3 id="多层级固定大小块分配（层级分配器）"><a href="#多层级固定大小块分配（层级分配器）" class="headerlink" title="多层级固定大小块分配（层级分配器）"></a>多层级固定大小块分配（层级分配器）</h3><ul>
+<li>设计了 5 个分配层级（lvl1~lvl5），每层负责不同大小的定长内存块（如 64、256、1024、4096、16384 字节）。</li>
+<li>小于等于这 5 个等级的分配请求，会被分配到各自的层级。</li>
+<li>超过最大层级的请求，则直接调用 <code>_alloc_raw</code>（通常是 <code>mmap</code>）。</li>
+</ul>
+<p>优点：</p>
+<ul>
+<li>小块内存可以复用，减少系统调用和碎片。</li>
+<li>大块内存仍可直接用系统接口，兼顾通用性。</li>
+</ul>
+<h3 id="固定块分配器-JFixedAllocStack"><a href="#固定块分配器-JFixedAllocStack" class="headerlink" title="固定块分配器 JFixedAllocStack"></a>固定块分配器 JFixedAllocStack</h3><p>每个层级对应一个 <code>JFixedAllocStack&lt;N&gt;</code>，其核心是无锁栈式管理：</p>
+<ul>
+<li>内部维护一个空闲块栈（LIFO 链表）。</li>
+<li>allocate 时从栈取出一个空闲块，栈空时调用 expand 申请一批新块。</li>
+<li>deallocate 时将块归还到栈顶。</li>
+</ul>
+<p>核心技术点</p>
+<ul>
+<li><p>原子双字比较交换（128 位 CAS）</p>
+<p>为了线程安全，栈顶指针 _top 需要原子更新。这里用到了 128 位 CAS（Compare-And-Swap），保证 node 指针和计数器同时更新，避免 ABA 问题。</p>
+</li>
+<li><p>CAS 不可用时的降级方案</p>
+<p>对于不支持 128 位原子操作的平台，采用 futex+memcpy 的方式手动实现互斥和原子性。</p>
+</li>
+</ul>
+<h3 id="线程安全设计"><a href="#线程安全设计" class="headerlink" title="线程安全设计"></a>线程安全设计</h3><p>分配和释放都用原子操作保护，无需锁，性能高。<br>多线程环境下不会出现竞争条件或内存破坏。</p>
+<h3 id="Arena-记录和调试"><a href="#Arena-记录和调试" class="headerlink" title="Arena 记录和调试"></a>Arena 记录和调试</h3><p>分配的内存区域（arena）可以记录到全局数组中，方便调试和统计。<br>通过 <code>JAlloc::getAllocArenas()</code> 可获得分配区域列表。</p>
+<h3 id="全局-new-delete-重载（可选）"><a href="#全局-new-delete-重载（可选）" class="headerlink" title="全局 new&#x2F;delete 重载（可选）"></a>全局 new&#x2F;delete 重载（可选）</h3><p>如果定义了 <code>OVERRIDE_GLOBAL_ALLOCATOR</code>，会重载 <code>operator new</code> 和 <code>operator delete</code>，让全局 <code>new</code>&#x2F;<code>delete</code> 也用这个分配器。</p>
+<h3 id="灵活切换"><a href="#灵活切换" class="headerlink" title="灵活切换"></a>灵活切换</h3><p>可以通过宏 <code>JALIB_ALLOCATOR</code> 切换：</p>
+<ul>
+<li>启用时用自定义分配器</li>
+<li>否则回退为标准 malloc&#x2F;free</li>
+</ul>
+<h3 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h3><p>本内存分配器的设计核心在于：</p>
+<ul>
+<li>采用多级固定块内存池 + 无锁算法，高效服务于小块高频分配 &#x2F; 释放；</li>
+<li>通过 128 位原子操作或 futex 确保并发安全，适用多平台；</li>
+<li>提供 arena 管理和统计，方便调试与维护；</li>
+<li>兼容传统分配方式，易于集成和切换。</li>
+</ul>
+<p>这种设计非常适合像 DMTCP 这样对性能和内存管理有特殊要求的系统级软件。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E5%86%85%E5%AD%98/" rel="tag"># 内存</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2025/08/20/EDA/EAD%E4%BB%BF%E7%9C%9F%E4%B9%8BMemory/" rel="prev" title="EDA 仿真之 Memory">
+      <i class="fa fa-chevron-left"></i> EDA 仿真之 Memory
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2025/08/22/%E6%B1%87%E7%BC%96%E4%B8%8Egdb/" rel="next" title="汇编与 gdb">
+      汇编与 gdb <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%BA%90%E7%A0%81"><span class="nav-text">源码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#malloc-%E7%9A%84%E7%89%B9%E6%80%A7%E5%92%8C%E5%B1%80%E9%99%90"><span class="nav-text">malloc 的特性和局限</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E7%A2%8E%E7%89%87"><span class="nav-text">内存碎片</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#jalib%EF%BC%88%E8%87%AA%E5%AE%9A%E4%B9%89%E5%88%86%E9%85%8D%E5%99%A8%EF%BC%89%E7%9A%84%E8%AE%BE%E8%AE%A1%E5%8A%A8%E6%9C%BA"><span class="nav-text">jalib（自定义分配器）的设计动机</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96"><span class="nav-text">性能优化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E7%9A%84%E9%AB%98%E6%95%88%E5%AE%9E%E7%8E%B0"><span class="nav-text">线程安全的高效实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%AF%E6%8E%A7%E6%80%A7%E5%92%8C%E5%8F%AF%E8%BF%BD%E8%B8%AA%E6%80%A7"><span class="nav-text">可控性和可追踪性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%82%E5%BA%94-DMTCP-%E7%9A%84%E7%89%B9%E6%AE%8A%E9%9C%80%E6%B1%82"><span class="nav-text">适应 DMTCP 的特殊需求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%85%E9%9A%9C%E9%9A%94%E7%A6%BB%E5%92%8C%E8%B0%83%E8%AF%95"><span class="nav-text">故障隔离和调试</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#jalloc-%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF"><span class="nav-text">jalloc 设计思路</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%9A%E5%B1%82%E7%BA%A7%E5%9B%BA%E5%AE%9A%E5%A4%A7%E5%B0%8F%E5%9D%97%E5%88%86%E9%85%8D%EF%BC%88%E5%B1%82%E7%BA%A7%E5%88%86%E9%85%8D%E5%99%A8%EF%BC%89"><span class="nav-text">多层级固定大小块分配（层级分配器）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9B%BA%E5%AE%9A%E5%9D%97%E5%88%86%E9%85%8D%E5%99%A8-JFixedAllocStack"><span class="nav-text">固定块分配器 JFixedAllocStack</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E8%AE%BE%E8%AE%A1"><span class="nav-text">线程安全设计</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Arena-%E8%AE%B0%E5%BD%95%E5%92%8C%E8%B0%83%E8%AF%95"><span class="nav-text">Arena 记录和调试</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%A8%E5%B1%80-new-delete-%E9%87%8D%E8%BD%BD%EF%BC%88%E5%8F%AF%E9%80%89%EF%BC%89"><span class="nav-text">全局 new&#x2F;delete 重载（可选）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%81%B5%E6%B4%BB%E5%88%87%E6%8D%A2"><span class="nav-text">灵活切换</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93-1"><span class="nav-text">总结</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">95</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">44</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://cuda-doc.readthedocs.io/" title="https:&#x2F;&#x2F;cuda-doc.readthedocs.io" rel="noopener" target="_blank">CUDA中文手册</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://infiniband-doc.readthedocs.io/" title="https:&#x2F;&#x2F;infiniband-doc.readthedocs.io&#x2F;" rel="noopener" target="_blank">InfiniBand中文手册</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
