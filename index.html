@@ -193,6 +193,462 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/02/concurrency/%E4%BA%BA%E4%BA%BA%E9%83%BD%E7%9C%8B%E5%BE%97%E6%87%82%E7%9A%84%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/09/02/concurrency/%E4%BA%BA%E4%BA%BA%E9%83%BD%E7%9C%8B%E5%BE%97%E6%87%82%E7%9A%84%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/" class="post-title-link" itemprop="url">人人都看得懂的内存模型</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2025-09-02 11:10:13 / Modified: 11:18:14" itemprop="dateCreated datePublished" datetime="2025-09-02T11:10:13+00:00">2025-09-02</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="术语"><a href="#术语" class="headerlink" title="术语"></a>术语</h2><p>内存模型（Memory Model）是定义<strong>数据一致性</strong>与<strong>执行顺序</strong>规则的一组规范。</p>
+<p>关键概念：</p>
+<ol>
+<li>原子性：操作不可打断；如果同时修改，硬件会串行排队。</li>
+<li>可见性：对其他核心可见，也就是 load 指令可以读到最新值。</li>
+<li>顺序性：禁止指令重排序。所以可以用作同步点。</li>
+</ol>
+<p>所有原子变量都满足原子性。但是其他两者不一定满足，由内存序定义。</p>
+<p>比如原子自增 fetch_add(relaxed) 是线程安全的，但是无法使用 load 指令读到最新的结果。</p>
+<h2 id="缓存一致性协议-MESI"><a href="#缓存一致性协议-MESI" class="headerlink" title="缓存一致性协议 (MESI)"></a>缓存一致性协议 (MESI)</h2><table>
+<thead>
+<tr>
+<th align="center">状态</th>
+<th align="center">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">M (Modified)</td>
+<td align="center">缓存行已被修改，只有当前 CPU 拥有，主内存未更新</td>
+</tr>
+<tr>
+<td align="center">E (Exclusive)</td>
+<td align="center">缓存行未被修改，只有当前 CPU 拥有，与主内存一致</td>
+</tr>
+<tr>
+<td align="center">S (Shared)</td>
+<td align="center">缓存行未被修改，多个 CPU 拥有，与主内存一致</td>
+</tr>
+<tr>
+<td align="center">I (Invalid)</td>
+<td align="center">缓存行无效，必须重新从主内存加载</td>
+</tr>
+</tbody></table>
+<h2 id="relaxed-内存序"><a href="#relaxed-内存序" class="headerlink" title="relaxed 内存序"></a>relaxed 内存序</h2><p>术语：</p>
+<ol>
+<li>保证原子性：整个操作不可被打断；不一定立即回写主内存，可能暂时把结果放在 Store Buffer 中。</li>
+<li>不保证顺序：编译器和CPU可能对指令重排序。</li>
+<li>不保证可见性：其他核心不一定立即可见。</li>
+</ol>
+<p>说人话：</p>
+<ol>
+<li>原子性：原子操作是串行的（由硬件排队）</li>
+<li>不保证可见性：<ul>
+<li>load 操作是并行的，并且不保证看到最新值。</li>
+<li>“可见性”是针对程序员的，因为对于 relaxed ，没有任何指令可以保证 load 拿到最新值。它可能直接从自己的缓存行中把旧值返回给你。</li>
+<li>硬件本身是知道最新值的，它会根据 MESI 来保证自己当时拿到的是最新值（但是无法通过指令告知你）。</li>
+</ul>
+</li>
+<li>不保证顺序：不是同步点，无法保证前后指令与程序员的编写顺序一致。</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th align="center">层级</th>
+<th align="center">机制</th>
+<th align="center">作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">指令级</td>
+<td align="center">原子指令（如 LOCK XADD）</td>
+<td align="center">保证操作不可打断</td>
+</tr>
+<tr>
+<td align="center">缓存级</td>
+<td align="center">MESI 协议</td>
+<td align="center">控制缓存行访问，避免冲突</td>
+</tr>
+<tr>
+<td align="center">编译器级</td>
+<td align="center">编译器屏障</td>
+<td align="center">防止指令重排</td>
+</tr>
+<tr>
+<td align="center">CPU级</td>
+<td align="center">内存屏障</td>
+<td align="center">保证执行顺序</td>
+</tr>
+<tr>
+<td align="center">高级机制</td>
+<td align="center">事务性内存</td>
+<td align="center">实现复杂原子逻辑（可选）</td>
+</tr>
+</tbody></table>
+<h2 id="release-acquire-语义"><a href="#release-acquire-语义" class="headerlink" title="release-acquire 语义"></a>release-acquire 语义</h2><h2 id="指令重排序"><a href="#指令重排序" class="headerlink" title="指令重排序"></a>指令重排序</h2><ol>
+<li>编译器指令重排：编译器屏障防止指令重排</li>
+<li>CPU 乱序执行：内存屏障保证执行顺序。</li>
+</ol>
+<h2 id="原子指令"><a href="#原子指令" class="headerlink" title="原子指令"></a>原子指令</h2><p>原子指令（如 LOCK XADD）：保证操作不可打断</p>
+<h2 id="Load-Store-Buffer"><a href="#Load-Store-Buffer" class="headerlink" title="Load &#x2F; Store Buffer"></a>Load &#x2F; Store Buffer</h2><h2 id="缓存行"><a href="#缓存行" class="headerlink" title="缓存行"></a>缓存行</h2><h2 id="内存屏障"><a href="#内存屏障" class="headerlink" title="内存屏障"></a>内存屏障</h2>
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/26/cpp/%E4%BD%8D%E7%BD%AE%E6%97%A0%E5%85%B3%E4%BB%A3%E7%A0%81PIC/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/26/cpp/%E4%BD%8D%E7%BD%AE%E6%97%A0%E5%85%B3%E4%BB%A3%E7%A0%81PIC/" class="post-title-link" itemprop="url">位置无关代码</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-08-26 13:54:18" itemprop="dateCreated datePublished" datetime="2025-08-26T13:54:18+00:00">2025-08-26</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="位置无关代码（PIC）"><a href="#位置无关代码（PIC）" class="headerlink" title="位置无关代码（PIC）"></a>位置无关代码（PIC）</h2><ul>
+<li>位置无关代码（<code>PIC</code>）：程序可以在内存中的任意位置运行，不需要修改代码中的绝对地址。</li>
+<li>节省空间：相比使用 64 位绝对地址，RIP 相对寻址只需要一个 32 位偏移量。</li>
+<li>更安全：支持地址随机化（ASLR），提高程序的安全性。</li>
+</ul>
+<p>在 x86-64 架构中，传统的绝对地址寻址方式不再适用于位置无关代码。于是引入了 RIP（指令指针）相对寻址：</p>
+<p>假设你有一个全局变量 int x &#x3D; 42;，在汇编中访问它可能会变成：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">asm</span><br><span class="line">mov eax, DWORD PTR [rip + offset_to_x]</span><br></pre></td></tr></table></figure>
+
+<p>这里的 offset_to_x 是编译器计算出来的 x 相对于当前指令的偏移量。</p>
+<table>
+<thead>
+<tr>
+<th align="center">寻址方式</th>
+<th align="center">描述</th>
+<th align="center">是否位置无关</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">绝对地址寻址</td>
+<td align="center">使用固定地址，如 [0x400123]</td>
+<td align="center">❌ 否</td>
+</tr>
+<tr>
+<td align="center">寄存器间接寻址</td>
+<td align="center">如 [rax]，地址由寄存器决定</td>
+<td align="center">✅ 是</td>
+</tr>
+<tr>
+<td align="center">RIP 相对寻址</td>
+<td align="center">如 [rip + offset]，相对当前指令位置</td>
+<td align="center">✅ 是</td>
+</tr>
+</tbody></table>
+<p>但并不是所有 PIC 都用 RIP 相对寻址，PIC 的实现方式取决于：</p>
+<ul>
+<li>架构：在 x86（32 位）中没有 RIP 寄存器，PIC 通常通过 call 指令获取当前地址，再加偏移量。</li>
+<li>编译器策略：有些编译器会使用全局偏移表（GOT）或过程链接表（PLT）来实现位置无关性。</li>
+<li>访问目标：访问函数地址时可能通过 PLT；访问外部变量时可能通过 GOT；访问静态数据时可能用 RIP 相对寻址。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="center">架构</th>
+<th align="center">是否使用 RIP 相对寻址</th>
+<th align="center">是否支持位置无关代码</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">x86-64</td>
+<td align="center">✅ 常用，尤其访问数据段</td>
+<td align="center">✅ 强力支持（默认启用）</td>
+</tr>
+<tr>
+<td align="center">x86 (32位)</td>
+<td align="center">❌ 无 RIP，用其他方式实现</td>
+<td align="center">✅ 但需要特殊技巧</td>
+</tr>
+</tbody></table>
+<p>举个 gdb 调试的例子：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(gdb) x/i <span class="variable">$rip</span></span><br><span class="line">=&gt; 0x2ac084b5ec10 &lt;poll&gt;:       cmpl   <span class="variable">$0x0</span>,0x2d939d(%rip)        <span class="comment"># 0x2ac084e37fb4 &lt;__libc_multiple_threads&gt;</span></span><br><span class="line">(gdb) p (bool)<span class="variable">$__libc_multiple_threads</span></span><br><span class="line"><span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>cmpl $0x0, 0x2d939d(%rip)</code> 是一条比较指令（<code>cmp</code>），用于将某个内存地址中的值与立即数 <code>0</code> 进行比较。</li>
+<li><code>(%rip)</code> 表示使用 RIP 相对寻址，这是 x86-64 架构中常见的一种寻址方式。</li>
+<li>实际比较的是地址 <code>0x2ac084e37fb4</code> 处的值，也就是 <code>__libc_multiple_threads</code> 这个变量。</li>
+</ul>
+<p><code>__libc_multiple_threads</code> 是什么？</p>
+<ul>
+<li>这是 GNU C 库（glibc）中的一个内部变量，用来标记当前进程是否启用了多线程。</li>
+<li>如果这个值是 0，说明当前进程是单线程。</li>
+<li>如果是非零，说明进程中有多个线程。</li>
+</ul>
+<p>所以这条指令的作用是：判断当前进程是否是多线程环境，可能用于决定是否启用线程安全的行为。</p>
+<h3 id="为什么使用-RIP-相对寻址？"><a href="#为什么使用-RIP-相对寻址？" class="headerlink" title="为什么使用 RIP 相对寻址？"></a>为什么使用 RIP 相对寻址？</h3><ol>
+<li>RIP 是唯一始终已知的寄存器</li>
+</ol>
+<ul>
+<li>在执行指令时，CPU总是知道当前指令的地址（即 RIP）。</li>
+<li>所以可以在编译时计算出目标数据与当前指令之间的偏移量，而不需要知道数据的绝对地址。</li>
+</ul>
+<p>这就允许编译器生成位置无关代码，即使程序被加载到不同的内存地址，偏移量仍然有效。</p>
+<ol start="2">
+<li>其他寄存器值是动态的，不可预测</li>
+</ol>
+<ul>
+<li>比如 RBX、RAX、RDI 等寄存器，它们的值在运行时可能被程序修改。</li>
+<li>如果用这些寄存器做基址寻址，编译器就无法提前知道它们的值，也就无法生成稳定的偏移量。</li>
+</ul>
+<ol start="3">
+<li>支持共享库和地址空间布局随机化（ASLR）</li>
+</ol>
+<ul>
+<li>RIP 相对寻址让代码段不依赖固定地址，可以被多个进程共享。</li>
+<li>也支持操作系统在运行时随机加载地址，提高安全性（ASLR）。</li>
+</ul>
+<ol start="4">
+<li>节省指令空间</li>
+</ol>
+<ul>
+<li>使用 RIP 相对寻址只需要一个 32 位偏移量。</li>
+<li>如果使用绝对地址，需要嵌入完整的 64 位地址，指令长度更长，效率更低。</li>
+</ul>
+<h3 id="为什么使用-RIP-相对寻址只需要一个-32-位偏移量"><a href="#为什么使用-RIP-相对寻址只需要一个-32-位偏移量" class="headerlink" title="为什么使用 RIP 相对寻址只需要一个 32 位偏移量"></a>为什么使用 RIP 相对寻址只需要一个 32 位偏移量</h3><p>在 x86-64 架构中，RIP 相对寻址的偏移量被设计为一个有符号的 32 位整数，也就是一个 displacement（位移）字段，它在机器码中只占用 4 个字节。</p>
+<ul>
+<li><p>RIP 是 64 位的指令指针，表示当前指令的地址。</p>
+</li>
+<li><p>RIP 相对寻址的目标地址是通过：</p>
+<p><code>目标地址 = 下一条指令地址（RIP） + 32 位偏移量</code></p>
+</li>
+<li><p>这个偏移量是一个 有符号整数，所以它的范围是：</p>
+<p>从 −2³¹ 到 +2³¹−1，即 <strong>±2GB</strong> 的寻址范围。</p>
+</li>
+</ul>
+<p>这意味着，当前指令附近 ±2GB 范围内的任何数据都可以通过 RIP 相对寻址访问。</p>
+<table>
+<thead>
+<tr>
+<th align="center">优点</th>
+<th align="center">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">✅ 节省空间</td>
+<td align="center">只用 4 字节表示偏移，比使用完整 64 位地址节省指令长度</td>
+</tr>
+<tr>
+<td align="center">✅ 支持位置无关代码</td>
+<td align="center">编译器只需计算偏移，不依赖绝对地址</td>
+</tr>
+<tr>
+<td align="center">✅ 高效</td>
+<td align="center">CPU 执行时只需加法运算，无需查表或重定位</td>
+</tr>
+<tr>
+<td align="center">✅ 安全</td>
+<td align="center">支持地址空间布局随机化（ASLR），提高安全性</td>
+</tr>
+</tbody></table>
+<h3 id="为什么可以被多个进程共享？"><a href="#为什么可以被多个进程共享？" class="headerlink" title="为什么可以被多个进程共享？"></a>为什么可以被多个进程共享？</h3><p>因为代码中不再硬编码具体地址，多个进程可以：</p>
+<ul>
+<li>使用同一份物理内存中的代码段。</li>
+<li>每个进程有自己的数据段，但共享同一份只读代码。</li>
+</ul>
+<p>这大大节省了内存，提高了系统效率。</p>
+<p>举个例子：</p>
+<table>
+<thead>
+<tr>
+<th align="center">进程</th>
+<th align="center">加载地址</th>
+<th align="center">使用的代码段</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">A</td>
+<td align="center">0x400000</td>
+<td align="center">使用共享代码段</td>
+</tr>
+<tr>
+<td align="center">B</td>
+<td align="center">0x500000</td>
+<td align="center">使用共享代码段</td>
+</tr>
+</tbody></table>
+<p>两者的代码段内容完全一样，因为里面的寻址是相对 RIP 的，不依赖于加载地址。</p>
+<p>为什么绝对寻址不可以被多进程共享？</p>
+<ul>
+<li>每个进程的虚拟地址空间是独立的<ul>
+<li>操作系统为每个进程分配独立的虚拟地址空间。</li>
+<li>即使两个进程都加载了同一个程序，它们的地址空间可能完全不同。</li>
+<li>如果代码中使用绝对地址，加载到不同地址空间后，这些地址就不再有效。</li>
+</ul>
+</li>
+</ul>
+<p>所以，绝对地址在一个进程中是有效的，在另一个进程中可能就指向错误的地方或根本不存在。</p>
+<ul>
+<li><p>需要重定位，无法直接共享物理页</p>
+<ul>
+<li>如果使用绝对地址，操作系统必须在每个进程加载时对代码进行“重定位”，修改指令中的地址。</li>
+<li>一旦修改，代码段就变成了进程私有，不能共享同一份物理内存。</li>
+<li>而位置无关代码（如使用 RIP 相对寻址）不需要修改，可以直接映射到多个进程的地址空间。</li>
+</ul>
+</li>
+<li><p>违反共享库的设计原则</p>
+<ul>
+<li>动态链接库（如 <code>.so</code> 或 <code>.dll</code>）的核心优势就是可以被多个进程共享。</li>
+<li>如果库中使用绝对地址，每个进程都要有自己的副本，失去了共享的意义。</li>
+<li>正确做法是使用位置无关代码（PIC），让库在任意地址都能运行。</li>
+</ul>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="center">区域</th>
+<th align="center">是否可共享</th>
+<th align="center">原因说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">代码段</td>
+<td align="center">✅ 是</td>
+<td align="center">只读 + 位置无关，多个进程可映射同一物理页</td>
+</tr>
+<tr>
+<td align="center">数据段</td>
+<td align="center">❌ 否</td>
+<td align="center">每个进程的数据不同，需独立副本</td>
+</tr>
+<tr>
+<td align="center">堆</td>
+<td align="center">❌ 否</td>
+<td align="center">动态分配，地址空间不同</td>
+</tr>
+<tr>
+<td align="center">栈</td>
+<td align="center">❌ 否</td>
+<td align="center">私有调用栈，不能混用</td>
+</tr>
+<tr>
+<td align="center">共享内存段</td>
+<td align="center">✅ 是</td>
+<td align="center">显式创建，专门用于共享</td>
+</tr>
+</tbody></table>
+<p>如果你想深入了解某个进程的内存布局，可以分析 <code>/proc/[pid]/maps</code> 或用工具如 <code>pmap</code>、<code>vmmap</code>。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/22/cpp/%E6%B1%87%E7%BC%96%E4%B8%8Egdb/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +680,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-23 09:03:39" itemprop="dateModified" datetime="2025-08-23T09:03:39+00:00">2025-08-23</time>
+                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -895,7 +1351,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-23 09:03:39" itemprop="dateModified" datetime="2025-08-23T09:03:39+00:00">2025-08-23</time>
+                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1062,7 +1518,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-23 09:03:39" itemprop="dateModified" datetime="2025-08-23T09:03:39+00:00">2025-08-23</time>
+                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1225,7 +1681,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-23 09:03:39" itemprop="dateModified" datetime="2025-08-23T09:03:39+00:00">2025-08-23</time>
+                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
               </span>
 
           
@@ -1300,7 +1756,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-23 09:03:39" itemprop="dateModified" datetime="2025-08-23T09:03:39+00:00">2025-08-23</time>
+                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1728,7 +2184,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-23 09:03:39" itemprop="dateModified" datetime="2025-08-23T09:03:39+00:00">2025-08-23</time>
+                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
               </span>
 
           
@@ -1850,7 +2306,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-23 09:03:39" itemprop="dateModified" datetime="2025-08-23T09:03:39+00:00">2025-08-23</time>
+                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1984,7 +2440,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-23 09:03:39" itemprop="dateModified" datetime="2025-08-23T09:03:39+00:00">2025-08-23</time>
+                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2050,213 +2506,6 @@
 <p>thread_local 变量放在 TLS 段，每个线程有自己的拷贝。</p>
 <p>访问是通过 线程局部存储寄存器（FS&#x2F;GS）+ 偏移量 实现的。</p>
 <p>存储空间由线程库在创建线程时分配和初始化。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/18/%E5%AE%9E%E7%94%A8%E4%B9%A6%E7%B1%8D%E5%88%97%E8%A1%A8/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/18/%E5%AE%9E%E7%94%A8%E4%B9%A6%E7%B1%8D%E5%88%97%E8%A1%A8/" class="post-title-link" itemprop="url">实用书籍列表</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-18 21:25:16" itemprop="dateCreated datePublished" datetime="2025-08-18T21:25:16+00:00">2025-08-18</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-23 09:03:39" itemprop="dateModified" datetime="2025-08-23T09:03:39+00:00">2025-08-23</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Misc/" itemprop="url" rel="index"><span itemprop="name">Misc</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>.<br>├── AT&amp;T Assembly Manual.pdf<br>├── C++ Primer Plus 第五版中文版.pdf<br>├── C++.Primer.5th.Edition_2013.pdf<br>├── CplusplusConcurrencyInAction_PracticalMultithreading.pdf<br>├── Debug Hacks中文版：深入调试的技术和工具.pdf<br>├── IB-Host-and-Ports.pdf<br>├── IBTA-Overview-of-IBTA-Volume-1-Release-1.6-2022-07-15.pdf<br>├── InifiniBand Guide.pdf<br>├── LDAP Authentication Guide.pdf<br>├── Linux Kernel Networking - Implementation and Theory.pdf<br>├── Linux-UNIX系统编程手册（上、下册）.pdf<br>├── Linux内核设计与实现(第三版中文高清带目录).pdf<br>├── Linux多线程服务端编程 - 陈硕.pdf<br>├── Linux多线程服务端编程：使用muduo C++网络库.pdf<br>├── Linux高性能服务器编程.pdf<br>├── OKTA Multifactor Authentication (MFA) FAQ.pdf<br>├── Shell脚本学习指南.pdf<br>├── TBB<br>│   ├── Intel TBB.pdf<br>│   ├── TBBtutorial.pdf<br>│   ├── intel-tbb.pdf<br>│   ├── oneTBB-master.zip<br>│   └── onetbb_developer-guide-api-reference_2021.6-772616-772617.pdf<br>├── UNIX环境高级编程(第三版).pdf<br>├── UNIX网络编程卷1：套接字联网API（第3版）.pdf<br>├── ccia_code_samples-master.zip<br>├── dmtcp<br>│   ├── Be Kind, Rewind —Checkpoint &amp; Restore Capability for Improving Reliability of Large-scale Semiconductor Design.pdf<br>│   ├── dmtcp-mug-17.pdf<br>│   └── plugin-tutorial.pdf<br>├── gdb-and-assembly.pdf<br>├── gdb-refcard.pdf<br>├── gdb.pdf<br>├── p4-p4v-cheat-sheet_cn.pdf<br>├── thread-analyzer-193426.pdf<br>├── 并行编程<br>│   ├── C++ Concurrency in Action.pdf<br>│   ├── C++-Concurrency-In-Action-2ed-zh-v0.2.pdf<br>│   ├── C++并发编程实战(中文版).pdf<br>│   ├── C++并发编程实战.pdf<br>│   ├── C++并发编程实战源代码<br>│   ├── C++并发编程实战源代码.zip<br>│   ├── Patterns_for_Parallel_Programming.pdf<br>│   └── 高并发网络模型.png<br>└── 编译原理(龙书) 第二版.pdf</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/17/misc/%E5%A6%82%E4%BD%95%E5%88%9B%E5%BB%BA%E4%B8%AA%E4%BA%BA%E4%B8%BB%E9%A1%B5/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/17/misc/%E5%A6%82%E4%BD%95%E5%88%9B%E5%BB%BA%E4%B8%AA%E4%BA%BA%E4%B8%BB%E9%A1%B5/" class="post-title-link" itemprop="url">如何创建个人主页</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-17 16:14:48" itemprop="dateCreated datePublished" datetime="2025-08-17T16:14:48+00:00">2025-08-17</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-08-23 09:03:39" itemprop="dateModified" datetime="2025-08-23T09:03:39+00:00">2025-08-23</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="1-Github-Pages"><a href="#1-Github-Pages" class="headerlink" title="1. Github Pages"></a>1. Github Pages</h1><p>本文解释利用<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages">github pages</a>搭建个人主页&#x2F;项目主页的方法。</p>
-<p>github pages简介：<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages">官方链接</a>。</p>
-<p>github pages使用了<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/CNAME_record">CNAME record</a>技术，参考：<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/39301250">链接1</a>、<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/26609475">链接2</a>、<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/about-custom-domains-and-github-pages#using-a-subdomain-for-your-github-pages-site">Custom domains in Github Pages</a>。</p>
-<p>注：<a target="_blank" rel="noopener" href="https://readthedocs.org/">Read the Docs</a>也是一个很好的搭建个人主页的网站。</p>
-<h2 id="Github-Pages-站点类型"><a href="#Github-Pages-站点类型" class="headerlink" title="Github Pages 站点类型"></a>Github Pages 站点类型</h2><p>有3种类型的 Github Pages 站点（sites）：project, user 和 organization 。</p>
-<p>Project sites 连接到 github 上特定 project ，比如 Javascript library 或 recipe collection。user 或 organization sites 连接到 github.com 的特定账户。</p>
-<p>发布 user site ，你必须创建一个你的个人账户下的一个名为 <code>&lt;username&gt;.github.io</code> 的 repository 。发布 organization site ，你必须创建一个组织所有的名为 <code>&lt;organization&gt;.github.io</code> 的 repository 。除非你使用 custom domain ，否则 user 和 organization sites 将位于 <code>http(s)://&lt;username&gt;.github.io</code> 或 <code>http(s)://&lt;organization&gt;.github.io</code> 。</p>
-<p>project site 的源文件存储在作为 project 的相同的 repository 中。除非使用 custom domain ， 否则 project sites 将位于 <code>http(s)://&lt;username&gt;.github.io/&lt;repository&gt;</code> 或 <code>http(s)://&lt;organization&gt;.github.io/&lt;repository&gt;</code> 。</p>
-<p>有关如何自定义影响您网站的域名的更多信息，参见”<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/about-custom-domains-and-github-pages">About custom domains and GitHub Pages</a>“。</p>
-<p>每个 github 账户允许创建 1 个 user 或 organization 站点。无论是被组织还是个人所有，project 站点的个数不限制。</p>
-<h2 id="GitHub-Pages-访问方法"><a href="#GitHub-Pages-访问方法" class="headerlink" title="GitHub Pages 访问方法"></a>GitHub Pages 访问方法</h2><p>参考<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site#next-steps">官方文档</a>。</p>
-<p>例如，你的project站点配置的发布源是<code>gh-pages</code>分支，然后在<code>gh-pages</code>分支上创建了一个<code>about/contact-us.md</code>文件，你将可以在<code>https://&lt;user&gt;.github.io/&lt;repository&gt;/about/contact-us.html</code>访问它。</p>
-<p>你也可以使用<code>Jekyll</code>等静态站点生成器来给你的github page配置一个主题。</p>
-<h2 id="站点发布常见问题的解决方法"><a href="#站点发布常见问题的解决方法" class="headerlink" title="站点发布常见问题的解决方法"></a>站点发布常见问题的解决方法</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/72851548/permission-denied-to-github-actionsbot">Permission denied to github-actions[bot]</a></li>
-</ul>
-<h2 id="Github-workflows"><a href="#Github-workflows" class="headerlink" title="Github workflows"></a>Github workflows</h2><p>参考<a target="_blank" rel="noopener" href="https://docs.github.com/zh/actions/using-workflows/workflow-syntax-for-github-actions">官方文档</a>。</p>
-<h1 id="2-配置前准备"><a href="#2-配置前准备" class="headerlink" title="2. 配置前准备"></a>2. 配置前准备</h1><h2 id="2-1-Markdown编辑器"><a href="#2-1-Markdown编辑器" class="headerlink" title="2.1. Markdown编辑器"></a>2.1. Markdown编辑器</h2><p>推荐的<a target="_blank" rel="noopener" href="https://www.zhihu.com/tardis/zm/art/103348449?source_id=1003">markdown编辑器</a>：</p>
-<ul>
-<li>VSCode：免费。VSCode原生支持Markdown，安装一些插件可以帮助更快地编写markdown文件。</li>
-<li>Typora：现在已经开始收费。</li>
-</ul>
-<p>VSCode markdown插件：</p>
-<ul>
-<li>Mardown All in One: 提供快捷键，帮助更快的编写markdown文件。</li>
-<li>Markdown+Math：提供数学公式支持。</li>
-<li>Markdown Preview Enhanced: 将原生markdown预览的黑色背景改成白色。</li>
-<li>Markdown Preview Github Styling：提供Github风格的预览。</li>
-</ul>
-<p><a target="_blank" rel="noopener" href="https://www.tablesgenerator.com/markdown_tables">在线表格生成器</a>：可以生成Markdown、Text、HTML、LaTex、MediaWiki格式的表格。</p>
-<h2 id="2-2-轻量级虚拟机WSL"><a href="#2-2-轻量级虚拟机WSL" class="headerlink" title="2.2. 轻量级虚拟机WSL"></a>2.2. 轻量级虚拟机WSL</h2><p>WSL，<a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/wsl/install">Windows Subsystem for Linux</a>，是Windows提供的轻量级Linux虚拟机。</p>
-<p>安装教程：见<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/170210673">链接</a>。</p>
-<h3 id="2-2-1-WSL默认没有启用systemctl："><a href="#2-2-1-WSL默认没有启用systemctl：" class="headerlink" title="2.2.1. WSL默认没有启用systemctl："></a>2.2.1. WSL默认没有启用systemctl：</h3><p>启用systemctl的方法：<a target="_blank" rel="noopener" href="https://askubuntu.com/questions/1379425/system-has-not-been-booted-with-systemd-as-init-system-pid-1-cant-operate">链接</a>。</p>
-<p>替代方法：不需要启动systemctl，因为会比较占用资源，启动也会变慢。可以使用service命令替代。</p>
-<h3 id="2-2-2-WSL默认没有安装openssl-server："><a href="#2-2-2-WSL默认没有安装openssl-server：" class="headerlink" title="2.2.2. WSL默认没有安装openssl-server："></a>2.2.2. WSL默认没有安装openssl-server：</h3><p>使用ssh连接到服务器时，需要服务器运行着sshd程序，否则连接不上，会出现”<a target="_blank" rel="noopener" href="https://www.makeuseof.com/fix-ssh-connection-refused-error-linux/">Connection refused</a>“错误。</p>
-<p>参考<a target="_blank" rel="noopener" href="https://askubuntu.com/questions/1339980/enable-ssh-in-wsl-system">链接</a>。</p>
-<p>查看openssh-server有没有安装：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dpkg --list | grep ssh</span><br></pre></td></tr></table></figure>
-
-<p>注：如果安装了openssh-server，执行which sshd可以看到路径。</p>
-<p>WSL默认没有安装openssh-server，安装方法：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install openssh-server</span><br></pre></td></tr></table></figure>
-
-<p>启动ssh：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo service ssh start</span><br></pre></td></tr></table></figure>
-
-<h3 id="2-2-3-通过https登录到github"><a href="#2-2-3-通过https登录到github" class="headerlink" title="2.2.3. 通过https登录到github"></a>2.2.3. 通过https登录到github</h3><p><code>git push</code>不再支持输入用户名和密码，当提示输入密码时，需要输入personal access token.</p>
-<p>步骤1：在github上<a target="_blank" rel="noopener" href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic">创建personal access token</a>；</p>
-<p>步骤2：<a target="_blank" rel="noopener" href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#using-a-personal-access-token-on-the-command-line">在命令行上使用personal access token</a>；</p>
-<p>步骤3：为了避免每次都需要输入personal access token，可以将其<a target="_blank" rel="noopener" href="https://docs.github.com/en/get-started/getting-started-with-git/caching-your-github-credentials-in-git">缓存在git client上</a>：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gh auth login</span><br></pre></td></tr></table></figure>
-
-<p>注：使用<code>gh</code>命令需要先安装GitHub CLI：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install gh</span><br></pre></td></tr></table></figure>
-
-<h3 id="2-2-4-执行git-pull-push时，出现”The-authenticity-of-host-‘github-com-20-205-243-166-’-can’t-be-established-ED25519-key-fingerprint-is-SHA256-…”错误"><a href="#2-2-4-执行git-pull-push时，出现”The-authenticity-of-host-‘github-com-20-205-243-166-’-can’t-be-established-ED25519-key-fingerprint-is-SHA256-…”错误" class="headerlink" title="2.2.4 执行git pull&#x2F;push时，出现”The authenticity of host ‘github.com (20.205.243.166)’ can’t be established. ED25519 key fingerprint is SHA256:…”错误"></a>2.2.4 执行git pull&#x2F;push时，出现”The authenticity of host ‘github.com (20.205.243.166)’ can’t be established. ED25519 key fingerprint is SHA256:…”错误</h3><p>报错解释：</p>
-<p>这个报错信息通常出现在使用SSH连接到一个新的主机时。它表示你的计算机无法验证远程服务器的身份，因为服务器的公钥不在你本地计算机的known_hosts文件中。这是SSH为了防止”中间人”攻击而进行的安全检查。</p>
-<p>解决方法：</p>
-<p>验证指纹信息：你可以查看远程主机的指纹信息，并与服务器gitee.com的公钥指纹进行对比，确保它们匹配。你可以在~&#x2F;.ssh&#x2F;known_hosts文件中找到已知主机的公钥指纹。</p>
-<p>如果确认指纹正确无误，且你信任这个服务器，可以添加这个主机及其公钥到你的known_hosts文件中，以便SSH不再警告。执行以下命令：</p>
-<p>ssh-keyscan -H gitee.com &gt;&gt; ~&#x2F;.ssh&#x2F;known_hosts</p>
-<p>如果你不想添加到known_hosts文件中，可以在第一次连接时使用ssh -o StrictHostKeyChecking&#x3D;no来跳过这个检查。但这样做会降低安全性。</p>
-<p>如果你是在多个服务器上使用相同的IP地址，并且之前已经添加过这个IP的记录，那么可能是服务器的公钥发生了变化，这种情况下你应该联系服务器管理员确认公钥的变更。</p>
-<p>注意：在实际生产环境中，不建议无条件信任新的SSH指纹，除非你完全了解这个服务器的来源和身份。</p>
-<h1 id="3-静态站点生成器"><a href="#3-静态站点生成器" class="headerlink" title="3. 静态站点生成器"></a>3. 静态站点生成器</h1><p>以下几种<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages">静态站点生成器</a>都可以用来搭建个人主页。如果使用除JekyII外的工具，则需要配置<a target="_blank" rel="noopener" href="https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions">Github Actions</a>以构建和发布你的站点。</p>
-<h2 id="3-1-mkdocs"><a href="#3-1-mkdocs" class="headerlink" title="3.1. mkdocs"></a>3.1. mkdocs</h2><p><a target="_blank" rel="noopener" href="https://www.mkdocs.org/">mkdocs</a>是一个快速的静态网页生成器。</p>
-<p>发布个人网站的方法：参见<a target="_blank" rel="noopener" href="https://squidfunk.github.io/mkdocs-material/publishing-your-site/">mkdocs-material官网</a>。</p>
-<h2 id="3-2-JekyII"><a href="#3-2-JekyII" class="headerlink" title="3.2. JekyII"></a>3.2. JekyII</h2><p>Jekyll 是一个静态站点生成器，内置对 GitHub Pages 的支持和简化的构建进程。</p>
-<p>参见 <a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll/about-github-pages-and-jekyll">About GitHub Pages and Jekyll</a> 。</p>
 
       
     </div>
@@ -2343,7 +2592,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">95</span>
+          <span class="site-state-item-count">97</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -2356,7 +2605,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">44</span>
+        <span class="site-state-item-count">45</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

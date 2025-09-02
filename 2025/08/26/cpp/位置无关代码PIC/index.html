@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="位置无关代码（PIC） 位置无关代码（PIC）：程序可以在内存中的任意位置运行，不需要修改代码中的绝对地址。 节省空间：相比使用 64 位绝对地址，RIP 相对寻址只需要一个 32 位偏移量。 更安全：支持地址随机化（ASLR），提高程序的安全性。  在 x86-64 架构中，传统的绝对地址寻址方式不再适用于位置无关代码。于是引入了 RIP（指令指针）相对寻址： 假设你有一个全局变量 int x">
+<meta property="og:type" content="article">
+<meta property="og:title" content="位置无关代码">
+<meta property="og:url" content="https://bi-an.github.io/blog/2025/08/26/cpp/%E4%BD%8D%E7%BD%AE%E6%97%A0%E5%85%B3%E4%BB%A3%E7%A0%81PIC/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="位置无关代码（PIC） 位置无关代码（PIC）：程序可以在内存中的任意位置运行，不需要修改代码中的绝对地址。 节省空间：相比使用 64 位绝对地址，RIP 相对寻址只需要一个 32 位偏移量。 更安全：支持地址随机化（ASLR），提高程序的安全性。  在 x86-64 架构中，传统的绝对地址寻址方式不再适用于位置无关代码。于是引入了 RIP（指令指针）相对寻址： 假设你有一个全局变量 int x">
+<meta property="og:locale">
+<meta property="article:published_time" content="2025-08-26T13:54:18.000Z">
+<meta property="article:modified_time" content="2025-09-02T11:18:14.145Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="编译原理">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2025/08/26/cpp/%E4%BD%8D%E7%BD%AE%E6%97%A0%E5%85%B3%E4%BB%A3%E7%A0%81PIC/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>位置无关代码 | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-resource">
+
+    <a href="/blog/resources/" rel="section"><i class="fa fa-paperclip fa-fw"></i>Resource</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/26/cpp/%E4%BD%8D%E7%BD%AE%E6%97%A0%E5%85%B3%E4%BB%A3%E7%A0%81PIC/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          位置无关代码
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-08-26 13:54:18" itemprop="dateCreated datePublished" datetime="2025-08-26T13:54:18+00:00">2025-08-26</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="位置无关代码（PIC）"><a href="#位置无关代码（PIC）" class="headerlink" title="位置无关代码（PIC）"></a>位置无关代码（PIC）</h2><ul>
+<li>位置无关代码（<code>PIC</code>）：程序可以在内存中的任意位置运行，不需要修改代码中的绝对地址。</li>
+<li>节省空间：相比使用 64 位绝对地址，RIP 相对寻址只需要一个 32 位偏移量。</li>
+<li>更安全：支持地址随机化（ASLR），提高程序的安全性。</li>
+</ul>
+<p>在 x86-64 架构中，传统的绝对地址寻址方式不再适用于位置无关代码。于是引入了 RIP（指令指针）相对寻址：</p>
+<p>假设你有一个全局变量 int x &#x3D; 42;，在汇编中访问它可能会变成：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">asm</span><br><span class="line">mov eax, DWORD PTR [rip + offset_to_x]</span><br></pre></td></tr></table></figure>
+
+<p>这里的 offset_to_x 是编译器计算出来的 x 相对于当前指令的偏移量。</p>
+<table>
+<thead>
+<tr>
+<th align="center">寻址方式</th>
+<th align="center">描述</th>
+<th align="center">是否位置无关</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">绝对地址寻址</td>
+<td align="center">使用固定地址，如 [0x400123]</td>
+<td align="center">❌ 否</td>
+</tr>
+<tr>
+<td align="center">寄存器间接寻址</td>
+<td align="center">如 [rax]，地址由寄存器决定</td>
+<td align="center">✅ 是</td>
+</tr>
+<tr>
+<td align="center">RIP 相对寻址</td>
+<td align="center">如 [rip + offset]，相对当前指令位置</td>
+<td align="center">✅ 是</td>
+</tr>
+</tbody></table>
+<p>但并不是所有 PIC 都用 RIP 相对寻址，PIC 的实现方式取决于：</p>
+<ul>
+<li>架构：在 x86（32 位）中没有 RIP 寄存器，PIC 通常通过 call 指令获取当前地址，再加偏移量。</li>
+<li>编译器策略：有些编译器会使用全局偏移表（GOT）或过程链接表（PLT）来实现位置无关性。</li>
+<li>访问目标：访问函数地址时可能通过 PLT；访问外部变量时可能通过 GOT；访问静态数据时可能用 RIP 相对寻址。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="center">架构</th>
+<th align="center">是否使用 RIP 相对寻址</th>
+<th align="center">是否支持位置无关代码</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">x86-64</td>
+<td align="center">✅ 常用，尤其访问数据段</td>
+<td align="center">✅ 强力支持（默认启用）</td>
+</tr>
+<tr>
+<td align="center">x86 (32位)</td>
+<td align="center">❌ 无 RIP，用其他方式实现</td>
+<td align="center">✅ 但需要特殊技巧</td>
+</tr>
+</tbody></table>
+<p>举个 gdb 调试的例子：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(gdb) x/i <span class="variable">$rip</span></span><br><span class="line">=&gt; 0x2ac084b5ec10 &lt;poll&gt;:       cmpl   <span class="variable">$0x0</span>,0x2d939d(%rip)        <span class="comment"># 0x2ac084e37fb4 &lt;__libc_multiple_threads&gt;</span></span><br><span class="line">(gdb) p (bool)<span class="variable">$__libc_multiple_threads</span></span><br><span class="line"><span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>cmpl $0x0, 0x2d939d(%rip)</code> 是一条比较指令（<code>cmp</code>），用于将某个内存地址中的值与立即数 <code>0</code> 进行比较。</li>
+<li><code>(%rip)</code> 表示使用 RIP 相对寻址，这是 x86-64 架构中常见的一种寻址方式。</li>
+<li>实际比较的是地址 <code>0x2ac084e37fb4</code> 处的值，也就是 <code>__libc_multiple_threads</code> 这个变量。</li>
+</ul>
+<p><code>__libc_multiple_threads</code> 是什么？</p>
+<ul>
+<li>这是 GNU C 库（glibc）中的一个内部变量，用来标记当前进程是否启用了多线程。</li>
+<li>如果这个值是 0，说明当前进程是单线程。</li>
+<li>如果是非零，说明进程中有多个线程。</li>
+</ul>
+<p>所以这条指令的作用是：判断当前进程是否是多线程环境，可能用于决定是否启用线程安全的行为。</p>
+<h3 id="为什么使用-RIP-相对寻址？"><a href="#为什么使用-RIP-相对寻址？" class="headerlink" title="为什么使用 RIP 相对寻址？"></a>为什么使用 RIP 相对寻址？</h3><ol>
+<li>RIP 是唯一始终已知的寄存器</li>
+</ol>
+<ul>
+<li>在执行指令时，CPU总是知道当前指令的地址（即 RIP）。</li>
+<li>所以可以在编译时计算出目标数据与当前指令之间的偏移量，而不需要知道数据的绝对地址。</li>
+</ul>
+<p>这就允许编译器生成位置无关代码，即使程序被加载到不同的内存地址，偏移量仍然有效。</p>
+<ol start="2">
+<li>其他寄存器值是动态的，不可预测</li>
+</ol>
+<ul>
+<li>比如 RBX、RAX、RDI 等寄存器，它们的值在运行时可能被程序修改。</li>
+<li>如果用这些寄存器做基址寻址，编译器就无法提前知道它们的值，也就无法生成稳定的偏移量。</li>
+</ul>
+<ol start="3">
+<li>支持共享库和地址空间布局随机化（ASLR）</li>
+</ol>
+<ul>
+<li>RIP 相对寻址让代码段不依赖固定地址，可以被多个进程共享。</li>
+<li>也支持操作系统在运行时随机加载地址，提高安全性（ASLR）。</li>
+</ul>
+<ol start="4">
+<li>节省指令空间</li>
+</ol>
+<ul>
+<li>使用 RIP 相对寻址只需要一个 32 位偏移量。</li>
+<li>如果使用绝对地址，需要嵌入完整的 64 位地址，指令长度更长，效率更低。</li>
+</ul>
+<h3 id="为什么使用-RIP-相对寻址只需要一个-32-位偏移量"><a href="#为什么使用-RIP-相对寻址只需要一个-32-位偏移量" class="headerlink" title="为什么使用 RIP 相对寻址只需要一个 32 位偏移量"></a>为什么使用 RIP 相对寻址只需要一个 32 位偏移量</h3><p>在 x86-64 架构中，RIP 相对寻址的偏移量被设计为一个有符号的 32 位整数，也就是一个 displacement（位移）字段，它在机器码中只占用 4 个字节。</p>
+<ul>
+<li><p>RIP 是 64 位的指令指针，表示当前指令的地址。</p>
+</li>
+<li><p>RIP 相对寻址的目标地址是通过：</p>
+<p><code>目标地址 = 下一条指令地址（RIP） + 32 位偏移量</code></p>
+</li>
+<li><p>这个偏移量是一个 有符号整数，所以它的范围是：</p>
+<p>从 −2³¹ 到 +2³¹−1，即 <strong>±2GB</strong> 的寻址范围。</p>
+</li>
+</ul>
+<p>这意味着，当前指令附近 ±2GB 范围内的任何数据都可以通过 RIP 相对寻址访问。</p>
+<table>
+<thead>
+<tr>
+<th align="center">优点</th>
+<th align="center">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">✅ 节省空间</td>
+<td align="center">只用 4 字节表示偏移，比使用完整 64 位地址节省指令长度</td>
+</tr>
+<tr>
+<td align="center">✅ 支持位置无关代码</td>
+<td align="center">编译器只需计算偏移，不依赖绝对地址</td>
+</tr>
+<tr>
+<td align="center">✅ 高效</td>
+<td align="center">CPU 执行时只需加法运算，无需查表或重定位</td>
+</tr>
+<tr>
+<td align="center">✅ 安全</td>
+<td align="center">支持地址空间布局随机化（ASLR），提高安全性</td>
+</tr>
+</tbody></table>
+<h3 id="为什么可以被多个进程共享？"><a href="#为什么可以被多个进程共享？" class="headerlink" title="为什么可以被多个进程共享？"></a>为什么可以被多个进程共享？</h3><p>因为代码中不再硬编码具体地址，多个进程可以：</p>
+<ul>
+<li>使用同一份物理内存中的代码段。</li>
+<li>每个进程有自己的数据段，但共享同一份只读代码。</li>
+</ul>
+<p>这大大节省了内存，提高了系统效率。</p>
+<p>举个例子：</p>
+<table>
+<thead>
+<tr>
+<th align="center">进程</th>
+<th align="center">加载地址</th>
+<th align="center">使用的代码段</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">A</td>
+<td align="center">0x400000</td>
+<td align="center">使用共享代码段</td>
+</tr>
+<tr>
+<td align="center">B</td>
+<td align="center">0x500000</td>
+<td align="center">使用共享代码段</td>
+</tr>
+</tbody></table>
+<p>两者的代码段内容完全一样，因为里面的寻址是相对 RIP 的，不依赖于加载地址。</p>
+<p>为什么绝对寻址不可以被多进程共享？</p>
+<ul>
+<li>每个进程的虚拟地址空间是独立的<ul>
+<li>操作系统为每个进程分配独立的虚拟地址空间。</li>
+<li>即使两个进程都加载了同一个程序，它们的地址空间可能完全不同。</li>
+<li>如果代码中使用绝对地址，加载到不同地址空间后，这些地址就不再有效。</li>
+</ul>
+</li>
+</ul>
+<p>所以，绝对地址在一个进程中是有效的，在另一个进程中可能就指向错误的地方或根本不存在。</p>
+<ul>
+<li><p>需要重定位，无法直接共享物理页</p>
+<ul>
+<li>如果使用绝对地址，操作系统必须在每个进程加载时对代码进行“重定位”，修改指令中的地址。</li>
+<li>一旦修改，代码段就变成了进程私有，不能共享同一份物理内存。</li>
+<li>而位置无关代码（如使用 RIP 相对寻址）不需要修改，可以直接映射到多个进程的地址空间。</li>
+</ul>
+</li>
+<li><p>违反共享库的设计原则</p>
+<ul>
+<li>动态链接库（如 <code>.so</code> 或 <code>.dll</code>）的核心优势就是可以被多个进程共享。</li>
+<li>如果库中使用绝对地址，每个进程都要有自己的副本，失去了共享的意义。</li>
+<li>正确做法是使用位置无关代码（PIC），让库在任意地址都能运行。</li>
+</ul>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="center">区域</th>
+<th align="center">是否可共享</th>
+<th align="center">原因说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">代码段</td>
+<td align="center">✅ 是</td>
+<td align="center">只读 + 位置无关，多个进程可映射同一物理页</td>
+</tr>
+<tr>
+<td align="center">数据段</td>
+<td align="center">❌ 否</td>
+<td align="center">每个进程的数据不同，需独立副本</td>
+</tr>
+<tr>
+<td align="center">堆</td>
+<td align="center">❌ 否</td>
+<td align="center">动态分配，地址空间不同</td>
+</tr>
+<tr>
+<td align="center">栈</td>
+<td align="center">❌ 否</td>
+<td align="center">私有调用栈，不能混用</td>
+</tr>
+<tr>
+<td align="center">共享内存段</td>
+<td align="center">✅ 是</td>
+<td align="center">显式创建，专门用于共享</td>
+</tr>
+</tbody></table>
+<p>如果你想深入了解某个进程的内存布局，可以分析 <code>/proc/[pid]/maps</code> 或用工具如 <code>pmap</code>、<code>vmmap</code>。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/" rel="tag"># 编译原理</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2025/08/22/cpp/%E6%B1%87%E7%BC%96%E4%B8%8Egdb/" rel="prev" title="汇编与 gdb">
+      <i class="fa fa-chevron-left"></i> 汇编与 gdb
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2025/09/02/concurrency/%E4%BA%BA%E4%BA%BA%E9%83%BD%E7%9C%8B%E5%BE%97%E6%87%82%E7%9A%84%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/" rel="next" title="人人都看得懂的内存模型">
+      人人都看得懂的内存模型 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%8D%E7%BD%AE%E6%97%A0%E5%85%B3%E4%BB%A3%E7%A0%81%EF%BC%88PIC%EF%BC%89"><span class="nav-text">位置无关代码（PIC）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%BF%E7%94%A8-RIP-%E7%9B%B8%E5%AF%B9%E5%AF%BB%E5%9D%80%EF%BC%9F"><span class="nav-text">为什么使用 RIP 相对寻址？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%BF%E7%94%A8-RIP-%E7%9B%B8%E5%AF%B9%E5%AF%BB%E5%9D%80%E5%8F%AA%E9%9C%80%E8%A6%81%E4%B8%80%E4%B8%AA-32-%E4%BD%8D%E5%81%8F%E7%A7%BB%E9%87%8F"><span class="nav-text">为什么使用 RIP 相对寻址只需要一个 32 位偏移量</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8F%AF%E4%BB%A5%E8%A2%AB%E5%A4%9A%E4%B8%AA%E8%BF%9B%E7%A8%8B%E5%85%B1%E4%BA%AB%EF%BC%9F"><span class="nav-text">为什么可以被多个进程共享？</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">45</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://cuda-doc.readthedocs.io/" title="https:&#x2F;&#x2F;cuda-doc.readthedocs.io" rel="noopener" target="_blank">CUDA中文手册</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://infiniband-doc.readthedocs.io/" title="https:&#x2F;&#x2F;infiniband-doc.readthedocs.io&#x2F;" rel="noopener" target="_blank">InfiniBand中文手册</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
