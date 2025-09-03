@@ -6,7 +6,7 @@ tags:
 
 ## Linux 配置 clash 代理
 
-‌1. 创建并配置服务文件‌
+### 创建并配置服务文件‌
 
 编辑 /etc/systemd/system/clash_meta.service，内容示例如下（需根据实际路径调整）：
 
@@ -16,8 +16,10 @@ Description=Clash Meta Service
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/clash_meta -d /path/to/config
+Type=simple
+ExecStart=/usr/local/bin/clash_meta -f /path/to/config
 Restart=always
+User=root
 
 [Install]
 WantedBy=multi-user.target
@@ -28,7 +30,8 @@ WantedBy=multi-user.target
 - ExecStart：指定 clash_meta 的启动命令和配置目录。
 - Restart=always：确保服务崩溃后自动重启‌
 
-‌2. 启用开机自启‌
+### 启用开机自启‌
+
 执行以下命令使配置生效：
 
 ```bash
@@ -59,7 +62,8 @@ systemctl is-enabled clash_meta  # 输出应为 "enabled"
 systemctl status clash_meta      # 检查服务状态
 ```
 
-‌3. 验证自启动机制‌
+### 验证自启动机制‌
+
 ‌检查服务状态‌：
 
 ```bash
@@ -77,6 +81,27 @@ journalctl -u clash_meta -f  # 实时跟踪日志
 - ‌路径错误‌：确保 ExecStart 中的路径正确（如 /usr/local/bin/clash_meta 是否存在）‌
 - ‌权限不足‌：服务文件需以 root 权限创建，或通过 User= 指定运行用户‌
 - ‌依赖未满足‌：若依赖网络，需在 [Unit] 中添加 After=network.target
+
+### bash 的配置
+
+```bash
+# Clash 代理端口
+PROXY_PORT=7890
+SOCKS5_PORT=7891
+
+# 判断 clash-meta 是否正在运行
+if pgrep -x "clash_meta" > /dev/null; then
+    export http_proxy="http://127.0.0.1:$PROXY_PORT"
+    export https_proxy="http://127.0.0.1:$PROXY_PORT"
+    export all_proxy="socks5://127.0.0.1:$SOCKS5_PORT"
+    export GIT_SSH_COMMAND="ssh -o ProxyCommand='nc -x 127.0.0.1:$SOCKS5_PORT %h %p'"
+else
+    unset http_proxy
+    unset https_proxy
+    unset all_proxy
+    unset GIT_SSH_COMMAND
+fi
+```
 
 
 ## VMWare 的 Linux 虚拟机共享 Windows 主机的 VPN
