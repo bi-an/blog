@@ -4,6 +4,81 @@ date: 2025-01-14 20:44:40
 tags:
 ---
 
+## Linux 配置 clash 代理
+
+‌1. 创建并配置服务文件‌
+
+编辑 /etc/systemd/system/clash_meta.service，内容示例如下（需根据实际路径调整）：
+
+```ini
+[Unit]
+Description=Clash Meta Service
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/clash_meta -d /path/to/config
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+关键参数说明：
+
+- ExecStart：指定 clash_meta 的启动命令和配置目录。
+- Restart=always：确保服务崩溃后自动重启‌
+
+‌2. 启用开机自启‌
+执行以下命令使配置生效：
+
+```bash
+sudo systemctl daemon-reload  # 重新加载配置
+sudo systemctl enable clash_meta  # 设置开机自启
+sudo systemctl start clash_meta   # 立即启动服务
+```
+
+命令的作用分析‌
+
+- sudo systemctl daemon-reload‌
+
+重新加载 systemd 的配置文件（如 .service 文件），仅对本次修改生效，‌不影响开机自启‌。
+（例如：修改了 /etc/systemd/system/clash_meta.service 后需执行此命令使配置生效）
+
+- ‌sudo systemctl enable clash_meta‌
+
+‌关键命令‌：将 clash_meta 服务添加到开机自启列表，‌下次开机会自动启动‌。
+（实际效果：在 /etc/systemd/system/multi-user.target.wants/ 下创建服务符号链接）
+
+- ‌sudo systemctl start clash_meta‌
+立即启动服务，但仅对当前会话有效，‌不直接影响开机行为‌。
+
+验证是否成功：
+
+```bash
+systemctl is-enabled clash_meta  # 输出应为 "enabled"
+systemctl status clash_meta      # 检查服务状态
+```
+
+‌3. 验证自启动机制‌
+‌检查服务状态‌：
+
+```bash
+systemctl list-unit-files | grep clash_meta  # 确认状态为 "enabled"
+```
+
+‌查看日志‌：
+
+```bash
+journalctl -u clash_meta -f  # 实时跟踪日志
+```
+
+‌常见问题‌
+
+- ‌路径错误‌：确保 ExecStart 中的路径正确（如 /usr/local/bin/clash_meta 是否存在）‌
+- ‌权限不足‌：服务文件需以 root 权限创建，或通过 User= 指定运行用户‌
+- ‌依赖未满足‌：若依赖网络，需在 [Unit] 中添加 After=network.target
+
+
 ## VMWare 的 Linux 虚拟机共享 Windows 主机的 VPN
 
 方案 2：NAT 模式 + Windows 网络共享
