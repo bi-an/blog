@@ -193,6 +193,73 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/04/16/dlfcn/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/04/16/dlfcn/" class="post-title-link" itemprop="url">dlfcn</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-04-16 00:20:34" itemprop="dateCreated datePublished" datetime="2025-04-16T00:20:34+00:00">2025-04-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <figure class="highlight cpp"><figcaption><span>Makefile</span><a href="/blog/downloads/code/dlfcn/Makefile">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">CXX = g++</span><br><span class="line">CXXFLAGS = -fPIC -Wall -Wextra</span><br><span class="line">LDFLAGS = -shared</span><br><span class="line"></span><br><span class="line">all: main libhello.so</span><br><span class="line"></span><br><span class="line">main: main.cpp</span><br><span class="line">	$(CXX) main.cpp -o main -ldl</span><br><span class="line"></span><br><span class="line">libhello.so: hello.cpp</span><br><span class="line">	$(CXX) $(CXXFLAGS) $(LDFLAGS) hello.cpp -o libhello.so</span><br><span class="line"></span><br><span class="line">clean:</span><br><span class="line">	rm -f main libhello.</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight cpp"><figcaption><span>main.cpp</span><a href="/blog/downloads/code/dlfcn/main.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;dlfcn.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*HelloFunc)</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="comment">// 打开共享库</span></span><br><span class="line">    <span class="type">void</span>* handle = <span class="built_in">dlopen</span>(<span class="string">&quot;./libhello.so&quot;</span>, RTLD_LAZY);</span><br><span class="line">    <span class="keyword">if</span> (!handle) {</span><br><span class="line">        std::cerr &lt;&lt; <span class="string">&quot;dlopen failed: &quot;</span> &lt;&lt; <span class="built_in">dlerror</span>() &lt;&lt; std::endl;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 清除之前的错误</span></span><br><span class="line">    <span class="built_in">dlerror</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取函数指针</span></span><br><span class="line">    HelloFunc hello = (HelloFunc)<span class="built_in">dlsym</span>(handle, <span class="string">&quot;hello&quot;</span>);</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>* dlsym_error = <span class="built_in">dlerror</span>();</span><br><span class="line">    <span class="keyword">if</span> (dlsym_error) {</span><br><span class="line">        std::cerr &lt;&lt; <span class="string">&quot;dlsym failed: &quot;</span> &lt;&lt; dlsym_error &lt;&lt; std::endl;</span><br><span class="line">        <span class="built_in">dlclose</span>(handle);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 打印函数地址</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Address of hello function: &quot;</span> &lt;&lt; <span class="built_in">reinterpret_cast</span>&lt;<span class="type">void</span>*&gt;(hello) &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调用函数</span></span><br><span class="line">    <span class="built_in">hello</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 关闭共享库</span></span><br><span class="line">    <span class="built_in">dlclose</span>(handle);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/03/19/concurrency/%E5%8E%9F%E5%AD%90%E5%8F%98%E9%87%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +291,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
 
           
@@ -489,7 +556,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
 
           
@@ -588,7 +655,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
 
           
@@ -885,7 +952,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
 
           
@@ -1211,7 +1278,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
 
           
@@ -1225,7 +1292,46 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="VMWare-的-Linux-虚拟机共享-Windows-主机的-VPN"><a href="#VMWare-的-Linux-虚拟机共享-Windows-主机的-VPN" class="headerlink" title="VMWare 的 Linux 虚拟机共享 Windows 主机的 VPN"></a>VMWare 的 Linux 虚拟机共享 Windows 主机的 VPN</h2><p>方案 2：NAT 模式 + Windows 网络共享<br>另一种方式是保持 VMware 使用 NAT 模式，并通过 Windows 主机的网络共享功能，将 VPN 流量共享给虚拟机。</p>
+          <h2 id="Linux-配置-clash-代理"><a href="#Linux-配置-clash-代理" class="headerlink" title="Linux 配置 clash 代理"></a>Linux 配置 clash 代理</h2><p>‌1. 创建并配置服务文件‌</p>
+<p>编辑 &#x2F;etc&#x2F;systemd&#x2F;system&#x2F;clash_meta.service，内容示例如下（需根据实际路径调整）：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[Unit]</span></span><br><span class="line"><span class="attr">Description</span>=Clash Meta Service</span><br><span class="line"><span class="attr">After</span>=network.target</span><br><span class="line"></span><br><span class="line"><span class="section">[Service]</span></span><br><span class="line"><span class="attr">ExecStart</span>=/usr/local/bin/clash_meta -d /path/to/config</span><br><span class="line"><span class="attr">Restart</span>=always</span><br><span class="line"></span><br><span class="line"><span class="section">[Install]</span></span><br><span class="line"><span class="attr">WantedBy</span>=multi-user.target</span><br></pre></td></tr></table></figure>
+
+<p>关键参数说明：</p>
+<ul>
+<li>ExecStart：指定 clash_meta 的启动命令和配置目录。</li>
+<li>Restart&#x3D;always：确保服务崩溃后自动重启‌</li>
+</ul>
+<p>‌2. 启用开机自启‌<br>执行以下命令使配置生效：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl daemon-reload  <span class="comment"># 重新加载配置</span></span><br><span class="line">sudo systemctl <span class="built_in">enable</span> clash_meta  <span class="comment"># 设置开机自启</span></span><br><span class="line">sudo systemctl start clash_meta   <span class="comment"># 立即启动服务</span></span><br></pre></td></tr></table></figure>
+
+<p>命令的作用分析‌</p>
+<ul>
+<li>sudo systemctl daemon-reload‌</li>
+</ul>
+<p>重新加载 systemd 的配置文件（如 .service 文件），仅对本次修改生效，‌不影响开机自启‌。<br>（例如：修改了 &#x2F;etc&#x2F;systemd&#x2F;system&#x2F;clash_meta.service 后需执行此命令使配置生效）</p>
+<ul>
+<li>‌sudo systemctl enable clash_meta‌</li>
+</ul>
+<p>‌关键命令‌：将 clash_meta 服务添加到开机自启列表，‌下次开机会自动启动‌。<br>（实际效果：在 &#x2F;etc&#x2F;systemd&#x2F;system&#x2F;multi-user.target.wants&#x2F; 下创建服务符号链接）</p>
+<ul>
+<li>‌sudo systemctl start clash_meta‌<br>立即启动服务，但仅对当前会话有效，‌不直接影响开机行为‌。</li>
+</ul>
+<p>验证是否成功：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">systemctl is-enabled clash_meta  <span class="comment"># 输出应为 &quot;enabled&quot;</span></span><br><span class="line">systemctl status clash_meta      <span class="comment"># 检查服务状态</span></span><br></pre></td></tr></table></figure>
+
+<p>‌3. 验证自启动机制‌<br>‌检查服务状态‌：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">systemctl list-unit-files | grep clash_meta  <span class="comment"># 确认状态为 &quot;enabled&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>‌查看日志‌：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">journalctl -u clash_meta -f  <span class="comment"># 实时跟踪日志</span></span><br></pre></td></tr></table></figure>
+
+<p>‌常见问题‌</p>
+<ul>
+<li>‌路径错误‌：确保 ExecStart 中的路径正确（如 &#x2F;usr&#x2F;local&#x2F;bin&#x2F;clash_meta 是否存在）‌</li>
+<li>‌权限不足‌：服务文件需以 root 权限创建，或通过 User&#x3D; 指定运行用户‌</li>
+<li>‌依赖未满足‌：若依赖网络，需在 [Unit] 中添加 After&#x3D;network.target</li>
+</ul>
+<h2 id="VMWare-的-Linux-虚拟机共享-Windows-主机的-VPN"><a href="#VMWare-的-Linux-虚拟机共享-Windows-主机的-VPN" class="headerlink" title="VMWare 的 Linux 虚拟机共享 Windows 主机的 VPN"></a>VMWare 的 Linux 虚拟机共享 Windows 主机的 VPN</h2><p>方案 2：NAT 模式 + Windows 网络共享<br>另一种方式是保持 VMware 使用 NAT 模式，并通过 Windows 主机的网络共享功能，将 VPN 流量共享给虚拟机。</p>
 <p>步骤：<br>在 Windows 上启用网络共享：</p>
 <p>确保 Clash 在 Windows 主机上运行，并已连接到 VPN。<br>打开 控制面板 &gt; 网络和共享中心 &gt; 更改适配器设置。<br>右键点击你的 VPN 连接（通常是一个以 Ethernet 开头的适配器），选择 属性。<br>在 共享 标签页，勾选 允许其他网络用户通过此计算机的 Internet 连接连接。<br>选择虚拟机使用的网络适配器（例如 VMware 的 VMnet8 适配器），然后点击确定。<br>配置虚拟机网络为 NAT：</p>
 <p>在 VMware 中，确保虚拟机的网络适配器设置为 NAT（这通常是默认设置）。<br>在 NAT 模式下，虚拟机会通过 Windows 主机访问网络，但流量会被路由到共享的网络适配器。<br>验证虚拟机是否可以通过 VPN 访问网络：</p>
@@ -1351,7 +1457,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
 
           
@@ -1419,7 +1525,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
 
           
@@ -1514,7 +1620,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1597,7 +1703,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1695,90 +1801,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/06/linux/File-Exists/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/09/06/linux/File-Exists/" class="post-title-link" itemprop="url">File Exists</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-09-06 18:09:03" itemprop="dateCreated datePublished" datetime="2024-09-06T18:09:03+00:00">2024-09-06</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="判断文件是否存在"><a href="#判断文件是否存在" class="headerlink" title="判断文件是否存在"></a>判断文件是否存在</h1><h2 id="相关函数"><a href="#相关函数" class="headerlink" title="相关函数"></a>相关函数</h2><ul>
-<li><code>access</code></li>
-<li><code>stat</code></li>
-<li><code>inotify_node</code></li>
-<li><code>opendir</code></li>
-<li><code>readdir</code></li>
-</ul>
-<h2 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h2><p>文件系统并不会实时刷新缓存，尤其是在网络文件系统中。这会导致文件即使已经创建，<code>access</code>或<code>stat</code>函数依然返回”No such file”。<br>但是<code>ls</code>可以看到文件，这是因为<code>ls</code>和<code>access</code>函数的实现机制不同。</p>
-<p>例如：</p>
-<p>在<code>NFS</code>文件系统中，创建文件之后立即调用<code>stat</code>命令查看文件，<code>stat</code>会报告“文件不存在”。<br>删除文件之后立即调用<code>stat</code>命令查看文件，发现<code>stat</code>依然可以看到该文件。</p>
-<p>我们可以改用<code>readdir</code>来读取目录，因为目录会被更快地更新缓存。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1850,14 +1872,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-count">98</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-count">11</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">

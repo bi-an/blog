@@ -193,6 +193,75 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/03/cuda/CUDA%E7%9F%A9%E9%98%B5%E4%B9%98%E6%B3%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/09/03/cuda/CUDA%E7%9F%A9%E9%98%B5%E4%B9%98%E6%B3%95/" class="post-title-link" itemprop="url">CUDA矩阵乘法</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2025-09-03 09:23:17 / Modified: 01:44:34" itemprop="dateCreated datePublished" datetime="2025-09-03T09:23:17+00:00">2025-09-03</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/CUDA/" itemprop="url" rel="index"><span itemprop="name">CUDA</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="使用共享内存优化"><a href="#使用共享内存优化" class="headerlink" title="使用共享内存优化"></a>使用共享内存优化</h2><p><a href='https://postimg.cc/BjfXcPQ9' target='_blank'><img src='https://i.postimg.cc/dVLrFGb1/matrix-Mul.png' border='0' alt='matrix-Mul'/></a></p>
+<figure class="highlight cpp"><figcaption><span>matrixMul.cpp</span><a href="/blog/downloads/code/cuda/matrixMul.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Matrix multiplication (CUDA Kernel) on the device: C = A * B</span></span><br><span class="line"><span class="comment"> * wA is A&#x27;s width and wB is B&#x27;s width</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="type">int</span> BLOCK_SIZE&gt; <span class="function">__global__ <span class="type">void</span> <span class="title">MatrixMulCUDA</span><span class="params">(<span class="type">float</span> *C, <span class="type">float</span> *A, <span class="type">float</span> *B, <span class="type">int</span> wA, <span class="type">int</span> wB)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="comment">// Block index</span></span><br><span class="line">    <span class="type">int</span> bx = blockIdx.x;</span><br><span class="line">    <span class="type">int</span> by = blockIdx.y;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Thread index</span></span><br><span class="line">    <span class="type">int</span> tx = threadIdx.x;</span><br><span class="line">    <span class="type">int</span> ty = threadIdx.y;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Index of the first sub-matrix of A processed by the block</span></span><br><span class="line">    <span class="type">int</span> aBegin = wA * BLOCK_SIZE * by;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Index of the last sub-matrix of A processed by the block</span></span><br><span class="line">    <span class="type">int</span> aEnd = aBegin + wA - <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Step size used to iterate through the sub-matrices of A</span></span><br><span class="line">    <span class="type">int</span> aStep = BLOCK_SIZE;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Index of the first sub-matrix of B processed by the block</span></span><br><span class="line">    <span class="type">int</span> bBegin = BLOCK_SIZE * bx;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Step size used to iterate through the sub-matrices of B</span></span><br><span class="line">    <span class="type">int</span> bStep = BLOCK_SIZE * wB;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Csub is used to store the element of the block sub-matrix</span></span><br><span class="line">    <span class="comment">// that is computed by the thread</span></span><br><span class="line">    <span class="type">float</span> Csub = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Loop over all the sub-matrices of A and B</span></span><br><span class="line">    <span class="comment">// required to compute the block sub-matrix</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> a = aBegin, b = bBegin; a &lt;= aEnd; a += aStep, b += bStep) {</span><br><span class="line">        <span class="comment">// Declaration of the shared memory array As used to</span></span><br><span class="line">        <span class="comment">// store the sub-matrix of A</span></span><br><span class="line">        __shared__ <span class="type">float</span> As[BLOCK_SIZE][BLOCK_SIZE];</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Declaration of the shared memory array Bs used to</span></span><br><span class="line">        <span class="comment">// store the sub-matrix of B</span></span><br><span class="line">        __shared__ <span class="type">float</span> Bs[BLOCK_SIZE][BLOCK_SIZE];</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Load the matrices from device memory</span></span><br><span class="line">        <span class="comment">// to shared memory; each thread loads</span></span><br><span class="line">        <span class="comment">// one element of each matrix</span></span><br><span class="line">        As[ty][tx] = A[a + wA * ty + tx];</span><br><span class="line">        Bs[ty][tx] = B[b + wB * ty + tx];</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Synchronize to make sure the matrices are loaded</span></span><br><span class="line">        __syncthreads();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Multiply the two matrices together;</span></span><br><span class="line">        <span class="comment">// each thread computes one element</span></span><br><span class="line">        <span class="comment">// of the block sub-matrix</span></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> unroll</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> k = <span class="number">0</span>; k &lt; BLOCK_SIZE; ++k) {</span><br><span class="line">            Csub += As[ty][k] * Bs[k][tx];</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Synchronize to make sure that the preceding</span></span><br><span class="line">        <span class="comment">// computation is done before loading two new</span></span><br><span class="line">        <span class="comment">// sub-matrices of A and B in the next iteration</span></span><br><span class="line">        __syncthreads();</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Write the block sub-matrix to device memory;</span></span><br><span class="line">    <span class="comment">// each thread writes one element</span></span><br><span class="line">    <span class="type">int</span> c               = wB * BLOCK_SIZE * by + BLOCK_SIZE * bx;</span><br><span class="line">    C[c + wB * ty + tx] = Csub;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/02/concurrency/%E4%BA%BA%E4%BA%BA%E9%83%BD%E7%9C%8B%E5%BE%97%E6%87%82%E7%9A%84%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -216,10 +285,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2025-09-02 11:10:13 / Modified: 11:18:14" itemprop="dateCreated datePublished" datetime="2025-09-02T11:10:13+00:00">2025-09-02</time>
+              <time title="Created: 2025-09-02 11:10:13" itemprop="dateCreated datePublished" datetime="2025-09-02T11:10:13+00:00">2025-09-02</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -380,7 +455,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -680,7 +755,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1351,7 +1426,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1518,7 +1593,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1681,7 +1756,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
 
           
@@ -1756,7 +1831,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2184,7 +2259,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
 
           
@@ -2306,7 +2381,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2405,122 +2480,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/19/concurrency/thread_local%E7%9A%84%E5%AE%9E%E7%8E%B0/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/19/concurrency/thread_local%E7%9A%84%E5%AE%9E%E7%8E%B0/" class="post-title-link" itemprop="url">thread_local的实现</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-19 19:41:37" itemprop="dateCreated datePublished" datetime="2025-08-19T19:41:37+00:00">2025-08-19</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <ol>
-<li>thread_local 的基本语义</li>
-</ol>
-<p>C++11 引入的存储类型说明符：</p>
-<p>thread_local int x &#x3D; 0;</p>
-<p>表示 每个线程都有一份独立的 x，互不干扰。</p>
-<p>生命周期：跟普通静态变量类似（全局存活直到线程退出）。</p>
-<ol start="2">
-<li>底层实现原理</li>
-</ol>
-<p>它的实现依赖于 TLS (Thread Local Storage, 线程局部存储) 机制。</p>
-<p>在 ELF&#x2F;Linux 下：</p>
-<p>编译器在 .tdata &#x2F; .tbss 段里为 thread_local 变量分配空间（就像全局变量在 .data &#x2F; .bss 段里）。</p>
-<p>程序加载时，动态链接器（ld.so）会记录这些 TLS 变量的“模板布局”。</p>
-<p>每个线程启动时，线程库（glibc&#x2F;pthread）会：</p>
-<p>给这个线程分配一块 TLS 块（通常放在线程栈附近，或者专门的内存页）。</p>
-<p>把 .tdata 里的初始值拷贝到这个线程的 TLS 块。</p>
-<p>.tbss 部分（未初始化的 thread_local）则清零。</p>
-<p>线程访问 thread_local 时，编译器生成的代码会通过 TLS 寄存器（如 x86-64 的 FS&#x2F;GS 段寄存器）+ 偏移量，找到对应线程的存储单元。</p>
-<p>例如 x86-64 Linux 上，errno 就是：</p>
-<p>#define errno (*__errno_location())</p>
-<p>而 __errno_location() 内部就是通过 %fs:offset 找到 TLS 块里的 errno。</p>
-<ol start="3">
-<li>存放在哪里？</li>
-</ol>
-<p>Windows：在 TEB (Thread Environment Block) 里有 TLS 指针，__declspec(thread) 就用它。</p>
-<p>Linux&#x2F;ELF：在每个线程的 TLS 块里（通常分配在线程栈附近的一片内存区域）。访问通过 FS&#x2F;GS 寄存器。</p>
-<p>编译器细节：</p>
-<p>GCC&#x2F;Clang 默认用 “动态 TLS 模型”（访问时通过动态链接器查询 TLS 偏移）。</p>
-<p>如果加 -ftls-model&#x3D;initial-exec，编译器会直接用固定偏移访问 TLS，速度更快（但要求变量在主程序或静态库里）。</p>
-<ol start="4">
-<li>示例</li>
-</ol>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="keyword">thread_local</span> <span class="type">int</span> counter = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">worker</span><span class="params">(<span class="type">int</span> id)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">3</span>; i++) &#123;</span><br><span class="line">        counter++;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Thread &quot;</span> &lt;&lt; id &lt;&lt; <span class="string">&quot;: counter = &quot;</span> &lt;&lt; counter &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="function">std::thread <span class="title">t1</span><span class="params">(worker, <span class="number">1</span>)</span></span>;</span><br><span class="line">    <span class="function">std::thread <span class="title">t2</span><span class="params">(worker, <span class="number">2</span>)</span></span>;</span><br><span class="line">    t1.<span class="built_in">join</span>();</span><br><span class="line">    t2.<span class="built_in">join</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>输出大致是：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Thread 1: counter = 1</span><br><span class="line">Thread 1: counter = 2</span><br><span class="line">Thread 1: counter = 3</span><br><span class="line">Thread 2: counter = 1</span><br><span class="line">Thread 2: counter = 2</span><br><span class="line">Thread 2: counter = 3</span><br></pre></td></tr></table></figure>
-
-<p>说明 counter 在不同线程里独立。</p>
-<p>✅ 总结：</p>
-<p>thread_local 变量放在 TLS 段，每个线程有自己的拷贝。</p>
-<p>访问是通过 线程局部存储寄存器（FS&#x2F;GS）+ 偏移量 实现的。</p>
-<p>存储空间由线程库在创建线程时分配和初始化。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2592,14 +2551,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-count">98</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-count">11</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">

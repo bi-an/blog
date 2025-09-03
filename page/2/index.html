@@ -193,6 +193,122 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/19/concurrency/thread_local%E7%9A%84%E5%AE%9E%E7%8E%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/19/concurrency/thread_local%E7%9A%84%E5%AE%9E%E7%8E%B0/" class="post-title-link" itemprop="url">thread_local的实现</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-08-19 19:41:37" itemprop="dateCreated datePublished" datetime="2025-08-19T19:41:37+00:00">2025-08-19</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <ol>
+<li>thread_local 的基本语义</li>
+</ol>
+<p>C++11 引入的存储类型说明符：</p>
+<p>thread_local int x &#x3D; 0;</p>
+<p>表示 每个线程都有一份独立的 x，互不干扰。</p>
+<p>生命周期：跟普通静态变量类似（全局存活直到线程退出）。</p>
+<ol start="2">
+<li>底层实现原理</li>
+</ol>
+<p>它的实现依赖于 TLS (Thread Local Storage, 线程局部存储) 机制。</p>
+<p>在 ELF&#x2F;Linux 下：</p>
+<p>编译器在 .tdata &#x2F; .tbss 段里为 thread_local 变量分配空间（就像全局变量在 .data &#x2F; .bss 段里）。</p>
+<p>程序加载时，动态链接器（ld.so）会记录这些 TLS 变量的“模板布局”。</p>
+<p>每个线程启动时，线程库（glibc&#x2F;pthread）会：</p>
+<p>给这个线程分配一块 TLS 块（通常放在线程栈附近，或者专门的内存页）。</p>
+<p>把 .tdata 里的初始值拷贝到这个线程的 TLS 块。</p>
+<p>.tbss 部分（未初始化的 thread_local）则清零。</p>
+<p>线程访问 thread_local 时，编译器生成的代码会通过 TLS 寄存器（如 x86-64 的 FS&#x2F;GS 段寄存器）+ 偏移量，找到对应线程的存储单元。</p>
+<p>例如 x86-64 Linux 上，errno 就是：</p>
+<p>#define errno (*__errno_location())</p>
+<p>而 __errno_location() 内部就是通过 %fs:offset 找到 TLS 块里的 errno。</p>
+<ol start="3">
+<li>存放在哪里？</li>
+</ol>
+<p>Windows：在 TEB (Thread Environment Block) 里有 TLS 指针，__declspec(thread) 就用它。</p>
+<p>Linux&#x2F;ELF：在每个线程的 TLS 块里（通常分配在线程栈附近的一片内存区域）。访问通过 FS&#x2F;GS 寄存器。</p>
+<p>编译器细节：</p>
+<p>GCC&#x2F;Clang 默认用 “动态 TLS 模型”（访问时通过动态链接器查询 TLS 偏移）。</p>
+<p>如果加 -ftls-model&#x3D;initial-exec，编译器会直接用固定偏移访问 TLS，速度更快（但要求变量在主程序或静态库里）。</p>
+<ol start="4">
+<li>示例</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="keyword">thread_local</span> <span class="type">int</span> counter = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">worker</span><span class="params">(<span class="type">int</span> id)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">3</span>; i++) &#123;</span><br><span class="line">        counter++;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Thread &quot;</span> &lt;&lt; id &lt;&lt; <span class="string">&quot;: counter = &quot;</span> &lt;&lt; counter &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="function">std::thread <span class="title">t1</span><span class="params">(worker, <span class="number">1</span>)</span></span>;</span><br><span class="line">    <span class="function">std::thread <span class="title">t2</span><span class="params">(worker, <span class="number">2</span>)</span></span>;</span><br><span class="line">    t1.<span class="built_in">join</span>();</span><br><span class="line">    t2.<span class="built_in">join</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出大致是：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Thread 1: counter = 1</span><br><span class="line">Thread 1: counter = 2</span><br><span class="line">Thread 1: counter = 3</span><br><span class="line">Thread 2: counter = 1</span><br><span class="line">Thread 2: counter = 2</span><br><span class="line">Thread 2: counter = 3</span><br></pre></td></tr></table></figure>
+
+<p>说明 counter 在不同线程里独立。</p>
+<p>✅ 总结：</p>
+<p>thread_local 变量放在 TLS 段，每个线程有自己的拷贝。</p>
+<p>访问是通过 线程局部存储寄存器（FS&#x2F;GS）+ 偏移量 实现的。</p>
+<p>存储空间由线程库在创建线程时分配和初始化。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/18/%E5%AE%9E%E7%94%A8%E4%B9%A6%E7%B1%8D%E5%88%97%E8%A1%A8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +340,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -298,7 +414,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
 
           
@@ -431,7 +547,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -594,7 +710,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -721,7 +837,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1108,7 +1224,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1415,7 +1531,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
 
           
@@ -1644,7 +1760,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1765,7 +1881,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
+                <time title="Modified: 2025-09-03 01:44:34" itemprop="dateModified" datetime="2025-09-03T01:44:34+00:00">2025-09-03</time>
               </span>
 
           
@@ -1879,113 +1995,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/15/net/%E8%A7%A3%E5%86%B3Protol-not-available%E7%9A%84%E9%94%99%E8%AF%AF/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/15/net/%E8%A7%A3%E5%86%B3Protol-not-available%E7%9A%84%E9%94%99%E8%AF%AF/" class="post-title-link" itemprop="url">解决Protol not available的错误</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-15 10:45:33" itemprop="dateCreated datePublished" datetime="2025-08-15T10:45:33+00:00">2025-08-15</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-02 11:18:14" itemprop="dateModified" datetime="2025-09-02T11:18:14+00:00">2025-09-02</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h2><p>代码：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">getaddrinfo</span>(localhost, <span class="string">&quot;sunrpc&quot;</span>, &amp;hints, &amp;result); <span class="comment">// &quot;sunrpc&quot; 或 端口 111 都可以</span></span><br><span class="line"><span class="keyword">for</span> (<span class="type">const</span> <span class="keyword">auto</span> *rp = result; rp != <span class="literal">nullptr</span>; rp = rp-&gt;ai_next) &#123;</span><br><span class="line">    sock = <span class="built_in">socket</span>(rp-&gt;ai_family, rp-&gt;ai_socktype, rp-&gt;ai_protocol);</span><br><span class="line">    <span class="keyword">if</span> (sock == <span class="number">-1</span>) <span class="keyword">continue</span>;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">connect</span>(sock, rp-&gt;ai_addr, rp-&gt;ai_addrlen) != <span class="number">-1</span>) <span class="keyword">break</span>;  <span class="comment">// Success</span></span><br><span class="line">    <span class="built_in">perror</span>(<span class="string">&quot;connect failed&quot;</span>);</span><br><span class="line">    <span class="built_in">close</span>(sock);</span><br><span class="line">    sock = <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>这段代码，<code>connect()</code> 返回 <code>-1</code> ，报错为 <code>Protol not available</code> 。</p>
-<ul>
-<li>但是我们明明是通过 <code>getaddrinfo()</code> 查询到的地址信息，为什么报错？</li>
-<li>这个报错也很具有误导性，我们开启了 <code>IPv4</code> ，没有开启 <code>IPv6</code>，如果开启 <code>IPv6</code>，这个错误会消失，不支持 <code>IPv4</code> ？</li>
-</ul>
-<h2 id="排查过程"><a href="#排查过程" class="headerlink" title="排查过程"></a>排查过程</h2><p>运行这些命令：</p>
-<ul>
-<li><code>hostname</code></li>
-<li><code>hostname -f</code></li>
-<li><code>hostname -a</code></li>
-<li><code>hostname -I</code></li>
-<li><code>hostnamectl</code></li>
-<li><code>cat /proc/sys/kernel/hostname</code></li>
-<li><code>more /etc/host*</code></li>
-<li><code>/sbin/ifconfig -a</code></li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ hostname</span><br><span class="line">$ <span class="built_in">cat</span> /etc/hosts</span><br><span class="line"><span class="comment"># Created by chnetinfo.sh.</span></span><br><span class="line"><span class="comment"># Do not remove the following line, or various programs</span></span><br><span class="line"><span class="comment"># that require network functionality will fail.</span></span><br><span class="line">::1       localhost.localdomain   localhost</span><br><span class="line">xx.xxx.xxx.xx   xiaoming-PC      xiaoming-PC.xiaoming-company.com</span><br></pre></td></tr></table></figure>
-
-<p>注：上面 <code>cat /etc/hosts</code> 的第二个 IP 进行了个人信息隐藏。<code>xx</code> 代表数字。</p>
-<p>说明：</p>
-<table>
-<thead>
-<tr>
-<th align="center">地址</th>
-<th align="center">协议版本</th>
-<th align="center">作用</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">127.0.0.1</td>
-<td align="center">IPv4</td>
-<td align="center">本地回环地址，用于本机内部通信</td>
-</tr>
-<tr>
-<td align="center">::1</td>
-<td align="center">IPv6</td>
-<td align="center">本地回环地址，用于本机内部通信</td>
-</tr>
-</tbody></table>
-<p>于是问题找到了：<code>/etc/hosts/</code> 只配置了 <code>::1</code> ，那么使用 IPv4 协议尝试 connect localhost 就会返回 -1 。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2057,14 +2066,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-count">98</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-count">11</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
