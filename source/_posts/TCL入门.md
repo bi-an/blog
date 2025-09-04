@@ -158,3 +158,19 @@ puts $i
 ;# 正确
 puts $test::i
 ```
+
+## TCL C++ 打印堆栈
+
+```cpp
+int MyCommand(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]) {
+    // 打印调用命令
+    for (int i = 0; i < objc; ++i) {
+        printf("Arg[%d]: %s\n", Tcl_GetString(objv[i]));
+    }
+
+    // 打印堆栈信息（可选）
+    Tcl_Eval(interp, "puts \"Call stack:\"; for {set i 0} {$i <= [info level]} {incr i} {puts \"  [info level $i]\"}");
+
+    return TCL_OK;
+}
+```
