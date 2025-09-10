@@ -99,7 +99,7 @@ x86_64（64 位）
 | $r8~$r15               | 扩展通用寄存器      |
 | $eflags                | 标志寄存器          |
 
-* `show` 
+* `show`
   * `show environment` 查看全局变量
   * `set environment <var>=<value>` 设置环境变量
 * `attach` - 连接到正在运行的进程。与`gdb -p`效果相同。
@@ -311,4 +311,22 @@ And you can examine the current logging configuration:
 ```
 
 [Refercence](https://stackoverflow.com/questions/5941158/gdb-print-to-file-instead-of-stdout)
+
+
+## 权限限制
+
+```bash
+$ cat /proc/sys/kernel/yama/ptrace_scope
+3
+```
+
+Yama 是 Linux 内核中的一个 安全模块（LSM：Linux Security Module），专门用于加强进程间的访问控制，尤其是对 ptrace 系统调用的限制。
+Yama 的主要目的是防止恶意程序通过 ptrace 附加到其他进程，从而窃取数据或注入代码。
+
+| 值 |     模式名称     |                                      含义说明                                      |
+|:--:|:----------------:|:----------------------------------------------------------------------------------:|
+| 0  | 经典模式         | 允许同一用户调试其权限范围内的任意进程（只要目标进程是“可转储”的）。适合开发环境。 |
+| 1  | 受限模式（默认） | 只允许调试直接子进程，或拥有 CAP_SYS_PTRACE 权限的进程。更安全，适合大多数系统。   |
+| 2  | 管理员模式       | 只有 root 或具备 CAP_SYS_PTRACE 的进程可以使用 ptrace。适合高安全场景。            |
+| 3  | 完全禁用         | 所有进程（包括 root）都无法使用 ptrace。彻底禁止调试行为，适合极端安全需求。       |
 

@@ -180,13 +180,9 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,-rpath=$HOME/local/glibc-2.42/lib")
 GCC 默认会在系统的标准库路径中查找 glibc，例如：
 
 /lib
-
 /lib64
-
 /usr/lib
-
 /usr/lib64
-
 /usr/include（头文件）
 
 这些路径通常由系统预设，glibc 安装时会自动放置在这些位置。
