@@ -5,9 +5,9 @@ categories: c/cpp
 tags: gdb
 ---
 
-## gdb实现原理
+## gdb 实现原理
 
-参考[链接](https://www.zhihu.com/people/bi-an-60-46)。
+参考 [链接](https://www.zhihu.com/people/bi-an-60-46)。
 
 ## 在 vim / emacs 中启动 gdb
 
@@ -41,17 +41,17 @@ Vim 会打开一个新的窗口，显示 GDB 控制台，你可以在里面输�
 📖 教程参考：[Baeldung 的 Vim-GDB 集成指南](https://www.baeldung.com/linux/vim-gdb-integration)
 
 
-## gdb命令
+## gdb 命令
 
-* `thread apply [threadno] [all] args` - 将命令传递给一个或多个线程，参见[链接](https://developer.apple.com/library/archive/documentation/DeveloperTools/gdb/gdb/gdb_5.html)。
-比如，`thread apply all continue`表示将`continue`命令传递给所有线程，也就是让所有线程都继续运行。
+* `thread apply [threadno] [all] args` - 将命令传递给一个或多个线程，参见 [链接](https://developer.apple.com/library/archive/documentation/DeveloperTools/gdb/gdb/gdb_5.html)。
+比如，`thread apply all continue` 表示将 `continue` 命令传递给所有线程，也就是让所有线程都继续运行。
 
-* `rbreak` - Set a breakpoint for all functions matching REGEXP. 参考[链接](https://blog.csdn.net/zdl1016/article/details/8708077)。
+* `rbreak` - Set a breakpoint for all functions matching REGEXP. 参考 [链接](https://blog.csdn.net/zdl1016/article/details/8708077)。
 
-    e.g. `rbreak file.C:.*` - 给file.C的所有函数加上断点。
+    e.g. `rbreak file.C:.*` - 给 file.C 的所有函数加上断点。
 
 * `info`
-  - `info inferior` - 可以查看当前调试的进程的PID。另外一种方法是在gdb命令行中直接调用C函数：`print (int)getpid()`。参考：[链接](https://www.qiniu.com/qfans/qnso-36704270)。
+  - `info inferior` - 可以查看当前调试的进程的 PID。另外一种方法是在 gdb 命令行中直接调用 C 函数：`print (int)getpid()`。参考：[链接](https://www.qiniu.com/qfans/qnso-36704270)。
   - `info source` - 当前调试的源文件路径。
   - `info sources <pattern>` - 查询源文件路径
   - `info proc` - [当前进程信息](https://sourceware.org/gdb/onlinedocs/gdb/Process-Information.html)。
@@ -81,7 +81,7 @@ x86（32 位）
 
 | $eax, $ebx, $ecx, $edx | 通用寄存器                       |
 |------------------------|----------------------------------|
-| $esi, $edi             | 源/目标索引寄存器                |
+| $esi, $edi             | 源 / 目标索引寄存器                |
 | $esp                   | 栈顶指针（Stack Pointer）        |
 | $ebp                   | 栈底指针（Base Pointer）         |
 | $eip                   | 指令指针（下一条执行的指令地址） |
@@ -102,17 +102,17 @@ x86_64（64 位）
 * `show`
   * `show environment` 查看全局变量
   * `set environment <var>=<value>` 设置环境变量
-* `attach` - 连接到正在运行的进程。与`gdb -p`效果相同。
+* `attach` - 连接到正在运行的进程。与 `gdb -p` 效果相同。
 * `detach` - 取消连接的进程。
-* `handle <signal> print pass nostop` - 捕获信号（比如`SIGSEGV`）并且忽略它。`handle <signal nostop`。
+* `handle <signal> print pass nostop` - 捕获信号（比如 `SIGSEGV`）并且忽略它。`handle <signal nostop`。
   * `pass` 表示 gdb 会将捕获到的信号发回给被调试的进程。
-* `set` - 修改变量的值，比如`set x=10`（或`set var x=10`）将变量`x`的值改为`10`。参考[博客](https://blog.csdn.net/yasi_xi/article/details/12784507)。
+* `set` - 修改变量的值，比如 `set x=10`（或 `set var x=10`）将变量 `x` 的值改为 `10`。参考 [博客](https://blog.csdn.net/yasi_xi/article/details/12784507)。
 * `show directories`
-* `print` - gdb默认设置打印字符串的长度为200；更改打印最大长度：`set print elements <number-of-elements>`，`0`表示unlimited.
+* `print` - gdb 默认设置打印字符串的长度为 200；更改打印最大长度：`set print elements <number-of-elements>`，`0` 表示 unlimited.
           - 打印数组: `print arr[0]@3` ，其中 `@3` 表示打印 3 个元素。
           - 以十六进制打印：`p/x <var>`
 * `ptype <variable name>` - 打印变量类型。
-* `finish` - 从函数中返回，并打印函数返回值（即使函数的return语句很复杂，也可以获取返回值）。
+* `finish` - 从函数中返回，并打印函数返回值（即使函数的 return 语句很复杂，也可以获取返回值）。
 * `frame <n>` - 跳转到某个栈帧。
 * `up` 跳转到上一个栈帧
 * `x/FMT`: `x` 表示 `examine` ，查看内存。
@@ -133,7 +133,7 @@ x86_64（64 位）
 
 ## 环境变量
 
-见[链接](https://www.irya.unam.mx/computo/sites/manuales/fce12/debugger/cl/commandref/gdb_mode/cmd_set_environm.htm)
+见 [链接](https://www.irya.unam.mx/computo/sites/manuales/fce12/debugger/cl/commandref/gdb_mode/cmd_set_environm.htm)
 
 
 ## 断点
@@ -150,7 +150,7 @@ break file:line_no
 info break
 ```
 
-删除第2个断点：
+删除第 2 个断点：
 
 ```
 delete 2
@@ -183,22 +183,22 @@ set max-value-size unlimited
 
 * 打印字符长度限制
 
-  gdb默认设置打印字符串的长度为200；更改打印最大长度：`set print elements`
+  gdb 默认设置打印字符串的长度为 200；更改打印最大长度：`set print elements`
 
 
 ## coredump
 
-gdb命令：`gcore`。
+gdb 命令：`gcore`。
 
 [Reference](https://man7.org/linux/man-pages/man5/core.5.html)
 
-## WSL无法使用gdb
+## WSL 无法使用 gdb
 
-WSL指Windows虚拟机。
+WSL 指 Windows 虚拟机。
 
 [解决方法](https://github.com/microsoft/WSL/issues/8516)：
 
-安装[PPA的daily build版本](https://launchpad.net/~ubuntu-support-team/+archive/ubuntu/gdb)
+安装 [PPA 的 daily build 版本](https://launchpad.net/~ubuntu-support-team/+archive/ubuntu/gdb)
 
 ```bash
 sudo add-apt-repository ppa:ubuntu-support-team/gdb
@@ -321,11 +321,11 @@ $ cat /proc/sys/kernel/yama/ptrace_scope
 ```
 
 Yama 是 Linux 内核中的一个 安全模块（LSM：Linux Security Module），专门用于加强进程间的访问控制，尤其是对 ptrace 系统调用的限制。
-Yama 的主要目的是防止恶意程序通过 ptrace 附加到其他进程，从而窃取数据或注入代码。
+Yama 的主要目的是防止恶意程序通过 ptrace 附加到其他进程（包括 gdb, strace, pstack, gstack 等），从而窃取数据或注入代码。
 
 | 值 |     模式名称     |                                      含义说明                                      |
 |:--:|:----------------:|:----------------------------------------------------------------------------------:|
-| 0  | 经典模式         | 允许同一用户调试其权限范围内的任意进程（只要目标进程是“可转储”的）。适合开发环境。 |
+| 0  | 经典模式         | 允许同一用户调试其权限范围内的任意进程（只要目标进程是 “可转储” 的）。适合开发环境。 |
 | 1  | 受限模式（默认） | 只允许调试直接子进程，或拥有 CAP_SYS_PTRACE 权限的进程。更安全，适合大多数系统。   |
 | 2  | 管理员模式       | 只有 root 或具备 CAP_SYS_PTRACE 的进程可以使用 ptrace。适合高安全场景。            |
 | 3  | 完全禁用         | 所有进程（包括 root）都无法使用 ptrace。彻底禁止调试行为，适合极端安全需求。       |

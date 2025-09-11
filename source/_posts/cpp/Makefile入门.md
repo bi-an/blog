@@ -33,7 +33,7 @@ Makefile 接收命令行参数
 
 非常奇特的现象：
 $ make clean
-cat clean.sh >clean 
+cat clean.sh >clean
 chmod a+x clean
 因为 Makefile 文件中没有 clean 的 recipe，但是当前目录下有个 clean.sh 文件。
 但是，当再次执行 make clean，clean 脚本还是不会被执行：
@@ -161,3 +161,76 @@ all: $(SRCS:.c=)
 最后两行其实不需要，默认规则已经足够了。
 
 其中，`$(SRCS:.c=.o)`表示将变量`SRCS`中的每个单词（以空格分割）中的`.c`替换为`.o`。以上代码则是将所有`.c`都去掉。
+
+
+## Makefile保留中间文件
+
+🛡️ 方法一：使用 .PRECIOUS 保留中间文件
+这是最直接的方式，告诉 make 不要删除某些目标，即使构建失败：
+
+```makefile
+.PRECIOUS: %.o %.d
+```
+
+你可以指定具体的文件名或模式（如 %.o 表示所有 .o 文件）。
+
+🛡️ 方法二：使用 .SECONDARY 保留中间文件但不强制重建
+如果你希望保留中间文件，但又不希望它们被视为最终目标，可以用：
+
+```makefile
+.SECONDARY: intermediate.o
+```
+
+或者：
+
+```makefile
+.SECONDARY:
+```
+
+这会保留所有中间文件。
+
+🧠 方法三：避免使用“中间目标”语法
+如果你写了类似：
+
+```makefile
+intermediate: ;
+```
+
+这种空规则会让 make 把 intermediate 视为中间目标，构建失败时自动删除。避免这种写法，或者配合 .PRECIOUS 使用。
+
+🛠️ 方法四：将中间文件输出到特定目录
+你可以将中间文件集中到一个目录中，便于管理和保留：
+
+```makefile
+OBJ_DIR := build/obj
+$(OBJ_DIR)/%.o: %.cpp
+    $(CXX) -c $< -o $@
+然后用 .PRECIOUS: $(OBJ_DIR)/%.o 保留它们。
+```
+
+📌 示例：保留 .o 和 .d 文件
+
+```makefile
+.PRECIOUS: %.o %.d
+
+main: main.o
+    $(CC) $^ -o $@
+
+main.o: main.c
+    $(CC) -c $< -o $@
+```
+
+gcc可以使用 `-save-temps` 选项保留中间文件：
+
+```bash
+gcc -save-temps -c main.c
+```
+
+
+🧠 补充：`-save-temps=obj`
+
+如果你只想把中间文件保存在目标文件所在目录，而不是当前目录，可以使用：
+
+```bash
+gcc -save-temps=obj main.c -o main
+```
