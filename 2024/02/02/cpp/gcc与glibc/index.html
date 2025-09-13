@@ -28,7 +28,7 @@
 <meta property="og:description" content="gccgcc是一个编译套件，包含c、c++、Fortran语言的编译器。 glibcglibc是一个library，为C程序提供基础公共功能，包括系统调用、数学函数和其他核心组件。Linux平台和vscode似乎都依赖glibc，如果擅自将LD_LIBRARY_PATH更改为其他版本的glibc路径，则bash会直接crash。 glibc包含以下bin和lib：12345678910111213">
 <meta property="og:locale">
 <meta property="article:published_time" content="2024-02-02T13:24:45.000Z">
-<meta property="article:modified_time" content="2025-09-08T14:01:28.219Z">
+<meta property="article:modified_time" content="2025-09-13T15:22:27.458Z">
 <meta property="article:author" content="bi-an">
 <meta property="article:tag" content="gcc">
 <meta property="article:tag" content="glibc">
@@ -230,7 +230,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -277,6 +277,80 @@
 <p>Warning: Missing GLIBCXX &gt;&#x3D; 3.4.25! from &#x2F;usr&#x2F;lib64&#x2F;libstdc++.so.6.0.19<br>Warning: Missing GLIBC &gt;&#x3D; 2.28! from &#x2F;usr&#x2F;lib64&#x2F;libc-2.17.so<br>Error: Missing required dependencies. Please refer to our FAQ <a target="_blank" rel="noopener" href="https://aka.ms/vscode-remote/faq/old-linux">https://aka.ms/vscode-remote/faq/old-linux</a> for additional information.</p>
 </blockquote>
 <p>这是因为Linux系统上的glibc版本中不包含GLIBCXX_3.4.25及以上的版本。此时需要降级vscode（建议做法）或升级glibc（似乎很难）。</p>
+<h3 id="让某些程序默认使用你本地安装的-glibc"><a href="#让某些程序默认使用你本地安装的-glibc" class="headerlink" title="让某些程序默认使用你本地安装的 glibc"></a>让某些程序默认使用你本地安装的 glibc</h3><p>你可以让某些程序默认使用你本地安装的 glibc（比如 ~&#x2F;local&#x2F;glibc-2.42），但不能全局替换系统默认 glibc，否则会导致系统崩溃。下面是几种安全又实用的方法，让你的程序“默认”使用本地 glibc：</p>
+<p>✅ 方法一：使用 LD_LIBRARY_PATH 环境变量（推荐）<br>这是最简单的方式，让你运行的程序优先使用你指定的 glibc：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> LD_LIBRARY_PATH=<span class="variable">$HOME</span>/local/glibc-2.42/lib:<span class="variable">$LD_LIBRARY_PATH</span></span><br></pre></td></tr></table></figure>
+
+<p>你可以把这行加到 ~&#x2F;.bashrc 或 ~&#x2F;.profile 中，这样每次登录都会自动生效。</p>
+<p>📌 注意：这只影响你当前用户的 shell 环境，不会影响系统服务或其他用户。</p>
+<p>✅ 方法二：使用 ld.so.preload（⚠️危险，不推荐）<br>你可以将本地 glibc 的路径写入 &#x2F;etc&#x2F;ld.so.preload，让系统优先加载它。但这会影响所有程序，包括 ls、bash、sudo 等，一旦路径错误，系统可能无法启动。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$HOME</span>/local/glibc-2.42/lib/libc.so.6&quot;</span> | sudo <span class="built_in">tee</span> /etc/ld.so.preload</span><br></pre></td></tr></table></figure>
+<p>⚠️ 强烈不建议使用此方法，除非你在容器或 chroot 环境中测试。</p>
+<p>✅ 方法三：使用 patchelf 修改程序的动态链接器<br>你可以用 patchelf 工具修改 ELF 程序的运行时 glibc 路径：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">patchelf --set-interpreter <span class="variable">$HOME</span>/local/glibc-2.42/lib/ld-2.42.so \</span><br><span class="line">         --set-rpath <span class="variable">$HOME</span>/local/glibc-2.42/lib \</span><br><span class="line">         ./your_program</span><br></pre></td></tr></table></figure>
+
+<p>这样修改后的程序会自动使用你指定的 glibc，无需额外设置。</p>
+<p>✅ 方法四：编译时指定 glibc 路径（适用于 CMake&#x2F;GCC）<br>如果你自己编译程序，可以在编译时指定 glibc 的头文件和库路径：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">gcc -I<span class="variable">$HOME</span>/local/glibc-2.42/include \</span><br><span class="line">    -L<span class="variable">$HOME</span>/local/glibc-2.42/lib \</span><br><span class="line">    -Wl,--rpath=<span class="variable">$HOME</span>/local/glibc-2.42/lib \</span><br><span class="line">    your_code.c -o your_program</span><br></pre></td></tr></table></figure>
+
+<p>或者在 CMake 中设置：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span>(CMAKE_C_FLAGS <span class="string">&quot;$&#123;CMAKE_C_FLAGS&#125; -Wl,-rpath=$HOME/local/glibc-2.42/lib&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>🧠 总结：推荐做法</p>
+<table>
+<thead>
+<tr>
+<th align="center">方法</th>
+<th>是否推荐</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">LD_LIBRARY_PATH</td>
+<td>✅ 推荐</td>
+<td>简单、安全、可控</td>
+</tr>
+<tr>
+<td align="center">patchelf</td>
+<td>✅ 推荐</td>
+<td>精确控制某个程序</td>
+</tr>
+<tr>
+<td align="center">编译时指定路径</td>
+<td>✅ 推荐</td>
+<td>适合开发者</td>
+</tr>
+<tr>
+<td align="center">修改 &#x2F;etc&#x2F;ld.so.preload</td>
+<td>❌ 危险</td>
+<td>可能导致系统崩溃</td>
+</tr>
+</tbody></table>
+<h3 id="🔍-编译器如何找到-glibc"><a href="#🔍-编译器如何找到-glibc" class="headerlink" title="🔍 编译器如何找到 glibc"></a>🔍 编译器如何找到 glibc</h3><ol>
+<li>默认系统路径<br>GCC 默认会在系统的标准库路径中查找 glibc，例如：</li>
+</ol>
+<p>&#x2F;lib<br>&#x2F;lib64<br>&#x2F;usr&#x2F;lib<br>&#x2F;usr&#x2F;lib64<br>&#x2F;usr&#x2F;include（头文件）</p>
+<p>这些路径通常由系统预设，glibc 安装时会自动放置在这些位置。</p>
+<ol start="2">
+<li>头文件与动态库<br>编译阶段：GCC 会使用 &#x2F;usr&#x2F;include 下的 glibc 头文件（如 stdio.h, stdlib.h）来进行语法检查和类型推导。</li>
+</ol>
+<p>链接阶段：GCC 会调用链接器（ld），查找 libc.so.6 或 libc.a 来完成符号解析。</p>
+<ol start="3">
+<li>环境变量控制<br>你可以通过环境变量来影响 GCC 查找 glibc 的位置：</li>
+</ol>
+<p>C_INCLUDE_PATH：指定头文件搜索路径</p>
+<p>LIBRARY_PATH：指定库文件搜索路径</p>
+<p>LD_LIBRARY_PATH：运行时动态库搜索路径</p>
+<p>例如：</p>
+<p>bash<br>export C_INCLUDE_PATH&#x3D;&#x2F;opt&#x2F;glibc&#x2F;include<br>export LIBRARY_PATH&#x3D;&#x2F;opt&#x2F;glibc&#x2F;lib<br>4. 链接器参数<br>你也可以通过 GCC 的 -Wl 参数直接告诉链接器使用哪个 glibc：</p>
+<p>bash<br>gcc hello.c -o hello <br>  -Wl,–dynamic-linker&#x3D;&#x2F;opt&#x2F;glibc&#x2F;lib&#x2F;ld-2.34.so <br>  -L&#x2F;opt&#x2F;glibc&#x2F;lib<br>这会指定使用 &#x2F;opt&#x2F;glibc&#x2F;lib&#x2F;libc.so.6 和对应的动态链接器。</p>
+<ol start="5">
+<li>使用 patchelf 工具修改依赖<br>如果你已经编译好了程序，但想修改它使用的 glibc，可以用 patchelf：</li>
+</ol>
+<p>bash<br>patchelf –set-interpreter &#x2F;opt&#x2F;glibc&#x2F;lib&#x2F;ld-2.34.so hello<br>patchelf –replace-needed libc.so.6 &#x2F;opt&#x2F;glibc&#x2F;lib&#x2F;libc.so.6 hello<br>这在部署多版本 glibc 时非常有用。</p>
+<p>🧪 如何验证 glibc 的使用情况<br>查看程序依赖的 glibc：</p>
+<p>bash<br>ldd .&#x2F;hello<br>查看系统 glibc 版本：</p>
+<p>bash<br>ldd</p>
 
     </div>
 
@@ -361,7 +435,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#gcc"><span class="nav-text">gcc</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#glibc"><span class="nav-text">glibc</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#glibc%E5%8C%85%E5%90%AB%E4%BB%A5%E4%B8%8Bbin%E5%92%8Clib%EF%BC%9A"><span class="nav-text">glibc包含以下bin和lib：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8Bglibc%E7%9A%84%E7%89%88%E6%9C%AC%EF%BC%9A"><span class="nav-text">查看glibc的版本：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AF%BB%E6%89%BElibc-so%E7%9A%84%E8%B7%AF%E5%BE%84%EF%BC%9A"><span class="nav-text">寻找libc.so的路径：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85glibc%EF%BC%9A"><span class="nav-text">安装glibc：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A3%80%E6%9F%A5GNC-C-Library-libstdc-%E7%9A%84%E7%89%88%E6%9C%AC%EF%BC%9A"><span class="nav-text">检查GNC C++ Library (libstdc++)的版本：</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#gcc"><span class="nav-text">gcc</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#glibc"><span class="nav-text">glibc</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#glibc%E5%8C%85%E5%90%AB%E4%BB%A5%E4%B8%8Bbin%E5%92%8Clib%EF%BC%9A"><span class="nav-text">glibc包含以下bin和lib：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8Bglibc%E7%9A%84%E7%89%88%E6%9C%AC%EF%BC%9A"><span class="nav-text">查看glibc的版本：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AF%BB%E6%89%BElibc-so%E7%9A%84%E8%B7%AF%E5%BE%84%EF%BC%9A"><span class="nav-text">寻找libc.so的路径：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85glibc%EF%BC%9A"><span class="nav-text">安装glibc：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A3%80%E6%9F%A5GNC-C-Library-libstdc-%E7%9A%84%E7%89%88%E6%9C%AC%EF%BC%9A"><span class="nav-text">检查GNC C++ Library (libstdc++)的版本：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%A9%E6%9F%90%E4%BA%9B%E7%A8%8B%E5%BA%8F%E9%BB%98%E8%AE%A4%E4%BD%BF%E7%94%A8%E4%BD%A0%E6%9C%AC%E5%9C%B0%E5%AE%89%E8%A3%85%E7%9A%84-glibc"><span class="nav-text">让某些程序默认使用你本地安装的 glibc</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%94%8D-%E7%BC%96%E8%AF%91%E5%99%A8%E5%A6%82%E4%BD%95%E6%89%BE%E5%88%B0-glibc"><span class="nav-text">🔍 编译器如何找到 glibc</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -377,14 +451,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">98</span>
+          <span class="site-state-item-count">99</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">12</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">

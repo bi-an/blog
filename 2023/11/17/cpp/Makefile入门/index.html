@@ -28,7 +28,7 @@
 <meta property="og:description" content="Makefile默认shellMakefile 默认的 shell 是 &#x2F;bin&#x2F;sh:查看 Makefile 默认的 shell:$(warning ${SHELL}) # 查看默认 shell 如果在 Makefile 开头加上以下语句，可以指定 shell:SHELL :&#x3D; &#x2F;bin&#x2F;bash Makefile 的 shell 命令似乎每一条">
 <meta property="og:locale">
 <meta property="article:published_time" content="2023-11-17T14:19:35.000Z">
-<meta property="article:modified_time" content="2025-09-08T14:01:28.219Z">
+<meta property="article:modified_time" content="2025-09-13T15:22:27.458Z">
 <meta property="article:author" content="bi-an">
 <meta property="article:tag" content="build">
 <meta name="twitter:card" content="summary">
@@ -229,7 +229,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -288,7 +288,34 @@
 
 <p>最后两行其实不需要，默认规则已经足够了。</p>
 <p>其中，<code>$(SRCS:.c=.o)</code>表示将变量<code>SRCS</code>中的每个单词（以空格分割）中的<code>.c</code>替换为<code>.o</code>。以上代码则是将所有<code>.c</code>都去掉。</p>
+<h2 id="Makefile保留中间文件"><a href="#Makefile保留中间文件" class="headerlink" title="Makefile保留中间文件"></a>Makefile保留中间文件</h2><p>🛡️ 方法一：使用 .PRECIOUS 保留中间文件<br>这是最直接的方式，告诉 make 不要删除某些目标，即使构建失败：</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">.PRECIOUS: %.o %.d</span></span><br></pre></td></tr></table></figure>
 
+<p>你可以指定具体的文件名或模式（如 %.o 表示所有 .o 文件）。</p>
+<p>🛡️ 方法二：使用 .SECONDARY 保留中间文件但不强制重建<br>如果你希望保留中间文件，但又不希望它们被视为最终目标，可以用：</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">.SECONDARY: intermediate.o</span></span><br></pre></td></tr></table></figure>
+
+<p>或者：</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">.SECONDARY:</span></span><br></pre></td></tr></table></figure>
+
+<p>这会保留所有中间文件。</p>
+<p>🧠 方法三：避免使用“中间目标”语法<br>如果你写了类似：</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">intermediate: ;</span></span><br></pre></td></tr></table></figure>
+
+<p>这种空规则会让 make 把 intermediate 视为中间目标，构建失败时自动删除。避免这种写法，或者配合 .PRECIOUS 使用。</p>
+<p>🛠️ 方法四：将中间文件输出到特定目录<br>你可以将中间文件集中到一个目录中，便于管理和保留：</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">OBJ_DIR := build/obj</span><br><span class="line"><span class="variable">$(OBJ_DIR)</span>/%.o: %.cpp</span><br><span class="line">    <span class="variable">$(CXX)</span> -c <span class="variable">$&lt;</span> -o <span class="variable">$@</span></span><br><span class="line">然后用 .PRECIOUS: <span class="variable">$(OBJ_DIR)</span>/%.o 保留它们。</span><br></pre></td></tr></table></figure>
+
+<p>📌 示例：保留 .o 和 .d 文件</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">.PRECIOUS: %.o %.d</span></span><br><span class="line"></span><br><span class="line"><span class="section">main: main.o</span></span><br><span class="line">    <span class="variable">$(CC)</span> <span class="variable">$^</span> -o <span class="variable">$@</span></span><br><span class="line"></span><br><span class="line"><span class="section">main.o: main.c</span></span><br><span class="line">    <span class="variable">$(CC)</span> -c <span class="variable">$&lt;</span> -o <span class="variable">$@</span></span><br></pre></td></tr></table></figure>
+
+<p>gcc可以使用 <code>-save-temps</code> 选项保留中间文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -save-temps -c main.c</span><br></pre></td></tr></table></figure>
+
+
+<p>🧠 补充：<code>-save-temps=obj</code></p>
+<p>如果你只想把中间文件保存在目标文件所在目录，而不是当前目录，可以使用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -save-temps=obj main.c -o main</span><br></pre></td></tr></table></figure>
     </div>
 
     
@@ -371,7 +398,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Makefile%E9%BB%98%E8%AE%A4shell"><span class="nav-text">Makefile默认shell</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Makefile%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F"><span class="nav-text">Makefile环境变量</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%89%B9%E6%AE%8A%E7%AC%A6%E5%8F%B7"><span class="nav-text">特殊符号</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A9%BA%E6%A0%BC"><span class="nav-text">空格</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8B%AC%E5%8F%B7"><span class="nav-text">括号</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Makefile%E8%B0%83%E8%AF%95%E6%96%B9%E6%B3%95"><span class="nav-text">Makefile调试方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%8F%82%E6%95%B0"><span class="nav-text">命令行参数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#makefile%E5%90%8C%E5%90%8D%E7%9B%AE%E6%A0%87%E5%A4%84%E7%90%86%E6%96%B9%E5%BC%8F"><span class="nav-text">makefile同名目标处理方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Makefile%E4%B8%AD%E7%9F%AD%E5%88%92%E7%BA%BF"><span class="nav-text">Makefile中短划线</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E6%AF%8F%E4%B8%AA%E6%BA%90%E6%96%87%E4%BB%B6%E7%94%9F%E6%88%90%E4%B8%80%E4%B8%AA%E5%8F%AF%E6%89%A7%E8%A1%8C%E7%A8%8B%E5%BA%8F"><span class="nav-text">为每个源文件生成一个可执行程序</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Makefile%E9%BB%98%E8%AE%A4shell"><span class="nav-text">Makefile默认shell</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Makefile%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F"><span class="nav-text">Makefile环境变量</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%89%B9%E6%AE%8A%E7%AC%A6%E5%8F%B7"><span class="nav-text">特殊符号</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A9%BA%E6%A0%BC"><span class="nav-text">空格</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8B%AC%E5%8F%B7"><span class="nav-text">括号</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Makefile%E8%B0%83%E8%AF%95%E6%96%B9%E6%B3%95"><span class="nav-text">Makefile调试方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%8F%82%E6%95%B0"><span class="nav-text">命令行参数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#makefile%E5%90%8C%E5%90%8D%E7%9B%AE%E6%A0%87%E5%A4%84%E7%90%86%E6%96%B9%E5%BC%8F"><span class="nav-text">makefile同名目标处理方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Makefile%E4%B8%AD%E7%9F%AD%E5%88%92%E7%BA%BF"><span class="nav-text">Makefile中短划线</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E6%AF%8F%E4%B8%AA%E6%BA%90%E6%96%87%E4%BB%B6%E7%94%9F%E6%88%90%E4%B8%80%E4%B8%AA%E5%8F%AF%E6%89%A7%E8%A1%8C%E7%A8%8B%E5%BA%8F"><span class="nav-text">为每个源文件生成一个可执行程序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Makefile%E4%BF%9D%E7%95%99%E4%B8%AD%E9%97%B4%E6%96%87%E4%BB%B6"><span class="nav-text">Makefile保留中间文件</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -387,14 +414,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">98</span>
+          <span class="site-state-item-count">99</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">12</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">

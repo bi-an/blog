@@ -193,6 +193,139 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/06/linux/bash%E8%B0%83%E8%AF%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/09/06/linux/bash%E8%B0%83%E8%AF%95/" class="post-title-link" itemprop="url">Bash Debugging</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-09-06 18:10:12" itemprop="dateCreated datePublished" datetime="2024-09-06T18:10:12+00:00">2024-09-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="启用调试模式"><a href="#启用调试模式" class="headerlink" title="启用调试模式"></a>启用调试模式</h2><ol>
+<li>命令行启用调试：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#使用 -x 和 -v 选项运行 main.sh 脚本。</span></span><br><span class="line">bash -xv main.sh</span><br></pre></td></tr></table></figure>
+
+<p>注意：调试输出是通过 <code>stderr</code> ，在试图重定向时要注意。</p>
+<ol start="2">
+<li>在脚本中启用调试：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">set</span> -xv</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>Short notation</th>
+<th>Long notation</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>set -f</td>
+<td>set -o noglob</td>
+<td>Disable file name generation using metacharacters (globbing).</td>
+</tr>
+<tr>
+<td>set -v</td>
+<td>set -o verbose</td>
+<td>Prints shell input lines as they are read.</td>
+</tr>
+<tr>
+<td>set -x</td>
+<td>set -o xtrace</td>
+<td>Print command traces before executing command.</td>
+</tr>
+</tbody></table>
+<p>参考<a target="_blank" rel="noopener" href="https://tldp.org/LDP/Bash-Beginners-Guide/html/sect_02_03.html">链接</a></p>
+<p>其他选项：</p>
+<ul>
+<li><code>set +e</code>：忽略错误继续运行（bash）。</li>
+<li><code>set -e</code>：遇错停止执行（bash）。</li>
+</ul>
+<ol start="3">
+<li>环境变量 <code>PS4</code></li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PS4=<span class="string">&#x27;+ $&#123;LINENO&#125;: &#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>可以搭配使用 <code>PS4</code> 环境变量，以在调试输出中打印命令所在的文件行号。</p>
+<p><code>PS4</code> 是一个 Bash 环境变量，用于定义调试模式下的提示符格式。<br>当你启用调试模式（通过 <code>set -x</code>）时，Bash 会在每一行执行之前打印调试信息，而 PS4 决定了这些调试信息的格式。<br><code>$LINENO</code>表示打印行号。</p>
+<h2 id="trap-DEBUG"><a href="#trap-DEBUG" class="headerlink" title="trap DEBUG"></a><code>trap DEBUG</code></h2><p>设置DEBUG陷阱，该陷阱在每一条“简单语句”执行完毕之后会被调用一次。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">set</span> -o functrace</span><br><span class="line">track_var=<span class="string">&quot;my_var&quot;</span></span><br><span class="line">old_value=<span class="string">&quot;&quot;</span></span><br><span class="line"><span class="function"><span class="title">check_var_change</span></span>() &#123;</span><br><span class="line">    new_value=<span class="string">&quot;<span class="variable">$&#123;!track_var&#125;</span>&quot;</span></span><br><span class="line">    <span class="keyword">if</span> [[ <span class="string">&quot;<span class="variable">$new_value</span>&quot;</span> != <span class="string">&quot;<span class="variable">$old_value</span>&quot;</span> ]]; <span class="keyword">then</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$track_var</span> changed to \&quot;<span class="variable">$new_value</span>\&quot; at <span class="variable">$BASH_LINENO</span>&quot;</span></span><br><span class="line">        old_value=<span class="string">&quot;<span class="variable">$new_value</span>&quot;</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">trap</span> check_var_change DEBUG</span><br></pre></td></tr></table></figure>
+
+<p>说明：监控<code>my_var</code>变量的变化，如果变化，则打印新值。</p>
+<p>注意：实际测试中，我们发现<code>trap</code>监控变量变化似乎会延迟，而<code>set -x</code>打印的信息是可靠的。</p>
+<h2 id="特殊变量"><a href="#特殊变量" class="headerlink" title="特殊变量"></a>特殊变量</h2><p>参考：<a target="_blank" rel="noopener" href="https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html">https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html</a></p>
+<ul>
+<li><code>BASH_LINENO</code>: 这是一个数组变量，‌用于表示当前执行的脚本或函数中每一行的行号。‌它特别适用于调试，‌因为它可以追踪到函数调用栈中每一层的行号。‌通过访问BASH_LINENO数组的不同索引，‌可以获取到不同函数调用层级对应的行号信息‌。</li>
+<li><code>LINENO</code>: 获取当前脚本行号‌，‌而不涉及函数调用栈的追踪‌。</li>
+<li><code>FUNCNAME</code>: 函数名</li>
+<li><code>BASH_SOURCE</code></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/06/linux/File-Exists/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +357,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -308,7 +441,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -398,7 +531,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
               </span>
 
           
@@ -480,7 +613,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -555,7 +688,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
               </span>
 
           
@@ -627,7 +760,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1095,7 +1228,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1142,6 +1275,80 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
 <p>Warning: Missing GLIBCXX &gt;&#x3D; 3.4.25! from &#x2F;usr&#x2F;lib64&#x2F;libstdc++.so.6.0.19<br>Warning: Missing GLIBC &gt;&#x3D; 2.28! from &#x2F;usr&#x2F;lib64&#x2F;libc-2.17.so<br>Error: Missing required dependencies. Please refer to our FAQ <a target="_blank" rel="noopener" href="https://aka.ms/vscode-remote/faq/old-linux">https://aka.ms/vscode-remote/faq/old-linux</a> for additional information.</p>
 </blockquote>
 <p>这是因为Linux系统上的glibc版本中不包含GLIBCXX_3.4.25及以上的版本。此时需要降级vscode（建议做法）或升级glibc（似乎很难）。</p>
+<h3 id="让某些程序默认使用你本地安装的-glibc"><a href="#让某些程序默认使用你本地安装的-glibc" class="headerlink" title="让某些程序默认使用你本地安装的 glibc"></a>让某些程序默认使用你本地安装的 glibc</h3><p>你可以让某些程序默认使用你本地安装的 glibc（比如 ~&#x2F;local&#x2F;glibc-2.42），但不能全局替换系统默认 glibc，否则会导致系统崩溃。下面是几种安全又实用的方法，让你的程序“默认”使用本地 glibc：</p>
+<p>✅ 方法一：使用 LD_LIBRARY_PATH 环境变量（推荐）<br>这是最简单的方式，让你运行的程序优先使用你指定的 glibc：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> LD_LIBRARY_PATH=<span class="variable">$HOME</span>/local/glibc-2.42/lib:<span class="variable">$LD_LIBRARY_PATH</span></span><br></pre></td></tr></table></figure>
+
+<p>你可以把这行加到 ~&#x2F;.bashrc 或 ~&#x2F;.profile 中，这样每次登录都会自动生效。</p>
+<p>📌 注意：这只影响你当前用户的 shell 环境，不会影响系统服务或其他用户。</p>
+<p>✅ 方法二：使用 ld.so.preload（⚠️危险，不推荐）<br>你可以将本地 glibc 的路径写入 &#x2F;etc&#x2F;ld.so.preload，让系统优先加载它。但这会影响所有程序，包括 ls、bash、sudo 等，一旦路径错误，系统可能无法启动。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$HOME</span>/local/glibc-2.42/lib/libc.so.6&quot;</span> | sudo <span class="built_in">tee</span> /etc/ld.so.preload</span><br></pre></td></tr></table></figure>
+<p>⚠️ 强烈不建议使用此方法，除非你在容器或 chroot 环境中测试。</p>
+<p>✅ 方法三：使用 patchelf 修改程序的动态链接器<br>你可以用 patchelf 工具修改 ELF 程序的运行时 glibc 路径：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">patchelf --set-interpreter <span class="variable">$HOME</span>/local/glibc-2.42/lib/ld-2.42.so \</span><br><span class="line">         --set-rpath <span class="variable">$HOME</span>/local/glibc-2.42/lib \</span><br><span class="line">         ./your_program</span><br></pre></td></tr></table></figure>
+
+<p>这样修改后的程序会自动使用你指定的 glibc，无需额外设置。</p>
+<p>✅ 方法四：编译时指定 glibc 路径（适用于 CMake&#x2F;GCC）<br>如果你自己编译程序，可以在编译时指定 glibc 的头文件和库路径：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">gcc -I<span class="variable">$HOME</span>/local/glibc-2.42/include \</span><br><span class="line">    -L<span class="variable">$HOME</span>/local/glibc-2.42/lib \</span><br><span class="line">    -Wl,--rpath=<span class="variable">$HOME</span>/local/glibc-2.42/lib \</span><br><span class="line">    your_code.c -o your_program</span><br></pre></td></tr></table></figure>
+
+<p>或者在 CMake 中设置：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span>(CMAKE_C_FLAGS <span class="string">&quot;$&#123;CMAKE_C_FLAGS&#125; -Wl,-rpath=$HOME/local/glibc-2.42/lib&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>🧠 总结：推荐做法</p>
+<table>
+<thead>
+<tr>
+<th align="center">方法</th>
+<th>是否推荐</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">LD_LIBRARY_PATH</td>
+<td>✅ 推荐</td>
+<td>简单、安全、可控</td>
+</tr>
+<tr>
+<td align="center">patchelf</td>
+<td>✅ 推荐</td>
+<td>精确控制某个程序</td>
+</tr>
+<tr>
+<td align="center">编译时指定路径</td>
+<td>✅ 推荐</td>
+<td>适合开发者</td>
+</tr>
+<tr>
+<td align="center">修改 &#x2F;etc&#x2F;ld.so.preload</td>
+<td>❌ 危险</td>
+<td>可能导致系统崩溃</td>
+</tr>
+</tbody></table>
+<h3 id="🔍-编译器如何找到-glibc"><a href="#🔍-编译器如何找到-glibc" class="headerlink" title="🔍 编译器如何找到 glibc"></a>🔍 编译器如何找到 glibc</h3><ol>
+<li>默认系统路径<br>GCC 默认会在系统的标准库路径中查找 glibc，例如：</li>
+</ol>
+<p>&#x2F;lib<br>&#x2F;lib64<br>&#x2F;usr&#x2F;lib<br>&#x2F;usr&#x2F;lib64<br>&#x2F;usr&#x2F;include（头文件）</p>
+<p>这些路径通常由系统预设，glibc 安装时会自动放置在这些位置。</p>
+<ol start="2">
+<li>头文件与动态库<br>编译阶段：GCC 会使用 &#x2F;usr&#x2F;include 下的 glibc 头文件（如 stdio.h, stdlib.h）来进行语法检查和类型推导。</li>
+</ol>
+<p>链接阶段：GCC 会调用链接器（ld），查找 libc.so.6 或 libc.a 来完成符号解析。</p>
+<ol start="3">
+<li>环境变量控制<br>你可以通过环境变量来影响 GCC 查找 glibc 的位置：</li>
+</ol>
+<p>C_INCLUDE_PATH：指定头文件搜索路径</p>
+<p>LIBRARY_PATH：指定库文件搜索路径</p>
+<p>LD_LIBRARY_PATH：运行时动态库搜索路径</p>
+<p>例如：</p>
+<p>bash<br>export C_INCLUDE_PATH&#x3D;&#x2F;opt&#x2F;glibc&#x2F;include<br>export LIBRARY_PATH&#x3D;&#x2F;opt&#x2F;glibc&#x2F;lib<br>4. 链接器参数<br>你也可以通过 GCC 的 -Wl 参数直接告诉链接器使用哪个 glibc：</p>
+<p>bash<br>gcc hello.c -o hello <br>  -Wl,–dynamic-linker&#x3D;&#x2F;opt&#x2F;glibc&#x2F;lib&#x2F;ld-2.34.so <br>  -L&#x2F;opt&#x2F;glibc&#x2F;lib<br>这会指定使用 &#x2F;opt&#x2F;glibc&#x2F;lib&#x2F;libc.so.6 和对应的动态链接器。</p>
+<ol start="5">
+<li>使用 patchelf 工具修改依赖<br>如果你已经编译好了程序，但想修改它使用的 glibc，可以用 patchelf：</li>
+</ol>
+<p>bash<br>patchelf –set-interpreter &#x2F;opt&#x2F;glibc&#x2F;lib&#x2F;ld-2.34.so hello<br>patchelf –replace-needed libc.so.6 &#x2F;opt&#x2F;glibc&#x2F;lib&#x2F;libc.so.6 hello<br>这在部署多版本 glibc 时非常有用。</p>
+<p>🧪 如何验证 glibc 的使用情况<br>查看程序依赖的 glibc：</p>
+<p>bash<br>ldd .&#x2F;hello<br>查看系统 glibc 版本：</p>
+<p>bash<br>ldd</p>
 
       
     </div>
@@ -1192,7 +1399,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1275,7 +1482,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1320,82 +1527,6 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
 <li><a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Memory_002dmapped-I_002fO.html">The GNU C Library (glibc) manual: 13.8 Memory-mapped I&#x2F;O</a></li>
 <li><a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Memory-Protection.html">The GNU C Library (glibc) manual: 3.4 Memory Protection</a></li>
 </ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/29/UML/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/29/UML/" class="post-title-link" itemprop="url">UML</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-29 11:10:46" itemprop="dateCreated datePublished" datetime="2024-01-29T11:10:46+00:00">2024-01-29</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ol>
-<li><a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1176331">认识UML类关系——依赖、关联、聚合、组合、泛化</a></li>
-</ol>
 
       
     </div>
@@ -1482,14 +1613,14 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">98</span>
+          <span class="site-state-item-count">99</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">12</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">

@@ -193,6 +193,128 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/19/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/19/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/" class="post-title-link" itemprop="url">内存管理</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-08-19 20:12:58" itemprop="dateCreated datePublished" datetime="2025-08-19T20:12:58+00:00">2025-08-19</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="线程安全性"><a href="#线程安全性" class="headerlink" title="线程安全性"></a>线程安全性</h2><p>malloc 是线程安全的，但有一些细节需要注意。</p>
+<ol>
+<li>线程安全含义</li>
+</ol>
+<p>线程安全：多个线程同时调用 malloc&#x2F;free 不会破坏堆管理结构，也不会导致内存管理崩溃。</p>
+<p>实现方法：</p>
+<p>glibc malloc 在内部使用 锁（mutex 或 spinlock） 保护全局堆管理数据结构</p>
+<p>不同线程同时申请或释放内存，内核保证堆表一致</p>
+<ol start="2">
+<li>限制与注意事项</li>
+</ol>
+<p>性能问题</p>
+<p>多线程频繁 malloc&#x2F;free，锁竞争可能成为瓶颈</p>
+<p>对性能敏感的程序可能使用：</p>
+<p>线程本地缓存（thread-local cache） 的 jemalloc &#x2F; tcmalloc</p>
+<p>避免全局锁竞争</p>
+<p>信号处理上下文不安全</p>
+<p>虽然线程安全，但 malloc 在信号处理函数里不安全</p>
+<p>原因：</p>
+<p>信号可能打断正在执行的 malloc</p>
+<p>malloc 内部锁可能被持有 → 再次调用可能死锁</p>
+<p>所以 signal handler 中不能直接调用 malloc&#x2F;free</p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>malloc&#x2F;glibc</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>多线程调用安全</td>
+<td>✅ 是线程安全的</td>
+</tr>
+<tr>
+<td>信号处理函数调用安全</td>
+<td>❌ 不安全</td>
+</tr>
+<tr>
+<td>性能</td>
+<td>可能锁竞争，需要优化（jemalloc&#x2F;tcmalloc）</td>
+</tr>
+</tbody></table>
+<h2 id="信号安全"><a href="#信号安全" class="headerlink" title="信号安全"></a>信号安全</h2><p>malloc &#x2F; free 内部会修改全局堆管理结构（如 free list）</p>
+<p>如果信号到达时主程序正在调用 malloc 或 free，信号处理函数里再次调用 malloc&#x2F;free → 堆数据结构可能被破坏，<br>可能导致崩溃或内存泄漏</p>
+<p>虽然线程安全，但 malloc 在信号处理函数里不安全</p>
+<p>原因：</p>
+<ul>
+<li>信号可能打断正在执行的 malloc</li>
+<li>malloc 内部锁可能被持有 → 再次调用可能死锁</li>
+</ul>
+<p>所以 signal handler 中不能直接调用 malloc&#x2F;free</p>
+<h3 id="安全做法"><a href="#安全做法" class="headerlink" title="安全做法"></a>安全做法</h3><p>信号处理函数里只做：</p>
+<ul>
+<li>设置标志位（sig_atomic_t flag &#x3D; 1;）</li>
+<li>写入 pipe &#x2F; eventfd</li>
+<li>调用 async-signal-safe 系统调用（write(), _exit()）</li>
+</ul>
+<p>之后由主程序在安全上下文处理 malloc&#x2F;free 或其他复杂操作</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/19/os/%E4%BF%A1%E5%8F%B7/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +346,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -358,7 +480,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -474,7 +596,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -548,7 +670,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
               </span>
 
           
@@ -681,7 +803,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -844,7 +966,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -971,7 +1093,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1358,7 +1480,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1665,7 +1787,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
+                <time title="Modified: 2025-09-13 15:22:27" itemprop="dateModified" datetime="2025-09-13T15:22:27+00:00">2025-09-13</time>
               </span>
 
           
@@ -1859,127 +1981,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/16/os/%E7%94%A8%E6%88%B7%E6%80%81%E5%92%8C%E5%86%85%E6%A0%B8%E6%80%81/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/16/os/%E7%94%A8%E6%88%B7%E6%80%81%E5%92%8C%E5%86%85%E6%A0%B8%E6%80%81/" class="post-title-link" itemprop="url">用户态和内核态</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-16 13:31:26" itemprop="dateCreated datePublished" datetime="2025-08-16T13:31:26+00:00">2025-08-16</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-08 14:01:28" itemprop="dateModified" datetime="2025-09-08T14:01:28+00:00">2025-09-08</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="用户空间和内核空间是隔离的"><a href="#用户空间和内核空间是隔离的" class="headerlink" title="用户空间和内核空间是隔离的"></a>用户空间和内核空间是隔离的</h2><p>切换内核态和用户态为什么要内存复制？</p>
-<table>
-<thead>
-<tr>
-<th>问题</th>
-<th>描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>安全性</td>
-<td>用户程序可能传入非法地址，导致内核崩溃或被利用攻击</td>
-</tr>
-<tr>
-<td>稳定性</td>
-<td>用户程序可能在 <code>poll()</code> 返回前修改数组，导致内核读取不一致</td>
-</tr>
-<tr>
-<td>内存管理</td>
-<td>用户空间内存可能被 swap 出或者释放，内核无法保证访问有效</td>
-</tr>
-</tbody></table>
-<h2 id="内核态"><a href="#内核态" class="headerlink" title="内核态"></a>内核态</h2><p>我们在说“切换到内核态”时，其实指的是 CPU 特权级别从用户态（ring3）切换到内核态（ring0） 的过程。</p>
-<p>用户态 vs 内核态</p>
-<p>用户态（user mode）</p>
-<p>应用程序（比如你写的 C++ 程序）运行的环境。</p>
-<p>权限受限，不能直接操作硬件（如磁盘、网卡），也不能随便访问内核内存。</p>
-<p>只能通过 系统调用 (syscall) 向内核请求服务。</p>
-<p>内核态（kernel mode）</p>
-<p>操作系统内核运行的环境。</p>
-<p>拥有最高权限（ring0），可以操作 CPU 指令集、内存管理、驱动、硬件寄存器。</p>
-<p>系统调用的实现代码就在内核态里。</p>
-<p>“切换到内核态”的过程</p>
-<p>当你调用一个系统调用，比如：</p>
-<p>read(fd, buf, size);</p>
-<p>你的程序在 用户态，调用 read()。</p>
-<p>实际上 read() 会触发一条特殊指令（例如 Linux x86-64 用 syscall 指令）。</p>
-<p>CPU 捕捉到这个指令，自动：</p>
-<p>从用户态切换到内核态。</p>
-<p>切换到内核栈。</p>
-<p>保存用户态寄存器上下文。</p>
-<p>跳到系统调用处理函数（比如 sys_read）。</p>
-<p>内核态代码执行 sys_read，比如访问文件系统、检查 socket buffer。</p>
-<p>处理完后返回，CPU 再切回用户态，恢复上下文，继续执行应用代码。</p>
-<p>🔹 为什么要区分用户态&#x2F;内核态？</p>
-<p>安全：用户程序不能直接操作硬件。</p>
-<p>稳定性：即使用户程序崩溃，内核和其他进程不会受影响。</p>
-<p>性能隔离：内核提供抽象（系统调用接口），避免应用直接干扰底层资源。</p>
-<p>✅ 所以，总结一句：<br>“切换到内核态”就是 CPU 从运行普通用户代码（权限受限）切换到执行内核代码（最高权限）的过程，常常发生在系统调用、异常、硬件中断时。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2051,14 +2052,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">98</span>
+          <span class="site-state-item-count">99</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">12</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
