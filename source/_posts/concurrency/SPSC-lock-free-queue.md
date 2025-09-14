@@ -7,9 +7,11 @@ tags:
 
 # 前言
 
-Moody Camel: [A Fast Lock-Free Queue for C++](https://moodycamel.com/blog/2013/a-fast-lock-free-queue-for-c++)
+这是阅读 Cameron Desrochers 的 [A Fast Lock-Free Queue for C++](https://moodycamel.com/blog/2013/a-fast-lock-free-queue-for-c++) 源码的笔记。
 
-仓库：https://github.com/cameron314/readerwriterqueue
+仓库地址：https://github.com/cameron314/readerwriterqueue
+
+其他参考文献：
 
 [An Introduction to Lock-Free Programming](https://preshing.com/20120612/an-introduction-to-lock-free-programming/)
 [C++ and Beyond 2012: Herb Sutter - atomic Weapons 1 of 2](https://www.youtube.com/watch?v=A8eCGOqgvH4&list=PLjwoip0ltHwHCe0Nw7PDPtzlJP7rUouRL)
