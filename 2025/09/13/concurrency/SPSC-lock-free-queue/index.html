@@ -20,15 +20,15 @@
     var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="前言Moody Camel: A Fast Lock-Free Queue for C++ 仓库：https:&#x2F;&#x2F;github.com&#x2F;cameron314&#x2F;readerwriterqueue An Introduction to Lock-Free ProgrammingC++ and Beyond 2012: Herb Sutter - atomic Weapons 1 of 2C++ and">
+  <meta name="description" content="前言这是阅读 Cameron Desrochers 的 A Fast Lock-Free Queue for C++ 源码的笔记。 仓库地址：https:&#x2F;&#x2F;github.com&#x2F;cameron314&#x2F;readerwriterqueue 其他参考文献： An Introduction to Lock-Free ProgrammingC++ and Beyond 2012: Herb Sutter">
 <meta property="og:type" content="article">
 <meta property="og:title" content="单生产者 - 单消费者 无锁队列">
 <meta property="og:url" content="https://bi-an.github.io/blog/2025/09/13/concurrency/SPSC-lock-free-queue/index.html">
 <meta property="og:site_name" content="江南人物的博客">
-<meta property="og:description" content="前言Moody Camel: A Fast Lock-Free Queue for C++ 仓库：https:&#x2F;&#x2F;github.com&#x2F;cameron314&#x2F;readerwriterqueue An Introduction to Lock-Free ProgrammingC++ and Beyond 2012: Herb Sutter - atomic Weapons 1 of 2C++ and">
+<meta property="og:description" content="前言这是阅读 Cameron Desrochers 的 A Fast Lock-Free Queue for C++ 源码的笔记。 仓库地址：https:&#x2F;&#x2F;github.com&#x2F;cameron314&#x2F;readerwriterqueue 其他参考文献： An Introduction to Lock-Free ProgrammingC++ and Beyond 2012: Herb Sutter">
 <meta property="og:locale">
 <meta property="article:published_time" content="2025-09-13T17:09:37.000Z">
-<meta property="article:modified_time" content="2025-09-13T15:22:27.457Z">
+<meta property="article:modified_time" content="2025-09-14T03:46:22.447Z">
 <meta property="article:author" content="bi-an">
 <meta name="twitter:card" content="summary">
 
@@ -220,10 +220,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2025-09-13 17:09:37 / Modified: 15:22:27" itemprop="dateCreated datePublished" datetime="2025-09-13T17:09:37+00:00">2025-09-13</time>
+              <time title="Created: 2025-09-13 17:09:37" itemprop="dateCreated datePublished" datetime="2025-09-13T17:09:37+00:00">2025-09-13</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-14 03:46:22" itemprop="dateModified" datetime="2025-09-14T03:46:22+00:00">2025-09-14</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -245,8 +251,9 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>Moody Camel: <a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2013/a-fast-lock-free-queue-for-c++">A Fast Lock-Free Queue for C++</a></p>
-<p>仓库：<a target="_blank" rel="noopener" href="https://github.com/cameron314/readerwriterqueue">https://github.com/cameron314/readerwriterqueue</a></p>
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>这是阅读 Cameron Desrochers 的 <a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2013/a-fast-lock-free-queue-for-c++">A Fast Lock-Free Queue for C++</a> 源码的笔记。</p>
+<p>仓库地址：<a target="_blank" rel="noopener" href="https://github.com/cameron314/readerwriterqueue">https://github.com/cameron314/readerwriterqueue</a></p>
+<p>其他参考文献：</p>
 <p><a target="_blank" rel="noopener" href="https://preshing.com/20120612/an-introduction-to-lock-free-programming/">An Introduction to Lock-Free Programming</a><br><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=A8eCGOqgvH4&list=PLjwoip0ltHwHCe0Nw7PDPtzlJP7rUouRL">C++ and Beyond 2012: Herb Sutter - atomic Weapons 1 of 2</a><br><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=KeLBd2EJLOU">C++ and Beyond 2012: Herb Sutter - atomic Weapons 2 of 2</a></p>
 <h2 id="内存屏障"><a href="#内存屏障" class="headerlink" title="内存屏障"></a>内存屏障</h2><p>约束 memory loads&#x2F;stores 的顺序。</p>
 <ul>
