@@ -193,6 +193,101 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/29/linux/Introduction-to-memory/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/29/linux/Introduction-to-memory/" class="post-title-link" itemprop="url">Introduction to memory</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-29 14:25:24" itemprop="dateCreated datePublished" datetime="2024-01-29T14:25:24+00:00">2024-01-29</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="malloc-free"><a href="#malloc-free" class="headerlink" title="malloc&#x2F;free"></a>malloc&#x2F;free</h2><p>See <a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Backtraces.html">this example</a></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">char</span> ** <span class="title">backtrace_symbols</span> <span class="params">(<span class="type">void</span> *<span class="type">const</span> *buffer, <span class="type">int</span> size)</span> </span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>The return value of backtrace_symbols is a pointer obtained via the malloc function, and it is the responsibility of the caller to free that pointer. Note that only the return value need be freed, not the individual strings.</p>
+</blockquote>
+<p>Question: Why does it say “only the return value need be freed, not the individual strings”?</p>
+<p>Let us observe the defintion of the <code>malloc</code>&#x2F;<code>free</code> functions first:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> *<span class="title">malloc</span><span class="params">( <span class="type">size_t</span> size )</span></span>;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">free</span><span class="params">( <span class="type">void</span> *ptr )</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p><code>free</code> takes a <code>void*</code> pointer to deallocate the memory, it doesn’t care what type it is, even if it is a multi-level pointer. It means that <code>malloc</code> has stored the memory size in some place and <code>free</code> will find it beforing deallocate the memory.</p>
+<p>Let us return the question. The memory pointer returned by <code>backtrace_symbols</code> is the <code>char**</code> type, it must be a whole block contigunous memory using <code>malloc</code> and might be enforced to be transformed as <code>char**</code> pointer when returing. So when we <code>free</code> the memory block, the Linux kernel find its actual memory size and deallocate it.</p>
+<p>Example:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">char</span>** strings = (<span class="type">char</span>**)<span class="built_in">malloc</span>(<span class="number">3</span> * <span class="built_in">sizeof</span>(<span class="type">char</span>*) + <span class="number">3</span> * <span class="number">50</span>); <span class="comment">// assuming a maximum 50 characters per sentence</span></span><br><span class="line">    <span class="type">char</span>* block = (<span class="type">char</span>*)(strings + <span class="number">3</span>);</span><br><span class="line">    <span class="type">char</span>* s1 = <span class="built_in">strcpy</span>(block, <span class="string">&quot;The first sentence&quot;</span>); block += <span class="built_in">strlen</span>(s1) + <span class="number">1</span>;</span><br><span class="line">    <span class="type">char</span>* s2 = <span class="built_in">strcpy</span>(block, <span class="string">&quot;The second sentence&quot;</span>); block += <span class="built_in">strlen</span>(s2) + <span class="number">1</span>;</span><br><span class="line">    <span class="type">char</span>* s3 = <span class="built_in">strcpy</span>(block, <span class="string">&quot;The third sentence&quot;</span>);</span><br><span class="line">    strings[<span class="number">0</span>] = s1;</span><br><span class="line">    strings[<span class="number">1</span>] = s2;</span><br><span class="line">    strings[<span class="number">2</span>] = s3;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">3</span>; ++i) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>, strings[i]);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">free</span>(strings); <span class="comment">// deallocate all memory at once</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>More elegant but less economical code:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">char</span>** strings = (<span class="type">char</span>**)<span class="built_in">malloc</span>(<span class="number">3</span> * <span class="built_in">sizeof</span>(<span class="type">char</span>*) + <span class="number">3</span> * <span class="number">50</span>);</span><br><span class="line">    <span class="type">char</span>* block = (<span class="type">char</span>*)(strings + <span class="number">3</span>);</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">3</span>; ++i) &#123;</span><br><span class="line">        strings[i] = block + i * <span class="number">50</span>; <span class="comment">// Assuming a maximum of 50 characters per sentence</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">strcpy</span>(strings[<span class="number">0</span>], <span class="string">&quot;The first sentence&quot;</span>);</span><br><span class="line">    <span class="built_in">strcpy</span>(strings[<span class="number">1</span>], <span class="string">&quot;The second sentence&quot;</span>);</span><br><span class="line">    <span class="built_in">strcpy</span>(strings[<span class="number">2</span>], <span class="string">&quot;The third sentence&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">3</span>; ++i) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>, strings[i]);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">free</span>(strings); <span class="comment">// deallocate all memory at once</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Memory_002dmapped-I_002fO.html">The GNU C Library (glibc) manual: 13.8 Memory-mapped I&#x2F;O</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Memory-Protection.html">The GNU C Library (glibc) manual: 3.4 Memory Protection</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/29/UML/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +319,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-14 06:49:35" itemprop="dateModified" datetime="2025-09-14T06:49:35+00:00">2025-09-14</time>
+                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -300,7 +395,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-14 06:49:35" itemprop="dateModified" datetime="2025-09-14T06:49:35+00:00">2025-09-14</time>
+                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -418,7 +513,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-14 06:49:35" itemprop="dateModified" datetime="2025-09-14T06:49:35+00:00">2025-09-14</time>
+                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -495,7 +590,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-14 06:49:35" itemprop="dateModified" datetime="2025-09-14T06:49:35+00:00">2025-09-14</time>
+                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -598,7 +693,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-14 06:49:35" itemprop="dateModified" datetime="2025-09-14T06:49:35+00:00">2025-09-14</time>
+                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -702,7 +797,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-14 06:49:35" itemprop="dateModified" datetime="2025-09-14T06:49:35+00:00">2025-09-14</time>
+                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1202,7 +1297,7 @@ PHSICIAN &amp; SURGEON
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-14 06:49:35" itemprop="dateModified" datetime="2025-09-14T06:49:35+00:00">2025-09-14</time>
+                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1313,7 +1408,7 @@ PHSICIAN &amp; SURGEON
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-14 06:49:35" itemprop="dateModified" datetime="2025-09-14T06:49:35+00:00">2025-09-14</time>
+                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1396,7 +1491,7 @@ backtrace_symbols_fd
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-14 06:49:35" itemprop="dateModified" datetime="2025-09-14T06:49:35+00:00">2025-09-14</time>
+                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1441,356 +1536,6 @@ clean:
 <li><code>modinfo</code>: 从命令行指定的内核模块中提取信息，如果没有给出模块名称，那么会搜索<code>/lib/modules/version</code>目录，就像<code>modprobe</code>加载模块时一样。</li>
 <li><code>depmod</code>: 生成<code>modules.dep</code>和映射文件。</li>
 <li><code>dmesg</code>: 打印或控制内核ring buffer（存储kernel message）。</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/misc/PCIE/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/misc/PCIE/" class="post-title-link" itemprop="url">Introducation to PCIE</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 22:04:18" itemprop="dateCreated datePublished" datetime="2024-01-23T22:04:18+00:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-14 06:49:35" itemprop="dateModified" datetime="2025-09-14T06:49:35+00:00">2025-09-14</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Misc/" itemprop="url" rel="index"><span itemprop="name">Misc</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="词汇表（Glossary）"><a href="#词汇表（Glossary）" class="headerlink" title="词汇表（Glossary）"></a>词汇表（Glossary）</h1><ul>
-<li>BAR: base address register.</li>
-<li>PCI configuration space.</li>
-<li>sba: system bus address.</li>
-</ul>
-<p><a target="_blank" rel="noopener" href="https://wiki.osdev.org/PCI">PCI</a></p>
-<p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/PCI_configuration_space">PCI configurtation space</a></p>
-<pre><code>PCI设备有一组被称为configuratin space的寄存器，并且PCI Express引入了Extended configuration space。configuration space寄存器被映射到memory locations。
-驱动设备和诊断软件必须要有权限访问configuration space，操作系统通常使用APIs来授权访问设备configuration space。
-</code></pre>
-<p>PCI configuration space有两种类型的Header（64 bytes）：</p>
-<h2 id="Header-Type-0x0"><a href="#Header-Type-0x0" class="headerlink" title="Header Type 0x0"></a>Header Type 0x0</h2><style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-rcf9{background-color:#F9F9F9;text-align:left;vertical-align:middle}
-.tg .tg-tbl0{background-color:#F9F9F9;font-weight:bold;text-align:center;vertical-align:middle}
-</style>
-<table class="tg">
-<thead>
-  <tr>
-    <th class="tg-tbl0">Register</th>
-    <th class="tg-tbl0">Offset</th>
-    <th class="tg-tbl0">Bits 31-24</th>
-    <th class="tg-tbl0">Bits 23-16</th>
-    <th class="tg-tbl0">Bits 15-8</th>
-    <th class="tg-tbl0">Bits 7-0</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td class="tg-rcf9">0x0</td>
-    <td class="tg-rcf9">0x0</td>
-    <td class="tg-rcf9" colspan="2">Device ID</td>
-    <td class="tg-rcf9" colspan="2">Vendor ID</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x1</td>
-    <td class="tg-rcf9">0x4</td>
-    <td class="tg-rcf9" colspan="2">Status</td>
-    <td class="tg-rcf9" colspan="2">Command</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x2</td>
-    <td class="tg-rcf9">0x8</td>
-    <td class="tg-rcf9">Class code</td>
-    <td class="tg-rcf9">Subclass</td>
-    <td class="tg-rcf9">Prog IF</td>
-    <td class="tg-rcf9">Revision ID</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x3</td>
-    <td class="tg-rcf9">0xC</td>
-    <td class="tg-rcf9">BIST</td>
-    <td class="tg-rcf9">Header type</td>
-    <td class="tg-rcf9">Latency Timer</td>
-    <td class="tg-rcf9">Cache Line Size</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x4</td>
-    <td class="tg-rcf9">0x10</td>
-    <td class="tg-rcf9" colspan="4">Base address #0 (BAR0)</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x5</td>
-    <td class="tg-rcf9">0x14</td>
-    <td class="tg-rcf9" colspan="4">Base address #1 (BAR1)</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x6</td>
-    <td class="tg-rcf9">0x18</td>
-    <td class="tg-rcf9">Secondary Latency Timer</td>
-    <td class="tg-rcf9">Subordinate Bus Number</td>
-    <td class="tg-rcf9">Secondary Bus Number</td>
-    <td class="tg-rcf9">Primary Bus Number</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x7</td>
-    <td class="tg-rcf9">0x1C</td>
-    <td class="tg-rcf9" colspan="2">Secondary Status</td>
-    <td class="tg-rcf9">I/O Limit</td>
-    <td class="tg-rcf9">I/O Base</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x8</td>
-    <td class="tg-rcf9">0x20</td>
-    <td class="tg-rcf9" colspan="2">Memory Limit</td>
-    <td class="tg-rcf9" colspan="2">Memory Base</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x9</td>
-    <td class="tg-rcf9">0x24</td>
-    <td class="tg-rcf9" colspan="2">Prefetchable Memory Limit</td>
-    <td class="tg-rcf9" colspan="2">Prefetchable Memory Base</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xA</td>
-    <td class="tg-rcf9">0x28</td>
-    <td class="tg-rcf9" colspan="4">Prefetchable Base Upper 32 Bits</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xB</td>
-    <td class="tg-rcf9">0x2C</td>
-    <td class="tg-rcf9" colspan="4">Prefetchable Limit Upper 32 Bits</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xC</td>
-    <td class="tg-rcf9">0x30</td>
-    <td class="tg-rcf9" colspan="2">I/O Limit Upper 16 Bits</td>
-    <td class="tg-rcf9" colspan="2">I/O Base Upper 16 Bits</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xD</td>
-    <td class="tg-rcf9">0x34</td>
-    <td class="tg-rcf9" colspan="3">Reserved</td>
-    <td class="tg-rcf9">Capability Pointer</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xE</td>
-    <td class="tg-rcf9">0x38</td>
-    <td class="tg-rcf9" colspan="4">Expansion ROM base address</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xF</td>
-    <td class="tg-rcf9">0x3C</td>
-    <td class="tg-rcf9" colspan="2">Bridge Control</td>
-    <td class="tg-rcf9">Interrupt PIN</td>
-    <td class="tg-rcf9">Interrupt Line</td>
-  </tr>
-</tbody>
-</table>
-
-<h2 id="Header-Type-0x1"><a href="#Header-Type-0x1" class="headerlink" title="Header Type 0x1"></a>Header Type 0x1</h2><style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-rcf9{background-color:#F9F9F9;text-align:left;vertical-align:middle}
-.tg .tg-tbl0{background-color:#F9F9F9;font-weight:bold;text-align:center;vertical-align:middle}
-</style>
-<table class="tg">
-<thead>
-  <tr>
-    <th class="tg-tbl0">Register</th>
-    <th class="tg-tbl0">Offset</th>
-    <th class="tg-tbl0">Bits 31-24</th>
-    <th class="tg-tbl0">Bits 23-16</th>
-    <th class="tg-tbl0">Bits 15-8</th>
-    <th class="tg-tbl0">Bits 7-0</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td class="tg-rcf9">0x0</td>
-    <td class="tg-rcf9">0x0</td>
-    <td class="tg-rcf9" colspan="2">Device ID</td>
-    <td class="tg-rcf9" colspan="2">Vendor ID</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x1</td>
-    <td class="tg-rcf9">0x4</td>
-    <td class="tg-rcf9" colspan="2">Status</td>
-    <td class="tg-rcf9" colspan="2">Command</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x2</td>
-    <td class="tg-rcf9">0x8</td>
-    <td class="tg-rcf9">Class code</td>
-    <td class="tg-rcf9">Subclass</td>
-    <td class="tg-rcf9">Prog IF</td>
-    <td class="tg-rcf9">Revision ID</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x3</td>
-    <td class="tg-rcf9">0xC</td>
-    <td class="tg-rcf9">BIST</td>
-    <td class="tg-rcf9">Header type</td>
-    <td class="tg-rcf9">Latency Timer</td>
-    <td class="tg-rcf9">Cache Line Size</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x4</td>
-    <td class="tg-rcf9">0x10</td>
-    <td class="tg-rcf9" colspan="4">Base address #0 (BAR0)</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x5</td>
-    <td class="tg-rcf9">0x14</td>
-    <td class="tg-rcf9" colspan="4">Base address #1 (BAR1)</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x6</td>
-    <td class="tg-rcf9">0x18</td>
-    <td class="tg-rcf9">Secondary Latency Timer</td>
-    <td class="tg-rcf9">Subordinate Bus Number</td>
-    <td class="tg-rcf9">Secondary Bus Number</td>
-    <td class="tg-rcf9">Primary Bus Number</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x7</td>
-    <td class="tg-rcf9">0x1C</td>
-    <td class="tg-rcf9" colspan="2">Secondary Status</td>
-    <td class="tg-rcf9">I/O Limit</td>
-    <td class="tg-rcf9">I/O Base</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x8</td>
-    <td class="tg-rcf9">0x20</td>
-    <td class="tg-rcf9" colspan="2">Memory Limit</td>
-    <td class="tg-rcf9" colspan="2">Memory Base</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0x9</td>
-    <td class="tg-rcf9">0x24</td>
-    <td class="tg-rcf9" colspan="2">Prefetchable Memory Limit</td>
-    <td class="tg-rcf9" colspan="2">Prefetchable Memory Base</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xA</td>
-    <td class="tg-rcf9">0x28</td>
-    <td class="tg-rcf9" colspan="4">Prefetchable Base Upper 32 Bits</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xB</td>
-    <td class="tg-rcf9">0x2C</td>
-    <td class="tg-rcf9" colspan="4">Prefetchable Limit Upper 32 Bits</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xC</td>
-    <td class="tg-rcf9">0x30</td>
-    <td class="tg-rcf9" colspan="2">I/O Limit Upper 16 Bits</td>
-    <td class="tg-rcf9" colspan="2">I/O Base Upper 16 Bits</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xD</td>
-    <td class="tg-rcf9">0x34</td>
-    <td class="tg-rcf9" colspan="3">Reserved</td>
-    <td class="tg-rcf9">Capability Pointer</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xE</td>
-    <td class="tg-rcf9">0x38</td>
-    <td class="tg-rcf9" colspan="4">Expansion ROM base address</td>
-  </tr>
-  <tr>
-    <td class="tg-rcf9">0xF</td>
-    <td class="tg-rcf9">0x3C</td>
-    <td class="tg-rcf9" colspan="2">Bridge Control</td>
-    <td class="tg-rcf9">Interrupt PIN</td>
-    <td class="tg-rcf9">Interrupt Line</td>
-  </tr>
-</tbody>
-</table>
-
-<pre><code>BAR0
-Memory-mapped I/O (MMIO) registers
-BAR1
-Device memory windows.
-BAR2/3
-Complementary space of BAR1.
-BAR5
-I/O port.
-BAR6
-PCI ROM.
-</code></pre>
-<h1 id="Commands"><a href="#Commands" class="headerlink" title="Commands"></a>Commands</h1><p>lspci</p>
-<p><a target="_blank" rel="noopener" href="https://diego.assencio.com/?index=649b7a71b35fc7ad41e03b6d0e825f07">Interpreting the output of lspci</a></p>
-<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://insujang.github.io/2017-04-03/pci-express-i/o-system/">PCI Express I&#x2F;O System</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.pcmag.com/encyclopedia/term/pci-express">PCI Express</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.trentonsystems.com/blog/what-is-pcie">What is PCIe</a></li>
-<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/30190050/what-is-the-base-address-register-bar-in-pcie">What is the Base Address Register (BAR) in PCIe?</a></li>
-<li><a target="_blank" rel="noopener" href="https://utcc.utoronto.ca/~cks/space/blog/linux/PCIeLspciBusAddresses">PCIe bus addresses, lspci, and working out your PCIe bus topology</a></li>
 </ul>
 
       
@@ -1878,14 +1623,14 @@ PCI ROM.
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">99</span>
+          <span class="site-state-item-count">100</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-count">13</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
