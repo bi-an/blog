@@ -5,7 +5,46 @@ categories: 并发编程
 tags:
 ---
 
+## ABA 问题
+
+在典型的无锁栈/队列里，指针会被反复复用（比如 pop 出再 push 回去）。如果只用 compare_exchange 比较指
+针，那么：
+
+- T1 读到 A
+- T2 把 A → B → A 改一圈
+- T1 CAS 时看到还是 A，以为结构没变，但其实已经发生变化
+
+这就是 ABA 问题。
+
 ## 解决方案
+
+### 版本标记指针方案
+
+‌ 核心思想 ‌：为每个指针附加一个版本号标记，每次修改时递增版本号。
+
+‌ 实现要点 ‌：
+
+- 需要双字 CAS(DCAS)硬件支持
+- 每次修改头指针时递增标记值
+- 即使指针地址相同，标记值不同也会使 CAS 失败
+- 适用于支持 DCAS 的平台(如某些 ARM 架构)
+- 在非 DCAS 平台也可用，前提是将 data + version 放入一个机器字中，以维持操作的原子性
+
+‌ 限制 ‌：
+
+- 在某些机器上需要双字宽度（两个 word）CAS；
+- 如果硬件／编译器／平台不支持就只能模拟／锁住；或者要压缩 pointer 或 tag 大小，可能限制可管理的节点数量／地址空间。
+
+### 引用计数方案
+
+‌ 核心思想 ‌：为每个节点维护引用计数，防止节点在被使用时被重新添加到列表。
+
+‌ 关键实现细节 ‌：
+
+每个节点包含 freeListRefs(引用计数)和 freeListNext(下一节点指针) 引用计数高位用作 "应返回自由列表"
+标志位 try_get()操作前确保引用计数不为零 add()操作使用原子操作管理引用计数和标志位 ‌ 优势 ‌：
+
+完全通用的解决方案，不依赖特定硬件特性保持真正的锁无关性质正确处理并发场景下的各种竞争条件
 
 ### Hazard Pointer（危险指针）
 
@@ -35,5 +74,5 @@ tags:
 程可能 CAS 成功指向了一个“已经被释放并重用的地址”，这就是 ABA 的根源。所以 hazard pointer 或 epoch
 GC 是在链表队列里用来避免这种 悬空引用 + ABA 的。
 
-而 moodycamel::ConcurrentQueue 因为用的是 环形 buffer + sequence number，节点不会反复 malloc/free，
+而 moodycamel:: ConcurrentQueue 因为用的是 环形 buffer + sequence number，节点不会反复 malloc/free，
 所以根本就不需要 hazard pointer 或 epoch GC。
