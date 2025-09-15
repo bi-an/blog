@@ -193,6 +193,188 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/12/06/net/InfiniBand/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2023/12/06/net/InfiniBand/" class="post-title-link" itemprop="url">Getting Started with IB</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2023-12-06 09:41:56" itemprop="dateCreated datePublished" datetime="2023-12-06T09:41:56+00:00">2023-12-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Network/" itemprop="url" rel="index"><span itemprop="name">Network</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h2><h3 id="ibv-fork-init"><a href="#ibv-fork-init" class="headerlink" title="ibv_fork_init"></a><code>ibv_fork_init</code></h3><p>文档 <a target="_blank" rel="noopener" href="https://docs.nvidia.com/networking/display/rdmaawareprogrammingv17/ibv_fork_init">ibv_fork_init</a></p>
+<p><strong>模板</strong>: <code>int ibv_fork_init(void)</code></p>
+<p><strong>输入参数</strong>: 无</p>
+<p><strong>输出参数</strong>: 无</p>
+<p><strong>返回值</strong>: <code>0</code> on success, <code>-1</code> on error. If the call fails, errno will be set to indicate the reason for the failure.</p>
+<p><strong>描述</strong>: <code>ibv_fork_init</code> 初始化 libverbs 的数据结构来安全地处理 <code>fork()</code> 并避免数据损坏，不论 <code>fork()</code> 是被显式调用还是隐式调用（比如在 <code>system()</code> 中被调用）。<br>如果所有的父进程总是阻塞直至所有的子进程结束或使用 <code>exec()</code> 改变地址空间，那么 <code>ibv_fork_init</code> 可以不被调用。</p>
+<p>该函数在支持 <code>madvise</code> 的 <code>MADV_DONTFORK</code> 标记的 Linux 内核（2.6.17或更高）上可以工作。</p>
+<p>设置环境变量 <code>RDMAV_FORK_SAFE</code> 或 <code>IBV_FORK_SAFE</code> 环境变量为任意值，有着与 <code>ibv_fork_init</code> 相同的效果。</p>
+<p>设置 <code>RDMAV_HUGEPAGES_SAFE</code> 为任意值，以告诉库需要检查内核为内存域（memory regions）使用的底层内存页的大小。如果应用程序直接或通过库（如 libhugtlbfs ）间接使用大内存页（博主注：即大于4KB）时，该环境变量是必须的。（博主注：<code>ibv_fork_init</code> 将检查 <code>RDMAV_HUGEPAGES_SAFE</code> ）</p>
+<p>调用 <code>ibv_fork_init</code> 将降低性能，因为每个内存注册都将有一个额外的系统调用和分配附加的内存以追踪内存域（memory regions）。<br>确切的性能损失取决于工作负载，通常不会很大。</p>
+<p>设置 <code>RDMAV_HUGEPAGES_SAFE</code> 会为所有的内存注册增加更多的开销。</p>
+<h2 id="文档"><a href="#文档" class="headerlink" title="文档"></a>文档</h2><p><a target="_blank" rel="noopener" href="https://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=346D319BA2A9F06B8C49B2C0AAFD28D9?doi=10.1.1.668.4459&rep=rep1&type=pdf">Documentation: RDMA Aware Networks Programming User Manual v1.6</a></p>
+<p><a href="/blog/documents/RDMA-Aware-Networks-Programming.pdf">Local Documentation</a></p>
+<p><a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E19671-01/835-0793-03/z40000419112.html#scrolltoc">Sun Network QDR InfiniBand Gateway Switch Topic Set</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.zhihu.com/column/c_1231181516811390976">RDMA知乎专栏</a></p>
+<p>用户态的Verbs API手册跟代码在一个仓库维护，手册地址：<a target="_blank" rel="noopener" href="https://github.com/linux-rdma/rdma-core/tree/master/libibverbs/man">https://github.com/linux-rdma/rdma-core/tree/master/libibverbs/man</a></p>
+<p>有很多在线的man page网站可以查阅这些接口的说明，比如官方的连接：<a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man3/ibv_post_send.3.html">https://man7.org/linux/man-pages/man3/ibv_post_send.3.html</a></p>
+<p>也有一些其他非官方网页，支持在线搜索：<a target="_blank" rel="noopener" href="https://linux.die.net/man/3/ibv">https://linux.die.net/man/3/ibv</a></p>
+<p>查阅系统man page<br>如果你使用的商用OS安装了rdma-core或者libibverbs库，那么可以直接用man命令查询接口：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">man ibv_post_send</span><br></pre></td></tr></table></figure>
+
+<p>查询Mellanox的编程手册<br>《<a target="_blank" rel="noopener" href="https://docs.nvidia.com/networking/display/rdmaawareprogrammingv17">RDMA Aware Networks Programming User Manual Rev 1.7</a>》，最新版是2015年更新的。该手册写的比较详尽，并且附有示例程序，但是可能与最新的接口有一些差异。Mellanox VPI®（Virtual Procotol Interconnect）架构为同时支持InfiniBand和以太网语义的网络适配器和交换机提供高性能、低延迟和可靠的方法。</p>
+<p>Book: <a target="_blank" rel="noopener" href="https://github.com/faquir-1990/itBooks/blob/master/Linux%20Kernel%20Networking%20-%20Implementation%20and%20Theory.pdf">Linux Kernel Networking - Implementation and Theory</a></p>
+<p><a target="_blank" rel="noopener" href="http://www.rdmamojo.com/">Dotan’s blog</a>: Dotan Barak, an InfiniBand Expert. Dotan is a Senior Software Manager at Mellanox Technologies working on RDMA Technologies.</p>
+<h2 id="性能分析工具（profiling）"><a href="#性能分析工具（profiling）" class="headerlink" title="性能分析工具（profiling）"></a>性能分析工具（profiling）</h2><p>Blog: <a target="_blank" rel="noopener" href="https://www.rdmamojo.com/2013/06/08/tips-and-tricks-to-optimize-your-rdma-code/">Tips and tricks to optimize your RDMA code</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/mellanox-hpc/libibprof">libibprof</a></p>
+<h2 id="IB简介"><a href="#IB简介" class="headerlink" title="IB简介"></a>IB简介</h2><p>RDMA - Remote Direct Memory Access 远程直接内存存取。</p>
+<p>InfiniBand是一种高性能计算机网络通信标准，它具有极高的吞吐量和极低的延迟。如果您需要使用InfiniBand进行编程，您需要使用支持InfiniBand的编程语言（如C++）来编写代码。</p>
+<p>机构和组织：</p>
+<p>OFA: <a target="_blank" rel="noopener" href="https://www.openfabrics.org/">Open Fabrics Alliance</a>.</p>
+<p>IBTA: <a target="_blank" rel="noopener" href="https://www.infinibandta.org/">InfiniBand Trade Association</a>.</p>
+<h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><ul>
+<li><code>CQ</code> - Complete Queue 完成队列</li>
+<li><code>WQ</code> - Work Queue 工作队列</li>
+<li><code>WR</code> - Work Request 工作请求</li>
+<li><code>QP</code> - Queue Pairs 队列对（Send-Receive）</li>
+<li><code>SQ</code> - Send Queue 发送队列</li>
+<li><code>RQ</code> - Receive Queue 接收队列</li>
+<li><code>PD</code> - Protection Domain 保护域，将QP和MR结合在一起</li>
+<li><code>MR</code> - Memory Region 内存区域。一块经注册过的且本地网卡可以读写的内存区域。包含R_Key和L_Key。</li>
+<li><code>SGE</code> - Scatter&#x2F;Gather Elements 分散&#x2F;聚集元素。</li>
+<li><code>R_Key</code> - Remote Key</li>
+<li><code>L_Key</code> - Local Key</li>
+<li><code>CA</code> - (Host) Channel Adapter, an inifiniband network interface card.</li>
+<li><code>NIC</code> - Network Interface Card 网卡。</li>
+<li><code>LID</code> - Local Identifier.</li>
+<li><code>CM</code> - Connection Manager.</li>
+</ul>
+<p>其他常见缩写：</p>
+<ul>
+<li><code>RC</code> - reliable connected.</li>
+<li><code>SCSI</code> - Small Computer System Interface 小型计算机系统接口。</li>
+<li><code>SRP</code> - SCSI RDMA Protocol. &#x2F; Secure Remote Password.</li>
+</ul>
+<p>博客：<a target="_blank" rel="noopener" href="https://blog.51cto.com/liangchaoxi/4044818">https://blog.51cto.com/liangchaoxi/4044818</a></p>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><p><a target="_blank" rel="noopener" href="https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/7/html/networking_guide/sec-infiniband_and_rdma_related_software_packages">InfiniBand 和 RDMA 相关软件包</a></p>
+<pre><code>sudo apt-get install infiniband-diags
+sudo apt install ibverbs-utils
+</code></pre>
+<h2 id="API"><a href="#API" class="headerlink" title="API"></a>API</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://insujang.github.io/2020-02-09/introduction-to-programming-infiniband/">introduction to programming infiniband</a></li>
+<li><a target="_blank" rel="noopener" href="https://indico.cern.ch/event/218156/attachments/351725/490089/RDMA_Aware_Programming_user_manual.pdf">RDMA Aware Programming user manual (PDF)</a></li>
+</ul>
+<p>以下是一些支持InfiniBand的C++库：</p>
+<p>Infinity：这是一个轻量级的C++ RDMA库，用于InfiniBand网络。它提供了对两侧（发送&#x2F;接收）和单侧（读&#x2F;写&#x2F;原子）操作的支持，并且是一个简单而强大的面向对象的ibVerbs抽象。该库使用户能够构建使用RDMA的复杂应用程序，而不会影响性能<a target="_blank" rel="noopener" href="https://github.com/claudebarthels/infinity">1</a>。</p>
+<p>OFED：这是一个开放式Fabrics Enterprise Distribution，它提供了对InfiniBand和RoCE（RDMA over Converged Ethernet）技术的支持。OFED提供了一组用户空间库和驱动程序，可用于构建支持RDMA的应用程序<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/337461037">2</a>。</p>
+<p>以下是使用Infinity库编写支持InfiniBand的C++代码示例：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 创建新上下文</span></span><br><span class="line">infinity::core::Context *context = <span class="keyword">new</span> infinity::core::<span class="built_in">Context</span>();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建队列对</span></span><br><span class="line">infinity::queues::QueuePairFactory *qpFactory = <span class="keyword">new</span> infinity::queues::<span class="built_in">QueuePairFactory</span>(context);</span><br><span class="line">infinity::queues::QueuePair *qp = qpFactory-&gt;<span class="built_in">connectToRemoteHost</span>(SERVER_IP, PORT_NUMBER);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建并向网络注册缓冲区</span></span><br><span class="line">infinity::memory::Buffer *localBuffer = <span class="keyword">new</span> infinity::memory::<span class="built_in">Buffer</span>(context, BUFFER_SIZE);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 从远程缓冲区读取（单向）并等待完成</span></span><br><span class="line">infinity::memory::RegionToken *remoteBufferToken = <span class="keyword">new</span> infinity::memory::<span class="built_in">RegionToken</span>(REMOTE_BUFFER_INFO);</span><br><span class="line">infinity::<span class="function">requests::RequestToken <span class="title">requestToken</span><span class="params">(context)</span></span>;</span><br><span class="line">qp-&gt;<span class="built_in">read</span>(localBuffer, remoteBufferToken, &amp;requestToken);</span><br><span class="line">requestToken.<span class="built_in">waitUntilCompleted</span>();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 将本地缓冲区的内容写入远程缓冲区（单向）并等待完成</span></span><br><span class="line">qp-&gt;<span class="built_in">write</span>(localBuffer, remoteBufferToken, &amp;requestToken);</span><br><span class="line">requestToken.<span class="built_in">waitUntilCompleted</span>();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 将本地缓冲区的内容通过队列对发送（双向）并等待完成</span></span><br><span class="line">qp-&gt;<span class="built_in">send</span>(localBuffer, &amp;requestToken);</span><br><span class="line">requestToken.<span class="built_in">waitUntilCompleted</span>();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 关闭连接</span></span><br><span class="line"><span class="keyword">delete</span> remoteBufferToken;</span><br><span class="line"><span class="keyword">delete</span> localBuffer;</span><br><span class="line"><span class="keyword">delete</span> qp;</span><br><span class="line"><span class="keyword">delete</span> qpFactory;</span><br><span class="line"><span class="keyword">delete</span> context;</span><br></pre></td></tr></table></figure>
+
+<p>以下是使用OFED库编写支持InfiniBand的C++代码示例：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 创建新上下文</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">ibv_context</span> *context = <span class="built_in">ibv_open_device</span>(*device);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建完成端口</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">ibv_pd</span> *pd = <span class="built_in">ibv_alloc_pd</span>(context);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建队列对</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">ibv_qp_init_attr</span> qp_init_attr;</span><br><span class="line"><span class="built_in">memset</span>(&amp;qp_init_attr, <span class="number">0</span>, <span class="built_in">sizeof</span>(qp_init_attr));</span><br><span class="line">qp_init_attr.send_cq = cq;</span><br><span class="line">qp_init_attr.recv_cq = cq;</span><br><span class="line">qp_init_attr.qp_type = IBV_QPT_RC;</span><br><span class="line">qp_init_attr.cap.max_send_wr = <span class="number">1</span>;</span><br><span class="line">qp_init_attr.cap.max_recv_wr = <span class="number">1</span>;</span><br><span class="line">qp_init_attr.cap.max_send_sge = <span class="number">1</span>;</span><br><span class="line">qp_init_attr.cap.max_recv_sge = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">ibv_qp</span> *qp = <span class="built_in">ibv_create_qp</span>(pd, &amp;qp_init_attr);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建并向网络注册缓冲区</span></span><br><span class="line"><span class="type">char</span> *localBuffer = (<span class="type">char</span> *)<span class="built_in">malloc</span>(BUFFER_SIZE);</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">ibv_mr</span> *mr = <span class="built_in">ibv_reg_mr</span>(pd, localBuffer, BUFFER_SIZE, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 连接到远程主机</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">sockaddr_in</span> remoteAddress;</span><br><span class="line"><span class="built_in">memset</span>(&amp;remoteAddress, <span class="number">0</span>, <span class="built_in">sizeof</span>(remoteAddress));</span><br><span class="line">remoteAddress.sin_family = AF_INET;</span><br><span class="line">remoteAddress.sin_port = <span class="built_in">htons</span>(PORT_NUMBER);</span><br><span class="line"><span class="built_in">inet_pton</span>(AF_INET, SERVER_IP, &amp;remoteAddress.sin_addr);</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">rdma_cm_id</span> *cmId;</span><br><span class="line"><span class="built_in">rdma_create_id</span>(*eventChannel, &amp;cmId, <span class="literal">NULL</span>, RDMA_PS_TCP);</span><br><span class="line"><span class="built_in">rdma_resolve_addr</span>(cmId, <span class="literal">NULL</span>, (<span class="keyword">struct</span> sockaddr *)&amp;remoteAddress, RESOLVE_TIMEOUT_MS);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 等待连接完成</span></span><br><span class="line"><span class="built_in">rdma_wait_event</span>(*eventChannel, RDMA_CM_EVENT_ESTABLISHED);</span><br><span class="line"><span class="built_in">rdma_ack_cm_event</span>(cmEvent);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 获取远程缓冲区信息</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">ibv_wc</span> wc;</span><br><span class="line"><span class="built_in">ibv_post_recv</span>(qp, &amp;recvWr, &amp;badRecvWr);</span><br><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">    <span class="built_in">ibv_poll_cq</span>(cq, <span class="number">1</span>, &amp;wc);</span><br><span class="line">&#125; <span class="keyword">while</span> (wc.status != IBV_WC_SUCCESS || wc.opcode != IBV_WC_RECV_RDMA_WITH_IMM || wc.imm_data != <span class="built_in">htonl</span>(IMM_DATA));</span><br><span class="line">remoteBufferInfo.rkey = <span class="built_in">ntohl</span>(wc.imm_data &gt;&gt; <span class="number">8</span>);</span><br><span class="line">remoteBufferInfo.vaddr = wc.wr_id;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 将本地缓冲区的内容写入远程缓冲区（单向）</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">ibv_send_wr</span> sendWr;</span><br><span class="line"><span class="built_in">memset</span>(&amp;sendWr, <span class="number">0</span>, <span class="built_in">sizeof</span>(sendWr));</span><br><span class="line">sendWr.wr_id = <span class="number">0</span>;</span><br><span class="line">sendWr.opcode = IBV_WR_RDMA_WRITE_WITH_IMM;</span><br><span class="line">sendWr.sg_list = &amp;localSge;</span><br><span class="line">sendWr.num_sge = <span class="number">1</span>;</span><br><span class="line">sendWr.send_flags = IBV_SEND_SIGNALED;</span><br><span class="line">sendWr.wr.rdma.remote_addr = remoteBufferInfo.vaddr;</span><br><span class="line">sendWr.wr.rdma.rkey = remoteBufferInfo.rkey;</span><br><span class="line">localSge.addr = (<span class="type">uintptr_t</span>)localBuffer;</span><br><span class="line">localSge.length = BUFFER_SIZE;</span><br><span class="line">localSge.lkey = mr-&gt;lkey;</span><br><span class="line"><span class="built_in">ibv_post_send</span>(qp, &amp;sendWr, &amp;badSendWr);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 关闭连接</span></span><br><span class="line"><span class="built_in">ibv_dereg_mr</span>(mr);</span><br><span class="line"><span class="built_in">free</span>(localBuffer);</span><br><span class="line"><span class="built_in">ibv_destroy_qp</span>(qp);</span><br><span class="line"><span class="built_in">ibv_dealloc_pd</span>(pd);</span><br><span class="line"><span class="built_in">ibv_close_device</span>(context);</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>入门级文档：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/337461037">https://zhuanlan.zhihu.com/p/337461037</a></li>
+<li>文档：<a target="_blank" rel="noopener" href="https://docs.kernel.org/infiniband/index.html">https://docs.kernel.org/infiniband/index.html</a></li>
+<li>文档：<a target="_blank" rel="noopener" href="http://blog.foool.net/wp-content/uploads/linuxdocs/infiniband.pdf">http://blog.foool.net/wp-content/uploads/linuxdocs/infiniband.pdf</a></li>
+<li>文档：<a target="_blank" rel="noopener" href="https://support.bull.com/documentation/byproduct/infra/sw-extremcomp/sw-extremcomp-com/g">https://support.bull.com/documentation/byproduct/infra/sw-extremcomp/sw-extremcomp-com/g</a></li>
+<li>文档：<a target="_blank" rel="noopener" href="https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html-single/configuring_infiniband_and_rdma_networks/index">https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html-single/configuring_infiniband_and_rdma_networks/index</a></li>
+<li>博客：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/337461037">https://zhuanlan.zhihu.com/p/337461037</a></li>
+<li>文档：<a target="_blank" rel="noopener" href="https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/7/html/networking_guide/ch-configure_infiniband_and_rdma_networks">https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/7/html/networking_guide/ch-configure_infiniband_and_rdma_networks</a></li>
+<li>知乎专栏：<a target="_blank" rel="noopener" href="https://www.zhihu.com/column/c_1231181516811390976">https://www.zhihu.com/column/c_1231181516811390976</a></li>
+<li>知乎专栏：<a target="_blank" rel="noopener" href="https://www.zhihu.com/column/rdmatechnology">https://www.zhihu.com/column/rdmatechnology</a></li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man3/ibv_reg_mr.3.html">Linux manual page</a></p>
+<h2 id="Command-Line"><a href="#Command-Line" class="headerlink" title="Command-Line"></a>Command-Line</h2><p>文档：<a target="_blank" rel="noopener" href="https://docs.nvidia.com/networking/pages/viewpage.action?pageId=43719572">https://docs.nvidia.com/networking/pages/viewpage.action?pageId=43719572</a></p>
+<ul>
+<li><p><code>ibstat</code></p>
+</li>
+<li><p><code>ibhosts</code> - 查看所有的IB hosts。</p>
+</li>
+<li><p><code>ibnetdiscover</code> - discover InfiniBand topology.</p>
+</li>
+<li><p><code>ibv_devices</code> - list RDMA devices.</p>
+</li>
+<li><p><code>ibv_devinof</code> - Print information about RDMA devices available for use from userspace.</p>
+</li>
+<li><p><code>ibv_rc_pingpong</code> - Run a simple ping-pong test over InfiniBand via the reliable connected (RC) transport.</p>
+</li>
+<li><p><code>targetcli</code> - administration shell for storage targets</p>
+<p>  <code>targetcli</code> is  a  shell for viewing, editing, and saving the configuration of the kernel’s target subsystem,<br>  also known as LIO. It enables the administrator to assign local storage resources backed by either files,<br>  volumes, local SCSI devices, or ramdisk, and export them to remote systems via network fabrics, such as iSCSI or FCoE.</p>
+</li>
+<li><p><code>srp_daemon</code> - Discovers and connects to InfiniBand SCSI RDMA Protocol (SRP) targets in an IB fabric.</p>
+</li>
+<li><p><code>ibsrpdm</code> - List InfiniBand SCSI RDMA Protocol (SRP) targets on an IB fabric.</p>
+</li>
+</ul>
+<h2 id="liraries"><a href="#liraries" class="headerlink" title="liraries"></a>liraries</h2><p>devid: device ID library. Refer to <a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E86824_01/html/E54772/libdevid-3lib.html">here</a>.</p>
+<p>ibverbs: 使得用户空间进程能够使用RDMA verbs（即进行RDMA操作）。Refer to <a target="_blank" rel="noopener" href="https://www.ibm.com/docs/en/aix/7.2?topic=ofed-libibverbs-library">here</a>.</p>
+<p>dl: Dynamic Loader.</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/11/30/cpp/%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +406,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -298,7 +480,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -383,7 +565,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -519,7 +701,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -596,7 +778,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -717,7 +899,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -948,7 +1130,7 @@ B</b></td>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1036,7 +1218,7 @@ B</b></td>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1114,7 +1296,7 @@ B</b></td>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1173,105 +1355,10 @@ B</b></td>
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/10/28/english/Muder-on-The-Orient-Express/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2023/10/28/english/Muder-on-The-Orient-Express/" class="post-title-link" itemprop="url">Muder on The Orient Express</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2023-10-28 19:00:54" itemprop="dateCreated datePublished" datetime="2023-10-28T19:00:54+00:00">2023-10-28</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/English/" itemprop="url" rel="index"><span itemprop="name">English</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="人物"><a href="#人物" class="headerlink" title="人物"></a>人物</h2><p>Daisy Armstrong<br>Miss Mary Debenham<br>Colonel Arbuthnott<br>Hercule Poirot<br>Lieutenant Dubosc</p>
-<h2 id="台词"><a href="#台词" class="headerlink" title="台词"></a>台词</h2><p>1930<br>The Armstrong Home, Long Island, N.Y.</p>
-<p>Armstrong Baby Kidnapped.<br>Crushed toys, crushed hopes.</p>
-<p>Baby taken in dead of night.<br>Armstrong Household Turmoil.<br>Baby Daisy Taken from Armstrong Home.<br>Staff Wakened But Hopeless.</p>
-<p>DAISY ARMSTRONG - Child of Colonel and Mrs. Hamish Armstrong was dramatically kidnapped last night while her parents were being driven to the airport by their chauffeur.</p>
-<p>The discover of the missing child was made by the chauffeur on returning from the airport where he found the family nurse bound and gagged in the room next to Baby Daisy’s bedroom.</p>
-<p>The police were informed immediately and investigations began at once. They described kidnapping as one of the most vicious crimous that can be commited.</p>
-<p>Daisy found slain.</p>
-<p>5 years later<br>The Asian side of Istanbul.</p>
-<p>Miss Mary Debenham</p>
-<p>Salacak</p>
-<p>Welcome aboard.</p>
-<p>Bosporus Ferry will shortly depart from Istanbul Sirkeci Station, connecting with the Orient Express.</p>
-<p>Here’s your ticket, Monsieur Poirot. I’m afraid you’ve still got another hour.</p>
-<p>Well, then, please do not wait.</p>
-<p>Not wait? After all you’ve done for us, Monsieur Poriot? My general’s orders were to ensure your safe departure. He also wished me to thank you again for saving the honor of the British garrison in Jordan. The brigadier’s confession was opportune. I say, how did you do it? Was it the old thumbscrew, you know, the rack?</p>
-<p>Chop-chop</p>
-<p>I hope we did the right thing booking you into a hotel on the European side rather than the Asia side.<br>我希望我们给你预订的是欧洲酒店而不是亚洲酒店是正确的。</p>
-<p>I have no prejudice with either continent.</p>
-<p>The crossing should be pleasant. The Borporus is always calm.<br>穿行应该会很愉快。博斯普鲁斯海峡总是很平静。</p>
-<p>You have crossed by the ferry?<br>你乘渡船穿渡过？</p>
-<h2 id="词汇"><a href="#词汇" class="headerlink" title="词汇"></a>词汇</h2><p>Daisy: 雏菊；人名（黛西）。<br>kidnapped: 绑架<br>crushed: 破灭的，压碎的<br>dead of night: 深夜时分，the quietest, darkest part of the night.<br>household: 家庭；户；家；家族；家人<br>turmoil: n. 动荡；动乱<br>staff: 工作人员。<br>wakened: waken v. 醒来。wakened 是waken的过去式和过去分词。<br>chauffeur: 美&#x2F;ʃoʊˈfɝː&#x2F; 英&#x2F;ˈʃəʊ.fər&#x2F; 司机。<br>bound: 这里是bind的过去式和过去分词，绑定、捆绑。<br>gag: n.&#x2F;v. 堵嘴；插科打诨。<br>vicious: 恶毒的。<br>slay: To kill in a violent way. 残忍杀害。<br>Istanbul: 伊斯坦布尔，为土耳其首都直至1923年。<br>Salacak: garrison: A group of soliders living in or defending a town or building, or the building that the soliders live in. 守军；守备营地。<br>Jordan: 约旦（西亚国家）。<br>brigadier: 英&#x2F;ˌbrɪɡəˈdɪə(r)&#x2F; 美&#x2F;ˌbrɪɡəˈdɪr&#x2F; 准将。<br>confession: n. 坦白；忏悔；认罪。<br>opportune: 英&#x2F;ˈɒpətjuːn&#x2F; 美&#x2F;ˌɑːpərˈtuːn&#x2F; 适当的；及时的。<br>thumbscrew: 螺丝；拧紧 。<br>rack: chop-chop: chop v.&#x2F;n. 砍；向下猛击。chop-chop 赶快，快点。<br>Bosporus Strait: 博斯普鲁斯海峡，又称伊斯坦布尔海峡，介于欧洲与亚洲之间的海峡。它长约30公里，最宽处宽约3,700米，最窄处宽约700米。北连黑海，南通马尔马拉海（土耳其内海），土耳其第一大城伊斯坦堡即隔着博斯普鲁斯海峡与小亚细亚半岛相望，是黑海沿岸国家出海第一关口，也是连接黑海以及地中海的唯一航道。因此，俄罗斯的黑海舰队必须通过博斯普鲁斯海峡才能前往地中海。<br>ferry: n.&#x2F;v. 渡船；摆渡</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/blog/page/9/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/9/">9</a><span class="page-number current">10</span>
+    <a class="extend prev" rel="prev" href="/blog/page/9/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/9/">9</a><span class="page-number current">10</span><a class="page-number" href="/blog/page/11/">11</a><a class="extend next" rel="next" href="/blog/page/11/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -1339,7 +1426,7 @@ B</b></td>
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">100</span>
+          <span class="site-state-item-count">101</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1352,7 +1439,7 @@ B</b></td>
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">45</span>
+        <span class="site-state-item-count">46</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

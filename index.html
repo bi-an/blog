@@ -193,6 +193,79 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/15/concurrency/%E4%B8%BAlock-free%E7%A9%BA%E9%97%B2%E9%93%BE%E8%A1%A8%E8%A7%A3%E5%86%B3ABA%E9%97%AE%E9%A2%98/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/09/15/concurrency/%E4%B8%BAlock-free%E7%A9%BA%E9%97%B2%E9%93%BE%E8%A1%A8%E8%A7%A3%E5%86%B3ABA%E9%97%AE%E9%A2%98/" class="post-title-link" itemprop="url">为 lock-free 空闲链表解决 ABA 问题</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2025-09-15 20:23:48 / Modified: 15:59:50" itemprop="dateCreated datePublished" datetime="2025-09-15T20:23:48+00:00">2025-09-15</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">并发编程</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>源码：<a target="_blank" rel="noopener" href="https://github.com/cameron314/concurrentqueue">https://github.com/cameron314/concurrentqueue</a></p>
+<p>原文<br>：<a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2014/solving-the-aba-problem-for-lock-free-free-lists">Solving the ABA Problem for Lock-Free Free Lists</a></p>
+<h2 id="常见的解决方案"><a href="#常见的解决方案" class="headerlink" title="常见的解决方案"></a>常见的解决方案</h2><h3 id="Tagged-versioned-指针"><a href="#Tagged-versioned-指针" class="headerlink" title="Tagged &#x2F; versioned 指针"></a>Tagged &#x2F; versioned 指针</h3><p>每次修改 head 的同时也变更一个版本号（tag&#x2F;version），把 (pointer, version) 当作 CAS 的对象。即使指针<br>回到同一个 A，只要版本号不同，CAS 就会失败，防止 ABA。</p>
+<p>缺点包括：在某些机器上需要双字宽度（两个 word）CAS，如果硬件／编译器／平台不支持就只能模拟／锁住；或<br>者要压缩 pointer 或 tag 大小，可能限制可管理的节点数量／地址空间。</p>
+<h3 id="LL-SC（Load-Linked-Store-Conditional）原语"><a href="#LL-SC（Load-Linked-Store-Conditional）原语" class="headerlink" title="LL&#x2F;SC（Load-Linked &#x2F; Store-Conditional）原语"></a>LL&#x2F;SC（Load-Linked &#x2F; Store-Conditional）原语</h3><p>在支持 LL&#x2F;SC 的架构上，它自然就可以阻止 ABA：因为 store-conditional 会检测在 load 和 store 之间地址<br>是否被“写过”，哪怕写了后来改回原来的值也不行。缺点是很多主流架构（尤其 x86）不支持或者支持有限。</p>
+<h2 id="作者的方法：以引用计数＋“should-be-on-freelist”标志（标志-引用计数）"><a href="#作者的方法：以引用计数＋“should-be-on-freelist”标志（标志-引用计数）" class="headerlink" title="作者的方法：以引用计数＋“should be on freelist”标志（标志 + 引用计数）"></a>作者的方法：以引用计数＋“should be on freelist”标志（标志 + 引用计数）</h2><p>作者提出了一个适用于 free list 的通用方法，结合以下几个机制来避免 ABA，且保持 lock‐free 特性。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/15/concurrency/ABA/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -218,7 +291,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2025-09-15 19:48:58 / Modified: 11:59:20" itemprop="dateCreated datePublished" datetime="2025-09-15T19:48:58+00:00">2025-09-15</time>
+              <time title="Created: 2025-09-15 19:48:58 / Modified: 15:59:50" itemprop="dateCreated datePublished" datetime="2025-09-15T19:48:58+00:00">2025-09-15</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -241,7 +314,32 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><h3 id="Hazard-Pointer（危险指针）"><a href="#Hazard-Pointer（危险指针）" class="headerlink" title="Hazard Pointer（危险指针）"></a>Hazard Pointer（危险指针）</h3><p>思路：每个线程在访问共享指针之前，把自己正在访问的指针写到一个全局可见的“hazard pointer”里。</p>
+          <h2 id="ABA-问题"><a href="#ABA-问题" class="headerlink" title="ABA 问题"></a>ABA 问题</h2><p>在典型的无锁栈&#x2F;队列里，指针会被反复复用（比如 pop 出再 push 回去）。如果只用 compare_exchange 比较指<br>针，那么：</p>
+<ul>
+<li>T1 读到 A</li>
+<li>T2 把 A → B → A 改一圈</li>
+<li>T1 CAS 时看到还是 A，以为结构没变，但其实已经发生变化</li>
+</ul>
+<p>这就是 ABA 问题。</p>
+<h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><h3 id="版本标记指针方案"><a href="#版本标记指针方案" class="headerlink" title="版本标记指针方案"></a>版本标记指针方案</h3><p>‌ 核心思想 ‌：为每个指针附加一个版本号标记，每次修改时递增版本号。</p>
+<p>‌ 实现要点 ‌：</p>
+<ul>
+<li>需要双字 CAS(DCAS)硬件支持</li>
+<li>每次修改头指针时递增标记值</li>
+<li>即使指针地址相同，标记值不同也会使 CAS 失败</li>
+<li>适用于支持 DCAS 的平台(如某些 ARM 架构)</li>
+<li>在非 DCAS 平台也可用，前提是将 data + version 放入一个机器字中，以维持操作的原子性</li>
+</ul>
+<p>‌ 限制 ‌：</p>
+<ul>
+<li>在某些机器上需要双字宽度（两个 word）CAS；</li>
+<li>如果硬件／编译器／平台不支持就只能模拟／锁住；或者要压缩 pointer 或 tag 大小，可能限制可管理的节点数量／地址空间。</li>
+</ul>
+<h3 id="引用计数方案"><a href="#引用计数方案" class="headerlink" title="引用计数方案"></a>引用计数方案</h3><p>‌ 核心思想 ‌：为每个节点维护引用计数，防止节点在被使用时被重新添加到列表。</p>
+<p>‌ 关键实现细节 ‌：</p>
+<p>每个节点包含 freeListRefs(引用计数)和 freeListNext(下一节点指针) 引用计数高位用作 “应返回自由列表”<br>标志位 try_get()操作前确保引用计数不为零 add()操作使用原子操作管理引用计数和标志位 ‌ 优势 ‌：</p>
+<p>完全通用的解决方案，不依赖特定硬件特性保持真正的锁无关性质正确处理并发场景下的各种竞争条件</p>
+<h3 id="Hazard-Pointer（危险指针）"><a href="#Hazard-Pointer（危险指针）" class="headerlink" title="Hazard Pointer（危险指针）"></a>Hazard Pointer（危险指针）</h3><p>思路：每个线程在访问共享指针之前，把自己正在访问的指针写到一个全局可见的“hazard pointer”里。</p>
 <p>作用：其他线程在想要回收这个节点内存时，必须检查所有线程的 hazard pointers，如果发现有人还在用这个节<br>点，就不能释放。</p>
 <p>优点：简单直接，内存可以安全回收。</p>
 <p>缺点：维护 hazard pointers 有一定开销，每次回收都要检查所有线程。</p>
@@ -251,7 +349,7 @@
 <p>缺点：需要所有线程都周期性地报告自己活跃的 epoch，否则内存可能迟迟回收不了。</p>
 <p>🚩 为什么会和 ABA 有关？</p>
 <p>像 Michael-Scott 队列这种链表结构，节点被 pop 出队后地址可能被重用。如果没有安全的内存回收，另一个线<br>程可能 CAS 成功指向了一个“已经被释放并重用的地址”，这就是 ABA 的根源。所以 hazard pointer 或 epoch<br>GC 是在链表队列里用来避免这种 悬空引用 + ABA 的。</p>
-<p>而 moodycamel::ConcurrentQueue 因为用的是 环形 buffer + sequence number，节点不会反复 malloc&#x2F;free，<br>所以根本就不需要 hazard pointer 或 epoch GC。</p>
+<p>而 moodycamel:: ConcurrentQueue 因为用的是 环形 buffer + sequence number，节点不会反复 malloc&#x2F;free，<br>所以根本就不需要 hazard pointer 或 epoch GC。</p>
 
       
     </div>
@@ -302,7 +400,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -418,7 +516,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
 
           
@@ -799,7 +897,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -874,7 +972,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1036,7 +1134,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1336,7 +1434,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2007,7 +2105,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2174,7 +2272,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2302,85 +2400,10 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/19/concurrency/TBB%E5%85%B8%E5%9E%8B%E5%9C%BA%E6%99%AF/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/19/concurrency/TBB%E5%85%B8%E5%9E%8B%E5%9C%BA%E6%99%AF/" class="post-title-link" itemprop="url">TBB典型场景</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-19 22:48:38" itemprop="dateCreated datePublished" datetime="2025-08-19T22:48:38+00:00">2025-08-19</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="IO-CPU-密集-IO"><a href="#IO-CPU-密集-IO" class="headerlink" title="IO + CPU 密集 + IO"></a>IO + CPU 密集 + IO</h2><p>tasks</p>
-<figure class="highlight cpp"><figcaption><span>tasks.hpp</span><a href="/blog/downloads/code/tbb/pipeline/tasks.hpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 模拟 IO 和 CPU 任务</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">DataChunk</span> {</span><br><span class="line">    std::vector&lt;<span class="type">char</span>&gt; data;</span><br><span class="line">    <span class="built_in">DataChunk</span>() = <span class="keyword">default</span>;</span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="title">DataChunk</span><span class="params">(<span class="type">size_t</span> size)</span> : data(size) {</span>}</span><br><span class="line">};</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">CompressedChunk</span> {</span><br><span class="line">    std::vector&lt;<span class="type">char</span>&gt; data;</span><br><span class="line">    <span class="built_in">CompressedChunk</span>() = <span class="keyword">default</span>;</span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="title">CompressedChunk</span><span class="params">(<span class="type">size_t</span> size)</span> : data(size) {</span>}</span><br><span class="line">};</span><br><span class="line"></span><br><span class="line"><span class="comment">// 模拟数据读取函数</span></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">read_from_network</span><span class="params">(DataChunk&amp; chunk)</span> </span>{</span><br><span class="line">    <span class="built_in">sleep</span>(<span class="number">3</span>);  <span class="comment">// 模拟 IO 延迟</span></span><br><span class="line"></span><br><span class="line">    chunk.data.<span class="built_in">resize</span>(<span class="number">100</span>);  <span class="comment">// 模拟每个数据块有 100 个字节</span></span><br><span class="line"></span><br><span class="line">    <span class="type">static</span> <span class="type">int</span> count = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> (count++ &gt;= <span class="number">10</span>) <span class="keyword">return</span> <span class="literal">false</span>;  <span class="comment">// 模拟读取 10 个数据块后结束</span></span><br><span class="line"></span><br><span class="line">    std::<span class="built_in">generate</span>(chunk.data.<span class="built_in">begin</span>(), chunk.data.<span class="built_in">end</span>(),</span><br><span class="line">                  []() { <span class="keyword">return</span> <span class="built_in">rand</span>() % <span class="number">256</span>; });</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// 模拟压缩函数</span></span><br><span class="line"><span class="function"><span class="type">char</span> <span class="title">compress_byte</span><span class="params">(<span class="type">char</span> byte)</span> </span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10&#x27;000ll</span>; ++i)</span><br><span class="line">        ;               <span class="comment">// 模拟 CPU busy</span></span><br><span class="line">    <span class="keyword">return</span> byte % <span class="number">128</span>;  <span class="comment">// 简单压缩算法示例</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// 模拟写入函数</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">write_to_file</span><span class="params">(<span class="type">const</span> CompressedChunk&amp; chunk)</span> </span>{</span><br><span class="line">    <span class="built_in">sleep</span>(<span class="number">3</span>);  <span class="comment">// 模拟 IO 延迟</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Writing chunk of size &quot;</span> &lt;&lt; chunk.data.<span class="built_in">size</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-<p>方案一</p>
-<figure class="highlight cpp"><figcaption><span>1_message_queue.cpp</span><a href="/blog/downloads/code/tbb/pipeline/1_message_queue.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 方案 1：异步队列 + TBB 流水线</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tbb/tbb.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;condition_variable&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;mutex&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;queue&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;tasks.hpp&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 全局队列</span></span><br><span class="line">std::queue&lt;std::vector&lt;<span class="type">char</span>&gt;&gt; readQueue;</span><br><span class="line">std::mutex mtx;</span><br><span class="line">std::condition_variable cv;</span><br><span class="line">std::atomic_bool stop = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 读线程</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">networkReader</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">while</span> (!stop) {</span><br><span class="line">        DataChunk chunk;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (!<span class="built_in">read_from_network</span>(chunk))  <span class="comment">// 阻塞 I/O</span></span><br><span class="line">        {</span><br><span class="line">            stop.<span class="built_in">store</span>(<span class="literal">true</span>, memory_order::releaxed);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        {</span><br><span class="line">            <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(mtx)</span></span>;</span><br><span class="line">            readQueue.<span class="built_in">push</span>(std::<span class="built_in">move</span>(chunk.data));</span><br><span class="line">        }</span><br><span class="line">        cv.<span class="built_in">notify_one</span>();</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// 压缩任务</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">compressor</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">while</span> (!stop) {</span><br><span class="line">        DataChunk chunk;</span><br><span class="line">        {</span><br><span class="line">            <span class="function">std::unique_lock&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(mtx)</span></span>;</span><br><span class="line">            cv.<span class="built_in">wait</span>(lock, [] { <span class="keyword">return</span> !readQueue.<span class="built_in">empty</span>(); });</span><br><span class="line">            chunk.data = std::<span class="built_in">move</span>(readQueue.<span class="built_in">front</span>());</span><br><span class="line">            readQueue.<span class="built_in">pop</span>();</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        <span class="comment">// CPU 密集计算，使用 TBB 并行</span></span><br><span class="line">        <span class="function">CompressedChunk <span class="title">compressed</span><span class="params">(chunk.data.size())</span></span>;</span><br><span class="line">        tbb::<span class="built_in">parallel_for</span>(<span class="built_in">size_t</span>(<span class="number">0</span>), chunk.data.<span class="built_in">size</span>(), [&amp;](<span class="type">size_t</span> i) {</span><br><span class="line">            compressed.data[i] = <span class="built_in">compress_byte</span>(chunk.data[i]);  <span class="comment">// 假设单字节压缩</span></span><br><span class="line">        });</span><br><span class="line"></span><br><span class="line">        <span class="built_in">write_to_file</span>(compressed);  <span class="comment">// 可以异步</span></span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="function">std::thread <span class="title">reader</span><span class="params">(networkReader)</span></span>;</span><br><span class="line">    <span class="function">std::thread <span class="title">worker</span><span class="params">(compressor)</span></span>;</span><br><span class="line"></span><br><span class="line">    reader.<span class="built_in">join</span>();</span><br><span class="line">    worker.<span class="built_in">join</span>();</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-<p>方案二</p>
-<figure class="highlight cpp"><figcaption><span>2_flow_graph.cpp</span><a href="/blog/downloads/code/tbb/pipeline/2_flow_graph.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 方案 2：TBB Flow Graph</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tbb/flow_graph.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tbb/tbb.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;tasks.hpp&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> tbb;</span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> tbb::flow;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    graph g;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 1. 读取节点（串行）</span></span><br><span class="line">    <span class="function">input_node&lt;DataChunk&gt; <span class="title">reader</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        g,</span></span></span><br><span class="line"><span class="params"><span class="function">        [](flow_control&amp; fc) -&gt; DataChunk {</span></span></span><br><span class="line"><span class="params"><span class="function">            DataChunk chunk(<span class="number">1024</span>);  <span class="comment">// 1KB数据块</span></span></span></span><br><span class="line"><span class="params"><span class="function">            <span class="keyword">if</span> (!read_from_network(chunk)) {</span></span></span><br><span class="line"><span class="params"><span class="function">                fc.stop();</span></span></span><br><span class="line"><span class="params"><span class="function">                <span class="keyword">return</span> DataChunk();</span></span></span><br><span class="line"><span class="params"><span class="function">            }</span></span></span><br><span class="line"><span class="params"><span class="function">            <span class="keyword">return</span> chunk;</span></span></span><br><span class="line"><span class="params"><span class="function">        })</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 并行处理节点（无限制并发）</span></span><br><span class="line">    <span class="function">function_node&lt;DataChunk, CompressedChunk&gt; <span class="title">processor</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        g, unlimited,</span></span></span><br><span class="line"><span class="params"><span class="function">        [](<span class="type">const</span> DataChunk&amp; input) -&gt; CompressedChunk {</span></span></span><br><span class="line"><span class="params"><span class="function">            CompressedChunk output(input.data.size());</span></span></span><br><span class="line"><span class="params"><span class="function"></span></span></span><br><span class="line"><span class="params"><span class="function">            tbb::parallel_for(</span></span></span><br><span class="line"><span class="params"><span class="function">                tbb::blocked_range&lt;<span class="type">size_t</span>&gt;(<span class="number">0</span>, input.data.size()),</span></span></span><br><span class="line"><span class="params"><span class="function">                [&amp;](<span class="type">const</span> tbb::blocked_range&lt;<span class="type">size_t</span>&gt;&amp; r) {</span></span></span><br><span class="line"><span class="params"><span class="function">                    <span class="keyword">for</span> (<span class="type">size_t</span> i = r.begin(); i != r.end(); ++i) {</span></span></span><br><span class="line"><span class="params"><span class="function">                        output.data[i] = compress_byte(input.data[i]);</span></span></span><br><span class="line"><span class="params"><span class="function">                    }</span></span></span><br><span class="line"><span class="params"><span class="function">                });</span></span></span><br><span class="line"><span class="params"><span class="function"></span></span></span><br><span class="line"><span class="params"><span class="function">            <span class="keyword">return</span> output;</span></span></span><br><span class="line"><span class="params"><span class="function">        })</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. 写入节点（串行保证写入顺序）</span></span><br><span class="line">    <span class="function">function_node&lt;CompressedChunk&gt; <span class="title">writer</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        g, serial,</span></span></span><br><span class="line"><span class="params"><span class="function">        [](<span class="type">const</span> CompressedChunk&amp; output) {</span></span></span><br><span class="line"><span class="params"><span class="function">            write_to_file(output);</span></span></span><br><span class="line"><span class="params"><span class="function">        })</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 构建数据流管道</span></span><br><span class="line">    <span class="built_in">make_edge</span>(reader, processor);</span><br><span class="line">    <span class="built_in">make_edge</span>(processor, writer);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 启动管道</span></span><br><span class="line">    reader.<span class="built_in">activate</span>();</span><br><span class="line">    g.<span class="built_in">wait_for_all</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-<p>方案三</p>
-<figure class="highlight cpp"><figcaption><span>3_pipeline.cpp</span><a href="/blog/downloads/code/tbb/pipeline/3_pipeline.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 方案 3: TBB 流水线</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tbb/tbb.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;tasks.hpp&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    tbb::<span class="built_in">parallel_pipeline</span>(</span><br><span class="line">        <span class="comment">/* max_number_of_live_token */</span> <span class="number">4</span>,</span><br><span class="line">        <span class="comment">// Stage 1: 读网络数据</span></span><br><span class="line">        tbb::<span class="built_in">make_filter</span>&lt;<span class="type">void</span>, DataChunk&gt;(</span><br><span class="line">            tbb::filter_mode::serial_in_order,</span><br><span class="line">            [](tbb::flow_control&amp; fc) -&gt; DataChunk {</span><br><span class="line">                DataChunk chunk;</span><br><span class="line">                <span class="keyword">if</span> (!<span class="built_in">read_from_network</span>(chunk)) {  <span class="comment">// 返回 false 时结束</span></span><br><span class="line">                    fc.<span class="built_in">stop</span>();</span><br><span class="line">                }</span><br><span class="line">                <span class="keyword">return</span> chunk;</span><br><span class="line">            }) &amp;</span><br><span class="line">            <span class="comment">// Stage 2: CPU 压缩</span></span><br><span class="line">            tbb::<span class="built_in">make_filter</span>&lt;DataChunk, CompressedChunk&gt;(</span><br><span class="line">                tbb::filter_mode::parallel,</span><br><span class="line">                [](DataChunk chunk) -&gt; CompressedChunk {</span><br><span class="line">                    CompressedChunk <span class="built_in">out</span>(chunk.data.<span class="built_in">size</span>());</span><br><span class="line">                    tbb::<span class="built_in">parallel_for</span>(<span class="built_in">size_t</span>(<span class="number">0</span>), chunk.data.<span class="built_in">size</span>(), [&amp;](<span class="type">size_t</span> i) {</span><br><span class="line">                        out.data[i] = <span class="built_in">compress_byte</span>(chunk.data[i]);</span><br><span class="line">                    });</span><br><span class="line">                    <span class="keyword">return</span> out;</span><br><span class="line">                }) &amp;</span><br><span class="line">            <span class="comment">// Stage 3: 写文件</span></span><br><span class="line">            tbb::<span class="built_in">make_filter</span>&lt;CompressedChunk, <span class="type">void</span>&gt;(</span><br><span class="line">                tbb::filter_mode::serial_in_order,</span><br><span class="line">                [](CompressedChunk out) {</span><br><span class="line">                    <span class="built_in">write_to_file</span>(out);  <span class="comment">// 可以异步</span></span><br><span class="line">                }));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/blog/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/10/">10</a><a class="extend next" rel="next" href="/blog/page/2/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/blog/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/11/">11</a><a class="extend next" rel="next" href="/blog/page/2/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -2448,7 +2471,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">100</span>
+          <span class="site-state-item-count">101</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -2461,7 +2484,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">45</span>
+        <span class="site-state-item-count">46</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

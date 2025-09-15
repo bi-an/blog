@@ -193,6 +193,153 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/core-dump/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/cpp/core-dump/" class="post-title-link" itemprop="url">core dump</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 21:42:51" itemprop="dateCreated datePublished" datetime="2024-01-23T21:42:51+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="ulimit"><a href="#ulimit" class="headerlink" title="ulimit"></a><code>ulimit</code></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#查看配置</span></span><br><span class="line"><span class="built_in">ulimit</span> -a</span><br><span class="line"><span class="comment">#设置core file size</span></span><br><span class="line"><span class="built_in">ulimit</span> -c unlimited</span><br></pre></td></tr></table></figure>
+
+<p><code>ulimit</code>只对当前终端有效。</p>
+<p>以下两种方法对所有用户和终端有效：</p>
+<ol>
+<li>在<code>/etc/security/limits.conf</code>中设置（redhat衍生系linux）。</li>
+<li>或注释掉<code>/etc/profile</code>中的这一行： <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># No core files by default</span></span><br><span class="line"><span class="built_in">ulimit</span> -S -c 0 &gt; /dev/null 2&gt;&amp;1</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="core-pattern"><a href="#core-pattern" class="headerlink" title="core_pattern"></a>core_pattern</h2><h3 id="core-pattern解释"><a href="#core-pattern解释" class="headerlink" title="core_pattern解释"></a>core_pattern解释</h3><p>见<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2065912/core-dumped-but-core-file-is-not-in-the-current-directory">链接</a>。</p>
+<p>Read <a target="_blank" rel="noopener" href="http://www.kernel.org/doc/Documentation/sysctl/kernel.txt">&#x2F;usr&#x2F;src&#x2F;linux&#x2F;Documentation&#x2F;sysctl&#x2F;kernel.txt</a>.</p>
+<pre><code>core_pattern is used to specify a core dumpfile pattern name.
+</code></pre>
+<p>在系统启动时，<a target="_blank" rel="noopener" href="https://wiki.ubuntu.com/Apport">Apport</a>（crash reporting service）会生成配置文件<code>/proc/sys/kernel/core_pattern</code>。参考<a target="_blank" rel="noopener" href="https://askubuntu.com/questions/420410/how-to-permanently-edit-the-core-pattern-file">这里</a>。</p>
+<p>Apport uses <code>/proc/sys/kernel/core_pattern</code> to directly pipe the core dump into <code>apport</code>:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cat</span> /proc/sys/kernel/core_pattern</span><br><span class="line">|/usr/share/apport/apport %p %s %c</span><br><span class="line">$ </span><br></pre></td></tr></table></figure>
+
+<p>Note that even if <code>ulimit</code> is set to disabled core files (by specyfing a core file size of zero using <code>ulimit -c 0</code>), <code>apport</code> will still capture the crash.</p>
+<p>For intercepting Python crashes it installs a <code>/etc/python*/sitecustomize.py</code> to call apport on unhandled exceptions.</p>
+<p>其中，<code>/usr/share/apport/apport</code>是一个python脚本。</p>
+<p>以下是core_pattern文件的参数说明（参考Linux Manual Page：<code>man core</code>）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">%c - Core file size soft resource limit of crashing process (since Linux 2.6.24).</span><br><span class="line">%p - insert pid into filename 添加pid</span><br><span class="line">%u - insert current uid into filename 添加当前uid</span><br><span class="line">%g - insert current gid into filename 添加当前gid</span><br><span class="line">%s - insert signal that caused the coredump into the filename 添加导致产生core的信号</span><br><span class="line">%t - insert UNIX time that the coredump occurred into filename 添加core文件生成时的unix时间</span><br><span class="line">%h - insert hostname where the coredump happened into filename 添加主机名</span><br><span class="line">%e - insert coredumping executable name into filename 添加命令名</span><br><span class="line"></span><br><span class="line">If the first character of the pattern is a &#x27;|&#x27;, the kernel will treat the rest of the pattern as a command to run. The core dump will be written to the standard input of that program instead of to a file.</span><br></pre></td></tr></table></figure>
+
+<p>Apport的拦截组件默认是关闭的：</p>
+<p>Apport itself is running at all times because it collects crash data for whoopsie (see <a target="_blank" rel="noopener" href="https://wiki.ubuntu.com/ErrorTracker">ErrorTracker</a>). However, the crash interception component is still disabled. To enable it permanently, do:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo nano /etc/apport/crashdb.conf</span><br></pre></td></tr></table></figure>
+
+<p>… and add a hash symbol # in the beginning of the following line:</p>
+<pre><code>&#39;problem_types&#39;: [&#39;Bug&#39;, &#39;Package&#39;],
+</code></pre>
+<p>To disable crash reporting just remove the hash symbol.</p>
+<h3 id="设置core-pattern"><a href="#设置core-pattern" class="headerlink" title="设置core_pattern"></a>设置core_pattern</h3><p>见<a target="_blank" rel="noopener" href="https://www.cnblogs.com/xiaodoujiaohome/p/6222895.html">链接</a>。</p>
+<ol>
+<li><p>&#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;core_uses_pid可以控制产生的core文件的文件名中是否添加pid作为扩展，如果添加则文件内容为1，否则为0；</p>
+</li>
+<li><p>&#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;core_pattern可以设置格式化的core文件保存位置或文件名：</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cat</span> /proc/sys/kernel/core_pattern</span><br><span class="line">|/usr/share/apport/apport %p %s %c</span><br><span class="line">$ <span class="built_in">echo</span> <span class="string">&quot;/corefile/core-%e-%p-%t&quot;</span> &gt; /proc/sys/kernel/core_pattern</span><br></pre></td></tr></table></figure>
+
+
+<p> 你可以用下列方式来完成：</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#查看所有sysctl所有变量的值。</span></span><br><span class="line">sysctl -a</span><br><span class="line"><span class="comment">#设置变量kernel.core_pattern为如下值。</span></span><br><span class="line">sudo sysctl -w kernel.core_pattern=/tmp/core-%e.%p.%h.%t</span><br></pre></td></tr></table></figure>
+
+<p> 这些操作一旦计算机重启，则会丢失，如果你想持久化这些操作，可以在 &#x2F;etc&#x2F;sysctl.conf文件中增加：</p>
+ <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kernel.core_pattern=/tmp/core%p</span><br></pre></td></tr></table></figure>
+
+<p> 加好后，如果你想不重启看看效果的话，则用下面的命令：</p>
+ <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sysctl -p /etc/sysctl.conf</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="相关命令行工具"><a href="#相关命令行工具" class="headerlink" title="相关命令行工具"></a>相关命令行工具</h2><p>参考资料：</p>
+<p>Linux Manual Page: <a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man5/core.5.html"><code>man core</code></a></p>
+<pre><code>SEE ALSO
+    bash(1),  coredumpctl(1),  gdb(1),  getrlimit(2), mmap(2), prctl(2), sigaction(2), elf(5), proc(5), pthreads(7), signal(7), systemd-coredump(8)
+</code></pre>
+<h2 id="Segment-Fault排查"><a href="#Segment-Fault排查" class="headerlink" title="Segment Fault排查"></a>Segment Fault排查</h2><p>参考<a target="_blank" rel="noopener" href="https://www.wtango.com/%E6%AE%B5%E9%94%99%E8%AF%AFsegmentation-fault%E4%BA%A7%E7%94%9F%E7%9A%84%E5%8E%9F%E5%9B%A0%E4%BB%A5%E5%8F%8A%E8%B0%83%E8%AF%95%E6%96%B9%E6%B3%95/">链接</a>。</p>
+<ol>
+<li><p>dmesg + nm + addr2line</p>
+<p>addr2line只能找出executable的行号；如果是shared libraries，请使用gdb。参考<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2549214/interpreting-segfault-messages">这里</a>。</p>
+<p>dmesg输出的含义：</p>
+<p>ip: 表示instruction pointer.</p>
+</li>
+<li><p>fprintf</p>
+</li>
+<li><p>gdb</p>
+</li>
+<li><p>signal(SIGSEGV,handler)</p>
+</li>
+<li><p>valgrind<br>参考：<br> <a target="_blank" rel="noopener" href="https://jvns.ca/blog/2018/04/28/debugging-a-segfault-on-linux/">博客</a><br> <a target="_blank" rel="noopener" href="https://valgrind.org/docs/manual/ms-manual.html">文档</a><br> <a target="_blank" rel="noopener" href="https://courses.cs.washington.edu/courses/cse326/05wi/valgrind-doc/ms_main.html">可以使用PostScript查看图形化结果</a></p>
+</li>
+<li><p>heaptrack</p>
+<p> 见<a target="_blank" rel="noopener" href="https://github.com/KDE/heaptrack">github仓库</a></p>
+</li>
+<li><p>Jemalloc</p>
+<p> 见<a target="_blank" rel="noopener" href="https://jemalloc.net/">官网</a></p>
+</li>
+</ol>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/%E7%BC%96%E8%AF%91%E5%92%8C%E9%93%BE%E6%8E%A5/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +371,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -639,7 +786,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -717,7 +864,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -807,7 +954,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -934,7 +1081,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1139,7 +1286,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1216,7 +1363,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1290,7 +1437,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1402,7 +1549,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1442,106 +1589,10 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/07/cpp/C++%E9%A2%84%E5%A4%84%E7%90%86/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/07/cpp/C++%E9%A2%84%E5%A4%84%E7%90%86/" class="post-title-link" itemprop="url">C++ 预处理</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-07 16:40:10" itemprop="dateCreated datePublished" datetime="2024-01-07T16:40:10+00:00">2024-01-07</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 11:59:20" itemprop="dateModified" datetime="2025-09-15T11:59:20+00:00">2025-09-15</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="预定义宏"><a href="#预定义宏" class="headerlink" title="预定义宏"></a>预定义宏</h2><p><code>#if defined(__linux)</code><br><code>#ifdef LINUX2</code></p>
-<h2 id="C标准预定义宏"><a href="#C标准预定义宏" class="headerlink" title="C标准预定义宏"></a>C标准预定义宏</h2><ul>
-<li><code>__LINE__</code></li>
-<li><code>__func__</code></li>
-<li><code>__FILE__</code></li>
-<li><code>NDEBUG</code>：参考<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2290509/debug-vs-ndebug">_DEBUG和NDEBUG的区别</a>，其中，<code>_DEBUG</code>是Visual Studio定义的，<code>NDEBUG</code>是C&#x2F;C++标准。</li>
-</ul>
-<h2 id="GNU-C预定义宏"><a href="#GNU-C预定义宏" class="headerlink" title="GNU C预定义宏"></a>GNU C预定义宏</h2><p><a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html">官方文档</a></p>
-<ul>
-<li><p><code>__COUNTER__</code>: 扩展为从<code>0</code>开始的连续整数值，每次在源码中出现，则加<code>1</code>。不同源文件的<code>__COUNTER__</code>互不影响。</p>
-<p>可以用来生成唯一的命名。<br>参考<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/652815/has-anyone-ever-had-a-use-for-the-counter-pre-processor-macro">链接</a>。</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> CONCAT_IMPL(x,y) x##y</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CONCAT(x,y) CONCAT_IMPL(x,y)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> VAR(name) CONCAT(name,__COUNTER__)</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">VAR</span><span class="params">(myvar)</span></span>; <span class="comment">// 展开为 int myvar0;</span></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">VAR</span><span class="params">(myvar)</span></span>; <span class="comment">// 展开为 int myvar1;</span></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">VAR</span><span class="params">(myvar)</span></span>; <span class="comment">// 展开为 int myvar2;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p><code>program_invocation_name</code>：参考<a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man3/program_invocation_name.3.html">man page</a></p>
-</li>
-<li></li>
-</ul>
-<h2 id="pragma"><a href="#pragma" class="headerlink" title="#pragma"></a>#pragma</h2><h3 id="pragma-weak"><a href="#pragma-weak" class="headerlink" title="#pragma weak"></a>#pragma weak</h3><h4 id="Synopsis"><a href="#Synopsis" class="headerlink" title="Synopsis"></a>Synopsis</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">pragma</span> weak function-name1 [= function-name2]</span></span><br></pre></td></tr></table></figure>
-
-<p><code>#pragma weak</code> means that even if the definition of the symbol is not found, no error will be reported.</p>
-<h4 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// It is not an error for symbol to never be defined at all.</span></span><br><span class="line"><span class="comment">// Without this line, the address of &quot;foo&quot; will always evaluate to &quot;true&quot;,</span></span><br><span class="line"><span class="comment">// so the linker will report an &quot;undefined reference to &#x27;foo&#x27;&quot; error.</span></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> weak foo</span></span><br><span class="line"><span class="comment">// The declaration is needed.</span></span><br><span class="line"><span class="comment">/* extern */</span> <span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (foo)</span><br><span class="line">        <span class="built_in">foo</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>Reference: <a target="_blank" rel="noopener" href="https://alberand.com/weak-directive.html">1</a>、<a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/gcc-4.5.4/gcc/Weak-Pragmas.html">2</a>、<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E19059-01/wrkshp50/805-4955/auto6/index.html">3</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/blog/page/7/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/7/">7</a><span class="page-number current">8</span><a class="page-number" href="/blog/page/9/">9</a><a class="page-number" href="/blog/page/10/">10</a><a class="extend next" rel="next" href="/blog/page/9/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+    <a class="extend prev" rel="prev" href="/blog/page/7/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/7/">7</a><span class="page-number current">8</span><a class="page-number" href="/blog/page/9/">9</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/11/">11</a><a class="extend next" rel="next" href="/blog/page/9/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -1609,7 +1660,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">100</span>
+          <span class="site-state-item-count">101</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1622,7 +1673,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">45</span>
+        <span class="site-state-item-count">46</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
