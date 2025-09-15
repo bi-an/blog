@@ -8,6 +8,7 @@ Preview: [Home Page](https://bi-an.github.io/blog)
 
 ```bash
 git clone https://github.com/bi-an/blog.git
+npm install
 cd themes/next && git submodule init && git submodule update
 ```
 
