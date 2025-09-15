@@ -11,7 +11,8 @@ tags:
 [A Fast General Purpose Lock-Free Queue for C++](https://moodycamel.com/blog/2014/a-fast-general-purpose-lock-free-queue-for-c++)
 源码的笔记。
 
-[Detailed Design of a Lock-Free Queue](https://moodycamel.com/blog/2014/detailed-design-of-a-lock-free-queue)
+- [Detailed Design of a Lock-Free Queue](https://moodycamel.com/blog/2014/detailed-design-of-a-lock-free-queue)
+- [Solving the ABA Problem for Lock-Free Free Lists](https://moodycamel.com/blog/2014/solving-the-aba-problem-for-lock-free-free-lists)
 
 ## 系统概览
 
@@ -137,8 +138,13 @@ CAS），前提是在此期间头部块没有发生变化。为了避免 ABA 问
 
 BlockQueue（只用分块）：使用分块内存布局，但不使用 ticket 分发机制。
 
-{% include_code lang:cpp from:8 to:44 camel_mpmc/TicketQueue/TicketQueue.hpp %}
+{% include_code lang:cpp from:10 to:49 camel_mpmc/TicketQueue/TicketQueue_benchmark.cpp %}
 
 TicketQueue（分块 + ticket）：模拟 moodycamel 的 ticket 分发方式。
 
-{% include_code lang:cpp camel_mpmc/TicketQueue/TicketQueue.hpp %}
+{% include_code lang:cpp from:51 to:78 camel_mpmc/TicketQueue/TicketQueue_benchmark.cpp %}
+
+Benchmark 代码：
+
+{% include_code lang:cpp from:80 camel_mpmc/TicketQueue/TicketQueue_benchmark.cpp %}
+

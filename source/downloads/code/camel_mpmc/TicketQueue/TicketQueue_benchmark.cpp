@@ -144,7 +144,6 @@ int main() {
     double timeTicket = benchmark<TicketQueue>("TicketQueue", opsTicket);
     double speedup = opsTicket / opsBlock;
 
-    std::cout << "\n📊 Performance Comparison\n";
     std::cout << std::left << "| " << std::setw(14) << "Queue Type"
               << "| " << std::setw(12) << "Time (s)"
               << "| " << std::setw(20) << "Throughput (ops/s)"
