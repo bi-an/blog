@@ -193,6 +193,491 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/gdb%E5%85%A5%E9%97%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/cpp/gdb%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">gdb 入门</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 21:44:37" itemprop="dateCreated datePublished" datetime="2024-01-23T21:44:37+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="gdb-实现原理"><a href="#gdb-实现原理" class="headerlink" title="gdb 实现原理"></a>gdb 实现原理</h2><p>参考 <a target="_blank" rel="noopener" href="https://www.zhihu.com/people/bi-an-60-46">链接</a>。</p>
+<h2 id="在-vim-emacs-中启动-gdb"><a href="#在-vim-emacs-中启动-gdb" class="headerlink" title="在 vim &#x2F; emacs 中启动 gdb"></a>在 vim &#x2F; emacs 中启动 gdb</h2><p>为什么在 Emacs&#x2F;vim 中运行 GDB？</p>
+<ul>
+<li>统一环境：你可以在 Emacs 中同时查看源代码和调试信息</li>
+<li>快捷键支持：使用 Emacs 的快捷键控制 GDB（如设置断点、单步执行）</li>
+<li>图形化布局：支持多窗口显示，如断点列表、堆栈信息、变量值等</li>
+<li>增强效率：无需离开编辑器即可完成调试任务</li>
+</ul>
+<p>Vim 从 8.1 版本开始内置了一个叫做 Termdebug 的插件，它可以直接在 Vim 中运行 GDB，并显示调试信息。</p>
+<p>✅ 步骤：<br>确保 Vim 版本 ≥ 8.1</p>
+<p>编译你的程序（加上 -g 选项）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -g my_program.c -o my_program</span><br></pre></td></tr></table></figure>
+
+<p>在 Vim 中加载插件：</p>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">:packadd termdebug</span><br><span class="line">:Termdebug</span><br></pre></td></tr></table></figure>
+
+<p>Vim 会打开一个新的窗口，显示 GDB 控制台，你可以在里面输入 GDB 命令。</p>
+<p>📖 教程参考：<a target="_blank" rel="noopener" href="https://www.baeldung.com/linux/vim-gdb-integration">Baeldung 的 Vim-GDB 集成指南</a></p>
+<h2 id="gdb-命令"><a href="#gdb-命令" class="headerlink" title="gdb 命令"></a>gdb 命令</h2><ul>
+<li><p><code>thread apply [threadno] [all] args</code> - 将命令传递给一个或多个线程，参见 <a target="_blank" rel="noopener" href="https://developer.apple.com/library/archive/documentation/DeveloperTools/gdb/gdb/gdb_5.html">链接</a>。<br>比如，<code>thread apply all continue</code> 表示将 <code>continue</code> 命令传递给所有线程，也就是让所有线程都继续运行。</p>
+</li>
+<li><p><code>rbreak</code> - Set a breakpoint for all functions matching REGEXP. 参考 <a target="_blank" rel="noopener" href="https://blog.csdn.net/zdl1016/article/details/8708077">链接</a>。</p>
+<p>  e.g. <code>rbreak file.C:.*</code> - 给 file.C 的所有函数加上断点。</p>
+</li>
+<li><p><code>info</code></p>
+<ul>
+<li><code>info inferior</code> - 可以查看当前调试的进程的 PID。另外一种方法是在 gdb 命令行中直接调用 C 函数：<code>print (int)getpid()</code>。参考：<a target="_blank" rel="noopener" href="https://www.qiniu.com/qfans/qnso-36704270">链接</a>。</li>
+<li><code>info source</code> - 当前调试的源文件路径。</li>
+<li><code>info sources &lt;pattern&gt;</code> - 查询源文件路径</li>
+<li><code>info proc</code> - <a target="_blank" rel="noopener" href="https://sourceware.org/gdb/onlinedocs/gdb/Process-Information.html">当前进程信息</a>。<ul>
+<li><code>info proc files</code> - 当前进程打开的文件（和文件描述符）。</li>
+<li><code>info args</code> - 查看函数参数</li>
+<li><code>info locals</code> - 查看局部变量。</li>
+<li><code>info reg</code> 查看寄存器。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>常用寄存器：</p>
+<table>
+<thead>
+<tr>
+<th align="center">寄存器</th>
+<th align="center">用途说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">rax</td>
+<td align="center">函数返回值，乘除法运算</td>
+</tr>
+<tr>
+<td align="center">rbx</td>
+<td align="center">通用寄存器，常用于基址</td>
+</tr>
+<tr>
+<td align="center">rcx</td>
+<td align="center">循环计数器</td>
+</tr>
+<tr>
+<td align="center">rdx</td>
+<td align="center">I&#x2F;O 指针或中间数据</td>
+</tr>
+<tr>
+<td align="center">rdi</td>
+<td align="center">函数第一个参数</td>
+</tr>
+<tr>
+<td align="center">rsi</td>
+<td align="center">函数第二个参数</td>
+</tr>
+<tr>
+<td align="center">rsp</td>
+<td align="center">栈顶指针</td>
+</tr>
+<tr>
+<td align="center">rbp</td>
+<td align="center">栈底指针，栈帧基址</td>
+</tr>
+<tr>
+<td align="center">rip</td>
+<td align="center">当前执行指令地址</td>
+</tr>
+<tr>
+<td align="center">eflags</td>
+<td align="center">运算状态标志，如 ZF（零标志）、CF（进位标志）等</td>
+</tr>
+</tbody></table>
+<p>gdb 的寄存器变量</p>
+<p>x86（32 位）</p>
+<table>
+<thead>
+<tr>
+<th>$eax, $ebx, $ecx, $edx</th>
+<th>通用寄存器</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>$esi, $edi</td>
+<td>源 &#x2F; 目标索引寄存器</td>
+</tr>
+<tr>
+<td>$esp</td>
+<td>栈顶指针（Stack Pointer）</td>
+</tr>
+<tr>
+<td>$ebp</td>
+<td>栈底指针（Base Pointer）</td>
+</tr>
+<tr>
+<td>$eip</td>
+<td>指令指针（下一条执行的指令地址）</td>
+</tr>
+<tr>
+<td>$eflags</td>
+<td>标志寄存器（保存条件标志）</td>
+</tr>
+</tbody></table>
+<p>x86_64（64 位）</p>
+<table>
+<thead>
+<tr>
+<th align="center">寄存器</th>
+<th align="center">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">$rax, $rbx, $rcx, $rdx</td>
+<td align="center">通用寄存器（64 位）</td>
+</tr>
+<tr>
+<td align="center">$rsi, $rdi</td>
+<td align="center">参数寄存器</td>
+</tr>
+<tr>
+<td align="center">$rsp</td>
+<td align="center">栈顶指针</td>
+</tr>
+<tr>
+<td align="center">$rbp</td>
+<td align="center">栈底指针</td>
+</tr>
+<tr>
+<td align="center">$rip</td>
+<td align="center">指令指针</td>
+</tr>
+<tr>
+<td align="center">$r8~$r15</td>
+<td align="center">扩展通用寄存器</td>
+</tr>
+<tr>
+<td align="center">$eflags</td>
+<td align="center">标志寄存器</td>
+</tr>
+</tbody></table>
+<ul>
+<li><code>show</code><ul>
+<li><code>show environment</code> 查看全局变量</li>
+<li><code>set environment &lt;var&gt;=&lt;value&gt;</code> 设置环境变量</li>
+</ul>
+</li>
+<li><code>attach</code> - 连接到正在运行的进程。与 <code>gdb -p</code> 效果相同。</li>
+<li><code>detach</code> - 取消连接的进程。</li>
+<li><code>handle &lt;signal&gt; print pass nostop</code> - 捕获信号（比如 <code>SIGSEGV</code>）并且忽略它。<code>handle &lt;signal nostop</code>。<ul>
+<li><code>pass</code> 表示 gdb 会将捕获到的信号发回给被调试的进程。</li>
+</ul>
+</li>
+<li><code>set</code> - 修改变量的值，比如 <code>set x=10</code>（或 <code>set var x=10</code>）将变量 <code>x</code> 的值改为 <code>10</code>。参考 <a target="_blank" rel="noopener" href="https://blog.csdn.net/yasi_xi/article/details/12784507">博客</a>。</li>
+<li><code>show directories</code></li>
+<li><code>print</code> - gdb 默认设置打印字符串的长度为 200；更改打印最大长度：<code>set print elements &lt;number-of-elements&gt;</code>，<code>0</code> 表示 unlimited.<br>    - 打印数组: <code>print arr[0]@3</code> ，其中 <code>@3</code> 表示打印 3 个元素。<br>    - 以十六进制打印：<code>p/x &lt;var&gt;</code></li>
+<li><code>ptype &lt;variable name&gt;</code> - 打印变量类型。</li>
+<li><code>finish</code> - 从函数中返回，并打印函数返回值（即使函数的 return 语句很复杂，也可以获取返回值）。</li>
+<li><code>frame &lt;n&gt;</code> - 跳转到某个栈帧。</li>
+<li><code>up</code> 跳转到上一个栈帧</li>
+<li><code>x/FMT</code>: <code>x</code> 表示 <code>examine</code> ，查看内存。<ul>
+<li><code>/i</code> 表示 <code>instruction</code> ，即查看汇编指令。</li>
+<li><code>/g</code> 表示 <code>giant word</code> ，即每次查看 8 字节。<ul>
+<li><code>x/g 0x400000</code> 查看地址 0x400000 处的 8 字节内容（以十六进制显示）</li>
+<li><code>x/4g $rsp</code> 查看当前栈指针 <code>$rsp</code> 指向的连续 4 个 8 字节值（共 32 字节）</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="center">命令</th>
+<th align="center">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">x&#x2F;g</td>
+<td align="center">默认十六进制显示 8 字节内容</td>
+</tr>
+<tr>
+<td align="center">x&#x2F;dg</td>
+<td align="center">十进制显示 8 字节内容</td>
+</tr>
+<tr>
+<td align="center">x&#x2F;ug</td>
+<td align="center">无符号十进制显示 8 字节内容</td>
+</tr>
+<tr>
+<td align="center">x&#x2F;tg</td>
+<td align="center">二进制显示 8 字节内容</td>
+</tr>
+<tr>
+<td align="center">x&#x2F;fg</td>
+<td align="center">浮点数格式显示 8 字节内容（double）</td>
+</tr>
+</tbody></table>
+<h2 id="环境变量"><a href="#环境变量" class="headerlink" title="环境变量"></a>环境变量</h2><p>见 <a target="_blank" rel="noopener" href="https://www.irya.unam.mx/computo/sites/manuales/fce12/debugger/cl/commandref/gdb_mode/cmd_set_environm.htm">链接</a></p>
+<h2 id="断点"><a href="#断点" class="headerlink" title="断点"></a>断点</h2><p>添加断点：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">break file:line_no</span><br></pre></td></tr></table></figure>
+
+<p>查看断点：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">info break</span><br></pre></td></tr></table></figure>
+
+<p>删除第 2 个断点：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">delete 2</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="条件断点"><a href="#条件断点" class="headerlink" title="条件断点"></a>条件断点</h3><p>参考：<a target="_blank" rel="noopener" href="http://c.biancheng.net/view/8255.html">博客</a>、<a target="_blank" rel="noopener" href="https://ftp.gnu.org/old-gnu/Manuals/gdb/html_node/gdb_28.html">文档</a>。</p>
+<p><code>break ... if cond</code></p>
+<h3 id="观察断点"><a href="#观察断点" class="headerlink" title="观察断点"></a>观察断点</h3><h3 id="捕捉断点"><a href="#捕捉断点" class="headerlink" title="捕捉断点"></a>捕捉断点</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">try...catch</span><br></pre></td></tr></table></figure>
+
+<h3 id="打印长度的限制"><a href="#打印长度的限制" class="headerlink" title="打印长度的限制"></a>打印长度的限制</h3><ul>
+<li>Value sizes - 参考：<a target="_blank" rel="noopener" href="https://sourceware.org/gdb/onlinedocs/gdb/Value-Sizes.html">文档</a></li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">set</span> max-value-size bytes</span><br><span class="line"><span class="built_in">set</span> max-value-size unlimited</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>打印字符长度限制</p>
+<p>gdb 默认设置打印字符串的长度为 200；更改打印最大长度：<code>set print elements</code></p>
+</li>
+</ul>
+<h2 id="coredump"><a href="#coredump" class="headerlink" title="coredump"></a>coredump</h2><p>gdb 命令：<code>gcore</code>。</p>
+<p><a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man5/core.5.html">Reference</a></p>
+<h2 id="WSL-无法使用-gdb"><a href="#WSL-无法使用-gdb" class="headerlink" title="WSL 无法使用 gdb"></a>WSL 无法使用 gdb</h2><p>WSL 指 Windows 虚拟机。</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/microsoft/WSL/issues/8516">解决方法</a>：</p>
+<p>安装 <a target="_blank" rel="noopener" href="https://launchpad.net/~ubuntu-support-team/+archive/ubuntu/gdb">PPA 的 daily build 版本</a></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo add-apt-repository ppa:ubuntu-support-team/gdb</span><br><span class="line">sudo apt update</span><br><span class="line">sudo apt install gdb</span><br></pre></td></tr></table></figure>
+
+<h2 id="gdb-attach-权限报错"><a href="#gdb-attach-权限报错" class="headerlink" title="gdb attach 权限报错"></a>gdb attach 权限报错</h2><p>This is due to kernel hardening in Linux; you can disable this behavior by <code>echo 0 &gt; /proc/sys/kernel/yama/ptrace_scope</code> or by modifying it in <code>/etc/sysctl.d/10-ptrace.conf</code>.</p>
+<p><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/19215177/how-to-solve-ptrace-operation-not-permitted-when-trying-to-attach-gdb-to-a-pro">How to solve “ptrace operation not permitted” when trying to attach GDB to a process?</a></p>
+<h2 id="gdb-debug-forks"><a href="#gdb-debug-forks" class="headerlink" title="gdb debug forks"></a>gdb debug forks</h2><p><a target="_blank" rel="noopener" href="https://www-zeuthen.desy.de/unix/unixguide/infohtml/gdb/Forks.html">Reference</a></p>
+<p>By default, when a program forks, gdb will continue to debug the parent process and the child process will run unimpeded.</p>
+<p>If you want to follow the child process instead of the parent process, use the command set <code>follow-fork-mode</code>.</p>
+<p><code>set follow-fork-mode mode</code><br>Set the debugger response to a program call of <code>fork</code> or <code>vfork</code>. A call to fork or vfork creates a new process. The mode argument can be:<br><code>parent</code><br>The original process is debugged after a fork. The child process runs unimpeded. This is the default.<br><code>child</code><br>The new process is debugged after a fork. The parent process runs unimpeded.<br><code>ask</code><br>gdb 会提示让你选择 <code>parent</code> 还是 <code>child</code> 。</p>
+<p><code>show follow-fork-mode</code><br>Display the current debugger response to a fork or vfork call.<br>On Linux, if you want to debug both the parent and child processes, use the command set detach-on-fork.</p>
+<p><code>set detach-on-fork mode</code><br>Tells gdb whether to detach one of the processes after a fork, or retain debugger control over them both.<br><code>on</code><br>The child process (or parent process, depending on the value of follow-fork-mode) will be detached and allowed to run independently. This is the default.<br><code>off</code><br>Both processes will be held under the control of gdb. One process (child or parent, depending on the value of follow-fork-mode) is debugged as usual, while the other is held suspended.</p>
+<p><code>show detach-on-fork</code><br>Show whether detach-on-fork mode is on&#x2F;off.</p>
+<p>If you issue a run command to gdb after an exec call executes, the new target restarts. To restart the parent process, use the file command with the parent executable name as its argument. By default, after an exec call executes, gdb discards the symbols of the previous executable image. You can change this behaviour with the set follow-exec-mode command.</p>
+<p>set follow-exec-mode mode<br>Set debugger response to a program call of exec. An exec call replaces the program image of a process.<br>follow-exec-mode can be:</p>
+<p><code>new</code><br>gdb creates a new inferior and rebinds the process to this new inferior. The program the process was running before the exec call can be restarted afterwards by restarting the original inferior.<br>For example:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">(gdb) info inferiors</span><br><span class="line">(gdb) info inferior</span><br><span class="line">  Id   Description   Executable</span><br><span class="line">* 1    &lt;null&gt;        prog1</span><br><span class="line">(gdb) run</span><br><span class="line">process 12020 is executing new program: prog2</span><br><span class="line">Program exited normally.</span><br><span class="line">(gdb) info inferiors</span><br><span class="line">  Id   Description   Executable</span><br><span class="line">* 2    &lt;null&gt;        prog2</span><br><span class="line">  1    &lt;null&gt;        prog1</span><br></pre></td></tr></table></figure>
+
+<p><code>same</code><br>gdb keeps the process bound to the same inferior. The new executable image replaces the previous executable loaded in the inferior. Restarting the inferior after the exec call, with e.g., the run command, restarts the executable the process was running after the exec call. This is the default mode.<br>For example:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">(gdb) info inferiors</span><br><span class="line">  Id   Description   Executable</span><br><span class="line">* 1    &lt;null&gt;        prog1</span><br><span class="line">(gdb) run</span><br><span class="line">process 12020 is executing new program: prog2</span><br><span class="line">Program exited normally.</span><br><span class="line">(gdb) info inferiors</span><br><span class="line">  Id   Description   Executable</span><br><span class="line">* 1    &lt;null&gt;        prog2</span><br></pre></td></tr></table></figure>
+
+<h2 id="Setting-Catchpoints"><a href="#Setting-Catchpoints" class="headerlink" title="Setting Catchpoints"></a>Setting Catchpoints</h2><p><a target="_blank" rel="noopener" href="https://www-zeuthen.desy.de/unix/unixguide/infohtml/gdb/Set-Catchpoints.html#Set-Catchpoints">Reference</a></p>
+<h2 id="gdb-redirect-to-a-log-file"><a href="#gdb-redirect-to-a-log-file" class="headerlink" title="gdb redirect to a log file"></a>gdb redirect to a log file</h2><p>You need to enable logging:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">(gdb) set logging on</span><br><span class="line">Now GDB will log to ./gdb.txt. You can tell it which file to use:</span><br><span class="line"></span><br><span class="line">(gdb) set logging file my_god_object.log</span><br><span class="line">And you can examine the current logging configuration:</span><br><span class="line"></span><br><span class="line">(gdb) show logging</span><br></pre></td></tr></table></figure>
+
+<p>更新：新版本 gdb 采用 <code>set logging enabled on</code> 。</p>
+<p>记录输入的命令：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) set trace-commands on</span><br></pre></td></tr></table></figure>
+
+<p><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/5941158/gdb-print-to-file-instead-of-stdout">Refercence</a></p>
+<h2 id="权限限制"><a href="#权限限制" class="headerlink" title="权限限制"></a>权限限制</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cat</span> /proc/sys/kernel/yama/ptrace_scope</span><br><span class="line">3</span><br></pre></td></tr></table></figure>
+
+<p>Yama 是 Linux 内核中的一个 安全模块（LSM：Linux Security Module），专门用于加强进程间的访问控制，尤其是对 ptrace 系统调用的限制。<br>Yama 的主要目的是防止恶意程序通过 ptrace 附加到其他进程（包括 gdb, strace, pstack, gstack 等），从而窃取数据或注入代码。</p>
+<table>
+<thead>
+<tr>
+<th align="center">值</th>
+<th align="center">模式名称</th>
+<th align="center">含义说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">0</td>
+<td align="center">经典模式</td>
+<td align="center">允许同一用户调试其权限范围内的任意进程（只要目标进程是 “可转储” 的）。适合开发环境。</td>
+</tr>
+<tr>
+<td align="center">1</td>
+<td align="center">受限模式（默认）</td>
+<td align="center">只允许调试直接子进程，或拥有 CAP_SYS_PTRACE 权限的进程。更安全，适合大多数系统。</td>
+</tr>
+<tr>
+<td align="center">2</td>
+<td align="center">管理员模式</td>
+<td align="center">只有 root 或具备 CAP_SYS_PTRACE 的进程可以使用 ptrace。适合高安全场景。</td>
+</tr>
+<tr>
+<td align="center">3</td>
+<td align="center">完全禁用</td>
+<td align="center">所有进程（包括 root）都无法使用 ptrace。彻底禁止调试行为，适合极端安全需求。</td>
+</tr>
+</tbody></table>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/gcc%E5%85%A5%E9%97%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/cpp/gcc%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">gcc 入门</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 21:44:11" itemprop="dateCreated datePublished" datetime="2024-01-23T21:44:11+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="递归处理顺序"><a href="#递归处理顺序" class="headerlink" title="递归处理顺序"></a>递归处理顺序</h2><p>gcc 的输入文件和库是从左往右处理的。也就是说，以下命令是错误的：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -L. -la main.cc</span><br></pre></td></tr></table></figure>
+
+<p>链接器处理到某个目标文件（如 main.cc 编译后的目标代码）时，如果遇到未解析的符号（比如 f() ），<br>它会从接下来的库中查找这些符号。因此顺序非常重要。</p>
+<p>这里，-L. -la 选项在 main.cc 之前，链接器会首先尝试从 liba.so 中查找引用的符号，<br>但是，因为此时 main.cc 还未被处理，所以链接器还不知道有对 liba.so 中的函数 f() 的引用。<br>到了 main.cc ，链接器解析出引用，但它不会回头再去 liba.so 中查找，导致报错：”undefined reference to f()”。</p>
+<p>正确的命令如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc main.cc -L. -la</span><br></pre></td></tr></table></figure>
+
+<p>注意：liba.so 的指定必须去掉 lib 和 .so ，也就是说不允许直接指定“库文件名”，而是只能指定“库名”。<br>如果想直接指定库文件名，那么应该把 liba.so 当成输入文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc main.cc ./liba.so</span><br></pre></td></tr></table></figure>
+
+<h2 id="属性语法（Attribute-Syntax）"><a href="#属性语法（Attribute-Syntax）" class="headerlink" title="属性语法（Attribute Syntax）"></a>属性语法（Attribute Syntax）</h2><p>参考：<a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/gcc-3.2/gcc/Attribute-Syntax.html#Attribute%20Syntax">官方文档</a>。</p>
+<h3 id="函数属性（Function-Attributes）"><a href="#函数属性（Function-Attributes）" class="headerlink" title="函数属性（Function Attributes）"></a>函数属性（Function Attributes）</h3><p>参考：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/11621043/how-should-i-properly-use-attribute-format-printf-x-y-inside-a-class">stackoverflow</a></li>
+<li><a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/gcc-3.2/gcc/Function-Attributes.html">gcc官方文档：Function Attributes</a></li>
+</ul>
+<p>属性列举：</p>
+<ul>
+<li><p><code>format (archetype, string-index, first-to-check)</code></p>
+<p>  format 属性，指定函数采用 printf、scanf、strftime 或 strfmon 风格的参数，<br>  这些参数应根据格式字符串（format string）进行类型检查（type-checked）。<br>  类型检查发生在编译期。</p>
+<p>  举例：</p>
+  <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">extern</span> <span class="type">int</span></span></span><br><span class="line"><span class="function"><span class="title">my_printf</span> <span class="params">(<span class="type">void</span> *my_object, <span class="type">const</span> <span class="type">char</span> *my_format, ...)</span></span></span><br><span class="line"><span class="function">    __<span class="title">attribute__</span> <span class="params">((format (printf, <span class="number">2</span>, <span class="number">3</span>)))</span></span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>archetype</code>决定format string应该如何解释。<br>可选为<code>printf</code>、<code>scanf</code>、<code>strftime</code>或<code>strfmon</code>（也可以使用<code>__printf__</code>、<code>__scanf__</code>、<code>__strftime__</code>或<code>__strfmon__</code>）。</li>
+<li><code>string-index</code>指定哪个参数是format string（从1开始）。</li>
+<li><code>first-to-check</code>指定format string对应的第一个参数的序号。<br>对于那些无法检查参数的函数（比如<code>vprintf</code>），该参数指定为<code>0</code>。在这种情况下，编译器仅检查format string的一致性。对于<code>strftime</code>格式，该参数必须为<code>0</code>。</li>
+</ul>
+</li>
+</ul>
+<h2 id="选项"><a href="#选项" class="headerlink" title="选项"></a>选项</h2><ul>
+<li><code>-save-temps</code>: 可以保留所有中间文件，例如预编译文件、汇编文件、目标文件等。</li>
+</ul>
+<h2 id="符号可见性"><a href="#符号可见性" class="headerlink" title="符号可见性"></a>符号可见性</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">pragma</span> GCC visibility push(hidden)</span></span><br><span class="line"></span><br><span class="line">__attribute__((__visibility__(<span class="string">&quot;default&quot;</span>)))</span><br></pre></td></tr></table></figure>
+
+<p>gcc 编译选项：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -fvisibility=hidden ...</span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/core-dump/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +709,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -371,7 +856,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -786,7 +1271,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -864,7 +1349,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -954,7 +1439,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1081,7 +1566,7 @@ ELF描述了normal executable files、relocatable object files、core files和sh
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1286,7 +1771,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1363,7 +1848,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1387,193 +1872,6 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
 
       
           <h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><p><a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1161103">关于线程死锁，活锁和饥饿问题</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/14/misc/%E5%8F%AF%E9%87%8D%E5%85%A5/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/14/misc/%E5%8F%AF%E9%87%8D%E5%85%A5/" class="post-title-link" itemprop="url">可重入</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-14 17:44:16" itemprop="dateCreated datePublished" datetime="2024-01-14T17:44:16+00:00">2024-01-14</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p><strong>可重入函数</strong>：如果一个函数在执行过程中被中断服务程序打断，执行中断服务程序之后恢复执行，还能不妨碍之前的执行，就称该函数是<strong>可重入的</strong>。</p>
-<p>可重入函数一般用于<strong>硬件中断处理</strong>或<strong>递归</strong>等应用程序中。</p>
-<p><strong>可重入程序&#x2F;可重入子例程</strong>：在多个处理器上能被安全地多次并发调用。</p>
-<p><strong>与线程安全的区别</strong>：可重入函数的概念在多任务操作系统出现之前就存在了，所以该概念仅仅针对的是单线程执行过程。<br>一个函数可以是线程安全但非可重入的，例如，该函数每次都使用互斥量来包裹。但是，如果该函数用于中断服务程序，那么，它可能在等待第一次执行过程释放互斥量时陷入饥饿。<strong>TODO：陷入饥饿为什么就不是可重入了？</strong></p>
-<p>要实现可重入性，函数通常需要满足以下条件：</p>
-<ul>
-<li>不使用静态或全局变量：这些变量在多次调用之间共享，可能导致数据竞争。</li>
-<li>不依赖于不可重入的函数：例如，标准库中的某些函数可能不是可重入的。</li>
-<li>不使用动态内存分配：动态内存分配可能会导致竞争条件。</li>
-<li>不使用信号处理：信号处理可能会中断函数的执行。</li>
-</ul>
-<p>可重入性在多线程编程和中断处理程序中尤为重要，因为它确保了函数在并发环境下的安全性。</p>
-<h3 id="可重入-VS-线程安全"><a href="#可重入-VS-线程安全" class="headerlink" title="可重入 VS 线程安全"></a>可重入 VS 线程安全</h3><p>可重入性和线程安全虽然都涉及到并发编程，但它们有不同的侧重点：</p>
-<p>可重入性：</p>
-<p>定义：一个函数可以在被中断后安全地再次调用，而不会影响其执行结果。<br>条件：不使用静态或全局变量、不依赖不可重入的函数、不使用动态内存分配、不使用信号处理。<br>应用场景：主要用于中断处理程序和嵌入式系统。<br>线程安全：</p>
-<p>定义：一个函数或代码块在多线程环境下可以安全地并发执行，而不会导致竞争条件或数据不一致。<br>条件：通常需要使用同步机制（如互斥锁、信号量）来保护共享资源。<br>应用场景：主要用于多线程编程。<br>总结来说，可重入性关注的是函数在被中断后能否安全地再次调用，而线程安全关注的是在多线程环境下能否安全地并发执行。可重入函数不一定是线程安全的，线程安全的函数也不一定是可重入的。</p>
-<ol>
-<li>可重入函数不一定是线程安全的</li>
-</ol>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> counter = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">reentrantFunction</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> localCounter = counter;</span><br><span class="line">    localCounter++;</span><br><span class="line">    counter = localCounter;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">reentrantFunction</span>();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Counter: %d\n&quot;</span>, counter);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>解释：</p>
-<p>reentrantFunction 是可重入的，因为它满足以下条件：</p>
-<p>不使用静态或全局变量：虽然 counter 是一个全局变量，但 reentrantFunction 中的操作都是基于局部变量 localCounter，并且没有依赖于函数外部的状态。<br>不依赖不可重入的函数：reentrantFunction 中没有调用任何不可重入的函数。<br>不使用动态内存分配：函数中没有使用 malloc 或其他动态内存分配函数。<br>不使用信号处理：函数中没有涉及信号处理。<br>因此，reentrantFunction 可以在被中断后安全地再次调用，而不会影响其执行结果。</p>
-<p>然而，正因为它使用了全局变量 counter，在多线程环境下可能会导致竞争条件，所以它不是线程安全的。</p>
-<ol start="2">
-<li>线程安全的函数不一定是可重入的</li>
-</ol>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">pthread_mutex_t</span> lock = PTHREAD_MUTEX_INITIALIZER;</span><br><span class="line"><span class="type">int</span> counter = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span>* <span class="title">threadSafeFunction</span><span class="params">(<span class="type">void</span>* arg)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">pthread_mutex_lock</span>(&amp;lock);</span><br><span class="line">    counter++;</span><br><span class="line">    <span class="built_in">pthread_mutex_unlock</span>(&amp;lock);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">pthread_t</span> thread1, thread2;</span><br><span class="line">    <span class="built_in">pthread_create</span>(&amp;thread1, <span class="literal">NULL</span>, threadSafeFunction, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_create</span>(&amp;thread2, <span class="literal">NULL</span>, threadSafeFunction, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_join</span>(thread1, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_join</span>(thread2, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Counter: %d\n&quot;</span>, counter);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>解释：</p>
-<p>这个函数 threadSafeFunction 是线程安全的，因为它使用了互斥锁来保护对 counter 的访问。<br>然而，它不是可重入的，因为它使用了互斥锁，互斥锁在中断处理程序中可能会导致死锁：</p>
-<p>互斥锁的使用：互斥锁用于确保线程安全，但它们在中断处理程序中可能会导致死锁。如果一个线程在持有锁时被中断，然后中断处理程序尝试再次调用该函数并试图获取同一个锁，就会发生死锁。</p>
-<p>依赖于锁的状态：函数的执行依赖于锁的状态。如果锁已经被其他线程持有，函数就无法继续执行，必须等待锁释放。这种依赖性使得函数在中断后无法安全地再次调用。</p>
-<p>不可重入的行为：由于锁的存在，函数在中断后重新进入时可能无法正确处理锁的状态，从而导致不可预期的行为。</p>
-<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://www.geeksforgeeks.org/reentrant-function/">Reentrant Function</a></li>
-<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Reentrancy_(computing)">Reentrancy</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/09/net/%E7%BD%91%E7%BB%9C%E5%8F%91%E7%8E%B0/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/09/net/%E7%BD%91%E7%BB%9C%E5%8F%91%E7%8E%B0/" class="post-title-link" itemprop="url">Network discovery</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-09 16:15:17" itemprop="dateCreated datePublished" datetime="2024-01-09T16:15:17+00:00">2024-01-09</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Network/" itemprop="url" rel="index"><span itemprop="name">Network</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Get-IP-from-the-host-name"><a href="#Get-IP-from-the-host-name" class="headerlink" title="Get IP from the host name"></a>Get IP from the host name</h2><p>Key function: <code>getaddrinfo</code>.</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> _POSIX_C_SOURCE 200112L</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/socket.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;netdb.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;errno.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;strings.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;arpa/inet.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">addrinfo</span> hints;</span><br><span class="line">    <span class="built_in">bzero</span>(&amp;hints, <span class="keyword">sizeof</span> hints);</span><br><span class="line">    <span class="comment">// hints.ai_family = AF_INET;</span></span><br><span class="line">    hints.ai_socktype = SOCK_STREAM;</span><br><span class="line">    hints.ai_protocol = IPPROTO_TCP;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">addrinfo</span> *res = <span class="number">0</span>;</span><br><span class="line">    <span class="comment">// The following 3 hostnames are legal.</span></span><br><span class="line">    <span class="type">int</span> rc = <span class="built_in">getaddrinfo</span>(<span class="string">&quot;www.baidu.com&quot;</span>, <span class="literal">NULL</span>, &amp;hints, &amp;res);</span><br><span class="line">    <span class="comment">// int rc = getaddrinfo(&quot;localhost&quot;, NULL, &amp;hints, &amp;res);</span></span><br><span class="line">    <span class="comment">// int rc = getaddrinfo(&quot;PC-XXX&quot;, NULL, &amp;hints, &amp;res); // PC-XXX is a hostname</span></span><br><span class="line">    <span class="keyword">if</span> (rc != <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">perror</span>(<span class="string">&quot;getaddrinfo failed&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">struct</span> addrinfo* res_i = res; res_i != <span class="literal">NULL</span>; res_i = res_i-&gt;ai_next) &#123;</span><br><span class="line">        <span class="keyword">if</span> (res_i-&gt;ai_addr) &#123;</span><br><span class="line">            <span class="keyword">if</span> (res_i-&gt;ai_addr-&gt;sa_family == AF_INET) &#123;</span><br><span class="line">                <span class="type">char</span> ip4[INET_ADDRSTRLEN];</span><br><span class="line">                <span class="built_in">inet_ntop</span>(AF_INET, &amp;(((<span class="keyword">struct</span> sockaddr_in*)(res_i-&gt;ai_addr))-&gt;sin_addr), ip4, INET_ADDRSTRLEN);</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">&quot;IP: %s\n&quot;</span>, ip4);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="type">char</span> ip6[INET6_ADDRSTRLEN];</span><br><span class="line">                <span class="built_in">inet_ntop</span>(AF_INET6, &amp;(((<span class="keyword">struct</span> sockaddr_in6*)(res_i-&gt;ai_addr))-&gt;sin6_addr), ip6, INET_ADDRSTRLEN);</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">&quot;IP: %s\n&quot;</span>, ip6);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
       
     </div>
@@ -1660,7 +1958,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">101</span>
+          <span class="site-state-item-count">103</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

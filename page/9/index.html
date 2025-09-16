@@ -193,6 +193,193 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/14/misc/%E5%8F%AF%E9%87%8D%E5%85%A5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/14/misc/%E5%8F%AF%E9%87%8D%E5%85%A5/" class="post-title-link" itemprop="url">可重入</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-14 17:44:16" itemprop="dateCreated datePublished" datetime="2024-01-14T17:44:16+00:00">2024-01-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p><strong>可重入函数</strong>：如果一个函数在执行过程中被中断服务程序打断，执行中断服务程序之后恢复执行，还能不妨碍之前的执行，就称该函数是<strong>可重入的</strong>。</p>
+<p>可重入函数一般用于<strong>硬件中断处理</strong>或<strong>递归</strong>等应用程序中。</p>
+<p><strong>可重入程序&#x2F;可重入子例程</strong>：在多个处理器上能被安全地多次并发调用。</p>
+<p><strong>与线程安全的区别</strong>：可重入函数的概念在多任务操作系统出现之前就存在了，所以该概念仅仅针对的是单线程执行过程。<br>一个函数可以是线程安全但非可重入的，例如，该函数每次都使用互斥量来包裹。但是，如果该函数用于中断服务程序，那么，它可能在等待第一次执行过程释放互斥量时陷入饥饿。<strong>TODO：陷入饥饿为什么就不是可重入了？</strong></p>
+<p>要实现可重入性，函数通常需要满足以下条件：</p>
+<ul>
+<li>不使用静态或全局变量：这些变量在多次调用之间共享，可能导致数据竞争。</li>
+<li>不依赖于不可重入的函数：例如，标准库中的某些函数可能不是可重入的。</li>
+<li>不使用动态内存分配：动态内存分配可能会导致竞争条件。</li>
+<li>不使用信号处理：信号处理可能会中断函数的执行。</li>
+</ul>
+<p>可重入性在多线程编程和中断处理程序中尤为重要，因为它确保了函数在并发环境下的安全性。</p>
+<h3 id="可重入-VS-线程安全"><a href="#可重入-VS-线程安全" class="headerlink" title="可重入 VS 线程安全"></a>可重入 VS 线程安全</h3><p>可重入性和线程安全虽然都涉及到并发编程，但它们有不同的侧重点：</p>
+<p>可重入性：</p>
+<p>定义：一个函数可以在被中断后安全地再次调用，而不会影响其执行结果。<br>条件：不使用静态或全局变量、不依赖不可重入的函数、不使用动态内存分配、不使用信号处理。<br>应用场景：主要用于中断处理程序和嵌入式系统。<br>线程安全：</p>
+<p>定义：一个函数或代码块在多线程环境下可以安全地并发执行，而不会导致竞争条件或数据不一致。<br>条件：通常需要使用同步机制（如互斥锁、信号量）来保护共享资源。<br>应用场景：主要用于多线程编程。<br>总结来说，可重入性关注的是函数在被中断后能否安全地再次调用，而线程安全关注的是在多线程环境下能否安全地并发执行。可重入函数不一定是线程安全的，线程安全的函数也不一定是可重入的。</p>
+<ol>
+<li>可重入函数不一定是线程安全的</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> counter = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">reentrantFunction</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> localCounter = counter;</span><br><span class="line">    localCounter++;</span><br><span class="line">    counter = localCounter;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">reentrantFunction</span>();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Counter: %d\n&quot;</span>, counter);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>解释：</p>
+<p>reentrantFunction 是可重入的，因为它满足以下条件：</p>
+<p>不使用静态或全局变量：虽然 counter 是一个全局变量，但 reentrantFunction 中的操作都是基于局部变量 localCounter，并且没有依赖于函数外部的状态。<br>不依赖不可重入的函数：reentrantFunction 中没有调用任何不可重入的函数。<br>不使用动态内存分配：函数中没有使用 malloc 或其他动态内存分配函数。<br>不使用信号处理：函数中没有涉及信号处理。<br>因此，reentrantFunction 可以在被中断后安全地再次调用，而不会影响其执行结果。</p>
+<p>然而，正因为它使用了全局变量 counter，在多线程环境下可能会导致竞争条件，所以它不是线程安全的。</p>
+<ol start="2">
+<li>线程安全的函数不一定是可重入的</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">pthread_mutex_t</span> lock = PTHREAD_MUTEX_INITIALIZER;</span><br><span class="line"><span class="type">int</span> counter = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span>* <span class="title">threadSafeFunction</span><span class="params">(<span class="type">void</span>* arg)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">pthread_mutex_lock</span>(&amp;lock);</span><br><span class="line">    counter++;</span><br><span class="line">    <span class="built_in">pthread_mutex_unlock</span>(&amp;lock);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">pthread_t</span> thread1, thread2;</span><br><span class="line">    <span class="built_in">pthread_create</span>(&amp;thread1, <span class="literal">NULL</span>, threadSafeFunction, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_create</span>(&amp;thread2, <span class="literal">NULL</span>, threadSafeFunction, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_join</span>(thread1, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_join</span>(thread2, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Counter: %d\n&quot;</span>, counter);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>解释：</p>
+<p>这个函数 threadSafeFunction 是线程安全的，因为它使用了互斥锁来保护对 counter 的访问。<br>然而，它不是可重入的，因为它使用了互斥锁，互斥锁在中断处理程序中可能会导致死锁：</p>
+<p>互斥锁的使用：互斥锁用于确保线程安全，但它们在中断处理程序中可能会导致死锁。如果一个线程在持有锁时被中断，然后中断处理程序尝试再次调用该函数并试图获取同一个锁，就会发生死锁。</p>
+<p>依赖于锁的状态：函数的执行依赖于锁的状态。如果锁已经被其他线程持有，函数就无法继续执行，必须等待锁释放。这种依赖性使得函数在中断后无法安全地再次调用。</p>
+<p>不可重入的行为：由于锁的存在，函数在中断后重新进入时可能无法正确处理锁的状态，从而导致不可预期的行为。</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://www.geeksforgeeks.org/reentrant-function/">Reentrant Function</a></li>
+<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Reentrancy_(computing)">Reentrancy</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/09/net/%E7%BD%91%E7%BB%9C%E5%8F%91%E7%8E%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/09/net/%E7%BD%91%E7%BB%9C%E5%8F%91%E7%8E%B0/" class="post-title-link" itemprop="url">Network discovery</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-09 16:15:17" itemprop="dateCreated datePublished" datetime="2024-01-09T16:15:17+00:00">2024-01-09</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Network/" itemprop="url" rel="index"><span itemprop="name">Network</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Get-IP-from-the-host-name"><a href="#Get-IP-from-the-host-name" class="headerlink" title="Get IP from the host name"></a>Get IP from the host name</h2><p>Key function: <code>getaddrinfo</code>.</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> _POSIX_C_SOURCE 200112L</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/socket.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;netdb.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;errno.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;strings.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;arpa/inet.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">addrinfo</span> hints;</span><br><span class="line">    <span class="built_in">bzero</span>(&amp;hints, <span class="keyword">sizeof</span> hints);</span><br><span class="line">    <span class="comment">// hints.ai_family = AF_INET;</span></span><br><span class="line">    hints.ai_socktype = SOCK_STREAM;</span><br><span class="line">    hints.ai_protocol = IPPROTO_TCP;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">addrinfo</span> *res = <span class="number">0</span>;</span><br><span class="line">    <span class="comment">// The following 3 hostnames are legal.</span></span><br><span class="line">    <span class="type">int</span> rc = <span class="built_in">getaddrinfo</span>(<span class="string">&quot;www.baidu.com&quot;</span>, <span class="literal">NULL</span>, &amp;hints, &amp;res);</span><br><span class="line">    <span class="comment">// int rc = getaddrinfo(&quot;localhost&quot;, NULL, &amp;hints, &amp;res);</span></span><br><span class="line">    <span class="comment">// int rc = getaddrinfo(&quot;PC-XXX&quot;, NULL, &amp;hints, &amp;res); // PC-XXX is a hostname</span></span><br><span class="line">    <span class="keyword">if</span> (rc != <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">perror</span>(<span class="string">&quot;getaddrinfo failed&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">struct</span> addrinfo* res_i = res; res_i != <span class="literal">NULL</span>; res_i = res_i-&gt;ai_next) &#123;</span><br><span class="line">        <span class="keyword">if</span> (res_i-&gt;ai_addr) &#123;</span><br><span class="line">            <span class="keyword">if</span> (res_i-&gt;ai_addr-&gt;sa_family == AF_INET) &#123;</span><br><span class="line">                <span class="type">char</span> ip4[INET_ADDRSTRLEN];</span><br><span class="line">                <span class="built_in">inet_ntop</span>(AF_INET, &amp;(((<span class="keyword">struct</span> sockaddr_in*)(res_i-&gt;ai_addr))-&gt;sin_addr), ip4, INET_ADDRSTRLEN);</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">&quot;IP: %s\n&quot;</span>, ip4);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="type">char</span> ip6[INET6_ADDRSTRLEN];</span><br><span class="line">                <span class="built_in">inet_ntop</span>(AF_INET6, &amp;(((<span class="keyword">struct</span> sockaddr_in6*)(res_i-&gt;ai_addr))-&gt;sin6_addr), ip6, INET_ADDRSTRLEN);</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">&quot;IP: %s\n&quot;</span>, ip6);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/07/cpp/C++%E9%A2%84%E5%A4%84%E7%90%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +411,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -320,7 +507,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
 
           
@@ -425,6 +612,85 @@
 <li><a target="_blank" rel="noopener" href="https://squidfunk.github.io/mkdocs-material/reference/diagrams/">Diagrams Reference</a></li>
 </ul>
 <h3 id="reStructuredText"><a href="#reStructuredText" class="headerlink" title="reStructuredText"></a>reStructuredText</h3><p><code>.rst</code></p>
+<h2 id="Markdown-文档写作助手"><a href="#Markdown-文档写作助手" class="headerlink" title="Markdown 文档写作助手"></a>Markdown 文档写作助手</h2><p>VS Code + Markdown 插件：</p>
+<ul>
+<li>Markdown All in One：快捷键、自动列表、格式化支持。</li>
+<li>markdownlint：格式规范检查，可配合 .markdownlint.json 使用。</li>
+<li>Markdown Preview Enhanced：支持公式、流程图、导出 PDF。</li>
+</ul>
+<p>图床工具：</p>
+<p>iPic（macOS）或 PicGo（全平台）：自动上传图片并生成 Markdown 链接。</p>
+<p>国内外常用免费图床推荐</p>
+<table>
+<thead>
+<tr>
+<th align="center">图床名称</th>
+<th align="center">特点与限制</th>
+<th align="center">适合场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">SM.MS</td>
+<td align="center">免费、支持 API、最大上传 5MB，全球 CDN 加速2</td>
+<td align="center">技术博客、Markdown</td>
+</tr>
+<tr>
+<td align="center">Imgur</td>
+<td align="center">老牌国外图床，支持匿名上传、API，国内访问速度较慢2</td>
+<td align="center">海外博客、论坛</td>
+</tr>
+<tr>
+<td align="center">路过图床</td>
+<td align="center">支持 HTTPS、免注册、永久存储，最大上传 10MB</td>
+<td align="center">Markdown、公众号</td>
+</tr>
+<tr>
+<td align="center">聚合图床</td>
+<td align="center">上传后自动分发至多个图床，支持多种格式</td>
+<td align="center">多平台分发</td>
+</tr>
+<tr>
+<td align="center">PostImage</td>
+<td align="center">国外图床，最大上传 24MB，支持 BBCode&#x2F;HTML&#x2F;Markdown 链接</td>
+<td align="center">技术论坛、社交媒体</td>
+</tr>
+<tr>
+<td align="center">UPLOAD.CC</td>
+<td align="center">香港图床，支持 Chrome 插件、最大上传 10MB</td>
+<td align="center">博客写作</td>
+</tr>
+<tr>
+<td align="center">ImageHub.cc</td>
+<td align="center">全球 CDN 加速，最大上传 10MB，支持多地备份</td>
+<td align="center">稳定性要求高的场景</td>
+</tr>
+</tbody></table>
+<ul>
+<li>Markdown 插图：推荐 SM.MS、路过图床，支持直接生成 <img src="/blog/"> 格式链接。</li>
+<li>国内访问速度：微博图床仍是最快之一，但需借助工具（如 iPic）上传。</li>
+<li>稳定性优先：Imgur 和 PostImage 在国外非常稳定，适合长期托管。</li>
+<li>自动化上传：PicGo + SM.MS 是最常见的组合，支持 VS Code 插件集成。</li>
+</ul>
+<p>表格生成器：</p>
+<ul>
+<li>TableConvert：将 Excel&#x2F;CSV 转换为 Markdown 表格。</li>
+<li><a target="_blank" rel="noopener" href="https://www.tablesgenerator.com/markdown_tables">Tables Generator</a></li>
+</ul>
+<p>美化内容：图文辅助</p>
+<ul>
+<li>Carbon &#x2F; Polacode：生成美观的代码截图。</li>
+<li>draw.io &#x2F; ProcessOn：绘制流程图、架构图、UML 图。</li>
+<li>Canva &#x2F; Figma：制作封面图、插图、社交媒体配图。</li>
+</ul>
+<p>写作后：发布与分发</p>
+<p>自建站：WordPress、Hexo、Hugo（推荐 GitHub Pages 托管）</p>
+<p>排版工具：</p>
+<ul>
+<li>mdnice：自动美化 Markdown，适配知乎&#x2F;公众号。</li>
+<li>Aclickall：一键生成公众号排版样式。</li>
+</ul>
+<p>多平台分发工具：</p>
+<p>BlogHelper：支持一键发布到多个平台。</p>
 <h2 id="大型文件存储"><a href="#大型文件存储" class="headerlink" title="大型文件存储"></a>大型文件存储</h2><h3 id="图片"><a href="#图片" class="headerlink" title="图片"></a>图片</h3><p>Postimages</p>
 <ul>
 <li>网站: <a target="_blank" rel="noopener" href="https://postimages.org/">https://postimages.org/</a></li>
@@ -517,7 +783,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -617,7 +883,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -693,7 +959,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -768,7 +1034,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -966,7 +1232,7 @@ man 7 tcp - tcp options
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1050,7 +1316,7 @@ man 7 tcp - tcp options
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1077,164 +1343,6 @@ man 7 tcp - tcp options
 <figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span>(ENV&#123;PKG_CONFIG_PATH&#125; <span class="string">&quot;$&#123;CMAKE_SOURCE_DIR&#125;/libs/opencv-install/lib/pkgconfig&quot;</span>)</span><br></pre></td></tr></table></figure>
 
 <p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/97369704">find_package</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/12/07/personal_site/Hexo-Documentation/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2023/12/07/personal_site/Hexo-Documentation/" class="post-title-link" itemprop="url">Hexo Documentation</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2023-12-07 10:06:59" itemprop="dateCreated datePublished" datetime="2023-12-07T10:06:59+00:00">2023-12-07</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Tools/" itemprop="url" rel="index"><span itemprop="name">Tools</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="hexo修改默认端口号"><a href="#hexo修改默认端口号" class="headerlink" title="hexo修改默认端口号"></a>hexo修改默认端口号</h2><p>参考<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/8398621502fd">博客</a></p>
-<h2 id="添加目录"><a href="#添加目录" class="headerlink" title="添加目录"></a>添加目录</h2><p><a target="_blank" rel="noopener" href="https://blog.ligos.net/2016-07-25/Writing-Content-On-Hexo.html">https://blog.ligos.net/2016-07-25/Writing-Content-On-Hexo.html</a><br><a target="_blank" rel="noopener" href="https://medium.com/employbl/create-a-custom-blog-theme-with-hexo-js-b24c82eb9271#.viurzqeac">https://medium.com/employbl/create-a-custom-blog-theme-with-hexo-js-b24c82eb9271#.viurzqeac</a><br><a target="_blank" rel="noopener" href="https://hexo.io/docs/themes">https://hexo.io/docs/themes</a><br><a target="_blank" rel="noopener" href="https://hexo.io/docs/templates">https://hexo.io/docs/templates</a><br><a target="_blank" rel="noopener" href="https://hexo.io/docs/helpers">https://hexo.io/docs/helpers</a></p>
-<h2 id="Add-pages"><a href="#Add-pages" class="headerlink" title="Add pages"></a>Add pages</h2><p>Commands</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># The following command generate a &#x27;categories/index.md&#x27; file</span></span><br><span class="line">hexo new page categories</span><br><span class="line"></span><br><span class="line">hexo new page tags</span><br><span class="line">hexo new page about</span><br></pre></td></tr></table></figure>
-
-<p>Refers to <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/60759559/hexo-next-theme-categories-and-tags-page">Hexo NeXT Theme categories and tags page</a></p>
-<h2 id="Plugins"><a href="#Plugins" class="headerlink" title="Plugins"></a>Plugins</h2><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/wugenqiang/article/details/88377669">Display PDF</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/12/06/net/bsub/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2023/12/06/net/bsub/" class="post-title-link" itemprop="url">bsub用法</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2023-12-06 09:41:56" itemprop="dateCreated datePublished" datetime="2023-12-06T09:41:56+00:00">2023-12-06</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Network/" itemprop="url" rel="index"><span itemprop="name">Network</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="find-host-queue-sh"><a href="#find-host-queue-sh" class="headerlink" title="find_host_queue.sh"></a>find_host_queue.sh</h2><p>寻找 hostname 所在的 queue ：</p>
-<figure class="highlight bash"><figcaption><span>find_host_queue.sh</span><a href="/blog/downloads/code/bsub/find_host_queue.sh">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 检查是否提供了主机名参数</span></span><br><span class="line"><span class="keyword">if</span> [ -z <span class="string">&quot;<span class="variable">$1</span>&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;用法: <span class="variable">$0</span> &lt;hostname&gt;&quot;</span></span><br><span class="line">    <span class="built_in">exit</span> 1</span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line">HOSTNAME=<span class="variable">$1</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;正在查找包含主机 [<span class="variable">$HOSTNAME</span>] 或其主机组的队列...&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取所有队列名</span></span><br><span class="line">queues=$(bqueues | awk <span class="string">&#x27;NR&gt;1 {print $1}&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> q <span class="keyword">in</span> <span class="variable">$queues</span>; <span class="keyword">do</span></span><br><span class="line">    <span class="comment"># 获取队列的 HOSTS 字段</span></span><br><span class="line">    hosts_line=$(bqueues -l <span class="string">&quot;<span class="variable">$q</span>&quot;</span> | awk <span class="string">&#x27;/HOSTS:/,/^$/&#x27;</span>)</span><br><span class="line">    <span class="comment"># 将字符串按空格拆分为数组</span></span><br><span class="line">    host_array=(<span class="variable">$hosts_line</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 提取所有主机或主机组</span></span><br><span class="line">    <span class="keyword">for</span> entry <span class="keyword">in</span> <span class="string">&quot;<span class="variable">${host_array[@]}</span>&quot;</span>; <span class="keyword">do</span></span><br><span class="line">        <span class="comment"># 如果是主机组（以@开头或以/结尾）</span></span><br><span class="line">        <span class="keyword">if</span> [[ <span class="variable">$entry</span> == @* || <span class="variable">$entry</span> == */ ]]; <span class="keyword">then</span></span><br><span class="line">            <span class="comment"># if [[ $entry == @* ]]; then</span></span><br><span class="line">            <span class="comment">#     # 去掉前面的@符号</span></span><br><span class="line">            <span class="comment">#     entry=${entry:1}</span></span><br><span class="line">            <span class="comment"># fi</span></span><br><span class="line">            <span class="comment"># 去掉前面的@符号和后面的斜杠</span></span><br><span class="line">            group=<span class="variable">${entry#@}</span></span><br><span class="line">            group=<span class="variable">${entry%/}</span></span><br><span class="line">            <span class="comment"># 获取主机组中的主机列表</span></span><br><span class="line">            <span class="keyword">if</span> bmgroup <span class="variable">$group</span> 2&gt;/dev/null | grep -qw <span class="string">&quot;<span class="variable">$HOSTNAME</span>&quot;</span>; <span class="keyword">then</span></span><br><span class="line">                <span class="built_in">echo</span> <span class="string">&quot;✅ 队列 [<span class="variable">$q</span>] 包含主机组 [<span class="variable">$group</span>]，其中包括主机 [<span class="variable">$HOSTNAME</span>]&quot;</span></span><br><span class="line">            <span class="keyword">fi</span></span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">            <span class="comment"># 直接匹配主机名</span></span><br><span class="line">            <span class="keyword">if</span> [[ <span class="string">&quot;<span class="variable">$entry</span>&quot;</span> == <span class="string">&quot;<span class="variable">$HOSTNAME</span>&quot;</span> ]]; <span class="keyword">then</span></span><br><span class="line">                <span class="built_in">echo</span> <span class="string">&quot;✅ 队列 [<span class="variable">$q</span>] 直接包含主机 [<span class="variable">$HOSTNAME</span>]&quot;</span></span><br><span class="line">            <span class="keyword">fi</span></span><br><span class="line">        <span class="keyword">fi</span></span><br><span class="line">    <span class="keyword">done</span></span><br><span class="line"><span class="keyword">done</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="auto-submit-to-host-queue-sh"><a href="#auto-submit-to-host-queue-sh" class="headerlink" title="auto_submit_to_host_queue.sh"></a>auto_submit_to_host_queue.sh</h2><p>根据提供的 hostname ，自动寻找最空闲的队列提交 bsub 作业：</p>
-<figure class="highlight bash"><figcaption><span>auto_submit_to_host_queue.sh</span><a href="/blog/downloads/code/bsub/auto_submit_to_host_queue.sh">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 该脚本会自动将 hostname 提交到延迟最小、最空闲的队列</span></span><br><span class="line"><span class="comment"># 处理后的命令为 bsub -q &lt;queue&gt; -m &lt;host&gt; &lt;args&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 用法提示</span></span><br><span class="line"><span class="comment"># 例如：$0 myhostname -Is bash</span></span><br><span class="line"><span class="keyword">if</span> [ <span class="variable">$#</span> -lt 2 ]; <span class="keyword">then</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;用法: <span class="variable">$0</span> &lt;hostname&gt; &lt;args&gt;&quot;</span></span><br><span class="line">    <span class="built_in">exit</span> 1</span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line">HOSTNAME=<span class="variable">$1</span></span><br><span class="line"><span class="comment"># JOB_SCRIPT=$2</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># # 检查作业脚本是否存在</span></span><br><span class="line"><span class="comment"># if [ ! -f &quot;$JOB_SCRIPT&quot; ]; then</span></span><br><span class="line"><span class="comment">#     echo &quot;错误：找不到作业脚本 $JOB_SCRIPT&quot;</span></span><br><span class="line"><span class="comment">#     exit 1</span></span><br><span class="line"><span class="comment"># fi</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;🔍 正在查找包含主机 [<span class="variable">$HOSTNAME</span>] 的队列...&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">declare</span> -A matching_queues</span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取所有队列名</span></span><br><span class="line">queues=$(bqueues | awk <span class="string">&#x27;NR&gt;1 {print $1}&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> q <span class="keyword">in</span> <span class="variable">$queues</span>; <span class="keyword">do</span></span><br><span class="line">    <span class="comment"># 获取队列的 HOSTS 字段</span></span><br><span class="line">    hosts_line=$(bqueues -l <span class="string">&quot;<span class="variable">$q</span>&quot;</span> | awk <span class="string">&#x27;/HOSTS:/,/^$/&#x27;</span>)</span><br><span class="line">    host_array=(<span class="variable">$hosts_line</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> entry <span class="keyword">in</span> <span class="string">&quot;<span class="variable">${host_array[@]}</span>&quot;</span>; <span class="keyword">do</span></span><br><span class="line">        <span class="comment"># 如果是主机组（以@开头或以/结尾）</span></span><br><span class="line">        <span class="keyword">if</span> [[ <span class="variable">$entry</span> == @* || <span class="variable">$entry</span> == */ ]]; <span class="keyword">then</span></span><br><span class="line">            <span class="comment"># 去掉前面的@符号和后面的斜杠</span></span><br><span class="line">            group=<span class="variable">${entry#@}</span></span><br><span class="line">            group=<span class="variable">${entry%/}</span></span><br><span class="line">            <span class="keyword">if</span> bmgroup <span class="string">&quot;<span class="variable">$group</span>&quot;</span> 2&gt;/dev/null | grep -qw <span class="string">&quot;<span class="variable">$HOSTNAME</span>&quot;</span>; <span class="keyword">then</span></span><br><span class="line">                <span class="built_in">echo</span> <span class="string">&quot;✅ 队列 [<span class="variable">$q</span>] 包含主机组 [<span class="variable">$group</span>]，其中包括主机 [<span class="variable">$HOSTNAME</span>]&quot;</span></span><br><span class="line">                matching_queues[<span class="string">&quot;<span class="variable">$q</span>&quot;</span>]=1</span><br><span class="line">            <span class="keyword">fi</span></span><br><span class="line">        <span class="keyword">elif</span> [[ <span class="string">&quot;<span class="variable">$entry</span>&quot;</span> == <span class="string">&quot;<span class="variable">$HOSTNAME</span>&quot;</span> ]]; <span class="keyword">then</span></span><br><span class="line">            <span class="built_in">echo</span> <span class="string">&quot;✅ 队列 [<span class="variable">$q</span>] 直接包含主机 [<span class="variable">$HOSTNAME</span>]&quot;</span></span><br><span class="line">            matching_queues[<span class="string">&quot;<span class="variable">$q</span>&quot;</span>]=1</span><br><span class="line">        <span class="keyword">fi</span></span><br><span class="line">    <span class="keyword">done</span></span><br><span class="line"><span class="keyword">done</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ <span class="variable">${#matching_queues[@]}</span> -eq 0 ]; <span class="keyword">then</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;❌ 没有找到包含主机 [<span class="variable">$HOSTNAME</span>] 的队列。&quot;</span></span><br><span class="line">    <span class="built_in">exit</span> 1</span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;✅ 找到以下队列包含主机 [<span class="variable">$HOSTNAME</span>]：&quot;</span></span><br><span class="line"><span class="keyword">for</span> q <span class="keyword">in</span> <span class="string">&quot;<span class="variable">${!matching_queues[@]}</span>&quot;</span>; <span class="keyword">do</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot; - <span class="variable">$q</span>&quot;</span></span><br><span class="line"><span class="keyword">done</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取这些队列的等待任务数，选择最空闲的一个</span></span><br><span class="line">best_queue=<span class="string">&quot;&quot;</span></span><br><span class="line">min_pend=999999</span><br><span class="line"></span><br><span class="line">sorted_queues=$(<span class="keyword">for</span> q <span class="keyword">in</span> <span class="string">&quot;<span class="variable">${!matching_queues[@]}</span>&quot;</span>; <span class="keyword">do</span></span><br><span class="line">    pend=$(bqueues <span class="string">&quot;<span class="variable">$q</span>&quot;</span> | awk <span class="string">&#x27;NR==2 {print $9}&#x27;</span>)</span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$pend</span> <span class="variable">$q</span>&quot;</span></span><br><span class="line">    <span class="comment"># if [[ &quot;$pend&quot; =~ ^[0-9]+$ ]] &amp;&amp; [ &quot;$pend&quot; -lt &quot;$min_pend&quot; ]; then</span></span><br><span class="line">    <span class="comment">#     min_pend=$pend</span></span><br><span class="line">    <span class="comment">#     best_queue=$q</span></span><br><span class="line">    <span class="comment"># fi</span></span><br><span class="line"><span class="keyword">done</span> | <span class="built_in">sort</span> -n | awk <span class="string">&#x27;{print $2}&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># if [ -z &quot;$best_queue&quot; ]; then</span></span><br><span class="line"><span class="comment">#     echo &quot;⚠️ 无法确定最空闲队列，默认使用第一个：${!matching_queues[@]}&quot;</span></span><br><span class="line"><span class="comment">#     best_queue=${!matching_queues[@]}</span></span><br><span class="line"><span class="comment"># fi</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 依次尝试提交任务</span></span><br><span class="line"><span class="keyword">for</span> q <span class="keyword">in</span> <span class="variable">$sorted_queues</span>; <span class="keyword">do</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;🔎 尝试队列 [<span class="variable">$q</span>]...&quot;</span></span><br><span class="line">    test_output=$(<span class="built_in">timeout</span> 10 bsub -q <span class="string">&quot;<span class="variable">$q</span>&quot;</span> -n 1 -Is /bin/true 2&gt;&amp;1)</span><br><span class="line">    <span class="keyword">if</span> [ $? -eq 124 ]; <span class="keyword">then</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="string">&quot;⏳ 队列 [<span class="variable">$q</span>] 测试超时，跳过。&quot;</span></span><br><span class="line">        <span class="built_in">continue</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$test_output</span>&quot;</span> | grep -q <span class="string">&quot;User cannot use the queue&quot;</span>; <span class="keyword">then</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="string">&quot;⛔ 无权限使用队列 [<span class="variable">$q</span>]，跳过。&quot;</span></span><br><span class="line">        <span class="built_in">continue</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;🚀 提交任务到队列 [<span class="variable">$q</span>]...&quot;</span></span><br><span class="line">    CMD=<span class="string">&quot;bsub -q <span class="variable">$q</span> -m <span class="variable">$HOSTNAME</span> <span class="variable">${@:2}</span>&quot;</span></span><br><span class="line">    <span class="comment"># exec将当前终端传递给bsub</span></span><br><span class="line">    <span class="comment"># exec $CMD</span></span><br><span class="line">    <span class="variable">$CMD</span></span><br><span class="line">    <span class="built_in">exit</span> 0</span><br><span class="line"><span class="keyword">done</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;❌ 所有队列都无法使用或提交失败。&quot;</span></span><br><span class="line"><span class="built_in">exit</span> 1</span><br><span class="line"></span><br><span class="line"><span class="comment"># echo &quot;🚀 正在将任务提交到最空闲的队列 [$best_queue]...&quot;</span></span><br><span class="line"><span class="comment"># # bsub -q &quot;$best_queue&quot; &quot;$JOB_SCRIPT&quot;</span></span><br><span class="line"><span class="comment"># bsub -q &quot;$best_queue&quot; -m &quot;$HOSTNAME&quot; &quot;$argv[2-]&quot;</span></span><br></pre></td></tr></table></figure>
 
       
     </div>
@@ -1321,7 +1429,7 @@ man 7 tcp - tcp options
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">101</span>
+          <span class="site-state-item-count">103</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

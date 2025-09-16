@@ -216,10 +216,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2025-09-15 20:23:48 / Modified: 15:59:50" itemprop="dateCreated datePublished" datetime="2025-09-15T20:23:48+00:00">2025-09-15</time>
+              <time title="Created: 2025-09-15 20:23:48" itemprop="dateCreated datePublished" datetime="2025-09-15T20:23:48+00:00">2025-09-15</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -289,10 +295,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2025-09-15 19:48:58 / Modified: 15:59:50" itemprop="dateCreated datePublished" datetime="2025-09-15T19:48:58+00:00">2025-09-15</time>
+              <time title="Created: 2025-09-15 19:48:58" itemprop="dateCreated datePublished" datetime="2025-09-15T19:48:58+00:00">2025-09-15</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -369,6 +381,185 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/14/concurrency/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E6%B3%95%E5%88%99/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/09/14/concurrency/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E6%B3%95%E5%88%99/" class="post-title-link" itemprop="url">并发编程法则</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-09-14 16:10:01" itemprop="dateCreated datePublished" datetime="2025-09-14T16:10:01+00:00">2025-09-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="TBB-的特殊性"><a href="#TBB-的特殊性" class="headerlink" title="TBB 的特殊性"></a>TBB 的特殊性</h1><p><strong>本文的法则是以线程为调度单位的。</strong></p>
+<p>如果你使用的是 TBB ，那么请将 “线程” 对应为 “任务”，而将本文的“任务” 对应为“载荷”（ payloads）。</p>
+<p>因为 TBB 是以任务为调度单位的：</p>
+<ul>
+<li>每个 “任务” 是并发运行的最小单位，必须保证数据独立或线程安全。</li>
+<li>TBB 采用 “任务窃取” 算法来保证线程的复杂均衡，所以若干任务可能被同一线程或不同线程运行。</li>
+</ul>
+<h1 id="经验法则"><a href="#经验法则" class="headerlink" title="经验法则"></a>经验法则</h1><h2 id="以-tasksPerThread-按需分配线程"><a href="#以-tasksPerThread-按需分配线程" class="headerlink" title="以 tasksPerThread 按需分配线程"></a>以 tasksPerThread 按需分配线程</h2><ul>
+<li>tasksPerThread：均匀性。如果每个线程分配的任务数不均匀，那么任务数最多的线程就会成为瓶颈。</li>
+<li>按需分配线程：如果任务可以很快完成，那么没有必要开启过多的线程，否则调度开销也不可小觑。</li>
+</ul>
+<h2 id="以空间换时间"><a href="#以空间换时间" class="headerlink" title="以空间换时间"></a>以空间换时间</h2><p>为了任务能并发运行，进行任务分隔时，必须尽可能减少数据共享。<br>所以不要吝惜空间，为每个任务单独开辟内存（不论是为输入还是输出目的）都是值得且必要的。</p>
+<h2 id="长临界区使用-lock-条件变量"><a href="#长临界区使用-lock-条件变量" class="headerlink" title="长临界区使用 lock + 条件变量"></a>长临界区使用 lock + 条件变量</h2><p>如果一个任务的临界区比较大，意味着该任务执行时，其他线程在短时间内无法进入临界区。<br>与其让这些线程忙等，不如释放 CPU 进入阻塞 &#x2F; 休眠。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/14/concurrency/MPMC-Lock-free-Queue/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/09/14/concurrency/MPMC-Lock-free-Queue/" class="post-title-link" itemprop="url">多生产者 - 多消费者 无锁队列</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-09-14 15:05:08" itemprop="dateCreated datePublished" datetime="2025-09-14T15:05:08+00:00">2025-09-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/concurrency/" itemprop="url" rel="index"><span itemprop="name">concurrency</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>这是阅读 Cameron Desrochers 的<br><a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2014/a-fast-general-purpose-lock-free-queue-for-c++">A Fast General Purpose Lock-Free Queue for C++</a><br>源码的笔记。</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2014/detailed-design-of-a-lock-free-queue">Detailed Design of a Lock-Free Queue</a></li>
+<li><a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2014/solving-the-aba-problem-for-lock-free-free-lists">Solving the ABA Problem for Lock-Free Free Lists</a></li>
+</ul>
+<h2 id="系统概览"><a href="#系统概览" class="headerlink" title="系统概览"></a>系统概览</h2><p>MPMC 队列由一系列 SPMC 队列组成。消费者使用启发式 (heuristic) 来决定消费哪个 SPMC 队列。允许批量入列<br>和出列，只需要很小的额外开销。</p>
+<p>producer 需要一些 thread-local 数据； consumer 也可以用一些可选的 thread-local 数据来加速；这些<br>thread-local 数据可以与用户分配的 tokens 关联；如果用户没有为生产者提供 tokens ，则使用无锁哈希表（<br>以当前线程 ID 为键）来查找线程本地生产者队列：每个 SPMC 队列都使用一个预分配的 token （或隐式分配的<br>token，如果没有提供的话）来创建。由于 token 包含相当于线程特定的数据，因此它们不应该同时在多个线程中<br>使用（尽管可以将 token 的所有权转移给另一个线程；特别是，这允许在线程池任务中使用令牌，即使运行任务<br>的线程在中途发生变化）。</p>
+<p>所有生产者队列都以无锁链表的形式连接在一起。当显式生产者不再有元素被添加时（即其令牌被销毁），它会被<br>标记为与任何生产者都无关联，但它会保留在链表中，且其内存不会被释放；下一个新生产者会重用旧生产者的内<br>存（这样，无锁生产者列表就只能添加）。隐式生产者永远不会被销毁（直到高层队列本身被销毁），因为无法知<br>道给定线程是否已完成对数据结构的使用。需要注意的是，最坏情况下的出队速度取决于生产者队列的数量，即使<br>它们都为空。</p>
+<p>显式生产者队列和隐式生产者队列的生命周期存在根本区别：显式生产者队列的生产生命周期有限，与令牌的生命<br>周期绑定；而隐式生产者队列的生产生命周期不受限制，且与高级队列本身的生命周期相同。因此，为了最大化速<br>度和内存利用率，我们使用了两种略有不同的 SPMC 算法。通常，显式生产者队列设计得更快，占用的内存也更多<br>；而隐式生产者队列设计得更慢，但会将更多内存回收到高级队列的全局池中。为了获得最佳速度，请始终使用显<br>式令牌（除非您觉得它太不方便）。</p>
+<p>任何分配的内存只有在高级队列被销毁时才会释放（尽管存在一些重用机制）。内存分配可以预先完成，如果内存<br>不足，操作就会失败（而不是分配更多内存）。如果需要，用户可以覆盖各种默认大小参数（以及队列使用的内存<br>分配函数）。</p>
+<h2 id="Full-API-pseudocode"><a href="#Full-API-pseudocode" class="headerlink" title="Full API (pseudocode)"></a>Full API (pseudocode)</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Allocates more memory if necessary</span></span><br><span class="line">enqueue(item) : bool</span><br><span class="line">enqueue(prod_token, item) : bool</span><br><span class="line">enqueue_bulk(item_first, count) : bool</span><br><span class="line">enqueue_bulk(prod_token, item_first, count) : bool</span><br><span class="line"></span><br><span class="line"><span class="comment"># Fails if not enough memory to enqueue</span></span><br><span class="line">try_enqueue(item) : bool</span><br><span class="line">try_enqueue(prod_token, item) : bool</span><br><span class="line">try_enqueue_bulk(item_first, count) : bool</span><br><span class="line">try_enqueue_bulk(prod_token, item_first, count) : bool</span><br><span class="line"></span><br><span class="line"><span class="comment"># Attempts to dequeue from the queue (never allocates)</span></span><br><span class="line">try_dequeue(item&amp;) : bool</span><br><span class="line">try_dequeue(cons_token, item&amp;) : bool</span><br><span class="line">try_dequeue_bulk(item_first, max) : size_t</span><br><span class="line">try_dequeue_bulk(cons_token, item_first, max) : size_t</span><br><span class="line"></span><br><span class="line"><span class="comment"># If you happen to know which producer you want to dequeue from</span></span><br><span class="line">try_dequeue_from_producer(prod_token, item&amp;) : bool</span><br><span class="line">try_dequeue_bulk_from_producer(prod_token, item_first, max) : size_t</span><br><span class="line"></span><br><span class="line"><span class="comment"># A not-necessarily-accurate count of the total number of elements</span></span><br><span class="line">size_approx() : size_t</span><br></pre></td></tr></table></figure>
+
+<h2 id="Producer-Queue-SPMC-Design"><a href="#Producer-Queue-SPMC-Design" class="headerlink" title="Producer Queue (SPMC) Design"></a>Producer Queue (SPMC) Design</h2><h3 id="隐式和显式版本的共享设计"><a href="#隐式和显式版本的共享设计" class="headerlink" title="隐式和显式版本的共享设计"></a>隐式和显式版本的共享设计</h3><p>生产者队列由块组成（显式和隐式生产者队列使用相同的块对象，以实现更好的内存共享）。初始状态下，它没有<br>块。每个块可以容纳固定数量的元素（所有块的容量相同，均为 2 的幂）。此外，块包含一个标志，指示已填充<br>的槽位是否已被完全消耗（显式版本使用此标志来判断块何时为空），以及一个原子计数器，用于计数已完全出队<br>的元素数量（隐式版本使用此标志来判断块何时为空）。</p>
+<p>为了实现无锁操作，生产者队列可以被认为是一个抽象的无限数组。尾部索引指示生产者下一个可用的槽位；它同<br>时也是已入队元素数量的两倍（ <strong>入队计数 (enqueue count)</strong> ）。尾部索引仅由生产者写入，并且始终递增（除<br>非溢出并回绕，但就我们的目的而言，这种情况仍被视为“递增”）。由于只有一个线程在更新相关变量，因此生产<br>一个元素的过程非常简单。头索引指示下一个可以被消费的元素。头索引由消费者原子地递增，可能并发进行。为<br>了防止头索引达到&#x2F;超过感知到的尾部索引，我们使用了一个额外的原子计数器： <strong>出队计数 (dequeue count)</strong><br>。出队计数是乐观的，即当消费者推测有元素需要出队时，它会递增。如果出队计数在递增后的值小于入队计数（<br>尾部），则保证至少有一个元素要出队（即使考虑到并发性），并且可以安全地递增头部索引，因为知道之后它会<br>小于尾部索引。另一方面，如果出队计数在递增后超过（或等于）尾部，则出队操作失败，并且出队计数在逻辑上<br>会递减（以使其最终与入队计数保持一致）：这可以通过直接递减出队计数来实现，但是（为了增加并行性并使所<br>有相关变量单调递增），改为递增**出队过量提交计数器 (dequeue overcommit counter)**。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">出队计数的逻辑值 = 出队计数变量 - 出队过量提交值</span><br></pre></td></tr></table></figure>
+
+<p>在消费时，一旦如上所述确定了有效索引，仍然需要将其映射到一个块以及该块中的偏移量；为此会使用某种索引<br>数据结构（具体使用哪种结构取决于它是隐式队列还是显式队列）。最后，可以将元素移出，并更新某种状态，以<br>便最终知道该块何时完全消费。下文将分别在隐式和显式队列的各个部分中对这些机制进行完整描述。</p>
+<p>如前所述，尾部和头部的索引&#x2F;计数最终会溢出。这是预料之中的，并且已被考虑在内。因此，索引&#x2F;计数被视为存<br>在于一个与最大整数值大小相同的圆上（类似于 360 度的圆，其中 359 在 1 之前）。为了检查一个索引&#x2F;计数（<br>例如 a）是否位于另一个索引&#x2F;计数（例如 b）之前（即逻辑小于），我们必须确定 a 是否沿着圆上的顺时针圆弧<br>更接近 b。使用以下”环形小于”算法（32 位版本）：<code>a &lt; b</code> 变为 <code>a - b &gt; (1U &lt;&lt; 31U)</code>。<code>a &lt;= b</code> 变为<br><code>a - b - 1ULL &gt; (1ULL &lt;&lt; 31ULL)</code>。请注意，环形减法“仅适用于”普通无符号整数（假设为二进制补码）。需要<br>注意的是，尾部索引的增量不会超过头部索引（这会破坏队列）。请注意，尽管如此，从技术上讲仍然存在竞争条<br>件，即消费者（或生产者）看到的索引值过于陈旧，几乎比当前值落后一整圈（甚至更多！），从而导致队列的内<br>部状态损坏。但在实践中，这不是问题，因为遍历 2^31 个值（对于 32 位索引类型）需要一段时间，而其他核心<br>到那时会看到更新的值。实际上，许多无锁算法都基于相关的标签指针习语（tag-pointer idiom），其中前 16<br>位用于重复递增的标签，后 16 位用于指针值；这依赖于类似的假设，即一个核心不能将标签递增超过 2^15 次，<br>而其他核心却不知道。尽管如此，队列的默认索引类型是 64 位宽（如果 16 位看起来就足够了，那么理论上应该<br>可以避免任何潜在的竞争）。</p>
+<p>内存分配失败也会得到妥善处理，不会损坏队列（只会报告失败）。此外，队列元素本身在操作时也应确保不会抛<br>出异常。</p>
+<h3 id="Block-Pools"><a href="#Block-Pools" class="headerlink" title="Block Pools"></a>Block Pools</h3><p>有两种不同的块池可供使用：首先，有一个初始的预分配块数组。一旦使用完毕，该池将永远保持为空。这简化了<br>其无等待（wait-free）实现，只需一条 fetch-and-add 原子指令（用于获取空闲块的下一个索引）并进行检查（<br>以确保该索引在范围内）。其次，有一个无锁（但非无等待）的全局空闲列表（“全局”是指对高级队列而言是全局<br>的），其中包含已用完且可重复使用的块，该列表实现为一个无锁单链表：头指针最初指向空（null）。要将块添<br>加到空闲列表，需要将块的下一个指针设置为头指针，然后使用比较并交换 (CAS) 更新头指针，使其指向该块，<br>前提是头指针未发生更改；如果发生更改，则重复该过程（这是一个经典的无锁 CAS 循环设计模式）。要从空闲<br>列表中移除一个块，可以使用类似的算法：读取头部块的下一个指针，然后将头部设置为该下一个指针（使用<br>CAS），前提是在此期间头部块没有发生变化。为了避免 ABA 问题，每个块都有一个引用计数，在执行 CAS 移除<br>块之前会递增，之后会递减；如果在块的引用计数大于 0 的情况下尝试将其重新添加到空闲列表中，则会设置一<br>个标志，指示该块应该在空闲列表中，并且下一个线程在完成最后一个引用的持有后会检查此标志，并将该块添加<br>到列表中（这种方法有效，因为我们不关心顺序）。我<br>在<a target="_blank" rel="noopener" href="http://moodycamel.com/blog/2014/solving-the-aba-problem-for-lock-free-free-lists">另一篇博文</a>中更<br>详细地描述了这个无锁空闲列表的具体设计和实现。当生产者队列需要新块时，它首先检查初始块池，然后检查全<br>局空闲列表，只有当它在那里找不到空闲块时，它才会在堆上分配一个新块（如果不允许内存分配，则失败）。</p>
+<h2 id="基准测试"><a href="#基准测试" class="headerlink" title="基准测试"></a>基准测试</h2><h3 id="Ticket-System"><a href="#Ticket-System" class="headerlink" title="Ticket System"></a>Ticket System</h3><p>BlockQueue（只用分块）：使用分块内存布局，但不使用 ticket 分发机制。</p>
+<figure class="highlight cpp"><figcaption><span>TicketQueue_benchmark.cpp</span><a href="/blog/downloads/code/camel_mpmc/TicketQueue/TicketQueue_benchmark.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">constexpr</span> <span class="type">size_t</span> BLOCK_SIZE = <span class="number">64</span>;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">int</span> N = <span class="number">1&#x27;000&#x27;000</span>;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">int</span> NUM_PRODUCERS = <span class="number">8</span>;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">int</span> NUM_CONSUMERS = <span class="number">8</span>;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">int</span> ITEMS_PER_PRODUCER = N / NUM_PRODUCERS;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">Slot</span> {</span><br><span class="line">    std::atomic&lt;<span class="type">bool</span>&gt; ready;</span><br><span class="line">    <span class="type">int</span> data;</span><br><span class="line">};</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">Block</span> {</span><br><span class="line">    Slot slots[BLOCK_SIZE];</span><br><span class="line">};</span><br><span class="line"></span><br><span class="line"><span class="comment">// BlockQueue: 分块但无 ticket</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">BlockQueue</span> {</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">BlockQueue</span>() : <span class="built_in">head</span>(<span class="number">0</span>), <span class="built_in">tail</span>(<span class="number">0</span>) {</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">enqueue</span><span class="params">(<span class="type">int</span> value)</span> </span>{</span><br><span class="line">        <span class="type">size_t</span> index = head.<span class="built_in">fetch_add</span>(<span class="number">1</span>) % BLOCK_SIZE;</span><br><span class="line">        block.slots[index].data = value;</span><br><span class="line">        block.slots[index].ready.<span class="built_in">store</span>(<span class="literal">true</span>, std::memory_order_release);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">try_dequeue</span><span class="params">(<span class="type">int</span>&amp; value)</span> </span>{</span><br><span class="line">        <span class="type">size_t</span> index = tail.<span class="built_in">fetch_add</span>(<span class="number">1</span>) % BLOCK_SIZE;</span><br><span class="line">        <span class="keyword">if</span> (!block.slots[index].ready.<span class="built_in">load</span>(std::memory_order_acquire))</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        value = block.slots[index].data;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::atomic&lt;<span class="type">size_t</span>&gt; head;</span><br><span class="line">    std::atomic&lt;<span class="type">size_t</span>&gt; tail;</span><br><span class="line">    Block block;</span><br><span class="line">};</span><br></pre></td></tr></table></figure>
+
+<p>TicketQueue（分块 + ticket）：模拟 moodycamel 的 ticket 分发方式。</p>
+<figure class="highlight cpp"><figcaption><span>TicketQueue_benchmark.cpp</span><a href="/blog/downloads/code/camel_mpmc/TicketQueue/TicketQueue_benchmark.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// TicketQueue: 分块 + ticket</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TicketQueue</span> {</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">TicketQueue</span>() : <span class="built_in">head</span>(<span class="number">0</span>), <span class="built_in">tail</span>(<span class="number">0</span>) {</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">enqueue</span><span class="params">(<span class="type">int</span> value)</span> </span>{</span><br><span class="line">        <span class="type">size_t</span> ticket = head.<span class="built_in">fetch_add</span>(<span class="number">1</span>);</span><br><span class="line">        <span class="type">size_t</span> index = ticket % BLOCK_SIZE;</span><br><span class="line">        block.slots[index].data = value;</span><br><span class="line">        block.slots[index].ready.<span class="built_in">store</span>(<span class="literal">true</span>, std::memory_order_release);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">try_dequeue</span><span class="params">(<span class="type">int</span>&amp; value)</span> </span>{</span><br><span class="line">        <span class="type">size_t</span> ticket = tail.<span class="built_in">fetch_add</span>(<span class="number">1</span>);</span><br><span class="line">        <span class="type">size_t</span> index = ticket % BLOCK_SIZE;</span><br><span class="line">        <span class="keyword">while</span> (!block.slots[index].ready.<span class="built_in">load</span>(std::memory_order_acquire)) {</span><br><span class="line">            <span class="comment">// 自旋等待</span></span><br><span class="line">        }</span><br><span class="line">        value = block.slots[index].data;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::atomic&lt;<span class="type">size_t</span>&gt; head;</span><br><span class="line">    std::atomic&lt;<span class="type">size_t</span>&gt; tail;</span><br><span class="line">    Block block;</span><br><span class="line">};</span><br></pre></td></tr></table></figure>
+
+<p>Benchmark 代码：</p>
+<figure class="highlight cpp"><figcaption><span>TicketQueue_benchmark.cpp</span><a href="/blog/downloads/code/camel_mpmc/TicketQueue/TicketQueue_benchmark.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 基准测试函数</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> QueueType&gt;</span><br><span class="line"><span class="function"><span class="type">double</span> <span class="title">benchmark</span><span class="params">(<span class="type">const</span> std::string&amp; name, <span class="type">double</span>&amp; opsPerSec)</span> </span>{</span><br><span class="line">    QueueType queue;</span><br><span class="line">    std::atomic&lt;<span class="type">int</span>&gt; totalConsumed{<span class="number">0</span>};</span><br><span class="line">    std::map&lt;<span class="type">int</span>, <span class="type">double</span>&gt; threadWaitTimes;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> start = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 启动生产者线程</span></span><br><span class="line">    std::vector&lt;std::thread&gt; producers;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> p = <span class="number">0</span>; p &lt; NUM_PRODUCERS; ++p) {</span><br><span class="line">        producers.<span class="built_in">emplace_back</span>([&amp;queue, p]() {</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; ITEMS_PER_PRODUCER; ++i) {</span><br><span class="line">                queue.<span class="built_in">enqueue</span>(i + p * ITEMS_PER_PRODUCER);</span><br><span class="line">            }</span><br><span class="line">        });</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 启动消费者线程</span></span><br><span class="line">    std::vector&lt;std::thread&gt; consumers;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> c = <span class="number">0</span>; c &lt; NUM_CONSUMERS; ++c) {</span><br><span class="line">        consumers.<span class="built_in">emplace_back</span>([&amp;queue, &amp;totalConsumed, c, &amp;threadWaitTimes]() {</span><br><span class="line">            <span class="type">int</span> item;</span><br><span class="line">            <span class="keyword">auto</span> localStart = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">            <span class="keyword">while</span> (<span class="literal">true</span>) {</span><br><span class="line">                <span class="keyword">auto</span> t0 = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">                <span class="keyword">while</span> (!queue.<span class="built_in">try_dequeue</span>(item)) {</span><br><span class="line">                    <span class="comment">// busy wait</span></span><br><span class="line">                }</span><br><span class="line">                <span class="keyword">auto</span> t1 = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">                threadWaitTimes[c] +=</span><br><span class="line">                    std::chrono::<span class="built_in">duration</span>&lt;<span class="type">double</span>&gt;(t1 - t0).<span class="built_in">count</span>();</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> (++totalConsumed &gt;= N)</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">            }</span><br><span class="line">            <span class="keyword">auto</span> localEnd = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">            <span class="type">double</span> threadTime =</span><br><span class="line">                std::chrono::<span class="built_in">duration</span>&lt;<span class="type">double</span>&gt;(localEnd - localStart).<span class="built_in">count</span>();</span><br><span class="line">            std::cout &lt;&lt; <span class="string">&quot;Consumer &quot;</span> &lt;&lt; c &lt;&lt; <span class="string">&quot; finished in &quot;</span> &lt;&lt; threadTime</span><br><span class="line">                      &lt;&lt; <span class="string">&quot;s, wait time: &quot;</span> &lt;&lt; threadWaitTimes[c] &lt;&lt; <span class="string">&quot;s\n&quot;</span>;</span><br><span class="line">        });</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; t : producers)</span><br><span class="line">        t.<span class="built_in">join</span>();</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; t : consumers)</span><br><span class="line">        t.<span class="built_in">join</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> end = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">    std::chrono::duration&lt;<span class="type">double</span>&gt; elapsed = end - start;</span><br><span class="line">    opsPerSec = N / elapsed.<span class="built_in">count</span>();</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;\n&quot;</span></span><br><span class="line">              &lt;&lt; name &lt;&lt; <span class="string">&quot; completed in &quot;</span> &lt;&lt; elapsed.<span class="built_in">count</span>()</span><br><span class="line">              &lt;&lt; <span class="string">&quot;s, throughput: &quot;</span> &lt;&lt; opsPerSec &lt;&lt; <span class="string">&quot; ops/sec\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> elapsed.<span class="built_in">count</span>();</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="type">double</span> opsBlock = <span class="number">0.0</span>, opsTicket = <span class="number">0.0</span>;</span><br><span class="line">    <span class="type">double</span> timeBlock = <span class="built_in">benchmark</span>&lt;BlockQueue&gt;(<span class="string">&quot;BlockQueue&quot;</span>, opsBlock);</span><br><span class="line">    <span class="type">double</span> timeTicket = <span class="built_in">benchmark</span>&lt;TicketQueue&gt;(<span class="string">&quot;TicketQueue&quot;</span>, opsTicket);</span><br><span class="line">    <span class="type">double</span> speedup = opsTicket / opsBlock;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; std::left &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">14</span>) &lt;&lt; <span class="string">&quot;Queue Type&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">12</span>) &lt;&lt; <span class="string">&quot;Time (s)&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">20</span>) &lt;&lt; <span class="string">&quot;Throughput (ops/s)&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">10</span>) &lt;&lt; <span class="string">&quot;Speedup&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;|\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; std::<span class="built_in">string</span>(<span class="number">70</span>, <span class="string">&#x27;-&#x27;</span>) &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// BlockQueue row</span></span><br><span class="line">    std::cout &lt;&lt; std::left &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">14</span>) &lt;&lt; <span class="string">&quot;BlockQueue&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">12</span>) &lt;&lt; std::fixed &lt;&lt; std::<span class="built_in">setprecision</span>(<span class="number">6</span>)</span><br><span class="line">              &lt;&lt; timeBlock &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">20</span>) &lt;&lt; std::fixed</span><br><span class="line">              &lt;&lt; std::<span class="built_in">setprecision</span>(<span class="number">0</span>) &lt;&lt; opsBlock &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">10</span>)</span><br><span class="line">              &lt;&lt; <span class="string">&quot;1.00×&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;|\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// TicketQueue row</span></span><br><span class="line">    std::ostringstream speedupStream;</span><br><span class="line">    speedupStream &lt;&lt; std::fixed &lt;&lt; std::<span class="built_in">setprecision</span>(<span class="number">2</span>) &lt;&lt; speedup &lt;&lt; <span class="string">&quot;×&quot;</span>;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; std::left &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">14</span>) &lt;&lt; <span class="string">&quot;TicketQueue&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">12</span>) &lt;&lt; std::fixed &lt;&lt; std::<span class="built_in">setprecision</span>(<span class="number">6</span>)</span><br><span class="line">              &lt;&lt; timeTicket &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">20</span>) &lt;&lt; std::fixed</span><br><span class="line">              &lt;&lt; std::<span class="built_in">setprecision</span>(<span class="number">0</span>) &lt;&lt; opsTicket &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">10</span>)</span><br><span class="line">              &lt;&lt; speedupStream.<span class="built_in">str</span>() &lt;&lt; <span class="string">&quot;|\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/13/concurrency/SPSC-lock-free-queue/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -400,7 +591,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -516,7 +707,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
 
           
@@ -897,7 +1088,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -972,7 +1163,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1134,7 +1325,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1434,7 +1625,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2070,336 +2261,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/21/dmtcp/DMTCP%E4%B9%8B%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86jalib/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/21/dmtcp/DMTCP%E4%B9%8B%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86jalib/" class="post-title-link" itemprop="url">DMTCP 之内存管理 (jalib)</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-21 09:59:55" itemprop="dateCreated datePublished" datetime="2025-08-21T09:59:55+00:00">2025-08-21</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/DMTCP/" itemprop="url" rel="index"><span itemprop="name">DMTCP</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="源码"><a href="#源码" class="headerlink" title="源码"></a>源码</h2><p><a target="_blank" rel="noopener" href="https://github.com/dmtcp/dmtcp/tree/main/jalib">https://github.com/dmtcp/dmtcp/tree/main/jalib</a></p>
-<h2 id="malloc-的特性和局限"><a href="#malloc-的特性和局限" class="headerlink" title="malloc 的特性和局限"></a>malloc 的特性和局限</h2><p><code>malloc</code>&#x2F;<code>free</code> 是操作系统（或 C 库）提供的通用堆分配器。</p>
-<ul>
-<li>它通常会采用 “内存池 + 分块 + 空闲链表” 等技术，但它为了通用性和线程安全，设计得很复杂，开销较大。</li>
-<li>在高并发 &#x2F; 频繁小块分配释放的场景下，<code>malloc</code> 的性能和碎片控制未必理想。</li>
-</ul>
-<p><code>malloc</code> 很难让你：</p>
-<ul>
-<li>控制分配内存的位置（如 DMTCP 需要特殊内存区域）</li>
-<li>统计 &#x2F; 追踪所有分配的内存块</li>
-<li>实现定制的分配策略（如无锁、分层小块池、预扩展等）</li>
-<li>轻松调试和隔离内存问题</li>
-</ul>
-<h3 id="内存碎片"><a href="#内存碎片" class="headerlink" title="内存碎片"></a>内存碎片</h3><p>malloc 的确在其实现内部也维护着自己的 “内存池”，并且会对小块内存（small bins&#x2F;tcache&#x2F;fast bins 等）做优化和分组管理。比如在 glibc 的 malloc（ptmalloc）中，就有针对小块内存的快速分配机制。</p>
-<ol>
-<li><p>malloc 是 “通用分配器”<br>malloc 需要支持所有应用场景，包括大 &#x2F; 小 &#x2F; 奇异尺寸的分配、跨多线程、兼容各种系统调用和 ABI。<br>为了兼容性和健壮性，malloc 实现复杂，包含很多额外的元数据和检查，导致分配 &#x2F; 释放开销更大。</p>
-</li>
-<li><p>malloc 的小块管理是 “全局的”<br>malloc 管理的小块是全进程共享的，所有线程 &#x2F; 模块都会竞争同一套管理结构（如 fastbin、tcache、small bin）。<br>在高并发、频繁小块分配 &#x2F; 释放的场景下，锁竞争和同步成本变高，可能成为性能瓶颈。</p>
-</li>
-<li><p>自定义分配器（如 jalib）“更窄、更专用”<br>jalib 只服务 DMTCP 内部的特殊内存分配需求，只关注固定几种典型的小块尺寸（如 64&#x2F;256&#x2F;1024…）。<br>可以用更简单、更高效的 “无锁链表 + 内存对齐块” 来管理池，分配和释放几乎都是 O(1)的原子操作。<br>不需要兼容所有 malloc 的场景（如 realloc、跨模块释放等），所以能极致优化。</p>
-</li>
-<li><p>控制权和可观测性<br>jalib 可以完全掌控池的生命周期、分配区域、分配策略（如预扩展、定制回收），还可以追踪统计、调试。<br>malloc 的内部状态你无法直接控制或感知，也无法方便地和 DMTCP 的 checkpoint、回滚等功能集成。</p>
-</li>
-<li><p>内存碎片和确定性<br>专用分配器能保证分配块 “定长、对齐”，几乎无碎片，分配和回收都是确定性的。<br>malloc 需要兼容各种尺寸，碎片和内存抖动不可避免。</p>
-</li>
-</ol>
-<h2 id="jalib（自定义分配器）的设计动机"><a href="#jalib（自定义分配器）的设计动机" class="headerlink" title="jalib（自定义分配器）的设计动机"></a>jalib（自定义分配器）的设计动机</h2><h3 id="性能优化"><a href="#性能优化" class="headerlink" title="性能优化"></a>性能优化</h3><ul>
-<li>DMTCP 频繁地分配和释放小块内存（如元数据、临时缓存等），如果每次都用 malloc，性能损耗大。</li>
-<li>jalib 采用分级固定块池，每次分配 &#x2F; 释放只需操作链表和原子变量，比 malloc 更快、更少碎片。</li>
-</ul>
-<h3 id="线程安全的高效实现"><a href="#线程安全的高效实现" class="headerlink" title="线程安全的高效实现"></a>线程安全的高效实现</h3><ul>
-<li>jalib 用无锁（128 位 CAS）或轻量级互斥方案，适合高并发分配 &#x2F; 释放。</li>
-<li>malloc 虽然线程安全，但实现方式更重，适用范围更广，未必最优。</li>
-</ul>
-<h3 id="可控性和可追踪性"><a href="#可控性和可追踪性" class="headerlink" title="可控性和可追踪性"></a>可控性和可追踪性</h3><ul>
-<li>jalib 可以统计分配次数、追踪所有内存池区，方便调试、分析和 checkpoint 恢复。</li>
-<li>可根据实际需求预分配或批量扩展，避免运行时大规模内存抖动。</li>
-</ul>
-<h3 id="适应-DMTCP-的特殊需求"><a href="#适应-DMTCP-的特殊需求" class="headerlink" title="适应 DMTCP 的特殊需求"></a>适应 DMTCP 的特殊需求</h3><ul>
-<li>DMTCP 需要在 checkpoint&#x2F;restore 时管理所有内存区域，jalib 可以定制分配区域、分配方式，malloc 无法满足。</li>
-<li>可实现特定平台的优化，如 mmap 固定地址分配等。</li>
-</ul>
-<h3 id="故障隔离和调试"><a href="#故障隔离和调试" class="headerlink" title="故障隔离和调试"></a>故障隔离和调试</h3><ul>
-<li>jalib 可以在有 bug 或内存泄漏时，帮助定位具体的分配 &#x2F; 释放流程。</li>
-<li>可以方便地记录所有 arena 信息，甚至实现特殊的调试模式。</li>
-</ul>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>虽然 malloc 也是内存池管理，但它是为通用用途设计的，不能满足 DMTCP 这类高性能、高可控性、特殊内存管理需求场景。自定义 jalib 分配器可以更高效地管理小块内存，优化多线程性能，便于调试和适配特定需求。</p>
-<p>可以归纳为三点：</p>
-<ul>
-<li>性能更高，碎片更少</li>
-<li>更好地适应 DMTCP 的需求</li>
-<li>更易于调试和控制</li>
-</ul>
-<h2 id="jalloc-设计思路"><a href="#jalloc-设计思路" class="headerlink" title="jalloc 设计思路"></a>jalloc 设计思路</h2><h3 id="多层级固定大小块分配（层级分配器）"><a href="#多层级固定大小块分配（层级分配器）" class="headerlink" title="多层级固定大小块分配（层级分配器）"></a>多层级固定大小块分配（层级分配器）</h3><ul>
-<li>设计了 5 个分配层级（lvl1~lvl5），每层负责不同大小的定长内存块（如 64、256、1024、4096、16384 字节）。</li>
-<li>小于等于这 5 个等级的分配请求，会被分配到各自的层级。</li>
-<li>超过最大层级的请求，则直接调用 <code>_alloc_raw</code>（通常是 <code>mmap</code>）。</li>
-</ul>
-<p>优点：</p>
-<ul>
-<li>小块内存可以复用，减少系统调用和碎片。</li>
-<li>大块内存仍可直接用系统接口，兼顾通用性。</li>
-</ul>
-<h3 id="固定块分配器-JFixedAllocStack"><a href="#固定块分配器-JFixedAllocStack" class="headerlink" title="固定块分配器 JFixedAllocStack"></a>固定块分配器 JFixedAllocStack</h3><p>每个层级对应一个 <code>JFixedAllocStack&lt;N&gt;</code>，其核心是无锁栈式管理：</p>
-<ul>
-<li>内部维护一个空闲块栈（LIFO 链表）。</li>
-<li>allocate 时从栈取出一个空闲块，栈空时调用 expand 申请一批新块。</li>
-<li>deallocate 时将块归还到栈顶。</li>
-</ul>
-<p>核心技术点</p>
-<ul>
-<li><p>原子双字比较交换（128 位 CAS）</p>
-<p>为了线程安全，栈顶指针 _top 需要原子更新。这里用到了 128 位 CAS（Compare-And-Swap），保证 node 指针和计数器同时更新，避免 ABA 问题。</p>
-</li>
-<li><p>CAS 不可用时的降级方案</p>
-<p>对于不支持 128 位原子操作的平台，采用 futex+memcpy 的方式手动实现互斥和原子性。</p>
-</li>
-</ul>
-<h3 id="线程安全设计"><a href="#线程安全设计" class="headerlink" title="线程安全设计"></a>线程安全设计</h3><p>分配和释放都用原子操作保护，无需锁，性能高。<br>多线程环境下不会出现竞争条件或内存破坏。</p>
-<h3 id="Arena-记录和调试"><a href="#Arena-记录和调试" class="headerlink" title="Arena 记录和调试"></a>Arena 记录和调试</h3><p>分配的内存区域（arena）可以记录到全局数组中，方便调试和统计。<br>通过 <code>JAlloc::getAllocArenas()</code> 可获得分配区域列表。</p>
-<h3 id="全局-new-delete-重载（可选）"><a href="#全局-new-delete-重载（可选）" class="headerlink" title="全局 new&#x2F;delete 重载（可选）"></a>全局 new&#x2F;delete 重载（可选）</h3><p>如果定义了 <code>OVERRIDE_GLOBAL_ALLOCATOR</code>，会重载 <code>operator new</code> 和 <code>operator delete</code>，让全局 <code>new</code>&#x2F;<code>delete</code> 也用这个分配器。</p>
-<h3 id="灵活切换"><a href="#灵活切换" class="headerlink" title="灵活切换"></a>灵活切换</h3><p>可以通过宏 <code>JALIB_ALLOCATOR</code> 切换：</p>
-<ul>
-<li>启用时用自定义分配器</li>
-<li>否则回退为标准 malloc&#x2F;free</li>
-</ul>
-<h3 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h3><p>本内存分配器的设计核心在于：</p>
-<ul>
-<li>采用多级固定块内存池 + 无锁算法，高效服务于小块高频分配 &#x2F; 释放；</li>
-<li>通过 128 位原子操作或 futex 确保并发安全，适用多平台；</li>
-<li>提供 arena 管理和统计，方便调试与维护；</li>
-<li>兼容传统分配方式，易于集成和切换。</li>
-</ul>
-<p>这种设计非常适合像 DMTCP 这样对性能和内存管理有特殊要求的系统级软件。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/20/EDA/EAD%E4%BB%BF%E7%9C%9F%E4%B9%8BMemory/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/20/EDA/EAD%E4%BB%BF%E7%9C%9F%E4%B9%8BMemory/" class="post-title-link" itemprop="url">EDA 仿真之 Memory</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-20 22:25:49" itemprop="dateCreated datePublished" datetime="2025-08-20T22:25:49+00:00">2025-08-20</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/EDA/" itemprop="url" rel="index"><span itemprop="name">EDA</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Memory"><a href="#Memory" class="headerlink" title="Memory"></a>Memory</h2><p>Memory &#x3D; 存储 + 访问逻辑</p>
-<p>存储</p>
-<ul>
-<li>在仿真里，memory 本质上就是一个数组（Array）或者向量（Vector），每个元素对应一个存储单元（bit&#x2F;byte&#x2F;word）。</li>
-<li>例：一个 8 位 × 1024 深度的 RAM，可以在仿真里用 <code>uint8_t mem[1024];</code> 表示。</li>
-</ul>
-<p>访问逻辑</p>
-<ul>
-<li>读（Read）：根据地址返回对应的数据。</li>
-<li>写（Write）：根据地址和写使能信号，将数据写入存储单元。</li>
-<li>可能涉及 时序：同步（clock 边沿写入）或异步（立即生效）。</li>
-</ul>
-<p>时序和延迟</p>
-<ul>
-<li>在硬件里，memory 访问不是瞬间的：存在 读延迟、写延迟。</li>
-<li>仿真时，可以用 延时事件 或 clock 边沿触发 来模拟。</li>
-</ul>
-<h2 id="仿真代码"><a href="#仿真代码" class="headerlink" title="仿真代码"></a>仿真代码</h2><p>功能说明</p>
-<ul>
-<li>多端口读写：支持同时多个端口访问 memory</li>
-<li>写冲突仲裁：写优先策略或延迟写，可扩展读优先 &#x2F; 轮询</li>
-<li>读延迟 pipeline：延迟由 read_delay 控制</li>
-<li>Burst &#x2F; wrap-around：访问超出末尾自动回绕</li>
-<li>简单 Cache&#x2F;Tag：模拟命中 &#x2F; 未命中</li>
-<li>异步端口：不同端口调用 read&#x2F;write 可在不同 tick，模拟异步时钟</li>
-<li>随机 bit flip &#x2F; SEU：1% 概率错误注入</li>
-<li>统计与功耗估算基础：记录读写次数、命中数、平均延迟</li>
-</ul>
-<figure class="highlight cpp"><figcaption><span>EdaMemoryFull.cpp</span><a href="/blog/downloads/code/eda/memory/EdaMemoryFull.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;queue&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;functional&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;random&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;map&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;algorithm&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fstream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">Event</span> {</span><br><span class="line">    <span class="type">int</span> time;</span><br><span class="line">    std::function&lt;<span class="type">void</span>()&gt; action;</span><br><span class="line">    <span class="type">bool</span> <span class="keyword">operator</span>&lt;(<span class="type">const</span> Event&amp; other) <span class="type">const</span> { <span class="keyword">return</span> time &gt; other.time; }</span><br><span class="line">};</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">EdaMemoryFull</span> {</span><br><span class="line">    std::vector&lt;<span class="type">uint8_t</span>&gt; mem;</span><br><span class="line">    std::priority_queue&lt;Event&gt; event_queue;</span><br><span class="line">    <span class="type">int</span> sim_time = <span class="number">0</span>;</span><br><span class="line">    <span class="type">int</span> read_delay;</span><br><span class="line">    std::mt19937 gen;</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> cache_size;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">CacheLine</span> { <span class="type">bool</span> valid=<span class="literal">false</span>; <span class="type">int</span> tag=<span class="number">-1</span>; };</span><br><span class="line">    std::vector&lt;CacheLine&gt; cache;</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> max_bus_access_per_cycle = <span class="number">2</span>;</span><br><span class="line">    <span class="type">int</span> current_cycle_access = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 统计信息</span></span><br><span class="line">    std::map&lt;<span class="type">int</span>,<span class="type">int</span>&gt; read_count, write_count, read_hits, write_hits;</span><br><span class="line">    std::map&lt;<span class="type">int</span>,<span class="type">int</span>&gt; read_delay_total;</span><br><span class="line">    <span class="type">int</span> dynamic_power = <span class="number">0</span>; <span class="comment">// 动态功耗</span></span><br><span class="line">    <span class="type">int</span> static_power; <span class="comment">// 静态功耗</span></span><br><span class="line">    std::vector&lt;<span class="type">int</span>&gt; dynamic_power_per_cycle; <span class="comment">// 每周期动态功耗</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 动态功耗公式（单位：动态功耗单位 = 每bit切换一次算1）</span></span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="comment">// P_dyn = α * C * V^2 * f</span></span><br><span class="line">    <span class="comment">// 其中，α 开关活动因子（switching activity）</span></span><br><span class="line">    <span class="comment">//      C 负载电容</span></span><br><span class="line">    <span class="comment">//      V 电源电压</span></span><br><span class="line">    <span class="comment">//      f 时钟频率</span></span><br><span class="line">    <span class="comment">// 简化为每次 bit 改变增加一个单位动态功耗</span></span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="comment">// 静态功耗公式（单位：静态功耗单位 = 每8bit存储单元算1）</span></span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="comment">// P_static = I_leak * V * N</span></span><br><span class="line">    <span class="comment">// 简化为每8bit存储单元增加1单位静态功耗</span></span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="comment">// 总功耗</span></span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="comment">// P_total = P_dyn + P_static</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">enum</span> <span class="title class_">WritePriority</span> { WRITE_FIRST, READ_FIRST, ROUND_ROBIN } write_prio;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">EdaMemoryFull</span>(<span class="type">size_t</span> size, <span class="type">int</span> delay, <span class="type">int</span> c_size, WritePriority prio=WRITE_FIRST)</span><br><span class="line">        : <span class="built_in">mem</span>(size,<span class="number">0</span>), <span class="built_in">read_delay</span>(delay), <span class="built_in">gen</span>(std::random_device{}()), </span><br><span class="line">          <span class="built_in">cache_size</span>(c_size), <span class="built_in">cache</span>(c_size), <span class="built_in">static_power</span>(size/<span class="number">8</span>), <span class="built_in">write_prio</span>(prio)</span><br><span class="line">    {</span><br><span class="line">        std::uniform_int_distribution&lt;&gt; <span class="built_in">dis</span>(<span class="number">0</span>,<span class="number">255</span>);</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">auto</span> &amp;v: mem) v = <span class="built_in">dis</span>(gen);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">write</span><span class="params">(<span class="type">int</span> port,<span class="type">int</span> addr,<span class="type">const</span> std::vector&lt;<span class="type">uint8_t</span>&gt;&amp; data)</span></span>{</span><br><span class="line">        write_count[port]++;</span><br><span class="line">        <span class="keyword">if</span>(current_cycle_access&gt;=max_bus_access_per_cycle){</span><br><span class="line">            event_queue.<span class="built_in">push</span>({sim_time+<span class="number">1</span>,[<span class="keyword">this</span>,port,addr,data](){ <span class="built_in">write</span>(port,addr,data); }});</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        }</span><br><span class="line">        current_cycle_access++;</span><br><span class="line">        <span class="keyword">if</span>(write_prio==WRITE_FIRST){</span><br><span class="line">            <span class="built_in">apply_write</span>(addr,data);</span><br><span class="line">        } <span class="keyword">else</span> {</span><br><span class="line">            event_queue.<span class="built_in">push</span>({sim_time+<span class="number">1</span>,[<span class="keyword">this</span>,addr,data](){ <span class="built_in">apply_write</span>(addr,data); }});</span><br><span class="line">        }</span><br><span class="line">        <span class="built_in">update_cache</span>(port, addr,data,<span class="literal">true</span>);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">read</span><span class="params">(<span class="type">int</span> port,<span class="type">int</span> addr,<span class="type">size_t</span> length,std::function&lt;<span class="type">void</span>(std::vector&lt;<span class="type">uint8_t</span>&gt;)&gt; callback)</span></span>{</span><br><span class="line">        read_count[port]++;</span><br><span class="line">        <span class="keyword">if</span>(current_cycle_access&gt;=max_bus_access_per_cycle){</span><br><span class="line">            event_queue.<span class="built_in">push</span>({sim_time+<span class="number">1</span>,[<span class="keyword">this</span>,port,addr,length,callback](){ <span class="built_in">read</span>(port,addr,length,callback); }});</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        }</span><br><span class="line">        current_cycle_access++;</span><br><span class="line">        <span class="type">int</span> trigger_time = sim_time+read_delay;</span><br><span class="line">        <span class="type">bool</span> hit = <span class="built_in">check_cache</span>(port, addr,length);</span><br><span class="line">        <span class="keyword">if</span>(hit) read_hits[port]++;</span><br><span class="line">        event_queue.<span class="built_in">push</span>({trigger_time,[<span class="keyword">this</span>,addr,length,callback,port,trigger_time]() {</span><br><span class="line">            std::vector&lt;<span class="type">uint8_t</span>&gt; data;</span><br><span class="line">            <span class="keyword">for</span>(<span class="type">size_t</span> i=<span class="number">0</span>;i&lt;length;i++){</span><br><span class="line">                <span class="type">uint8_t</span> val = mem[(addr+i)%mem.<span class="built_in">size</span>()];</span><br><span class="line">                <span class="keyword">if</span>(<span class="built_in">random_bit_flip</span>()) val ^= (<span class="number">1</span>&lt;&lt;(<span class="built_in">gen</span>()%<span class="number">8</span>));</span><br><span class="line">                dynamic_power += <span class="built_in">count_bit_changes</span>(val, mem[(addr+i)%mem.<span class="built_in">size</span>()]);</span><br><span class="line">                data.<span class="built_in">push_back</span>(val);</span><br><span class="line">            }</span><br><span class="line">            read_delay_total[port] += (trigger_time - sim_time);</span><br><span class="line">            <span class="built_in">callback</span>(data);</span><br><span class="line">        }});</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">tick</span><span class="params">()</span></span>{</span><br><span class="line">        sim_time++;</span><br><span class="line">        current_cycle_access = <span class="number">0</span>;</span><br><span class="line">        <span class="type">int</span> cycle_dyn_power = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">while</span>(!event_queue.<span class="built_in">empty</span>() &amp;&amp; event_queue.<span class="built_in">top</span>().time &lt;= sim_time){</span><br><span class="line">            <span class="keyword">auto</span> e = event_queue.<span class="built_in">top</span>(); event_queue.<span class="built_in">pop</span>();</span><br><span class="line">            <span class="type">int</span> before = dynamic_power;</span><br><span class="line">            e.<span class="built_in">action</span>();</span><br><span class="line">            cycle_dyn_power += (dynamic_power - before);</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        dynamic_power_per_cycle.<span class="built_in">push_back</span>(cycle_dyn_power);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// ASCII 可视化每周期动态功耗</span></span><br><span class="line">        <span class="type">int</span> scale = <span class="number">50</span>;</span><br><span class="line">        <span class="type">int</span> bar_len = *std::<span class="built_in">max_element</span>(dynamic_power_per_cycle.<span class="built_in">begin</span>(), dynamic_power_per_cycle.<span class="built_in">end</span>())&gt;<span class="number">0</span> ?</span><br><span class="line">                      cycle_dyn_power*scale/(*std::<span class="built_in">max_element</span>(dynamic_power_per_cycle.<span class="built_in">begin</span>(), dynamic_power_per_cycle.<span class="built_in">end</span>())) : <span class="number">0</span>;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Cycle &quot;</span> &lt;&lt; sim_time &lt;&lt; <span class="string">&quot; dyn power: &quot;</span> &lt;&lt; cycle_dyn_power</span><br><span class="line">                  &lt;&lt; <span class="string">&quot; total power: &quot;</span> &lt;&lt; dynamic_power + static_power &lt;&lt; <span class="string">&quot; &quot;</span>;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;bar_len;i++) std::cout&lt;&lt;<span class="string">&quot;#&quot;</span>;</span><br><span class="line">        std::cout &lt;&lt; std::endl;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">print_stats</span><span class="params">()</span> <span class="type">const</span> </span>{</span><br><span class="line">        std::cout&lt;&lt;<span class="string">&quot;Simulation stats:\n&quot;</span>;</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">auto</span>&amp; [port,cnt]: read_count)</span><br><span class="line">            std::cout&lt;&lt;<span class="string">&quot;Port &quot;</span>&lt;&lt;port&lt;&lt;<span class="string">&quot; read count: &quot;</span>&lt;&lt;cnt</span><br><span class="line">                     &lt;&lt;<span class="string">&quot;, hits: &quot;</span>&lt;&lt;read_hits.<span class="built_in">at</span>(port)</span><br><span class="line">                     &lt;&lt;<span class="string">&quot;, avg delay: &quot;</span>&lt;&lt;(cnt?read_delay_total.<span class="built_in">at</span>(port)/cnt:<span class="number">0</span>)&lt;&lt;<span class="string">&quot;\n&quot;</span>;</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">auto</span>&amp; [port,cnt]: write_count)</span><br><span class="line">            std::cout&lt;&lt;<span class="string">&quot;Port &quot;</span>&lt;&lt;port&lt;&lt;<span class="string">&quot; write count: &quot;</span>&lt;&lt;cnt</span><br><span class="line">                     &lt;&lt;<span class="string">&quot;, hits: &quot;</span>&lt;&lt;write_hits.<span class="built_in">at</span>(port)&lt;&lt;<span class="string">&quot;\n&quot;</span>;</span><br><span class="line">        std::cout&lt;&lt;<span class="string">&quot;Dynamic power units: &quot;</span>&lt;&lt;dynamic_power&lt;&lt;<span class="string">&quot;\n&quot;</span>;</span><br><span class="line">        std::cout&lt;&lt;<span class="string">&quot;Static power units: &quot;</span>&lt;&lt;static_power&lt;&lt;<span class="string">&quot;\n&quot;</span>;</span><br><span class="line">        std::cout&lt;&lt;<span class="string">&quot;Total power units: &quot;</span>&lt;&lt;dynamic_power + static_power&lt;&lt;<span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">export_power_csv</span><span class="params">(<span class="type">const</span> std::string &amp;filename)</span> <span class="type">const</span> </span>{</span><br><span class="line">        <span class="function">std::ofstream <span class="title">ofs</span><span class="params">(filename)</span></span>;</span><br><span class="line">        <span class="keyword">if</span>(!ofs.<span class="built_in">is_open</span>()) {</span><br><span class="line">            std::cerr &lt;&lt; <span class="string">&quot;Failed to open file: &quot;</span> &lt;&lt; filename &lt;&lt; std::endl;</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        }</span><br><span class="line">        ofs &lt;&lt; <span class="string">&quot;Cycle,DynamicPower,StaticPower,TotalPower\n&quot;</span>;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">size_t</span> i=<span class="number">0</span>;i&lt;dynamic_power_per_cycle.<span class="built_in">size</span>();i++){</span><br><span class="line">            <span class="type">int</span> dyn = dynamic_power_per_cycle[i];</span><br><span class="line">            <span class="type">int</span> total = dyn + static_power;</span><br><span class="line">            ofs &lt;&lt; (i+<span class="number">1</span>) &lt;&lt; <span class="string">&quot;,&quot;</span> &lt;&lt; dyn &lt;&lt; <span class="string">&quot;,&quot;</span> &lt;&lt; static_power &lt;&lt; <span class="string">&quot;,&quot;</span> &lt;&lt; total &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">        }</span><br><span class="line">        ofs.<span class="built_in">close</span>();</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Power data exported to &quot;</span> &lt;&lt; filename &lt;&lt; std::endl;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">random_bit_flip</span><span class="params">()</span></span>{</span><br><span class="line">        std::uniform_real_distribution&lt;&gt; <span class="built_in">dis</span>(<span class="number">0.0</span>,<span class="number">1.0</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">dis</span>(gen)&lt;<span class="number">0.01</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">count_bit_changes</span><span class="params">(<span class="type">uint8_t</span> a,<span class="type">uint8_t</span> b)</span></span>{</span><br><span class="line">        <span class="type">uint8_t</span> diff = a^b;</span><br><span class="line">        <span class="type">int</span> count=<span class="number">0</span>;</span><br><span class="line">        <span class="keyword">while</span>(diff){ count+=diff&amp;<span class="number">1</span>; diff&gt;&gt;=<span class="number">1</span>; }</span><br><span class="line">        <span class="keyword">return</span> count;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">check_cache</span><span class="params">(<span class="type">int</span> port, <span class="type">int</span> addr,<span class="type">size_t</span> length)</span></span>{</span><br><span class="line">        <span class="type">int</span> line = addr % cache_size;</span><br><span class="line">        <span class="type">int</span> tag = addr / cache_size;</span><br><span class="line">        <span class="keyword">return</span> cache[line].valid &amp;&amp; cache[line].tag==tag;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">update_cache</span><span class="params">(<span class="type">int</span> port, <span class="type">int</span> addr,<span class="type">const</span> std::vector&lt;<span class="type">uint8_t</span>&gt;&amp; data,<span class="type">bool</span> write=<span class="literal">false</span>)</span></span>{</span><br><span class="line">        <span class="type">int</span> line = addr % cache_size;</span><br><span class="line">        <span class="type">int</span> tag = addr / cache_size;</span><br><span class="line">        cache[line].valid=<span class="literal">true</span>;</span><br><span class="line">        cache[line].tag=tag;</span><br><span class="line">        <span class="keyword">if</span>(write) write_hits[port]++;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">apply_write</span><span class="params">(<span class="type">int</span> addr,<span class="type">const</span> std::vector&lt;<span class="type">uint8_t</span>&gt;&amp; data)</span></span>{</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">size_t</span> i=<span class="number">0</span>;i&lt;data.<span class="built_in">size</span>();i++) mem[(addr+i)%mem.<span class="built_in">size</span>()]=data[i];</span><br><span class="line">    }</span><br><span class="line">};</span><br><span class="line"></span><br><span class="line"><span class="comment">// 示例主程序</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>{</span><br><span class="line">    <span class="function">EdaMemoryFull <span class="title">mem</span><span class="params">(<span class="number">1024</span>,<span class="number">2</span>,<span class="number">16</span>,EdaMemoryFull::WRITE_FIRST)</span></span>;</span><br><span class="line"></span><br><span class="line">    mem.<span class="built_in">write</span>(<span class="number">0</span>,<span class="number">10</span>,{<span class="number">42</span>,<span class="number">43</span>,<span class="number">44</span>});</span><br><span class="line">    mem.<span class="built_in">write</span>(<span class="number">1</span>,<span class="number">11</span>,{<span class="number">99</span>});</span><br><span class="line">    mem.<span class="built_in">read</span>(<span class="number">0</span>,<span class="number">10</span>,<span class="number">3</span>,[](std::vector&lt;<span class="type">uint8_t</span>&gt; data){</span><br><span class="line">        std::cout&lt;&lt;<span class="string">&quot;Port0 read burst: &quot;</span>;</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">auto</span> v:data) std::cout&lt;&lt;(<span class="type">int</span>)v&lt;&lt;<span class="string">&quot; &quot;</span>;</span><br><span class="line">        std::cout&lt;&lt;std::endl;</span><br><span class="line">    });</span><br><span class="line">    mem.<span class="built_in">read</span>(<span class="number">1</span>,<span class="number">11</span>,<span class="number">1</span>,[](std::vector&lt;<span class="type">uint8_t</span>&gt; data){</span><br><span class="line">        std::cout&lt;&lt;<span class="string">&quot;Port1 read: &quot;</span>&lt;&lt;(<span class="type">int</span>)data[<span class="number">0</span>]&lt;&lt;std::endl;</span><br><span class="line">    });</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">10</span>;i++) mem.<span class="built_in">tick</span>();</span><br><span class="line">    <span class="comment">// 导出功耗数据</span></span><br><span class="line">    mem.<span class="built_in">export_power_csv</span>(<span class="string">&quot;memory_power.csv&quot;</span>);</span><br><span class="line"></span><br><span class="line">    mem.<span class="built_in">print_stats</span>();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-<p>输出的 memory_power.csv 文件内容示例：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Cycle,DynamicPower,StaticPower,TotalPower</span><br><span class="line">1,3,128,131</span><br><span class="line">2,0,128,128</span><br><span class="line">3,5,128,133</span><br><span class="line">4,2,128,130</span><br><span class="line">5,7,128,135</span><br><span class="line">6,1,128,129</span><br><span class="line">7,4,128,132</span><br><span class="line">8,0,128,128</span><br><span class="line">9,2,128,130</span><br><span class="line">10,3,128,131</span><br></pre></td></tr></table></figure>
-
-<p>每列含义：</p>
-<ul>
-<li>Cycle：周期号</li>
-<li>DynamicPower：每周期动态功耗单位</li>
-<li>StaticPower：静态功耗单位（固定）</li>
-<li>TotalPower：总功耗单位</li>
-</ul>
-<p>功耗分析</p>
-<figure class="highlight python"><figcaption><span>report_power.py</span><a href="/blog/downloads/code/eda/memory/report_power.py">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"></span><br><span class="line"><span class="comment"># 读取 CSV</span></span><br><span class="line">df = pd.read_csv(<span class="string">&#x27;memory_power.csv&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 找到动态功耗峰值周期</span></span><br><span class="line">peak_cycle = df[<span class="string">&#x27;DynamicPower&#x27;</span>].idxmax() + <span class="number">1</span></span><br><span class="line">peak_value = df[<span class="string">&#x27;DynamicPower&#x27;</span>].<span class="built_in">max</span>()</span><br><span class="line"></span><br><span class="line">plt.figure(figsize=(<span class="number">12</span>,<span class="number">6</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment"># 绘制条形背景（ASCII风格效果）</span></span><br><span class="line"><span class="keyword">for</span> i, val <span class="keyword">in</span> <span class="built_in">enumerate</span>(df[<span class="string">&#x27;DynamicPower&#x27;</span>]):</span><br><span class="line">    bar_len = <span class="built_in">int</span>(val / peak_value * <span class="number">50</span>)  <span class="comment"># 50字符最大长度</span></span><br><span class="line">    plt.text(i+<span class="number">1</span>, <span class="number">0</span>, <span class="string">&#x27;#&#x27;</span> * bar_len, fontsize=<span class="number">8</span>, color=<span class="string">&#x27;grey&#x27;</span>, va=<span class="string">&#x27;bottom&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 绘制曲线</span></span><br><span class="line">plt.plot(df[<span class="string">&#x27;Cycle&#x27;</span>], df[<span class="string">&#x27;DynamicPower&#x27;</span>], label=<span class="string">&#x27;Dynamic Power&#x27;</span>, marker=<span class="string">&#x27;o&#x27;</span>, color=<span class="string">&#x27;blue&#x27;</span>)</span><br><span class="line">plt.plot(df[<span class="string">&#x27;Cycle&#x27;</span>], df[<span class="string">&#x27;StaticPower&#x27;</span>], label=<span class="string">&#x27;Static Power&#x27;</span>, linestyle=<span class="string">&#x27;--&#x27;</span>, color=<span class="string">&#x27;orange&#x27;</span>)</span><br><span class="line">plt.plot(df[<span class="string">&#x27;Cycle&#x27;</span>], df[<span class="string">&#x27;TotalPower&#x27;</span>], label=<span class="string">&#x27;Total Power&#x27;</span>, linestyle=<span class="string">&#x27;-.&#x27;</span>, color=<span class="string">&#x27;green&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 高亮峰值</span></span><br><span class="line">plt.scatter(peak_cycle, peak_value, color=<span class="string">&#x27;red&#x27;</span>, s=<span class="number">100</span>, label=<span class="string">&#x27;Peak Dynamic Power&#x27;</span>)</span><br><span class="line"></span><br><span class="line">plt.title(<span class="string">&#x27;Memory Power Simulation with Peak Highlight &amp; ASCII-style Bars&#x27;</span>)</span><br><span class="line">plt.xlabel(<span class="string">&#x27;Cycle&#x27;</span>)</span><br><span class="line">plt.ylabel(<span class="string">&#x27;Power Units&#x27;</span>)</span><br><span class="line">plt.grid(<span class="literal">True</span>, linestyle=<span class="string">&#x27;:&#x27;</span>)</span><br><span class="line">plt.legend()</span><br><span class="line">plt.tight_layout()</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
-
-<h3 id="burst-multi-port-总线冲突"><a href="#burst-multi-port-总线冲突" class="headerlink" title="burst&#x2F;multi-port 总线冲突"></a>burst&#x2F;multi-port 总线冲突</h3><p>在多端口系统中，尤其是在使用总线结构的系统中，总线冲突（Bus contention）是一个常见的问题。总线冲突通常发生在多个设备尝试同时访问总线上的同一资源时。这种情况可能会导致数据损坏、系统性能下降或甚至系统崩溃。下面是一些解决和缓解总线冲突的策略：</p>
-<ol>
-<li>仲裁机制<br>仲裁是解决总线冲突的一种常用方法。它通过一个仲裁器（Arbiter）来决定哪个设备可以访问总线。常见的仲裁策略有：</li>
-</ol>
-<p>优先级仲裁：根据预先设定的优先级顺序决定哪个设备可以访问总线。</p>
-<p>轮询仲裁：轮流让每个设备访问总线。</p>
-<p>基于请求的仲裁（如请求共享（Request-for-Shared, RFS）和请求独占（Request-for-Exclusive, RFE））：设备首先请求对资源的访问，然后根据请求的类型（共享或独占）来决定访问权限。</p>
-<ol start="2">
-<li><p>分时复用<br>通过时间分割（Time Division Multiplexing, TDM）或频率分割（Frequency Division Multiplexing, FDM），可以允许多个设备在不同的时间或频率上使用总线，从而减少冲突。例如，可以使用时分多路复用将总线的不同时间段分配给不同的设备。</p>
-</li>
-<li><p>编码和解码技术<br>使用特殊的编码和解码技术，如霍纳编码（Hornar code）或格雷码（Gray code），可以减少在总线上传输数据时的错误，并帮助检测和纠正数据冲突。</p>
-</li>
-<li><p>总线锁定<br>在访问总线期间，通过总线锁定机制确保没有其他设备可以访问总线。这可以通过在总线上设置一个锁定信号来实现，该信号在访问期间保持激活状态。</p>
-</li>
-<li><p>缓存和缓冲<br>为每个设备提供局部缓存或缓冲机制，可以减少对总线的直接访问次数，从而降低冲突的可能性。当一个设备需要与总线上的另一个设备通信时，它可以先将数据写入自己的缓存，然后再由缓存同步到总线上。</p>
-</li>
-<li><p>使用更宽的总线<br>增加总线的宽度可以允许在同一时间内传输更多的数据，从而减少对总线的需求，降低冲突的可能性。</p>
-</li>
-</ol>
-<p>实施步骤<br>评估系统需求：确定哪些类型的设备将使用总线，以及它们对带宽的需求。</p>
-<p>选择仲裁策略：根据设备的优先级和带宽需求选择合适的仲裁策略。</p>
-<p>设计硬件：根据选定的策略设计硬件，包括添加仲裁器、缓存和适当的控制逻辑。</p>
-<p>测试和优化：实施后进行系统测试，根据测试结果调整策略或硬件设计。</p>
-<p>通过上述方法，可以有效管理和减少多端口系统中的总线冲突问题，提高系统的稳定性和性能。</p>
-<h3 id="Cache-Tag（缓存标记）"><a href="#Cache-Tag（缓存标记）" class="headerlink" title="Cache Tag（缓存标记）"></a>Cache Tag（缓存标记）</h3><p>Cache Tag（缓存标记）是高速缓存（Cache）中的关键组成部分，用于存储数据在主存中的地址信息，以便快速定位数据位置。 ‌</p>
-<p>核心功能<br>Tag字段存储了主存中数据的地址信息，当CPU访问主存时，首先通过Tag字段判断数据是否存在于Cache中。若存在，则直接从Cache读取；若不存在，则访问主存。 ‌</p>
-<p>结构组成</p>
-<ul>
-<li>‌Tag‌：记录数据在主存的地址信息。</li>
-<li>‌Data‌：存储实际数据。</li>
-<li>‌Valid Bit‌：标记数据是否有效。</li>
-<li>‌Dir‌：目录信息，用于区分不同数据块。 ‌</li>
-</ul>
-<p>应用场景</p>
-<p>现代处理器通常采用多级Cache结构（如L1、L2、L3），其中Tag与Data共同构成Cache Line，用于快速访问和存储数据。例如，ARMv8-A架构的处理器包含独立的I-Cache和D-Cache，分别存储指令和数据。</p>
-<p>Cache Tag 仿真代码</p>
-<blockquote>
-<p>FIXME: 该代码会 coredump 。</p>
-</blockquote>
-<figure class="highlight cpp"><figcaption><span>cache_simulator.h</span><a href="/blog/downloads/code/eda/memory/cache/cache_simulator.h">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">ifndef</span> CACHE_SIMULATOR_H</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CACHE_SIMULATOR_H</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unordered_map&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;mutex&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 缓存行结构体</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">CacheLine</span> {</span><br><span class="line">    <span class="type">bool</span> valid = <span class="literal">false</span>;</span><br><span class="line">    <span class="type">bool</span> dirty = <span class="literal">false</span>;</span><br><span class="line">    <span class="type">uint32_t</span> tag = <span class="number">0</span>;</span><br><span class="line">    <span class="type">uint64_t</span> last_used = <span class="number">0</span>; <span class="comment">// 用于LRU替换策略</span></span><br><span class="line">    std::vector&lt;<span class="type">uint8_t</span>&gt; data;</span><br><span class="line">};</span><br><span class="line"></span><br><span class="line"><span class="comment">// 端口访问请求结构体</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">PortRequest</span> {</span><br><span class="line">    <span class="type">uint32_t</span> port_id;</span><br><span class="line">    <span class="type">bool</span> is_write;</span><br><span class="line">    <span class="type">uint32_t</span> addr;</span><br><span class="line">    <span class="type">uint8_t</span>* data_ptr;</span><br><span class="line">    <span class="type">size_t</span> data_size;</span><br><span class="line">};</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">CacheSimulator</span> {</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">CacheSimulator</span>(<span class="type">uint32_t</span> line_size, <span class="type">uint32_t</span> num_lines, <span class="type">uint32_t</span> num_ports);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 多端口访问接口</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">process_request</span><span class="params">(<span class="type">const</span> PortRequest&amp; req)</span></span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 缓存配置</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">set_write_policy</span><span class="params">(<span class="type">bool</span> write_back)</span></span>; </span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">set_replacement_policy</span><span class="params">(<span class="type">int</span> policy)</span></span>; <span class="comment">// 0:LRU, 1:FIFO, 2:Random</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="comment">// 内部缓存操作</span></span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">access_cache</span><span class="params">(<span class="type">uint32_t</span> port_id, <span class="type">uint32_t</span> addr, <span class="type">bool</span> is_write, <span class="type">uint8_t</span>* data, <span class="type">size_t</span> size)</span></span>;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">handle_miss</span><span class="params">(<span class="type">uint32_t</span> port_id, <span class="type">uint32_t</span> addr)</span></span>;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">evict_line</span><span class="params">(<span class="type">uint32_t</span> set_idx, <span class="type">uint32_t</span> way_idx)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 多端口同步</span></span><br><span class="line">    std::atomic&lt;<span class="type">uint64_t</span>&gt; global_counter_{<span class="number">0</span>}; <span class="comment">// 原子计数器</span></span><br><span class="line">    std::vector&lt;std::mutex&gt; port_locks_;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 缓存结构</span></span><br><span class="line">    <span class="type">uint32_t</span> line_size_;</span><br><span class="line">    <span class="type">uint32_t</span> num_sets_;</span><br><span class="line">    std::vector&lt;std::vector&lt;CacheLine&gt;&gt; cache_;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 策略配置</span></span><br><span class="line">    <span class="type">bool</span> write_back_;</span><br><span class="line">    <span class="type">int</span> replacement_policy_;</span><br><span class="line">};</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
-
-<figure class="highlight cpp"><figcaption><span>cache_simulator.cpp</span><a href="/blog/downloads/code/eda/memory/cache/cache_simulator.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;cache_simulator.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;algorithm&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;random&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstring&gt;</span></span></span><br><span class="line"></span><br><span class="line">CacheSimulator::<span class="built_in">CacheSimulator</span>(<span class="type">uint32_t</span> line_size, <span class="type">uint32_t</span> num_lines, <span class="type">uint32_t</span> num_ports) </span><br><span class="line">    : <span class="built_in">port_locks_</span>(num_ports), <span class="built_in">line_size_</span>(line_size) {</span><br><span class="line">    num_sets_ = num_lines; <span class="comment">// 简单实现，可扩展为组相联</span></span><br><span class="line">    cache_.<span class="built_in">resize</span>(num_sets_, std::<span class="built_in">vector</span>&lt;CacheLine&gt;(<span class="number">1</span>)); <span class="comment">// 直接映射</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">CacheSimulator::process_request</span><span class="params">(<span class="type">const</span> PortRequest&amp; req)</span> </span>{</span><br><span class="line">    <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(port_locks_[req.port_id])</span></span>;</span><br><span class="line">    <span class="built_in">access_cache</span>(req.port_id, req.addr, req.is_write, req.data_ptr, req.data_size);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">CacheSimulator::access_cache</span><span class="params">(<span class="type">uint32_t</span> port_id, <span class="type">uint32_t</span> addr, <span class="type">bool</span> is_write, </span></span></span><br><span class="line"><span class="params"><span class="function">                                <span class="type">uint8_t</span>* data, <span class="type">size_t</span> size)</span> </span>{</span><br><span class="line">    <span class="type">uint32_t</span> tag = addr / line_size_;</span><br><span class="line">    <span class="type">uint32_t</span> set_idx = tag % num_sets_;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 查找命中</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; line : cache_[set_idx]) {</span><br><span class="line">        <span class="keyword">if</span> (line.valid &amp;&amp; line.tag == tag) {</span><br><span class="line">            line.last_used = ++global_counter_;</span><br><span class="line">            <span class="keyword">if</span> (is_write) {</span><br><span class="line">                <span class="built_in">memcpy</span>(line.data.<span class="built_in">data</span>(), data, size);</span><br><span class="line">                line.dirty = <span class="literal">true</span>;</span><br><span class="line">            } <span class="keyword">else</span> {</span><br><span class="line">                <span class="built_in">memcpy</span>(data, line.data.<span class="built_in">data</span>(), size);</span><br><span class="line">            }</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 未命中处理</span></span><br><span class="line">    <span class="built_in">handle_miss</span>(port_id, addr);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">CacheSimulator::handle_miss</span><span class="params">(<span class="type">uint32_t</span> port_id, <span class="type">uint32_t</span> addr)</span> </span>{</span><br><span class="line">    <span class="type">uint32_t</span> tag = addr / line_size_;</span><br><span class="line">    <span class="type">uint32_t</span> set_idx = tag % num_sets_;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 查找可替换行</span></span><br><span class="line">    <span class="keyword">auto</span>&amp; lines = cache_[set_idx];</span><br><span class="line">    <span class="keyword">auto</span> victim = std::<span class="built_in">min_element</span>(lines.<span class="built_in">begin</span>(), lines.<span class="built_in">end</span>(),</span><br><span class="line">        [](<span class="type">const</span> CacheLine&amp; a, <span class="type">const</span> CacheLine&amp; b) {</span><br><span class="line">            <span class="keyword">return</span> a.last_used &lt; b.last_used; <span class="comment">// LRU策略</span></span><br><span class="line">        });</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 写回脏数据</span></span><br><span class="line">    <span class="keyword">if</span> (write_back_ &amp;&amp; victim-&gt;dirty) {</span><br><span class="line">        <span class="comment">// 模拟写回主存操作</span></span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 加载新数据</span></span><br><span class="line">    victim-&gt;valid = <span class="literal">true</span>;</span><br><span class="line">    victim-&gt;tag = tag;</span><br><span class="line">    victim-&gt;dirty = <span class="literal">false</span>;</span><br><span class="line">    victim-&gt;last_used = ++global_counter_;</span><br><span class="line">    <span class="comment">// 模拟从主存加载数据</span></span><br><span class="line">    victim-&gt;data.<span class="built_in">resize</span>(line_size_);</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight cpp"><figcaption><span>main.cpp</span><a href="/blog/downloads/code/eda/memory/cache/main.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;cache_simulator.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">port_thread</span><span class="params">(CacheSimulator&amp; cache, <span class="type">uint32_t</span> port_id)</span> </span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000</span>; ++i) {</span><br><span class="line">        PortRequest req;</span><br><span class="line">        req.port_id = port_id;</span><br><span class="line">        req.is_write = (i % <span class="number">3</span> == <span class="number">0</span>);</span><br><span class="line">        req.addr = <span class="built_in">rand</span>() % <span class="number">0xFFFF</span>;</span><br><span class="line">        <span class="type">uint8_t</span> data[<span class="number">64</span>] = {<span class="number">0</span>};</span><br><span class="line">        req.data_ptr = data;</span><br><span class="line">        req.data_size = <span class="built_in">sizeof</span>(data);</span><br><span class="line">        </span><br><span class="line">        cache.<span class="built_in">process_request</span>(req);</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="function">CacheSimulator <span class="title">cache</span><span class="params">(<span class="number">64</span>, <span class="number">1024</span>, <span class="number">4</span>)</span></span>; <span class="comment">// 64B行, 1024行, 4端口</span></span><br><span class="line">    </span><br><span class="line">    std::vector&lt;std::thread&gt; threads;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">4</span>; ++i) {</span><br><span class="line">        threads.<span class="built_in">emplace_back</span>(port_thread, std::<span class="built_in">ref</span>(cache), i);</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; t : threads) {</span><br><span class="line">        t.<span class="built_in">join</span>();</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Cache simulation completed&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight cpp"><figcaption><span>Makefile</span><a href="/blog/downloads/code/eda/memory/cache/Makefile">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"># 编译器配置</span><br><span class="line">CXX := g++</span><br><span class="line">CXXFLAGS := -std=c++<span class="number">17</span> -Wall -Wextra -O3 -pthread</span><br><span class="line">LDFLAGS := -pthread</span><br><span class="line"></span><br><span class="line"># 项目结构</span><br><span class="line">SRC_DIR := .</span><br><span class="line">BUILD_DIR := build</span><br><span class="line">TARGET := $(BUILD_DIR)/cache_simulator</span><br><span class="line"></span><br><span class="line"># 源文件列表</span><br><span class="line">SRCS := $(wildcard $(SRC_DIR)<span class="comment">/*.cpp)</span></span><br><span class="line"><span class="comment">OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRCS))</span></span><br><span class="line"><span class="comment">DEPS := $(OBJS:.o=.d)</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># 默认目标</span></span><br><span class="line"><span class="comment">all: $(BUILD_DIR) $(TARGET)</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># 创建构建目录</span></span><br><span class="line"><span class="comment">$(BUILD_DIR):</span></span><br><span class="line"><span class="comment">	mkdir -p $(BUILD_DIR)</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># 主目标链接</span></span><br><span class="line"><span class="comment">$(TARGET): $(OBJS)</span></span><br><span class="line"><span class="comment">	$(CXX) $(LDFLAGS) $^ -o $@</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># 编译规则</span></span><br><span class="line"><span class="comment">$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp</span></span><br><span class="line"><span class="comment">	$(CXX) $(CXXFLAGS) -MMD -c $&lt; -o $@</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># 包含依赖关系</span></span><br><span class="line"><span class="comment">-include $(DEPS)</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># 清理</span></span><br><span class="line"><span class="comment">clean:</span></span><br><span class="line"><span class="comment">	rm -rf $(BUILD_DIR)</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">.PHONY: all clean</span></span><br></pre></td></tr></table></figure>
-
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2471,7 +2332,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">101</span>
+          <span class="site-state-item-count">103</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

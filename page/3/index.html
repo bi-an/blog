@@ -193,6 +193,574 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/16/net/%E9%AB%98%E6%95%88IO/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/16/net/%E9%AB%98%E6%95%88IO/" class="post-title-link" itemprop="url">高效 IO</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-08-16 23:40:06" itemprop="dateCreated datePublished" datetime="2025-08-16T23:40:06+00:00">2025-08-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="高效的-IO-函数"><a href="#高效的-IO-函数" class="headerlink" title="高效的 IO 函数"></a>高效的 IO 函数</h2><ul>
+<li>sendfile</li>
+<li>mmap + write</li>
+<li>splice</li>
+<li>readv</li>
+</ul>
+<h3 id="零拷贝-Zero-copy"><a href="#零拷贝-Zero-copy" class="headerlink" title="零拷贝 (Zero copy)"></a>零拷贝 (Zero copy)</h3><h4 id="文件到网络（最常见）"><a href="#文件到网络（最常见）" class="headerlink" title="文件到网络（最常见）"></a>文件到网络（最常见）</h4><ul>
+<li>sendfile(2)：一次系统调用把文件页直接从内核页缓存写到 socket（常用于 HTTP 文件静态服务）。<ul>
+<li>sendfile 通常能做到真正内核态零拷贝（文件页直接 DMA 到 NIC），但受限于协议（例如 SSL&#x2F;TLS 会破坏）。</li>
+<li>输入必须是普通文件（regular file），支持 O_RDONLY 的磁盘文件或内核页缓存。</li>
+<li>不支持：管道、socket、设备文件（大多数特殊设备）、字符设备。</li>
+</ul>
+</li>
+<li>splice(2) + vmsplice(2)：把数据在文件&#x2F;pipe&#x2F;socket 之间在内核内移动，避免用户态拷贝。可以做“文件 -&gt; pipe -&gt; socket”的零拷贝链路。<ul>
+<li>splice 输入&#x2F;输出都可以是 pipe, socket, file（部分限制）。</li>
+</ul>
+</li>
+<li>mmap + writev：把文件映射到用户地址空间（避免 read 系列复制），但仍会发生从用户到内核的复制（写时）。适合随机访问、共享映射场景。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>sendfile</th>
+<th>splice</th>
+<th>vmsplice</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>零拷贝</td>
+<td>✅（文件 → socket）</td>
+<td>✅（文件&#x2F;pipe&#x2F;socket → 文件&#x2F;pipe&#x2F;socket）</td>
+<td>✅（用户页 → pipe）</td>
+</tr>
+<tr>
+<td>输入源</td>
+<td>文件</td>
+<td>文件 &#x2F; pipe &#x2F; socket</td>
+<td>用户缓冲区</td>
+</tr>
+<tr>
+<td>输出目标</td>
+<td>Socket</td>
+<td>文件 &#x2F; pipe &#x2F; socket</td>
+<td>Pipe</td>
+</tr>
+<tr>
+<td>用户空间参与</td>
+<td>不参与</td>
+<td>不参与</td>
+<td>用户页作为数据源</td>
+</tr>
+</tbody></table>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/uio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> pipefd[<span class="number">2</span>];</span><br><span class="line">    <span class="built_in">pipe</span>(pipefd); <span class="comment">// pipefd[1] 写端, pipefd[0] 读端</span></span><br><span class="line"></span><br><span class="line">    <span class="type">char</span> buf[] = <span class="string">&quot;Hello zero-copy via vmsplice!&quot;</span>;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">iovec</span> iov;</span><br><span class="line">    iov.iov_base = buf;</span><br><span class="line">    iov.iov_len = <span class="built_in">sizeof</span>(buf);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 用户缓冲区插入 pipe</span></span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="comment">// flags = SPLICE_F_GIFT ：</span></span><br><span class="line">    <span class="comment">// 内核“接管”了这些页（把页的所有权赠送给内核）。</span></span><br><span class="line">    <span class="comment">// 应用不能再修改 iov 指向的缓冲区，否则会产生数据竞争或内核数据损坏。</span></span><br><span class="line">    <span class="comment">// 这个模式能确保 真正零拷贝，但代价是用户缓冲区失去控制权。</span></span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="comment">// flags = 0</span></span><br><span class="line">    <span class="comment">// 在 vmsplice 返回后可以安全修改 iov 的内容</span></span><br><span class="line">    <span class="comment">// flags=0时，vmsplice默认采用SPLICE_F_MOVE尝试移动内存页，若失败则回退到拷贝；而write始终执行拷贝</span></span><br><span class="line">    <span class="type">ssize_t</span> n = <span class="built_in">vmsplice</span>(pipefd[<span class="number">1</span>], &amp;iov, <span class="number">1</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (n &lt; <span class="number">0</span>) &#123; <span class="built_in">perror</span>(<span class="string">&quot;vmsplice&quot;</span>); <span class="keyword">return</span> <span class="number">1</span>; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 从 pipe 读出</span></span><br><span class="line">    <span class="type">char</span> out[<span class="number">64</span>];</span><br><span class="line">    n = <span class="built_in">read</span>(pipefd[<span class="number">0</span>], out, <span class="built_in">sizeof</span>(out));</span><br><span class="line">    <span class="built_in">write</span>(STDOUT_FILENO, out, n); <span class="comment">// 输出到终端</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="网络到网络-用户态网卡绕过"><a href="#网络到网络-用户态网卡绕过" class="headerlink" title="网络到网络 &#x2F; 用户态网卡绕过"></a>网络到网络 &#x2F; 用户态网卡绕过</h4><ul>
+<li>AF_XDP &#x2F; XDP &#x2F; Netmap &#x2F; PF_RING &#x2F; DPDK：绕开传统 kernel network stack，把网卡队列直接映射到用户态缓冲区（NUMA&#x2F;hugepages），实现用户态零拷贝和超低延迟。</li>
+<li>RDMA（InfiniBand &#x2F; RoCE）：RDMA NIC 通过 DMA 直接把远端内存读写到本地内存，完全绕过 CPU 复制（需要硬件与协议支持）。</li>
+</ul>
+<h4 id="加密-TLS-场景"><a href="#加密-TLS-场景" class="headerlink" title="加密 &#x2F; TLS 场景"></a>加密 &#x2F; TLS 场景</h4><p>常规 TLS（OpenSSL）会在用户态做加密，破坏零拷贝。可用内核 TLS（KTLS）或 NIC TLS&#x2F;offload 实现零拷贝出网（把加密放内核或网卡）。</p>
+<h4 id="存储层"><a href="#存储层" class="headerlink" title="存储层"></a>存储层</h4><ul>
+<li>O_DIRECT &#x2F; direct I&#x2F;O：绕过 page cache，用户空间 buffer 与磁盘 DMA 直接交互，但要求对齐（页&#x2F;块对齐）。</li>
+<li>mmap + msync：对于某些场景可以减少复制（但写回仍会有开销）。</li>
+</ul>
+<h4 id="异步-I-O-与零拷贝"><a href="#异步-I-O-与零拷贝" class="headerlink" title="异步 I&#x2F;O 与零拷贝"></a>异步 I&#x2F;O 与零拷贝</h4><p>io_uring（modern Linux）支持零拷贝模式（例如 splice&#x2F;sendfile 的异步提交、SQE&#x2F; CQE），并且可以做更高效的批处理。</p>
+<h3 id="Page-cache-和异步-IO"><a href="#Page-cache-和异步-IO" class="headerlink" title="Page cache 和异步 IO"></a>Page cache 和异步 IO</h3><p><a target="_blank" rel="noopener" href="https://www.xiaolincoding.com/os/8_network_system/zero_copy.html#%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9B%B6%E6%8B%B7%E8%B4%9D">https://www.xiaolincoding.com/os/8_network_system/zero_copy.html#%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9B%B6%E6%8B%B7%E8%B4%9D</a></p>
+<ul>
+<li>O_DIRECT: 绕过操作系统缓存，直接读写磁盘，可以避免缓存延迟，提高性能。可用于：<ul>
+<li>数据库系统：对性能要求极高，且直接操作磁盘数据。</li>
+<li>存储设置：如 SSD、硬盘，直接与硬件设备进行高效的 I&#x2F;O 操作。</li>
+<li>注意：由于绕过了缓存，所以 read 如果小于当前数据包的大小，则本次 read 后，内核会直接丢弃多余的数据。这是为了避免多余的数据在内存中驻留。</li>
+</ul>
+</li>
+</ul>
+<h3 id="散布读写-Scatter-read-write"><a href="#散布读写-Scatter-read-write" class="headerlink" title="散布读写 (Scatter read&#x2F;write)"></a>散布读写 (Scatter read&#x2F;write)</h3><ul>
+<li>readv</li>
+<li>writev</li>
+</ul>
+<p>散布读写支持一次性将数据从文件描述符读写到多个缓冲区：</p>
+<ul>
+<li>避免多次系统调用；</li>
+<li>直接分块读取，不需要额外用户态 memcpy 到不同的块。</li>
+</ul>
+<h2 id="IO-复用"><a href="#IO-复用" class="headerlink" title="IO 复用"></a>IO 复用</h2><ul>
+<li>select</li>
+<li>poll</li>
+<li>epoll</li>
+<li>非阻塞 IO</li>
+</ul>
+<p>如果 select &#x2F; poll &#x2F; epoll 通知可读写，那么一定可读写吗？<br>答案是不一定。因为内核不是 <strong>实时地</strong> 检查内核缓冲区是否有空间或有数据，所以内核的通知有时间差和虚假性。<br>而 epoll 等函数只关注事件变化，不检查缓冲区。这样可以提高效率。<br>最终的结果就是鼓励用户程序尝试，但是不保证一定成功，也就是可能阻塞。所以需要非阻塞 IO 来进一步提高性能。</p>
+<h3 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h3><ul>
+<li>减少数据拷贝：select &#x2F; poll 只有一个函数，这会要求每次调用都必须将描述事件的数据从用户空间复制到内核空间；所以 epoll 拆分成三个函数，用户可以向内核直接注册事件数据；</li>
+<li>红黑树：epoll 事件数据是用红黑树来记录，增删查改的时间复杂度为 O(logn) ；select &#x2F; poll 是线性扫描，时间复杂度 O(n) 。红黑树需要额外的空间，所以这是空间换时间的办法。</li>
+</ul>
+<h4 id="EPOLLONESHOT"><a href="#EPOLLONESHOT" class="headerlink" title="EPOLLONESHOT"></a><code>EPOLLONESHOT</code></h4><p>阅读 manual：</p>
+<blockquote>
+<p>Since  even  with  edge-triggered  epoll,  multiple events can be generated upon receipt of multiple chunks of data, the caller has the option to specify the EPOLLONESHOT flag, to tell epoll to disable the associated file descriptor after the receipt of an event  with  epoll_wait(2).   When the EPOLLONESHOT flag is specified, it is the caller’s responsibility to rearm the file descriptor using epoll_ctl(2) with EPOLL_CTL_MOD.</p>
+</blockquote>
+<p>如果某个文件描述符上有多个数据块到达，那么即使是边沿触发也无法保证事件只通知一次。这可能是由于数据包过大被分片，或者是新数据到达。</p>
+<ul>
+<li>这在单线程程序上不会有太大影响，因为对同一个 fd 不会造成重复读写。</li>
+<li>多线程程序中，fd 准备好后，我们常常将这个 fd 交给某个线程去处理。此时如果 fd 有新的事件，会造成多线程处理同一个 fd 的情况。<ul>
+<li>为了避免竞争，要么加锁；要么使用内核的 ONESHOT 机制。后者由内核保证，无锁，更高效。</li>
+</ul>
+</li>
+<li><code>EPOLLONSHOT</code> 需要调用者自行 reset 这个标志。</li>
+</ul>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/salmonwilliam/article/details/112347938">https://blog.csdn.net/salmonwilliam/article/details/112347938</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/16/os/%E6%96%87%E4%BB%B6IO%E4%B8%8E%E8%BF%9B%E7%A8%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/16/os/%E6%96%87%E4%BB%B6IO%E4%B8%8E%E8%BF%9B%E7%A8%8B/" class="post-title-link" itemprop="url">文件IO与进程</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-08-16 20:50:37" itemprop="dateCreated datePublished" datetime="2025-08-16T20:50:37+00:00">2025-08-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="进程打开文件"><a href="#进程打开文件" class="headerlink" title="进程打开文件"></a>进程打开文件</h2><p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/50jyHyjJ/image.png" alt="image"/></a></p>
+<ul>
+<li><code>struct task_struct</code> (进程控制块)<ul>
+<li>每个进程有一个 <code>task_struct</code>结构体，内核用它来描述进程。</li>
+<li>里面有一个指针 <code>files</code> ，执行该进程的 <code>files_struct</code> 。</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// https://elixir.bootlin.com/linux/v6.16/source/include/linux/sched.h</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* 进程控制块 */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">task_struct</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">files_struct</span> *<span class="title">files</span>;</span> <span class="comment">// 进程当前打开的文件</span></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>files_struct</code> (进程的文件表)<ul>
+<li>这里保存了一个指向 fd 数组 的指针。</li>
+<li>fd 数组的下标就是 0, 1, 2…，每个元素指向一个 <code>file *</code> 结构体。</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// https://elixir.bootlin.com/linux/v6.16/source/include/linux/fdtable.h</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">files_struct</span> &#123;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">fdtable</span> __rcu *fdt;                          <span class="comment">// fd 表（动态管理）</span></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">file</span> __rcu    *fd_array[NR_OPEN_DEFAULT];    <span class="comment">// 固定大小数组（早期 fd 数组）</span></span><br><span class="line">                                                        <span class="comment">// NR_OPEN_DEFAULT 通常为 1024</span></span><br><span class="line">                                                        <span class="comment">// 早期没有设置 FD_CLOEXEC 新特性</span></span><br><span class="line">    <span class="comment">// 为什么 fdt 与 fd_array 同时存在？</span></span><br><span class="line">    <span class="comment">// 1. 性能优化：大多数程序，fd 都在 0~1023，直接访问数组更快</span></span><br><span class="line">    <span class="comment">// 2. 向后兼容：早期接口会访问fd_array</span></span><br><span class="line">    <span class="comment">// 3. 动态扩展：如果 fd 超过 NR_OPEN_DEFAULT，内核会复制 fd_array 到 fdt-&gt;fd 来保证一致性。</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// ... `struct files_struct&#x27; 还有其他成员</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// fd 表（动态管理）</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">fdtable</span> &#123;</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span>        max_fds;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">file</span> __rcu **fd;             <span class="comment">/* 当前打开的 fd 指针数组 */</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span>      *close_on_exec;  <span class="comment">// fd 标志，目前只有一个</span></span><br><span class="line">                                        <span class="comment">// FD_CLOEXEC 定义在 &lt;fcntl.h&gt; 中</span></span><br><span class="line">                                        <span class="comment">// close_on_exec 指向一个位图(bitmap)，每个bit代表一个fd</span></span><br><span class="line">                                        <span class="comment">// 如果bit=1，表示该fd设置了FD_CLOEXEC</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span>      *open_fds;       <span class="comment">// 标记哪些fd是打开的，也是位图</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span>      *full_fds_bits;  <span class="comment">// 辅助位图，用于快速找到空闲fd</span></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">rcu_head</span>     rcu;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>struct file</code> (打开文件表项)<ul>
+<li>内核为每次 <code>open()</code>、<code>pipe()</code>、<code>socket()</code> 创建一个 <code>struct file</code>。</li>
+<li>它记录了文件状态（读写偏移、flag、引用计数等）。</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// https://elixir.bootlin.com/linux/v6.16/source/include/linux/fs.h</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">file</span> &#123;</span></span><br><span class="line">    <span class="type">spinlock_t</span>                    f_lock;</span><br><span class="line">    <span class="type">fmode_t</span>                       f_mode;</span><br><span class="line">    <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">file_operations</span> *<span class="title">f_op</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">address_space</span>         *<span class="title">f_mapping</span>;</span></span><br><span class="line">    <span class="type">void</span>                         *private_data;  <span class="comment">// 比如 socket</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">inode</span>                 *<span class="title">f_inode</span>;</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span>                  f_flags;  <span class="comment">// 文件状态标志，如 O_RDONLY, O_NONBLOCK, O_APPEND 等</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span>                  f_iocb_flags;</span><br><span class="line">    <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">cred</span>            *<span class="title">f_cred</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">fown_struct</span>           *<span class="title">f_owner</span>;</span></span><br><span class="line">    <span class="comment">/* --- cacheline 1 boundary (64 bytes) --- */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">path</span> <span class="title">f_path</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">        <span class="comment">/* regular files (with FMODE_ATOMIC_POS) and directories */</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">mutex</span> <span class="title">f_pos_lock</span>;</span></span><br><span class="line">        <span class="comment">/* pipes */</span></span><br><span class="line">        u64 f_pipe;  <span class="comment">// 管道</span></span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>inode &#x2F; pipe &#x2F; socket 内核对象<ul>
+<li><p><code>struct file</code> 再指向更底层的对象，比如 inode（磁盘文件）、socket 缓冲区、pipe 缓冲区。</p>
+</li>
+<li><p>i-node 包含以下内容</p>
+<ul>
+<li>链接计数（指向该i节点的目录项数）；</li>
+<li>文件类型、文件访问权限位、文件长度、指向文件数据块的指针等。<code>stat</code>结构中的大多数信息都取自i节点。</li>
+<li>只有两项重要数据放在目录项中：文件名和i-node编号。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<div style="text-align: center">
+<figure>
+  <img src="https://i.postimg.cc/rFRyX7Rh/image.png" alt="磁盘、分区和文件系统">
+  <figcaption>磁盘、分区和文件系统</figcaption>
+</figure>
+</div>
+
+<div style="text-align: center">
+<figure>
+  <img src="https://i.postimg.cc/3xM8K9g3/i.png" alt="i节点和数据块">
+  <figcaption>i节点和数据块</figcaption>
+</figure>
+</div>
+
+
+<p>软链接与硬链接</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>定义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>硬链接 (Hard Link)</strong></td>
+<td>表示有多少目录项（文件名）指向同一个 <strong>inode</strong> 。它们指向同一个文件内容。</td>
+</tr>
+<tr>
+<td><strong>软链接 (Symbolic Link &#x2F; Symlink)</strong></td>
+<td>类似快捷方式，是一个 <strong>独立文件</strong>，内容是指向目标文件的路径。</td>
+</tr>
+</tbody></table>
+<ul>
+<li>硬链接：当硬链接数降为0时，才从磁盘的数据块中删除该文件，所以删除文件（即目录项）称为<code>unlink</code>，而不是<code>delete</code>。</li>
+<li>软链接：i-node中的文件类型是<code>S_IFLINK</code>，表明是符号链接。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>硬链接</th>
+<th>软链接</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>是否指向 inode</td>
+<td>是，直接指向同一 inode</td>
+<td>否，指向目标路径</td>
+</tr>
+<tr>
+<td>是否可以跨文件系统</td>
+<td>否，只能在同一分区</td>
+<td>可以跨分区</td>
+</tr>
+<tr>
+<td>是否可以链接目录</td>
+<td>通常不能（除非 root）</td>
+<td>可以</td>
+</tr>
+<tr>
+<td>删除目标文件后</td>
+<td>文件内容仍可访问</td>
+<td>链接会失效（称为“悬挂链接”）</td>
+</tr>
+<tr>
+<td>占用空间</td>
+<td>不占用额外数据空间（只是多了一个目录项）</td>
+<td>占用少量空间存储路径信息</td>
+</tr>
+<tr>
+<td>更新文件内容</td>
+<td>所有硬链接同步可见</td>
+<td>通过软链接修改目标文件内容时可见，软链接本身只是路径</td>
+</tr>
+</tbody></table>
+<h2 id="两个独立进程各自打开同一个文件"><a href="#两个独立进程各自打开同一个文件" class="headerlink" title="两个独立进程各自打开同一个文件"></a>两个独立进程各自打开同一个文件</h2><p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/hG2hPTDM/image.png" alt="两个独立进程各自打开同一个文件"/></a></p>
+<ul>
+<li>O_APPEND：<ul>
+<li>原子操作：如果使用 <code>O_APPEND</code> 标志打开一个文件，那么相应的标志也被设置到文件表项的文件状态标志中。每次对文件执行写操作时，文件表项中的当前文件偏移量首先会被设置为 i 节点表项中的文件长度（相对其他进程来说是<strong>原子</strong>操作，不论是两个独立的进程，还是父子进程）。这就使得每次写入的数据都追加到文件的当前尾端处。<a target="_blank" rel="noopener" href="https://blog.csdn.net/yangbodong22011/article/details/63064166">这里</a>有一个测试的例子，文章结论不见得正确，请参考评论的讨论。</li>
+<li><code>PIPE_BUF</code>：只保证小于<code>PIPE_BUF</code>的内容是原子；如果大于则可能被多次多段写入。PIPE_BUF 是管道（pipe）单次写入保证原子的最大字节数，Linux 上是 4096 字节。</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看 PIPE_BUF 大小</span></span><br><span class="line"><span class="comment"># `/tmp&#x27; 可以换成任意文件系统路径</span></span><br><span class="line">$ getconf PIPE_BUF /tmp</span><br><span class="line">4096</span><br><span class="line"><span class="comment"># 也可以查看所有文件系统相关的 PIPE_BUF 限制</span></span><br><span class="line">$ getconf -a PIPE_BUF</span><br></pre></td></tr></table></figure>
+
+<p>  以下是 <code>man 2 write</code> 关于 <code>O_APPEND</code> 的说明：</p>
+<blockquote>
+<p>If the file was open(2)ed with O_APPEND, the file offset is first set to the end of the file before writing.  The adjustment of the file offset and the write operation are performed as an atomic step.</p>
+</blockquote>
+<ul>
+<li>lseek：</li>
+</ul>
+<p>若一个文件用 <code>lseek</code> 定位到文件当前的尾端，则文件表项中的当前文件偏移量被设置为 i 节点表项中的当前文件长度（注意，此时，设置偏移量和写操作之间不是原子操作）。</p>
+<hr>
+<h2 id="dup-后的内核数据结构"><a href="#dup-后的内核数据结构" class="headerlink" title="dup()后的内核数据结构"></a><code>dup()</code>后的内核数据结构</h2><p><code>dup()</code> &#x2F; <code>dup2()</code> 只复制 fd ，也就是在 fd 数组中新增了一个 fd 项。一般用来重定向。</p>
+<p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/s2mGQbcY/dup-1.png" alt="dup(1)"/></a></p>
+<hr>
+<h2 id="fork与文件共享"><a href="#fork与文件共享" class="headerlink" title="fork与文件共享"></a>fork与文件共享</h2><ul>
+<li>进程每打开一个文件，都会新建一个 <code>struct file</code> ，并添加到 fd 数组或 fd 表中。<ul>
+<li>对同一个文件，不同进程拥有各自的文件表项。</li>
+<li>但是对每个文件，v节点表项在整个操作系统中只有一份。</li>
+</ul>
+</li>
+<li><code>fork()</code> 后的子进程直接复制父进程的 fd 数组，<code>exec()</code> 也不能将其替换；<ul>
+<li>子进程对 <code>struct task_struct</code> 是深拷贝，所以 fd 数组被复制；</li>
+<li>但是子进程对 fd 数组是浅拷贝，fd 数组中的 <code>struct file*</code> 仍然指向父进程创建的 <code>struct file </code> （共享）；</li>
+<li>所以子进程共享了文件状态标志 (O_APPEND, O_NONBLOCK, O_RDONLY 等)、当前文件偏移量。</li>
+</ul>
+</li>
+<li>除非该文件描述符使用<code>fcntl()</code>设置了<code>FD_CLOEXEC</code>标志，此时 <code>exec</code> 会关闭继承的文件描述符。</li>
+</ul>
+<p><a href="https://postimages.org/" target="_blank"><img src="https://i.postimg.cc/TYbyqK0Y/fork.png" alt="fork"/></a></p>
+<p><strong>子进程对文件表项的修改，会不会影响父进程？</strong></p>
+<ul>
+<li>shell进程启动时，会自动打开这三个文件描述符（可能由配置项决定）；</li>
+<li>shell利用<code>fork()</code>开启用户进程（子进程），该子进程复制父进程shell的所有文件描述符，于是0, 1, 2文件描述符被打开；</li>
+<li>由于子进程<strong>共享</strong>父进程的<strong>文件表项</strong>，子进程对文件状态标志（读、写、同步或非阻塞等）、文件偏移量的修改，将<strong>会影响父进程</strong>。</li>
+</ul>
+<p>测试代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> err_sys(x)                                                             \</span></span><br><span class="line"><span class="meta">  &#123;                                                                            \</span></span><br><span class="line"><span class="meta">    perror(x);                                                                 \</span></span><br><span class="line"><span class="meta">    exit(1);                                                                   \</span></span><br><span class="line"><span class="meta">  &#125;</span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">pr_fl</span><span class="params">(<span class="type">int</span> fd)</span>;             <span class="comment">// 自定义函数：打印文件状态标志</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">set_fl</span><span class="params">(<span class="type">int</span> fd, <span class="type">int</span> flags)</span>; <span class="comment">// 自定义函数：设置文件状态标志</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">  pr_fl(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  set_fl(<span class="number">0</span>, O_APPEND);</span><br><span class="line">  pr_fl(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">set_fl</span><span class="params">(<span class="type">int</span> fd, <span class="type">int</span> flags)</span> &#123;</span><br><span class="line">  <span class="type">int</span> val;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> ((val = fcntl(fd, F_GETFL, <span class="number">0</span>)) &lt; <span class="number">0</span>)</span><br><span class="line">    err_sys(<span class="string">&quot;fcntl F_GETFL error&quot;</span>);</span><br><span class="line"></span><br><span class="line">  val |= flags;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (fcntl(fd, F_SETFL, val) &lt; <span class="number">0</span>)</span><br><span class="line">    err_sys(<span class="string">&quot;fcntl F_SETFL error&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">pr_fl</span><span class="params">(<span class="type">int</span> fd)</span> &#123;</span><br><span class="line">  <span class="type">int</span> val;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// do not guarantee success on certain system, check EINVAL first</span></span><br><span class="line">  <span class="keyword">if</span> ((val = fcntl(fd, F_GETFL, <span class="number">0</span>)) &lt; <span class="number">0</span>)</span><br><span class="line">    err_sys(<span class="string">&quot;fcntl F_GETFL error&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">switch</span> (val &amp; O_ACCMODE) &#123;</span><br><span class="line">  <span class="keyword">case</span> O_RDONLY:</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;read only&quot;</span>);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> O_WRONLY:</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;write only&quot;</span>);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> O_RDWR:</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;read write&quot;</span>);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">default</span>:</span><br><span class="line">    err_sys(<span class="string">&quot;unknown open type&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (val &amp; O_CREAT)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;, create&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> (val &amp; O_APPEND)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;, append&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> (val &amp; O_NONBLOCK)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;, non-block&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> (val &amp; O_SYNC)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;, synchronized file&quot;</span>);</span><br><span class="line">  <span class="comment">// if (val &amp; O_DSYNC)</span></span><br><span class="line">  <span class="comment">//   printf(&quot;, synchronize data&quot;);</span></span><br><span class="line"></span><br><span class="line">  <span class="built_in">putchar</span>(<span class="string">&#x27;\n&#x27;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>第一次运行：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ ./a.out</span><br><span class="line"><span class="built_in">read</span> write</span><br><span class="line"><span class="built_in">read</span> write, append</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>第二次运行：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ ./a.out</span><br><span class="line"><span class="built_in">read</span> write, append</span><br><span class="line"><span class="built_in">read</span> write, append</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>分析</p>
+<ul>
+<li>第二次运行时，文件描述符0的初始状态保持了第一次运行的结果！</li>
+<li>这是因为父进程shell的文件表项的文件状态标志被子进程<code>a.out</code>改变了。</li>
+</ul>
+</li>
+<li><p>第三次运行：</p>
+<p>重新启动shell，并运行<code>a.out</code></p>
+</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ ./a.out</span><br><span class="line"><span class="built_in">read</span> write</span><br><span class="line"><span class="built_in">read</span> write, append</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>分析</p>
+<ul>
+<li>第三次运行，结果与第一次一致，这说明我们的猜测正确。</li>
+<li>父进程shell关闭之后，所有文件描述符被关闭，文件IO被关闭，文件表被释放。重启shell也就重置了文件表。</li>
+</ul>
+</li>
+<li><p>引申：<br>在此我们注意到，文件描述符0, 1, 2（标准输入、标准输出、标准错误）在一个shell及其所有子进程中，对应的文件（设备）是同一个。由于共享了文件表项，指向了同一个v-node表项，故都指向同一个虚拟终端。这与我们的平时观察一致，不然shell运行程序时，输入输出的入口在哪里呢？</p>
+</li>
+</ul>
+<p><strong>如果进程打开文件，此时我们使用 rm &#x2F; unlink 删除文件，会发生什么？</strong></p>
+<p>什么也不会发生。因为 Linux 文件系统的设计允许文件名（目录项）和文件内容（inode）分离。只有当所有引用（包括文件描述符和内存映射）都关闭后，inode 才会被删除。</p>
+<p>在 Linux 中，一个文件由三部分组成：</p>
+<ul>
+<li>目录项（filename）：比如 <code>/lib/libexample.so</code></li>
+<li>inode（元数据）：记录权限、大小、时间戳等</li>
+<li>数据块（内容）：实际的文件内容</li>
+</ul>
+<p><code>rm</code> 只是删除了目录项（文件名），并没有删除 inode 或数据块，只要还有进程引用它。</p>
+<p>引用 inode 的方式包括：</p>
+<ul>
+<li>打开文件（open()）</li>
+<li>映射文件（mmap()）</li>
+<li>动态链接器加载 .so 文件</li>
+</ul>
+<p>这些引用会让内核知道：这个 inode 仍然在使用中，不能释放。</p>
+<p>这是为了支持非常重要的行为：</p>
+<blockquote>
+<p>✅ 允许进程继续使用已打开或已映射的文件，即使文件名被删除。</p>
+</blockquote>
+<p>这在很多场景下非常有用：</p>
+<ul>
+<li>日志轮转：删除旧日志文件，进程仍在写入</li>
+<li>安全性：防止其他进程访问文件名，但当前进程仍可使用</li>
+<li>临时文件：创建后立即删除，只让当前进程使用</li>
+</ul>
+<p>在 Linux 内核中，每个 inode 结构体有一个字段 <code>i_count</code>，表示该 inode 当前被引用的次数。这个引用包括：</p>
+<ul>
+<li>被文件系统挂载</li>
+<li>被进程打开</li>
+<li>被内核缓存使用</li>
+</ul>
+<p>这个字段不是用户空间可以直接查看的，但你可以通过以下方式间接观察：</p>
+<table>
+<thead>
+<tr>
+<th align="center">方法</th>
+<th align="center">能看到什么</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><code>ls -li</code></td>
+<td align="center">inode 号 + 硬链接引用计数</td>
+</tr>
+<tr>
+<td align="center"><code>lsof -p &lt;PID&gt; | grep</code> &#x2F; <code>fuser &lt;/path/to/so&gt;</code></td>
+<td align="center">是否有进程打开文件</td>
+</tr>
+<tr>
+<td align="center"><code>/proc/&lt;PID&gt;/fd/</code></td>
+<td align="center">查看文件描述符引用</td>
+</tr>
+<tr>
+<td align="center"><code>/proc/&lt;PID&gt;/maps</code></td>
+<td align="center">查看映射</td>
+</tr>
+<tr>
+<td align="center"><code>ldd</code></td>
+<td align="center">查看可执行文件依赖的 .so</td>
+</tr>
+<tr>
+<td align="center"><code>strace</code></td>
+<td align="center">跟踪运行时加载行为</td>
+</tr>
+<tr>
+<td align="center">内核字段 <code>i_count</code></td>
+<td align="center">真实引用计数（需内核调试）</td>
+</tr>
+</tbody></table>
+<p>在本地文件系统（如 ext4）中：</p>
+<ul>
+<li>即使文件正在使用，<code>rm</code> 也能删除目录项</li>
+<li>文件内容仍保留在 inode 中，直到所有引用关闭</li>
+</ul>
+<p>但在 NFS 文件系统 中：</p>
+<ul>
+<li>客户端不能立即删除正在被使用的文件</li>
+<li>所以它会将文件重命名为 <code>.nfsXXXX</code></li>
+<li>等引用释放后，自动删除该临时文件</li>
+</ul>
+<p>所以此时如果 <code>rm -rf</code> 目录，但是目录下某文件被使用，会提示 <code>xxx/.nfs000000004ec2d5e70000da89</code> 。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ lsof -p &lt;PID&gt; | grep .nfs</span><br><span class="line">my_executable 283964 my_name  mem    REG  0,183  18371240 1321391591 /XXX/.nfs000000004ec2d5e70000da89 (xxx:/yyy/zzz)</span><br></pre></td></tr></table></figure>
+
+<p>因为 so 被手动删除，此时引用的 so 被重命名成 <code>.nfsXXXX</code> 。</p>
+<p>手动删除 .so 文件后，系统生成了 .nfsXXXX 文件，但进程仍然能继续使用它。进程怎么知道新文件名？</p>
+<p>答案是：进程根本不知道新文件名，也不需要知道。</p>
+<p>当一个进程打开一个文件（比如 <code>libexample.so</code>），它获得的是一个 文件描述符（fd），这个描述符指向的是内核中的 inode，而不是文件名。</p>
+<p>那 <code>.nfsXXXX</code> 文件名是给谁看的？</p>
+<p>它是 NFS 客户端自动创建的临时文件名，用于：</p>
+<ul>
+<li>保留 inode 内容，直到所有引用关闭</li>
+<li>让系统知道这个文件还不能真正删除</li>
+<li>让你可以用 lsof 或 fuser 查找谁在使用它</li>
+</ul>
+<p>📌 这个文件名不会被通知给进程，也不会影响进程的运行。</p>
+<p>正常情况下：进程关闭后 .nfsXXXX 自动消失</p>
+<ul>
+<li>.nfsXXXX 文件是由 NFS客户端 创建的临时文件</li>
+<li>当某个文件被打开后删除，客户端会将其重命名为 .nfsXXXX</li>
+<li>一旦该文件的 打开引用计数为 0（即所有进程都关闭了该文件），客户端会自动删除 .nfsXXXX</li>
+</ul>
+<p>⚠️ 异常情况：文件可能残留</p>
+<p>如果出现以下情况，.nfsXXXX 文件可能不会自动删除：</p>
+<ul>
+<li>客户端 crash 或断网，未能完成清理动作</li>
+<li>使用 kill -9 强制终止进程，绕过了正常关闭流程</li>
+<li>NFS 客户端或服务器之间同步延迟</li>
+<li>文件被多个进程同时打开，只有部分进程关闭</li>
+</ul>
+<p>在这些情况下，.nfsXXXX 文件会残留在文件系统中，直到手动清理。</p>
+<h3 id="管道"><a href="#管道" class="headerlink" title="管道"></a>管道</h3><p>通过上文的叙述，我们很容易想到管道本质上也是一种特殊的文件，所以管道机制之所以可以进程间通信也是根据共享文件表项保证的。<br>管道和文件进行进程间通信的本质相同。</p>
+<h2 id="Linux-文件锁与记录锁"><a href="#Linux-文件锁与记录锁" class="headerlink" title="Linux 文件锁与记录锁"></a>Linux 文件锁与记录锁</h2><p>TODO</p>
+<p>参考链接：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/xuyh/p/3278881.html">链接1</a>、<a target="_blank" rel="noopener" href="https://www.cnblogs.com/fortunely/p/15219611.html">链接2</a>。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li>《UNIX 环境高级编程》</li>
+<li>《Linux 内核设计与实现（原书第 3 版） - Linux Kernel Development, Third Edition》，（美）拉芙（Love, R.）著；陈莉君，康华译. ——北京：机械工业出版社，2011.9（2021.5 重印）</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/antsHub/task_struct/tree/main">图解进程控制块stask_struct</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/16/os/Linux%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +792,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -531,7 +1099,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
 
           
@@ -760,7 +1328,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -881,7 +1449,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
 
           
@@ -1030,7 +1598,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
 
           
@@ -1137,7 +1705,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
 
           
@@ -1275,7 +1843,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
 
           
@@ -1451,7 +2019,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
 
           
@@ -2161,253 +2729,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/01/concurrency/%E7%BA%BF%E7%A8%8B%E7%8A%B6%E6%80%81%E8%BD%AC%E6%8D%A2/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/01/concurrency/%E7%BA%BF%E7%A8%8B%E7%8A%B6%E6%80%81%E8%BD%AC%E6%8D%A2/" class="post-title-link" itemprop="url">线程状态转换</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-01 12:18:07" itemprop="dateCreated datePublished" datetime="2025-08-01T12:18:07+00:00">2025-08-01</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="线程状态"><a href="#线程状态" class="headerlink" title="线程状态"></a>线程状态</h2><ul>
-<li>New（新建）：线程对象刚创建，还未开始执行。</li>
-<li>Ready（就绪）：线程准备好运行，等待调度器分配 CPU。</li>
-<li>Running（运行）：线程正在使用 CPU 执行指令。</li>
-<li>Blocked（阻塞）：线程在等待某个事件（如 I&#x2F;O、锁、条件变量等），不能运行。</li>
-<li>Terminated（终止）：线程执行完毕或被强制结束。</li>
-<li>Sleeping（休眠）：线程主动暂停一段时间（如 sleep()），不能被调度。</li>
-</ul>
-<h2 id="线程状态转换图"><a href="#线程状态转换图" class="headerlink" title="线程状态转换图"></a>线程状态转换图</h2><table>
-<thead>
-<tr>
-<th>当前状态</th>
-<th>触发条件</th>
-<th>转换后状态</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>New</td>
-<td>调用 start() 或 std::thread 构造函数</td>
-<td>Ready</td>
-<td>线程被创建，等待调度</td>
-</tr>
-<tr>
-<td>Ready</td>
-<td>被调度器选中</td>
-<td>Running</td>
-<td>获得 CPU，开始执行</td>
-</tr>
-<tr>
-<td>Running</td>
-<td>时间片耗尽 &#x2F; yield()</td>
-<td>Ready</td>
-<td>主动或被动让出 CPU，重新排队</td>
-</tr>
-<tr>
-<td>Running</td>
-<td>调用 sleep() &#x2F; wait() &#x2F; 等待锁</td>
-<td>Blocked &#x2F; Sleeping</td>
-<td>线程不能继续执行，等待事件或时间</td>
-</tr>
-<tr>
-<td>Blocked &#x2F; Sleeping</td>
-<td>条件满足 &#x2F; 时间到</td>
-<td>Ready</td>
-<td>线程重新具备运行条件，等待调度</td>
-</tr>
-<tr>
-<td>Running</td>
-<td>执行结束或异常</td>
-<td>Terminated</td>
-<td>线程生命周期结束</td>
-</tr>
-</tbody></table>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/07/31/cpp/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/07/31/cpp/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/" class="post-title-link" itemprop="url">性能分析</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-07-31 15:43:15" itemprop="dateCreated datePublished" datetime="2025-07-31T15:43:15+00:00">2025-07-31</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="性能指标"><a href="#性能指标" class="headerlink" title="性能指标"></a>性能指标</h2><h3 id="CPU时间"><a href="#CPU时间" class="headerlink" title="CPU时间"></a>CPU时间</h3><p><strong>函数调用的 CPU 时间:</strong></p>
-<ul>
-<li><code>Inclusive time</code>: total cpu time, include all functions it calls.</li>
-<li><code>Exclusive time</code>: only the time used by the function itself, exclusive all its children.</li>
-</ul>
-<p>Refer to <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/15760447/what-is-the-meaning-of-incl-cpu-time-excl-cpu-time-incl-real-cpu-time-excl-re/74426370">here</a>.</p>
-<ol>
-<li><p>Wall time: total time the process used, containing IO time.</p>
-</li>
-<li><p>CPU usage (CPU利用率) &#x3D; CPU time &#x2F; Wall time.</p>
-</li>
-<li><p>real&#x2F;user&#x2F;system time</p>
-<ul>
-<li><strong>Real</strong> is wall clock time - time from start to finish of the call. This is all elapsed time including time slices used by other processes and time the process spends blocked (for example if it is waiting for I&#x2F;O to complete).</li>
-<li><strong>User</strong> is the amount of CPU time spent in user-mode code (outside the kernel) within the process. This is only actual CPU time used in executing the process. Other processes and time the process spends blocked do not count towards this figure.</li>
-<li><strong>Sys</strong> is the amount of CPU time spent in the kernel within the process. This means executing CPU time spent in system calls within the kernel, as opposed to library code, which is still running in user-space. Like ‘user’, this is only CPU time used by the process. See below for a brief description of kernel mode (also known as ‘supervisor’ mode) and the system call mechanism.</li>
-</ul>
-<p> Refer to <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1">here</a>.</p>
-</li>
-<li><p>CPU 时间可能大于墙上时间：</p>
-<p>这是因为 CPU 时间是所有 CPU 核的运行时间的累加和，墙上时间则是实际的时间。此时 CPU 利用率大于 100%. （这是自己的理解）</p>
-</li>
-<li><p>TODO: Is CPU time in <em>flame graph</em> sum of all the CPU time? Or is it the wall time when CPU works?</p>
-</li>
-</ol>
-<h3 id="计时工具：timer"><a href="#计时工具：timer" class="headerlink" title="计时工具：timer"></a>计时工具：<code>timer</code></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ /usr/bin/time -p <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
-
-<p>Or,</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ time <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
-
-<p>其中（参考<a target="_blank" rel="noopener" href="https://ostechnix.com/how-to-find-the-execution-time-of-a-command-or-process-in-linux/">链接</a>），</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">type</span> -a time</span><br><span class="line">time is a shell keyword</span><br><span class="line">time is /usr/bin/time</span><br></pre></td></tr></table></figure>
-
-
-<h2 id="分析工具"><a href="#分析工具" class="headerlink" title="分析工具"></a>分析工具</h2><ul>
-<li>Performance Analyzer</li>
-<li>Thread Analyzer</li>
-<li>gprof</li>
-<li>DDT&#x2F;gdb</li>
-</ul>
-<h3 id="Performance-Analyzer"><a href="#Performance-Analyzer" class="headerlink" title="Performance Analyzer"></a>Performance Analyzer</h3><p>Oracle Developer Studio 提供了多种工具：Performance Analyzer、Thread Analyzer。</p>
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afagg.html#OSSPAgrkam">Performance Analyzer 官方文档</a></p>
-</blockquote>
-<p><strong>1. 收集数据</strong></p>
-<p>使用 <code>collect</code> 命令收集数据（<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afadn.html#scrolltoc">官方文档</a>）。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">collect collect-options program program-arguments</span><br></pre></td></tr></table></figure>
-
-<p><strong>2. 开始性能分析</strong></p>
-<p>使用 <code>analyzer</code> 命令进行性能分析（<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afafs.html#scrolltoc">官方文档</a>）。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">analyzer [control-options] [experiment | experiment-list]</span><br></pre></td></tr></table></figure>
-
-<p>例如：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">analyzer -c test.1.er test.4.er</span><br></pre></td></tr></table></figure>
-
-<h3 id="Thread-Analyzer"><a href="#Thread-Analyzer" class="headerlink" title="Thread Analyzer"></a>Thread Analyzer</h3><blockquote>
-<p><a target="_blank" rel="noopener" href="https://www.oracle.com/application-development/technologies/developerstudio-features.html#thread-analyzer-tab">Thread Analyzer 官方文档</a></p>
-</blockquote>
-<h3 id="gprof"><a href="#gprof" class="headerlink" title="gprof"></a>gprof</h3><p>gprof(GNU profiler)是GNU binutils工具集中的一个工具，linux系统当中会自带这个工具。它可以分析程序的性能，能给出函数调用时间、调用次数和调用关系，找出程序的瓶颈所在。在编译和链接选项中都加入-pg之后，gcc会在每个函数中插入代码片段，用于记录函数间的调用关系和调用次数，并采集函数的调用时间。</p>
-<ul>
-<li><a target="_blank" rel="noopener" href="https://ftp.gnu.org/old-gnu/Manuals/gprof-2.9.1/html_mono/gprof.html">gprof官方文档</a></li>
-<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/luronggui/article/-details/118141262">使用方法</a></li>
-<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/385842627">博客</a></li>
-</ul>
-<h3 id="DDT"><a href="#DDT" class="headerlink" title="DDT"></a>DDT</h3><p><a target="_blank" rel="noopener" href="https://www.linaroforge.com/linaroDdt">DDT</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2479,7 +2800,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">101</span>
+          <span class="site-state-item-count">103</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

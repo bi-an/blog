@@ -28,7 +28,7 @@
 <meta property="og:description" content="regexpERegExpWildcard&#x2F;Globman 7 glob  glob - globbing pathnames. glob is a shell built-in. 主要用于匹配带有通配符的文件路径。其匹配字符串的能力比正则表达式弱。 它最初是贝尔实验室 Unix 系统上的一个名叫 glob 的命令（glob 是 global 的缩写），用于展开命令行中的通配符。后来系统">
 <meta property="og:locale">
 <meta property="article:published_time" content="2024-01-25T13:13:41.000Z">
-<meta property="article:modified_time" content="2025-09-15T15:59:50.587Z">
+<meta property="article:modified_time" content="2025-09-16T02:21:27.529Z">
 <meta property="article:author" content="bi-an">
 <meta property="article:tag" content="shell">
 <meta name="twitter:card" content="summary">
@@ -229,7 +229,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-15 15:59:50" itemprop="dateModified" datetime="2025-09-15T15:59:50+00:00">2025-09-15</time>
+                <time title="Modified: 2025-09-16 02:21:27" itemprop="dateModified" datetime="2025-09-16T02:21:27+00:00">2025-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -282,7 +282,30 @@
 <h2 id="grep"><a href="#grep" class="headerlink" title="grep"></a>grep</h2><h2 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h2><ol>
 <li>找出一个未使用的port</li>
 </ol>
-<div class="tabs" id="code"><ul class="nav-tabs"><li class="tab active"><a href="#code-1">Makefile</a></li><li class="tab"><a href="#code-2">Bash</a></li><li class="tab"><a href="#code-3">Python</a></li></ul><div class="tab-content"><div class="tab-pane active" id="code-1"><figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># &quot;$$&quot;是为了转义&quot;$&quot;</span></span><br><span class="line">max_port=<span class="variable">$(<span class="built_in">shell</span> netstat -antulpen 2&gt; /dev/null \</span></span><br><span class="line"><span class="variable">    | awk -F&#x27; *&#x27; &#x27;/^(tcp|udp)</span>/&#123;print $$4&#125;&#x27; | cut -d: -f 2 \</span><br><span class="line">    | egrep <span class="string">&quot;\w&quot;</span> | sort | tail -1)</span><br><span class="line"><span class="comment">#$(warning $&#123;max_port&#125;)</span></span><br><span class="line">port=<span class="variable">$(<span class="built_in">shell</span> expr <span class="variable">$(max_port)</span> + 1)</span></span><br><span class="line"><span class="comment">#$(warning $&#123;port&#125;)</span></span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="code-2"><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 从1025开始找出已经存在的端口，如果相邻端口的gap大于1，则返回“当前端口号+1”</span></span><br><span class="line">netstat -ant | awk <span class="string">&#x27;&#123;print $4&#125;&#x27;</span> \</span><br><span class="line">    | awk -F: <span class="string">&#x27;&#123;if ($NF ~ /^[0-9]+$/ &amp;&amp; $NF &gt; 1024) &#123;print $NF&#125;&#125;&#x27;</span> \</span><br><span class="line">    | awk <span class="string">&#x27;BEGIN &#123;prev = 1024&#125; </span></span><br><span class="line"><span class="string">        &#123;if ($1 - prev &gt; 1) &#123; port = prev + 1; exit&#125; else &#123; prev = $1&#125;&#125; </span></span><br><span class="line"><span class="string">        END &#123; if (port==&quot;&quot;) &#123;print prev + 1&#125; else &#123;print port&#125;&#125;&#x27;</span></span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="code-3"><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#这不是正则表达式</span></span><br><span class="line"><span class="comment">#以0端口为参数创建一个socket，则系统会自动选择一个未使用的端口号</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#one-line mode:</span></span><br><span class="line"><span class="comment">#python -c &#x27;import socket; s=socket.socket(); s.bind((&quot;&quot;, 0)); print(s.getsockname()[1]); s.close()&#x27;</span></span><br><span class="line"><span class="keyword">import</span> socket</span><br><span class="line"></span><br><span class="line">s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)</span><br><span class="line">s.bind((<span class="string">&#x27;&#x27;</span>, <span class="number">0</span>))</span><br><span class="line">addr = s.getsockname()</span><br><span class="line"><span class="built_in">print</span>(addr[<span class="number">1</span>])</span><br><span class="line">s.close()</span><br></pre></td></tr></table></figure></div></div></div>
+
+{% tabs Code %}
+
+<!-- tab Makefile -->
+
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># &quot;$$&quot;是为了转义&quot;$&quot;</span></span><br><span class="line">max_port=<span class="variable">$(<span class="built_in">shell</span> netstat -antulpen 2&gt; /dev/null \</span></span><br><span class="line"><span class="variable">    | awk -F&#x27; *&#x27; &#x27;/^(tcp|udp)</span>/&#123;print $$4&#125;&#x27; | cut -d: -f 2 \</span><br><span class="line">    | egrep <span class="string">&quot;\w&quot;</span> | sort | tail -1)</span><br><span class="line"><span class="comment">#$(warning $&#123;max_port&#125;)</span></span><br><span class="line">port=<span class="variable">$(<span class="built_in">shell</span> expr <span class="variable">$(max_port)</span> + 1)</span></span><br><span class="line"><span class="comment">#$(warning $&#123;port&#125;)</span></span><br></pre></td></tr></table></figure>
+
+<!-- endtab -->
+
+<!-- tab Bash -->
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 从1025开始找出已经存在的端口，如果相邻端口的gap大于1，则返回“当前端口号+1”</span></span><br><span class="line">netstat -ant | awk <span class="string">&#x27;&#123;print $4&#125;&#x27;</span> \</span><br><span class="line">    | awk -F: <span class="string">&#x27;&#123;if ($NF ~ /^[0-9]+$/ &amp;&amp; $NF &gt; 1024) &#123;print $NF&#125;&#125;&#x27;</span> \</span><br><span class="line">    | awk <span class="string">&#x27;BEGIN &#123;prev = 1024&#125; </span></span><br><span class="line"><span class="string">        &#123;if ($1 - prev &gt; 1) &#123; port = prev + 1; exit&#125; else &#123; prev = $1&#125;&#125; </span></span><br><span class="line"><span class="string">        END &#123; if (port==&quot;&quot;) &#123;print prev + 1&#125; else &#123;print port&#125;&#125;&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<!-- endtab -->
+
+<!-- tab Python-->
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#这不是正则表达式</span></span><br><span class="line"><span class="comment">#以0端口为参数创建一个socket，则系统会自动选择一个未使用的端口号</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#one-line mode:</span></span><br><span class="line"><span class="comment">#python -c &#x27;import socket; s=socket.socket(); s.bind((&quot;&quot;, 0)); print(s.getsockname()[1]); s.close()&#x27;</span></span><br><span class="line"><span class="keyword">import</span> socket</span><br><span class="line"></span><br><span class="line">s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)</span><br><span class="line">s.bind((<span class="string">&#x27;&#x27;</span>, <span class="number">0</span>))</span><br><span class="line">addr = s.getsockname()</span><br><span class="line"><span class="built_in">print</span>(addr[<span class="number">1</span>])</span><br><span class="line">s.close()</span><br></pre></td></tr></table></figure>
+
+<!-- endtab -->
+
+{% endtabs %}
+
+
 
     </div>
 
@@ -382,7 +405,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">101</span>
+          <span class="site-state-item-count">103</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

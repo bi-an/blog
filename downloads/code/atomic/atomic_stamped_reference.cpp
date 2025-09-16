@@ -1,6 +1,6 @@
 #include <atomic>
-#include <thread>
 #include <iostream>
+#include <thread>
 #include <vector>
 
 std::atomic<int> counter(0);
@@ -10,7 +10,11 @@ void conditional_increment() {
     for (int i = 0; i < 1000; ++i) {
         int expected = counter.load();
         int expected_stamp = stamp.load();
-        while (expected < 500 && !counter.compare_exchange_weak(expected, expected + 1) && !stamp.compare_exchange_weak(expected_stamp, expected_stamp + 1)) {
+        // FIXME: 这种方式不可行，因为可能发生：expecited 更新了，但 expected_stamp
+        // 没有更新
+        while (expected < 500 &&
+               !counter.compare_exchange_weak(expected, expected + 1) &&
+               !stamp.compare_exchange_weak(expected_stamp, expected_stamp + 1)) {
             // 重试，直到成功或条件不满足
         }
     }
