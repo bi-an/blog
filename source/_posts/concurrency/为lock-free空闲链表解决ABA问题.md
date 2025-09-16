@@ -30,3 +30,5 @@ tags: ConcurrentQueue
 ## 作者的方法：以引用计数＋“should be on freelist”标志（标志 + 引用计数）
 
 作者提出了一个适用于 free list 的通用方法，结合以下几个机制来避免 ABA，且保持 lock‐free 特性。
+
+该代码应该从 try_get() 开始阅读，然后回到 add() ，这样才能理解设计引用计数的意图，否则很容易迷惑。
