@@ -193,6 +193,677 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/22/cpp/%E6%B1%87%E7%BC%96%E4%B8%8Egdb/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/22/cpp/%E6%B1%87%E7%BC%96%E4%B8%8Egdb/" class="post-title-link" itemprop="url">汇编与 gdb</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-08-22 15:42:27" itemprop="dateCreated datePublished" datetime="2025-08-22T15:42:27+00:00">2025-08-22</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-17 03:16:34" itemprop="dateModified" datetime="2025-09-17T03:16:34+00:00">2025-09-17</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="1-前言"><a href="#1-前言" class="headerlink" title="1. 前言"></a>1. 前言</h2><p>我们在调试 release 版本的程序时，由于缺乏符号信息，所以需要通过寄存器来查看函数的参数、返回值等。</p>
+<h2 id="2-寄存器"><a href="#2-寄存器" class="headerlink" title="2. 寄存器"></a>2. 寄存器</h2><h3 id="2-1-通用寄存器-General-Purpose-Registers"><a href="#2-1-通用寄存器-General-Purpose-Registers" class="headerlink" title="2.1. 通用寄存器 (General Purpose Registers)"></a>2.1. 通用寄存器 (General Purpose Registers)</h3><table>
+<thead>
+<tr>
+<th>寄存器名</th>
+<th>英文名称</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>rax</td>
+<td>Accumulator</td>
+<td>累加器，通常用于算术运算和函数返回值存储。</td>
+</tr>
+<tr>
+<td>rbx</td>
+<td>Base</td>
+<td>基址寄存器，常用于存储数据或指针。</td>
+</tr>
+<tr>
+<td>rsi</td>
+<td>Source Index</td>
+<td>源索引寄存器，常用于字符串操作中的源地址指针（函数第一个参数）。</td>
+</tr>
+<tr>
+<td>rdi</td>
+<td>Destination Index</td>
+<td>目标索引寄存器，常用于字符串操作中的目标地址指针或结构体指针（函数第二个参数）。</td>
+</tr>
+<tr>
+<td>rdx</td>
+<td>Data</td>
+<td>数据寄存器，常用于 I&#x2F;O 操作或乘除法运算中的扩展数据存储（函数第三个参数）。</td>
+</tr>
+<tr>
+<td>rcx</td>
+<td>Counter</td>
+<td>计数器寄存器，常用于循环计数或字符串操作中的计数（函数第四个参数）。</td>
+</tr>
+<tr>
+<td>rsp</td>
+<td>Stack Pointer</td>
+<td>栈指针寄存器，指向当前栈顶。</td>
+</tr>
+<tr>
+<td>rbp</td>
+<td>Base Pointer</td>
+<td>基址指针寄存器，指向当前栈帧的基址。</td>
+</tr>
+<tr>
+<td>r8~r15</td>
+<td>General Purpose</td>
+<td>通用寄存器，扩展的 64 位寄存器之一，用于存储数据或指针（<code>r8</code><del><code>r9</code> 常用于保存函数第五</del>六个参数）。</td>
+</tr>
+</tbody></table>
+<h3 id="2-2-特殊用途寄存器-Special-Purpose-Registers"><a href="#2-2-特殊用途寄存器-Special-Purpose-Registers" class="headerlink" title="2.2. 特殊用途寄存器 (Special Purpose Registers)"></a>2.2. 特殊用途寄存器 (Special Purpose Registers)</h3><table>
+<thead>
+<tr>
+<th>寄存器名</th>
+<th>英文名称</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>rip</td>
+<td>Instruction Pointer</td>
+<td>指令指针寄存器，存储当前执行指令的地址。</td>
+</tr>
+<tr>
+<td>rflags</td>
+<td>Flags</td>
+<td>标志寄存器，存储状态标志位（如进位、溢出、零标志等）。</td>
+</tr>
+</tbody></table>
+<h3 id="2-3-段寄存器-Segment-Registers"><a href="#2-3-段寄存器-Segment-Registers" class="headerlink" title="2.3. 段寄存器 (Segment Registers)"></a>2.3. 段寄存器 (Segment Registers)</h3><table>
+<thead>
+<tr>
+<th>寄存器名</th>
+<th>英文名称</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>cs</td>
+<td>Code Segment</td>
+<td>代码段寄存器，指向当前代码段的基址。</td>
+</tr>
+<tr>
+<td>ds</td>
+<td>Data Segment</td>
+<td>数据段寄存器，指向当前数据段的基址。</td>
+</tr>
+<tr>
+<td>es</td>
+<td>Extra Segment</td>
+<td>额外段寄存器，指向额外数据段的基址。</td>
+</tr>
+<tr>
+<td>fs</td>
+<td>FS Segment</td>
+<td>特殊用途段寄存器，常用于线程本地存储等。</td>
+</tr>
+<tr>
+<td>gs</td>
+<td>GS Segment</td>
+<td>特殊用途段寄存器，常用于线程本地存储等。</td>
+</tr>
+<tr>
+<td>ss</td>
+<td>Stack Segment</td>
+<td>栈段寄存器，指向当前栈段的基址。</td>
+</tr>
+</tbody></table>
+<h3 id="2-4-浮点与向量寄存器-Floating-Point-and-Vector-Registers"><a href="#2-4-浮点与向量寄存器-Floating-Point-and-Vector-Registers" class="headerlink" title="2.4. 浮点与向量寄存器 (Floating Point and Vector Registers)"></a>2.4. 浮点与向量寄存器 (Floating Point and Vector Registers)</h3><table>
+<thead>
+<tr>
+<th>寄存器名</th>
+<th>英文名称</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>xmm0-xmm15</td>
+<td>SIMD Registers</td>
+<td>用于 SSE 指令集的 128 位向量运算。</td>
+</tr>
+<tr>
+<td>ymm0-ymm15</td>
+<td>AVX Registers</td>
+<td>用于 AVX 指令集的 256 位向量运算。</td>
+</tr>
+<tr>
+<td>zmm0-zmm31</td>
+<td>AVX-512 Registers</td>
+<td>用于 AVX-512 指令集的 512 位向量运算。</td>
+</tr>
+</tbody></table>
+<h3 id="2-5-函数调用时的参数传递"><a href="#2-5-函数调用时的参数传递" class="headerlink" title="2.5. 函数调用时的参数传递"></a>2.5. 函数调用时的参数传递</h3><p>在 x86_64 架构中，函数调用时的参数传递遵循 System V AMD64 ABI（Linux&#x2F;Unix 系统的标准调用约定）。</p>
+<p>前六个整数或指针类型的参数依次存储在以下寄存器中：</p>
+<ol>
+<li><strong>rdi</strong> - 第一个参数</li>
+<li><strong>rsi</strong> - 第二个参数</li>
+<li><strong>rdx</strong> - 第三个参数</li>
+<li><strong>rcx</strong> - 第四个参数</li>
+<li><strong>r8</strong>  - 第五个参数</li>
+<li><strong>r9</strong>  - 第六个参数</li>
+</ol>
+<p>对于浮点类型的参数（如 <code>float</code> 或 <code>double</code>），前八个参数存储在以下 <strong>SSE 寄存器</strong> 中：</p>
+<ol>
+<li><strong>xmm0</strong> - 第一个浮点参数</li>
+<li><strong>xmm1</strong> - 第二个浮点参数</li>
+<li><strong>xmm2</strong> - 第三个浮点参数</li>
+<li><strong>xmm3</strong> - 第四个浮点参数</li>
+<li><strong>xmm4</strong> - 第五个浮点参数</li>
+<li><strong>xmm5</strong> - 第六个浮点参数</li>
+<li><strong>xmm6</strong> - 第七个浮点参数</li>
+<li><strong>xmm7</strong> - 第八个浮点参数</li>
+</ol>
+<p>溢出参数（超过寄存器数量）会依次存储在 <strong>栈</strong> 中：</p>
+<ul>
+<li>超过寄存器数量（整数参数超过 6 个，浮点参数超过 8 个）的参数会依次压入栈中。</li>
+<li>栈需要保持 16 字节对齐，可能会插入填充字节。</li>
+<li>可以通过访问栈指针（rsp）或基址指针（rbp）来找到栈上的参数。<ul>
+<li>使用 rsp（栈指针）<ul>
+<li>在函数入口时，rsp 指向栈顶（即返回地址的下一个位置）。</li>
+<li>栈上的第一个参数位于 [rsp + 8]（跳过返回地址）。</li>
+<li>第二个参数位于 [rsp + 16]，依此类推。</li>
+</ul>
+</li>
+<li>使用 rbp（基址指针）<ul>
+<li>如果函数使用了帧指针（rbp），rbp 通常指向调用者的栈帧基址。</li>
+<li>栈上的第一个参数位于 [rbp + 16]（跳过返回地址和保存的 rbp）。</li>
+<li>第二个参数位于 [rbp + 24]，依此类推。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="3-栈"><a href="#3-栈" class="headerlink" title="3. 栈"></a>3. 栈</h2><h3 id="3-1-理解栈布局"><a href="#3-1-理解栈布局" class="headerlink" title="3.1. 理解栈布局"></a>3.1. 理解栈布局</h3><p>在函数调用时，栈的布局通常如下（从高地址到低地址）：</p>
+<ol>
+<li>返回地址：调用函数时，call 指令会将返回地址（下一条指令的地址）压入栈中。</li>
+<li>溢出参数：如果参数超过寄存器数量，多余的参数会依次压入栈中。</li>
+<li>栈对齐填充：为了满足 16 字节对齐要求，可能会有额外的填充字节。</li>
+<li>局部变量和保存的寄存器：函数内部可能会在栈上分配空间用于局部变量或保存调用者的寄存器。</li>
+</ol>
+<h3 id="3-2-函数调用时的压栈过程"><a href="#3-2-函数调用时的压栈过程" class="headerlink" title="3.2. 函数调用时的压栈过程"></a>3.2. 函数调用时的压栈过程</h3><p>在x86_64架构中，函数调用时会涉及到栈的操作，包括压栈和出栈。这些操作主要用于保存调用者的上下文（如返回地址、寄存器值）以及为被调用函数分配栈帧。</p>
+<h4 id="3-2-1-调用者（Caller）的操作"><a href="#3-2-1-调用者（Caller）的操作" class="headerlink" title="3.2.1. 调用者（Caller）的操作"></a>3.2.1. 调用者（Caller）的操作</h4><ol>
+<li><p><strong>压入返回地址</strong><br>当调用者使用 <code>call</code> 指令调用函数时，CPU会自动将返回地址（下一条指令的地址）压入栈中。此时，<code>rsp</code>（栈指针）会减少8字节（64位系统）。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">call function</span><br><span class="line"># 等价于：</span><br><span class="line">push rip  ; 将返回地址压入栈</span><br><span class="line">jmp function</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>压入溢出参数（如果有）</strong><br>如果函数的参数超过了寄存器数量（整数参数超过6个，浮点参数超过8个），多余的参数会从右到左依次压入栈中。<code>rsp</code> 会随着每个参数的压入减少。</p>
+</li>
+<li><p><strong>对齐栈</strong><br>为了满足 <strong>16字节对齐</strong> 的要求，调用者可能会插入额外的填充字节，使得 <code>rsp</code> 在调用函数前保持16字节对齐。</p>
+</li>
+</ol>
+<h4 id="3-2-2-被调用者（Callee）的操作"><a href="#3-2-2-被调用者（Callee）的操作" class="headerlink" title="3.2.2. 被调用者（Callee）的操作"></a>3.2.2. <strong>被调用者（Callee）的操作</strong></h4><ol>
+<li><p><strong>保存调用者的栈帧基址</strong><br>被调用者通常会保存调用者的栈帧基址（<code>rbp</code>），以便在函数返回时恢复调用者的栈帧。  </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">push rbp       ; 保存调用者的 rbp</span><br><span class="line">mov rbp, rsp   ; 设置当前函数的栈帧基址</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>分配栈空间</strong><br>被调用者会根据函数内部局部变量的需求，在栈上分配空间。<code>rsp</code> 会减少相应的字节数。  </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sub rsp, &lt;size&gt;  ; 为局部变量分配栈空间</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="3-3-2-函数返回时的出栈过程"><a href="#3-3-2-函数返回时的出栈过程" class="headerlink" title="3.3. 2. 函数返回时的出栈过程"></a>3.3. <strong>2. 函数返回时的出栈过程</strong></h3><h4 id="3-3-1-被调用者（Callee）的操作"><a href="#3-3-1-被调用者（Callee）的操作" class="headerlink" title="3.3.1. 被调用者（Callee）的操作"></a>3.3.1. <strong>被调用者（Callee）的操作</strong></h4><ol>
+<li><p><strong>释放局部变量的栈空间</strong><br>被调用者在返回前会释放为局部变量分配的栈空间。  </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">add rsp, &lt;size&gt;  ; 恢复 rsp</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>恢复调用者的栈帧基址</strong><br>被调用者会恢复调用者的 <code>rbp</code>，以确保调用者的栈帧完整。  </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pop rbp  ; 恢复调用者的 rbp</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>返回到调用者</strong><br>被调用者使用 <code>ret</code> 指令从栈中弹出返回地址，并跳转到该地址。  </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ret  ; 等价于：pop rip</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h4 id="3-3-2-调用者（Caller）的操作"><a href="#3-3-2-调用者（Caller）的操作" class="headerlink" title="3.3.2. 调用者（Caller）的操作"></a>3.3.2. <strong>调用者（Caller）的操作</strong></h4><ol>
+<li><strong>清理栈上的参数（如果需要）</strong><br>如果调用约定要求调用者清理栈上的参数（如 <code>cdecl</code> 调用约定），调用者会调整 <code>rsp</code>。  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">add rsp, &lt;size&gt;  ; 清理栈上的参数</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="3-4-3-栈指针（rsp）和基址指针（rbp）的变化"><a href="#3-4-3-栈指针（rsp）和基址指针（rbp）的变化" class="headerlink" title="3.4. 3. 栈指针（rsp）和基址指针（rbp）的变化"></a>3.4. <strong>3. 栈指针（<code>rsp</code>）和基址指针（<code>rbp</code>）的变化</strong></h3><p>以下是一个函数调用的栈布局示例：</p>
+<p> <strong>C代码</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">example</span><span class="params">(<span class="type">int</span> a, <span class="type">int</span> b)</span> &#123;</span><br><span class="line">    <span class="type">int</span> x = a + b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">    example(<span class="number">1</span>, <span class="number">2</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>汇编代码（简化版）</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"># main 函数</span><br><span class="line">main:</span><br><span class="line">    sub rsp, 16         ; 对齐栈</span><br><span class="line">    mov edi, 1          ; 第一个参数 -&gt; rdi</span><br><span class="line">    mov esi, 2          ; 第二个参数 -&gt; rsi</span><br><span class="line">    call example        ; 调用 example 函数</span><br><span class="line">    add rsp, 16         ; 恢复栈</span><br><span class="line">    ret</span><br><span class="line"></span><br><span class="line"># example 函数</span><br><span class="line">example:</span><br><span class="line">    push rbp            ; 保存调用者的 rbp</span><br><span class="line">    mov rbp, rsp        ; 设置当前栈帧基址</span><br><span class="line">    sub rsp, 16         ; 为局部变量分配栈空间</span><br><span class="line">    mov eax, edi        ; a -&gt; eax</span><br><span class="line">    add eax, esi        ; a + b</span><br><span class="line">    leave               ; 恢复栈帧（等价于：mov rsp, rbp; pop rbp）</span><br><span class="line">    ret                 ; 返回调用者</span><br></pre></td></tr></table></figure>
+
+<p> <strong>栈布局变化</strong></p>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th><code>rsp</code> 变化</th>
+<th>栈内容（从高地址到低地址）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>call example</code></td>
+<td><code>rsp -= 8</code></td>
+<td>返回地址</td>
+</tr>
+<tr>
+<td><code>push rbp</code></td>
+<td><code>rsp -= 8</code></td>
+<td>保存调用者的 <code>rbp</code></td>
+</tr>
+<tr>
+<td><code>sub rsp, 16</code></td>
+<td><code>rsp -= 16</code></td>
+<td>为局部变量分配空间</td>
+</tr>
+<tr>
+<td><code>leave</code></td>
+<td><code>rsp += 16</code></td>
+<td>释放局部变量空间</td>
+</tr>
+<tr>
+<td><code>ret</code></td>
+<td><code>rsp += 8</code></td>
+<td>弹出返回地址</td>
+</tr>
+</tbody></table>
+<h3 id="3-5-总结"><a href="#3-5-总结" class="headerlink" title="3.5. 总结"></a>3.5. <strong>总结</strong></h3><ol>
+<li><strong>函数调用的栈操作</strong>：<ul>
+<li>调用者负责压入返回地址和溢出参数。</li>
+<li>被调用者负责保存 <code>rbp</code> 和分配局部变量空间。</li>
+<li>函数返回时，释放局部变量空间并恢复调用者的栈帧。</li>
+</ul>
+</li>
+<li><strong><code>rsp</code> 和 <code>rbp</code> 的变化</strong>：<ul>
+<li><code>rsp</code> 指向栈顶，动态变化。</li>
+<li><code>rbp</code> 指向栈帧基址，通常固定不变。</li>
+</ul>
+</li>
+</ol>
+<h2 id="4-使用-gdb-查看寄存器"><a href="#4-使用-gdb-查看寄存器" class="headerlink" title="4. 使用 gdb 查看寄存器"></a>4. 使用 gdb 查看寄存器</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看所有寄存器</span></span><br><span class="line">info registers</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看指定寄存器</span></span><br><span class="line">info registers rdi</span><br><span class="line"><span class="comment"># 或简写</span></span><br><span class="line">i r rdi</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看十六进制</span></span><br><span class="line">p/x <span class="variable">$rdx</span>    <span class="comment"># 十六进制</span></span><br><span class="line">p/d <span class="variable">$rdx</span>    <span class="comment"># 十进制</span></span><br><span class="line"><span class="comment"># 或简写</span></span><br><span class="line">p <span class="variable">$rdx</span></span><br></pre></td></tr></table></figure>
+
+<p>其中，<code>info registers</code> 会打印三列：</p>
+<ul>
+<li>第一列：寄存器名称</li>
+<li>第二列：寄存器的值（十六进制）</li>
+<li>第三列：寄存器的值（十进制；也可能是十六进制，用 <code>0x</code> 开头）</li>
+</ul>
+<p><code>info registers rdi</code> 与 <code>p $rdi</code> 效果相同。</p>
+<p>从寄存器查到的内存地址，可以用 <code>x</code> （examinze）命令来查看内存的值：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看指令</span></span><br><span class="line">x/i <span class="variable">$rip</span></span><br><span class="line"><span class="comment"># 查看栈顶</span></span><br><span class="line">x/16x <span class="variable">$rsp</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看内存</span></span><br><span class="line">p <span class="variable">$rdi</span></span><br><span class="line">x/2gx <span class="variable">$rdi</span></span><br><span class="line"><span class="comment"># 或先用 $rdi 查出内存地址，直接用地址访问</span></span><br><span class="line">x/2gx 47926411878160</span><br></pre></td></tr></table></figure>
+
+<p><code>x</code> 命令的说明：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">x/FMT ADDRESS</span><br></pre></td></tr></table></figure>
+
+<p>其中：</p>
+<ul>
+<li><code>x</code>：表示“examine memory”（查看内存）</li>
+<li><code>2</code>：数字，表示要查看的单元数</li>
+<li><code>g</code>：表示每个单元的 size，有 b(byte), h(halfword), w(word), g(giant, 8 bytes)</li>
+<li><code>x</code>：表示值的格式，有 o(octal), x(hex), d(decimal), u(unsigned decimal), t(binary), f(float), a(address), i(instruction), c(char), s(string)<br>and z(hex, zero padded on the left).</li>
+</ul>
+<p>在 gdb 命令行中使用 <code>help</code> 命令，可以查看命令的说明。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">(gdb) <span class="built_in">help</span> x</span><br><span class="line">Examine memory: x/FMT ADDRESS.</span><br><span class="line">ADDRESS is an expression <span class="keyword">for</span> the memory address to examine.</span><br><span class="line">FMT is a repeat count followed by a format letter and a size letter.</span><br><span class="line">Format letters are o(octal), x(hex), d(decimal), u(unsigned decimal),</span><br><span class="line">  t(binary), f(<span class="built_in">float</span>), a(address), i(instruction), c(char), s(string)</span><br><span class="line">  and z(hex, zero padded on the left).</span><br><span class="line">Size letters are b(byte), h(halfword), w(word), g(giant, 8 bytes).</span><br><span class="line">The specified number of objects of the specified size are printed</span><br><span class="line">according to the format.  If a negative number is specified, memory is</span><br><span class="line">examined backward from the address.</span><br><span class="line"></span><br><span class="line">Defaults <span class="keyword">for</span> format and size letters are those previously used.</span><br><span class="line">Default count is 1.  Default address is following last thing printed</span><br><span class="line">with this <span class="built_in">command</span> or <span class="string">&quot;print&quot;</span>.</span><br></pre></td></tr></table></figure>
+
+<h2 id="5-使用-gdb-查看栈"><a href="#5-使用-gdb-查看栈" class="headerlink" title="5. 使用 gdb 查看栈"></a>5. 使用 gdb 查看栈</h2><ul>
+<li>bt</li>
+<li>frame</li>
+<li>args</li>
+<li>locals</li>
+<li>x</li>
+</ul>
+<p>TDODO</p>
+<h3 id="5-1-frame-与寄存器的值"><a href="#5-1-frame-与寄存器的值" class="headerlink" title="5.1. frame 与寄存器的值"></a>5.1. <code>frame</code> 与寄存器的值</h3><ul>
+<li>GDB 中的寄存器值（如 <code>$rax</code>, <code>$rdi</code>, <code>$rsp</code> 等）是当前 CPU 执行上下文的快照。</li>
+<li>当你切换到 <code>frame 0</code>（最内层栈帧）时，寄存器值是最真实的，因为这是程序当前正在执行的地方。</li>
+<li>当你切换到 外层栈帧（frame 1, 2, …）时，GDB 会尝试还原当时的寄存器状态，但这依赖于：<ul>
+<li>编译器是否保存了寄存器值（如 callee-saved）</li>
+<li>是否有调试符号或 unwind 信息</li>
+<li>GDB 是否能推断出寄存器的保存位置</li>
+</ul>
+</li>
+</ul>
+<p>寄存器值可能出现的情况</p>
+<table>
+<thead>
+<tr>
+<th align="center">情况</th>
+<th align="center">表现</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">寄存器是 caller-saved（如 rdi, rsi, rax）</td>
+<td align="center">可能显示 <not saved> 或错误值</td>
+</tr>
+<tr>
+<td align="center">寄存器是 callee-saved（如 rbx, rbp, r12~r15）</td>
+<td align="center">通常能正确还原</td>
+</tr>
+<tr>
+<td align="center">没有调试信息或优化严重</td>
+<td align="center">GDB 无法还原，显示当前值或 <not saved></td>
+</tr>
+</tbody></table>
+<p>建议</p>
+<ul>
+<li>如果你要分析寄存器状态，最好在 frame 0 或断点处进行。</li>
+<li>如果你在分析 core dump 或栈破坏问题，寄存器值只能作为参考，不要完全依赖外层 frame 的寄存器快照。</li>
+<li>使用 info args 和 info locals 更可靠地查看参数和局部变量（如果有符号信息）。</li>
+</ul>
+<h2 id="6-在特定线程中设置断点"><a href="#6-在特定线程中设置断点" class="headerlink" title="6. 在特定线程中设置断点"></a>6. 在特定线程中设置断点</h2><h3 id="6-1-断点只作用于某线程"><a href="#6-1-断点只作用于某线程" class="headerlink" title="6.1. 断点只作用于某线程"></a>6.1. 断点只作用于某线程</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看所有线程 ID 和当前线程 ID（gdb 中会使用 * 标注当前线程）</span></span><br><span class="line">(gdb) info threads</span><br><span class="line"><span class="comment"># 切换当前上下文到指定线程</span></span><br><span class="line">(gdb) thread &lt;THREAD_ID&gt;</span><br><span class="line"><span class="comment"># 通过查看当前堆栈是不是自己要断点的线程</span></span><br><span class="line">(gdb) bt</span><br><span class="line">(gdb) <span class="built_in">break</span> LOCATION thread THREADNUM</span><br><span class="line"><span class="comment"># 条件断点</span></span><br><span class="line">(gdb) <span class="built_in">break</span> source.c:123 thread 5 <span class="keyword">if</span> fds[0].fd == 7</span><br><span class="line"><span class="comment"># 如果没有 debug 符号，可以利用函数返回值寄存器断点</span></span><br><span class="line">(gdb) <span class="built_in">break</span> poll thread 2 <span class="keyword">if</span> <span class="variable">$rdx</span> &gt; 0</span><br><span class="line"><span class="comment"># 完整格式</span></span><br><span class="line"><span class="built_in">break</span> [PROBE_MODIFIER] [LOCATION] [thread THREADNUM] [<span class="keyword">if</span> CONDITION]</span><br></pre></td></tr></table></figure>
+
+<h3 id="6-2-锁定调度器，只让当前线程运行"><a href="#6-2-锁定调度器，只让当前线程运行" class="headerlink" title="6.2. 锁定调度器，只让当前线程运行"></a>6.2. 锁定调度器，只让当前线程运行</h3><p>默认情况下，GDB 会让所有线程一起运行（比如你执行 continue 时）。如果你只想让当前线程运行，其它线程保持暂停，可以使用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) <span class="built_in">set</span> scheduler-locking on</span><br></pre></td></tr></table></figure>
+
+<p>这表示：只有当前线程会执行，其他线程全部暂停。</p>
+<p>其中模式还有：</p>
+<table>
+<thead>
+<tr>
+<th align="center">模式</th>
+<th align="center">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">off</td>
+<td align="center">默认值，所有线程都可以运行</td>
+</tr>
+<tr>
+<td align="center">on</td>
+<td align="center">只有当前线程运行，其他线程暂停</td>
+</tr>
+<tr>
+<td align="center">step</td>
+<td align="center">单步调试时只运行当前线程，continue 时其他线程也会运行</td>
+</tr>
+</tbody></table>
+<p>你可以随时切换：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) <span class="built_in">set</span> scheduler-locking step</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>如果你在调试死锁、竞态或线程间通信问题，锁定调度器是非常有效的方式。</li>
+<li>如果你在调试某个 poll() 或 epoll_wait() 调用，只想观察某个线程的行为，可以结合 catch syscall 和 thread 命令一起使用。</li>
+</ul>
+<h2 id="7-查看汇编代码"><a href="#7-查看汇编代码" class="headerlink" title="7. 查看汇编代码"></a>7. 查看汇编代码</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看汇编代码，其中 &quot;=&gt;&quot; 标记的是当前执行位置</span></span><br><span class="line">(gdb) disassemble</span><br><span class="line"><span class="comment"># 反汇编指定地址范围</span></span><br><span class="line"><span class="comment"># 这会显示从当前指令开始的 32 字节范围内的汇编代码。</span></span><br><span class="line">(gdb) disassemble <span class="variable">$rip</span>, <span class="variable">$rip</span>+32</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看当前指令（x86）</span></span><br><span class="line">(gdb) x/i <span class="variable">$pc</span></span><br><span class="line"><span class="comment"># 或在 x86-64 架构下：</span></span><br><span class="line">(gdb) x/i <span class="variable">$rip</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Bonus: 默认 GDB 使用 AT&amp;T 风格（如 %rax），你可以切换为 Intel 风格</span></span><br><span class="line"><span class="comment"># 这样输出会更接近你在汇编教材或 IDA Pro 中看到的格式</span></span><br><span class="line">(gdb) <span class="built_in">set</span> disassembly-flavor intel</span><br></pre></td></tr></table></figure>
+
+<h2 id="8-位置无关代码（PIC）"><a href="#8-位置无关代码（PIC）" class="headerlink" title="8. 位置无关代码（PIC）"></a>8. 位置无关代码（PIC）</h2><h3 id="8-1-什么是-PIC"><a href="#8-1-什么是-PIC" class="headerlink" title="8.1. 什么是 PIC"></a>8.1. <strong>什么是 PIC</strong></h3><ul>
+<li><strong>PIC</strong>（Position Independent Code，位置无关代码）是一种编译方式，使得生成的代码可以在内存中的任意位置运行，而无需硬编码绝对地址。</li>
+<li>在动态链接库（<code>shared libraries</code>）中，通常需要使用 PIC，以便库可以被加载到任意内存地址。</li>
+<li>节省空间：相比使用 64 位绝对地址，RIP 相对寻址只需要一个 32 位偏移量。</li>
+<li>更安全：支持地址随机化（ASLR），提高程序的安全性。</li>
+</ul>
+<h3 id="8-2-PIC-的实现"><a href="#8-2-PIC-的实现" class="headerlink" title="8.2. PIC 的实现"></a>8.2. <strong>PIC 的实现</strong></h3><ol>
+<li><p><strong>访问全局变量</strong><br>在 PIC 模式下，代码通过 <strong>全局偏移表（GOT, Global Offset Table）</strong> 和 <strong>过程链接表（PLT, Procedure Linkage Table）</strong> 访问全局变量和函数地址。</p>
+</li>
+<li><p><strong>寄存器 <code>rip</code> 的使用</strong><br>x86_64 支持基于 <code>rip</code>（指令指针）的寻址方式，PIC 会利用 <code>rip</code> 相对寻址来访问全局变量或函数地址，而不是使用绝对地址。</p>
+</li>
+</ol>
+<p>在 x86-64 架构中，传统的绝对地址寻址方式不再适用于位置无关代码。于是引入了 RIP（指令指针）相对寻址：</p>
+<p>假设你有一个全局变量 int x &#x3D; 42;，在汇编中访问它可能会变成：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">asm</span><br><span class="line">mov eax, DWORD PTR [rip + offset_to_x]</span><br></pre></td></tr></table></figure>
+
+<p>这里的 offset_to_x 是编译器计算出来的 x 相对于当前指令的偏移量。</p>
+<table>
+<thead>
+<tr>
+<th align="center">寻址方式</th>
+<th align="center">描述</th>
+<th align="center">是否位置无关</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">绝对地址寻址</td>
+<td align="center">使用固定地址，如 [0x400123]</td>
+<td align="center">❌ 否</td>
+</tr>
+<tr>
+<td align="center">寄存器间接寻址</td>
+<td align="center">如 [rax]，地址由寄存器决定</td>
+<td align="center">✅ 是</td>
+</tr>
+<tr>
+<td align="center">RIP 相对寻址</td>
+<td align="center">如 [rip + offset]，相对当前指令位置</td>
+<td align="center">✅ 是</td>
+</tr>
+</tbody></table>
+<h3 id="8-3-PIC-的优化"><a href="#8-3-PIC-的优化" class="headerlink" title="8.3. PIC 的优化"></a>8.3. <strong>PIC 的优化</strong></h3><ul>
+<li><strong>减少重定位</strong>：通过 <code>rip</code> 相对寻址，避免了加载时的重定位操作，提高了加载速度。</li>
+<li><strong>共享内存</strong>：多个进程可以共享同一段动态库代码，而无需为每个进程生成独立的副本。</li>
+</ul>
+<h3 id="8-4-示例"><a href="#8-4-示例" class="headerlink" title="8.4. 示例"></a>8.4. <strong>示例</strong></h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mov rax, [rip + global_var@GOTPCREL]  ; 通过 GOT 表访问全局变量</span><br><span class="line">call [rip + func@PLT]                ; 通过 PLT 表调用函数</span><br></pre></td></tr></table></figure>
+
+<p>举个 gdb 调试的例子：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(gdb) x/i <span class="variable">$rip</span></span><br><span class="line">=&gt; 0x2ac084b5ec10 &lt;poll&gt;:       cmpl   <span class="variable">$0x0</span>,0x2d939d(%rip)        <span class="comment"># 0x2ac084e37fb4 &lt;__libc_multiple_threads&gt;</span></span><br><span class="line">(gdb) p (bool)<span class="variable">$__libc_multiple_threads</span></span><br><span class="line"><span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>cmpl $0x0, 0x2d939d(%rip)</code> 是一条比较指令（<code>cmp</code>），用于将某个内存地址中的值与立即数 <code>0</code> 进行比较。</li>
+<li><code>(%rip)</code> 表示使用 RIP 相对寻址，这是 x86-64 架构中常见的一种寻址方式。</li>
+<li>实际比较的是地址 <code>0x2ac084e37fb4</code> 处的值，也就是 <code>__libc_multiple_threads</code> 这个变量。</li>
+</ul>
+<p><code>__libc_multiple_threads</code> 是什么？</p>
+<ul>
+<li>这是 GNU C 库（glibc）中的一个内部变量，用来标记当前进程是否启用了多线程。</li>
+<li>如果这个值是 0，说明当前进程是单线程。</li>
+<li>如果是非零，说明进程中有多个线程。</li>
+</ul>
+<p>所以这条指令的作用是：判断当前进程是否是多线程环境，可能用于决定是否启用线程安全的行为。</p>
+<h3 id="8-5-为什么使用-RIP-相对寻址？"><a href="#8-5-为什么使用-RIP-相对寻址？" class="headerlink" title="8.5. 为什么使用 RIP 相对寻址？"></a>8.5. 为什么使用 RIP 相对寻址？</h3><ol>
+<li>RIP 是唯一始终已知的寄存器</li>
+</ol>
+<ul>
+<li>在执行指令时，CPU 总是知道当前指令的地址（即 RIP）。</li>
+<li>所以可以在编译时计算出目标数据与当前指令之间的偏移量，而不需要知道数据的绝对地址。</li>
+</ul>
+<p>这就允许编译器生成位置无关代码，即使程序被加载到不同的内存地址，偏移量仍然有效。</p>
+<ol start="2">
+<li>其他寄存器值是动态的，不可预测</li>
+</ol>
+<ul>
+<li>比如 RBX、RAX、RDI 等寄存器，它们的值在运行时可能被程序修改。</li>
+<li>如果用这些寄存器做基址寻址，编译器就无法提前知道它们的值，也就无法生成稳定的偏移量。</li>
+</ul>
+<ol start="3">
+<li>支持共享库和地址空间布局随机化（ASLR）</li>
+</ol>
+<ul>
+<li>RIP 相对寻址让代码段不依赖固定地址，可以被多个进程共享。</li>
+<li>也支持操作系统在运行时随机加载地址，提高安全性（ASLR）。</li>
+</ul>
+<ol start="4">
+<li>节省指令空间</li>
+</ol>
+<ul>
+<li>使用 RIP 相对寻址只需要一个 32 位偏移量。</li>
+<li>如果使用绝对地址，需要嵌入完整的 64 位地址，指令长度更长，效率更低。</li>
+</ul>
+<h3 id="8-6-为什么使用-RIP-相对寻址只需要一个-32-位偏移量"><a href="#8-6-为什么使用-RIP-相对寻址只需要一个-32-位偏移量" class="headerlink" title="8.6. 为什么使用 RIP 相对寻址只需要一个 32 位偏移量"></a>8.6. 为什么使用 RIP 相对寻址只需要一个 32 位偏移量</h3><p>在 x86-64 架构中，RIP 相对寻址的偏移量被设计为一个有符号的 32 位整数，也就是一个 displacement（位移）字段，它在机器码中只占用 4 个字节。</p>
+<ul>
+<li><p>RIP 是 64 位的指令指针，表示当前指令的地址。</p>
+</li>
+<li><p>RIP 相对寻址的目标地址是通过：</p>
+<p><code>目标地址 = 下一条指令地址（RIP） + 32 位偏移量</code></p>
+</li>
+<li><p>这个偏移量是一个 有符号整数，所以它的范围是：</p>
+<p>从 −2³¹ 到 +2³¹−1，即 <strong>±2GB</strong> 的寻址范围。</p>
+</li>
+</ul>
+<p>这意味着，当前指令附近 ±2GB 范围内的任何数据都可以通过 RIP 相对寻址访问。</p>
+<table>
+<thead>
+<tr>
+<th align="center">优点</th>
+<th align="center">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">✅ 节省空间</td>
+<td align="center">只用 4 字节表示偏移，比使用完整 64 位地址节省指令长度</td>
+</tr>
+<tr>
+<td align="center">✅ 支持位置无关代码</td>
+<td align="center">编译器只需计算偏移，不依赖绝对地址</td>
+</tr>
+<tr>
+<td align="center">✅ 高效</td>
+<td align="center">CPU 执行时只需加法运算，无需查表或重定位</td>
+</tr>
+<tr>
+<td align="center">✅ 安全</td>
+<td align="center">支持地址空间布局随机化（ASLR），提高安全性</td>
+</tr>
+</tbody></table>
+<h3 id="8-7-为什么可以被多个进程共享？"><a href="#8-7-为什么可以被多个进程共享？" class="headerlink" title="8.7. 为什么可以被多个进程共享？"></a>8.7. 为什么可以被多个进程共享？</h3><p>因为代码中不再硬编码具体地址，多个进程可以：</p>
+<ul>
+<li>使用同一份物理内存中的代码段。</li>
+<li>每个进程有自己的数据段，但共享同一份只读代码。</li>
+</ul>
+<p>这大大节省了内存，提高了系统效率。</p>
+<p>举个例子：</p>
+<table>
+<thead>
+<tr>
+<th align="center">进程</th>
+<th align="center">加载地址</th>
+<th align="center">使用的代码段</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">A</td>
+<td align="center">0x400000</td>
+<td align="center">使用共享代码段</td>
+</tr>
+<tr>
+<td align="center">B</td>
+<td align="center">0x500000</td>
+<td align="center">使用共享代码段</td>
+</tr>
+</tbody></table>
+<p>两者的代码段内容完全一样，因为里面的寻址是相对 RIP 的，不依赖于加载地址。</p>
+<p>为什么绝对寻址不可以被多进程共享？</p>
+<ul>
+<li>每个进程的虚拟地址空间是独立的<ul>
+<li>操作系统为每个进程分配独立的虚拟地址空间。</li>
+<li>即使两个进程都加载了同一个程序，它们的地址空间可能完全不同。</li>
+<li>如果代码中使用绝对地址，加载到不同地址空间后，这些地址就不再有效。</li>
+</ul>
+</li>
+</ul>
+<p>所以，绝对地址在一个进程中是有效的，在另一个进程中可能就指向错误的地方或根本不存在。</p>
+<ul>
+<li><p>需要重定位，无法直接共享物理页</p>
+<ul>
+<li>如果使用绝对地址，操作系统必须在每个进程加载时对代码进行“重定位”，修改指令中的地址。</li>
+<li>一旦修改，代码段就变成了进程私有，不能共享同一份物理内存。</li>
+<li>而位置无关代码（如使用 RIP 相对寻址）不需要修改，可以直接映射到多个进程的地址空间。</li>
+</ul>
+</li>
+<li><p>违反共享库的设计原则</p>
+<ul>
+<li>动态链接库（如 <code>.so</code> 或 <code>.dll</code>）的核心优势就是可以被多个进程共享。</li>
+<li>如果库中使用绝对地址，每个进程都要有自己的副本，失去了共享的意义。</li>
+<li>正确做法是使用位置无关代码（PIC），让库在任意地址都能运行。</li>
+</ul>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="center">区域</th>
+<th align="center">是否可共享</th>
+<th align="center">原因说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">代码段</td>
+<td align="center">✅ 是</td>
+<td align="center">只读 + 位置无关，多个进程可映射同一物理页</td>
+</tr>
+<tr>
+<td align="center">数据段</td>
+<td align="center">❌ 否</td>
+<td align="center">每个进程的数据不同，需独立副本</td>
+</tr>
+<tr>
+<td align="center">堆</td>
+<td align="center">❌ 否</td>
+<td align="center">动态分配，地址空间不同</td>
+</tr>
+<tr>
+<td align="center">栈</td>
+<td align="center">❌ 否</td>
+<td align="center">私有调用栈，不能混用</td>
+</tr>
+<tr>
+<td align="center">共享内存段</td>
+<td align="center">✅ 是</td>
+<td align="center">显式创建，专门用于共享</td>
+</tr>
+</tbody></table>
+<p>如果你想深入了解某个进程的内存布局，可以分析 <code>/proc/[pid]/maps</code> 或用工具如 <code>pmap</code>、<code>vmmap</code>。</p>
+<h2 id="9-实际-debug-例子：在多线程中查看-poll-的事件"><a href="#9-实际-debug-例子：在多线程中查看-poll-的事件" class="headerlink" title="9. 实际 debug 例子：在多线程中查看 poll 的事件"></a>9. 实际 debug 例子：在多线程中查看 poll 的事件</h2><p>先复习下 <code>poll</code> 函数：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">poll</span><span class="params">(<span class="keyword">struct</span> pollfd *fds, <span class="type">nfds_t</span> nfds, <span class="type">int</span> timeout)</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 第一个参数 fds 的类型</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">pollfd</span> &#123;</span></span><br><span class="line">    <span class="type">int</span>   fd;         <span class="comment">/* file descriptor */</span></span><br><span class="line">    <span class="type">short</span> events;     <span class="comment">/* requested events */</span></span><br><span class="line">    <span class="type">short</span> revents;    <span class="comment">/* returned events */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><strong>FIXME：这种在汇编代码 ret 前断点，并依据 <code>rax</code> 、<code>rdi</code> 设置条件断点的方式不可靠，因为可能进入了 libc 层。</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看 polll 的汇编代码</span></span><br><span class="line">(gdb) disass poll</span><br><span class="line">Dump of assembler code <span class="keyword">for</span> <span class="keyword">function</span> poll:</span><br><span class="line">   0x00002ac084b5ec10 &lt;+0&gt;:     cmpl   <span class="variable">$0x0</span>,0x2d939d(%rip)        <span class="comment"># 0x2ac084e37fb4 &lt;__libc_multiple_threads&gt;</span></span><br><span class="line">   0x00002ac084b5ec17 &lt;+7&gt;:     jne    0x2ac084b5ec29 &lt;poll+25&gt;</span><br><span class="line">   0x00002ac084b5ec19 &lt;+0&gt;:     mov    <span class="variable">$0x7</span>,%eax</span><br><span class="line">   0x00002ac084b5ec1e &lt;+5&gt;:     syscall </span><br><span class="line">   0x00002ac084b5ec20 &lt;+7&gt;:     cmp    <span class="variable">$0xfffffffffffff001</span>,%rax</span><br><span class="line">   0x00002ac084b5ec26 &lt;+13&gt;:    jae    0x2ac084b5ec59 &lt;poll+73&gt;</span><br><span class="line">   0x00002ac084b5ec28 &lt;+15&gt;:    ret    </span><br><span class="line">   0x00002ac084b5ec29 &lt;+25&gt;:    sub    <span class="variable">$0x8</span>,%rsp</span><br><span class="line">   0x00002ac084b5ec2d &lt;+29&gt;:    call   0x2ac084b77600 &lt;__libc_enable_asynccancel&gt;</span><br><span class="line">   0x00002ac084b5ec32 &lt;+34&gt;:    mov    %rax,(%rsp)</span><br><span class="line">   0x00002ac084b5ec36 &lt;+38&gt;:    mov    <span class="variable">$0x7</span>,%eax</span><br><span class="line">   0x00002ac084b5ec3b &lt;+43&gt;:    syscall </span><br><span class="line">   0x00002ac084b5ec3d &lt;+45&gt;:    mov    (%rsp),%rdi</span><br><span class="line">   0x00002ac084b5ec41 &lt;+49&gt;:    mov    %rax,%rdx</span><br><span class="line">   0x00002ac084b5ec44 &lt;+52&gt;:    call   0x2ac084b77660 &lt;__libc_disable_asynccancel&gt;</span><br><span class="line">   0x00002ac084b5ec49 &lt;+57&gt;:    mov    %rdx,%rax</span><br><span class="line">   0x00002ac084b5ec4c &lt;+60&gt;:    add    <span class="variable">$0x8</span>,%rsp</span><br><span class="line">   0x00002ac084b5ec50 &lt;+64&gt;:    cmp    <span class="variable">$0xfffffffffffff001</span>,%rax</span><br><span class="line">   0x00002ac084b5ec56 &lt;+70&gt;:    jae    0x2ac084b5ec59 &lt;poll+73&gt;</span><br><span class="line">=&gt; 0x00002ac084b5ec58 &lt;+72&gt;:    ret    </span><br><span class="line">   0x00002ac084b5ec59 &lt;+73&gt;:    mov    0x2d31f0(%rip),%rcx        <span class="comment"># 0x2ac084e31e50</span></span><br><span class="line">   0x00002ac084b5ec60 &lt;+80&gt;:    neg    %eax</span><br><span class="line">   0x00002ac084b5ec62 &lt;+82&gt;:    mov    %eax,%fs:(%rcx)</span><br><span class="line">   0x00002ac084b5ec65 &lt;+85&gt;:    or     <span class="variable">$0xffffffffffffffff</span>,%rax</span><br><span class="line">   0x00002ac084b5ec69 &lt;+89&gt;:    ret</span><br><span class="line"></span><br><span class="line"><span class="comment"># 找到所有的 ret 指令，设置条件断点</span></span><br><span class="line"><span class="comment"># 注意：最好是在 ret 指令之前的指令上也加上断点，</span></span><br><span class="line"><span class="comment"># 因为 ret 的时候，可能已经把当前栈（除 rsp / rbp 外）都弹出了，寄存器中将看不到当前栈的信息</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># $rax 是返回值寄存器，也就是返回大于 0 时，让进程暂停</span></span><br><span class="line"><span class="comment"># 这里的 * 表示取内存的值（存放的是指令），* 断不可少，不然会被认为是 Function name</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line">(gdb) b *0x00002ac084b5ec26 thread 4 <span class="keyword">if</span> <span class="variable">$rax</span> &gt; 0</span><br><span class="line">(gdb) b *0x00002ac084b5ec28 thread 4 <span class="keyword">if</span> <span class="variable">$rax</span> &gt; 0</span><br><span class="line">(gdb) b *0x00002ac084b5ec56 thread 4 <span class="keyword">if</span> <span class="variable">$rax</span> &gt; 0</span><br><span class="line">(gdb) b *0x00002ac084b5ec58 thread 4 <span class="keyword">if</span> <span class="variable">$rax</span> &gt; 0</span><br><span class="line">(gdb) b *0x00002ac084b5ec65 thread 4 <span class="keyword">if</span> <span class="variable">$rax</span> &gt; 0</span><br><span class="line">(gdb) b *0x00002ac084b5ec69 thread 4 <span class="keyword">if</span> <span class="variable">$rax</span> &gt; 0</span><br><span class="line"></span><br><span class="line"><span class="comment"># 继续运行</span></span><br><span class="line">(gdb) c</span><br><span class="line"></span><br><span class="line"><span class="comment"># 当 IO 事件发生，程序会被暂停</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/21/dmtcp/DMTCP%E4%B9%8B%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86jalib/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +895,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-16 14:08:08" itemprop="dateModified" datetime="2025-09-16T14:08:08+00:00">2025-09-16</time>
+                <time title="Modified: 2025-09-17 03:16:34" itemprop="dateModified" datetime="2025-09-17T03:16:34+00:00">2025-09-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -391,7 +1062,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-16 14:08:08" itemprop="dateModified" datetime="2025-09-16T14:08:08+00:00">2025-09-16</time>
+                <time title="Modified: 2025-09-17 03:16:34" itemprop="dateModified" datetime="2025-09-17T03:16:34+00:00">2025-09-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -554,7 +1225,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-16 14:08:08" itemprop="dateModified" datetime="2025-09-16T14:08:08+00:00">2025-09-16</time>
+                <time title="Modified: 2025-09-17 03:16:34" itemprop="dateModified" datetime="2025-09-17T03:16:34+00:00">2025-09-17</time>
               </span>
 
           
@@ -629,7 +1300,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-16 14:08:08" itemprop="dateModified" datetime="2025-09-16T14:08:08+00:00">2025-09-16</time>
+                <time title="Modified: 2025-09-17 03:16:34" itemprop="dateModified" datetime="2025-09-17T03:16:34+00:00">2025-09-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1057,7 +1728,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-16 14:08:08" itemprop="dateModified" datetime="2025-09-16T14:08:08+00:00">2025-09-16</time>
+                <time title="Modified: 2025-09-17 03:16:34" itemprop="dateModified" datetime="2025-09-17T03:16:34+00:00">2025-09-17</time>
               </span>
 
           
@@ -1179,7 +1850,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-16 14:08:08" itemprop="dateModified" datetime="2025-09-16T14:08:08+00:00">2025-09-16</time>
+                <time title="Modified: 2025-09-17 03:16:34" itemprop="dateModified" datetime="2025-09-17T03:16:34+00:00">2025-09-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1313,7 +1984,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-16 14:08:08" itemprop="dateModified" datetime="2025-09-16T14:08:08+00:00">2025-09-16</time>
+                <time title="Modified: 2025-09-17 03:16:34" itemprop="dateModified" datetime="2025-09-17T03:16:34+00:00">2025-09-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1429,7 +2100,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-16 14:08:08" itemprop="dateModified" datetime="2025-09-16T14:08:08+00:00">2025-09-16</time>
+                <time title="Modified: 2025-09-17 03:16:34" itemprop="dateModified" datetime="2025-09-17T03:16:34+00:00">2025-09-17</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1503,7 +2174,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-16 14:08:08" itemprop="dateModified" datetime="2025-09-16T14:08:08+00:00">2025-09-16</time>
+                <time title="Modified: 2025-09-17 03:16:34" itemprop="dateModified" datetime="2025-09-17T03:16:34+00:00">2025-09-17</time>
               </span>
 
           
@@ -1601,169 +2272,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/17/concurrency/%E8%AF%A6%E8%A7%A3RCU%E6%9C%BA%E5%88%B6/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/17/concurrency/%E8%AF%A6%E8%A7%A3RCU%E6%9C%BA%E5%88%B6/" class="post-title-link" itemprop="url">详解RCU机制</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-17 10:39:19" itemprop="dateCreated datePublished" datetime="2025-08-17T10:39:19+00:00">2025-08-17</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-16 14:08:08" itemprop="dateModified" datetime="2025-09-16T14:08:08+00:00">2025-09-16</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="RCU-读-复制-更新"><a href="#RCU-读-复制-更新" class="headerlink" title="RCU (读-复制-更新)"></a>RCU (读-复制-更新)</h2><p>RCU（Read-Copy-Update，读-拷贝-更新）是 Linux 内核中一种高效的 并发读-写同步机制，专门用于在多核系统下实现 大量读、少量写 的场景。它的核心思想是：读操作完全无锁，写操作通过复制更新，最后再安全地回收旧版本。</p>
-<p>RCU 的核心思想</p>
-<ul>
-<li>读操作直接访问数据结构，不加锁</li>
-<li>写操作：<ul>
-<li>先 复制原数据 → 修改副本</li>
-<li>更新指针，使新数据生效</li>
-<li>延迟回收旧数据，保证当前正在读取旧数据的线程不受影响</li>
-</ul>
-</li>
-</ul>
-<h3 id="rcu"><a href="#rcu" class="headerlink" title="__rcu"></a><code>__rcu</code></h3><p>它是 RCU 机制中非常关键的一环，用来让 编译器和内核知道某个指针是 RCU 保护的。</p>
-<ol>
-<li><code>__rcu</code> 的定义</li>
-</ol>
-<p>在 Linux 内核中（以 x86_64 为例）：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> __rcu</span></span><br></pre></td></tr></table></figure>
-
-<p>实际上，它 本身对编译器不产生直接影响</p>
-<p>主要用途是 标记类型，告诉 Sparse 静态分析工具 或 内核开发者：这个指针受 RCU 保护，不能随意直接读&#x2F;写</p>
-<p>也就是说，<code>__rcu</code> 是 一个注释性质的宏，编译器编译时忽略，但静态分析工具会检查 RCU 访问规则。</p>
-<ol start="2">
-<li><code>__rcu</code> 的作用</li>
-</ol>
-<p>标记 RCU 保护的指针，常见用法：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">files_struct</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">fdtable</span> __<span class="title">rcu</span> *<span class="title">fdt</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">file</span> __<span class="title">rcu</span> *<span class="title">fd_array</span>[<span class="title">NR_OPEN_DEFAULT</span>];</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<p>含义：</p>
-<ul>
-<li><code>fdt</code> 是 RCU 指针</li>
-<li>不能直接写 <code>fdt = new_ptr</code>; 或直接解引用 <code>fdt-&gt;xxx</code></li>
-<li>必须通过 RCU API，如：<ul>
-<li><code>rcu_assign_pointer(fdt, new_fdt);</code> → 安全更新指针</li>
-<li><code>rcu_dereference(fdt)</code> → 安全读取指针</li>
-</ul>
-</li>
-<li>这样可以保证：<ul>
-<li>写线程更新指针时不会破坏读线程的访问</li>
-<li>读线程可以无锁访问旧数据</li>
-</ul>
-</li>
-</ul>
-<ol start="3">
-<li><code>__rcu</code> 与编译器和内核</li>
-</ol>
-<ul>
-<li>静态检查（Sparse）<ul>
-<li>Sparse 是 Linux 内核推荐的静态分析工具</li>
-<li>它会检查：<ul>
-<li>所有 <code>__rcu</code> 指针的写操作是否用 <code>rcu_assign_pointer</code></li>
-<li>所有读取是否用 <code>rcu_dereference</code></li>
-</ul>
-</li>
-<li>如果直接访问，就会报错，避免 RCU 访问错误</li>
-</ul>
-</li>
-<li>内存屏障和优化<ul>
-<li><code>rcu_assign_pointer</code> 内部会加上 适当的写屏障 (<code>smp_wmb()</code>)</li>
-<li><code>rcu_dereference</code> 内部会加 读取屏障 (<code>smp_rmb()</code>)</li>
-<li>防止编译器&#x2F;CPU 重排导致读写顺序错误</li>
-</ul>
-</li>
-</ul>
-<ol start="4">
-<li><code>__rcu</code> 的核心原理总结</li>
-</ol>
-<table>
-<thead>
-<tr>
-<th>方面</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>编译器作用</td>
-<td>本身是空宏，不改变代码</td>
-</tr>
-<tr>
-<td>静态分析</td>
-<td>Sparse 检查 RCU 指针的安全读写</td>
-</tr>
-<tr>
-<td>内存屏障</td>
-<td>通过 <code>rcu_assign_pointer</code> &#x2F; <code>rcu_dereference</code> 添加屏障，保证并发安全</td>
-</tr>
-<tr>
-<td>运行时</td>
-<td>指针仍然是普通指针，实际存储和访问和普通指针一样</td>
-</tr>
-</tbody></table>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1835,7 +2343,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">103</span>
+          <span class="site-state-item-count">104</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
