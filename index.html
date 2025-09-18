@@ -218,7 +218,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2025-09-18 18:57:08 / Modified: 10:58:56" itemprop="dateCreated datePublished" datetime="2025-09-18T18:57:08+00:00">2025-09-18</time>
+              <time title="Created: 2025-09-18 18:57:08 / Modified: 13:06:21" itemprop="dateCreated datePublished" datetime="2025-09-18T18:57:08+00:00">2025-09-18</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -406,11 +406,11 @@
 <td align="center">1️⃣</td>
 <td align="center">显式命令行参数 -L</td>
 <td align="center">✅</td>
-<td align="center">最优先，用户指定的库路径</td>
+<td align="center">用户指定的库路径，最高优先级</td>
 </tr>
 <tr>
 <td align="center">2️⃣</td>
-<td align="center">-rpath-link 参数</td>
+<td align="center">链接器参数 -rpath-link</td>
 <td align="center">✅</td>
 <td align="center">链接器查找间接依赖库时使用</td>
 </tr>
@@ -418,7 +418,7 @@
 <td align="center">3️⃣</td>
 <td align="center">环境变量 LIBRARY_PATH</td>
 <td align="center">✅</td>
-<td align="center">编译时使用，优先于默认路径</td>
+<td align="center">编译器查找库时使用，优先于默认路径</td>
 </tr>
 <tr>
 <td align="center">4️⃣</td>
@@ -428,17 +428,55 @@
 </tr>
 <tr>
 <td align="center">5️⃣</td>
+<td align="center">GCC 安装路径默认搜索目录</td>
+<td align="center">✅</td>
+<td align="center">来自 –prefix 和 –libdir 配置</td>
+</tr>
+<tr>
+<td align="center">6️⃣</td>
 <td align="center">specs 文件配置</td>
 <td align="center">✅</td>
 <td align="center">GCC 内部配置，可自定义行为</td>
 </tr>
 <tr>
-<td align="center">6️⃣</td>
+<td align="center">7️⃣</td>
 <td align="center">默认系统路径 &#x2F;lib, &#x2F;usr&#x2F;lib, &#x2F;lib64</td>
 <td align="center">❌</td>
-<td align="center">最后兜底路径</td>
+<td align="center">最后兜底路径，系统环境提供的库</td>
 </tr>
 </tbody></table>
+<p>说明：</p>
+<p>在编译安装 GCC 时，通常会使用 configure 脚本来指定安装路径：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./configure --prefix=/custom/gcc --libdir=/custom/gcc/lib64</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th align="center">参数</th>
+<th align="center">作用说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">–prefix</td>
+<td align="center">指定 GCC 的安装根目录。GCC 的可执行文件、头文件、库文件等都会安装到这个目录下的子目录中。</td>
+</tr>
+<tr>
+<td align="center">–libdir</td>
+<td align="center">指定库文件的安装目录，通常是 lib 或 lib64，用于放置 .so 或 .a 文件。</td>
+</tr>
+</tbody></table>
+<p>当你使用这个 GCC 编译器时，它会自动使用这些路径来查找头文件和库文件。例如：</p>
+<ul>
+<li>查找头文件时，会优先使用 &#x2F;custom&#x2F;gcc&#x2F;include</li>
+<li>查找库文件时，会优先使用 &#x2F;custom&#x2F;gcc&#x2F;lib64</li>
+<li>链接器（如 ld）也会被 GCC 告知去这些路径找库</li>
+</ul>
+<p>这些路径是 编译器内部写死的默认值，你可以通过以下命令查看：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -print-search-dirs</span><br></pre></td></tr></table></figure>
+
+<p>输出示例：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">install: /custom/gcc/lib/gcc/x86_64-linux-gnu/12.2.0/</span><br><span class="line">programs: /custom/gcc/libexec/gcc/x86_64-linux-gnu/12.2.0/:...</span><br><span class="line">libraries: /custom/gcc/lib/gcc/x86_64-linux-gnu/12.2.0/:/custom/gcc/lib64/:..</span><br></pre></td></tr></table></figure>
+
 <h3 id="编译时链接器（ld）"><a href="#编译时链接器（ld）" class="headerlink" title="编译时链接器（ld）"></a>编译时链接器（ld）</h3><p>编译时链接器（ld） 和 运行时动态链接器 不是同一个东西：</p>
 <table>
 <thead>
@@ -559,7 +597,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-18 10:58:56" itemprop="dateModified" datetime="2025-09-18T10:58:56+00:00">2025-09-18</time>
+                <time title="Modified: 2025-09-18 13:06:21" itemprop="dateModified" datetime="2025-09-18T13:06:21+00:00">2025-09-18</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -653,7 +691,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-18 10:58:56" itemprop="dateModified" datetime="2025-09-18T10:58:56+00:00">2025-09-18</time>
+                <time title="Modified: 2025-09-18 13:06:21" itemprop="dateModified" datetime="2025-09-18T13:06:21+00:00">2025-09-18</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -782,7 +820,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-18 10:58:56" itemprop="dateModified" datetime="2025-09-18T10:58:56+00:00">2025-09-18</time>
+                <time title="Modified: 2025-09-18 13:06:21" itemprop="dateModified" datetime="2025-09-18T13:06:21+00:00">2025-09-18</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -891,7 +929,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-18 10:58:56" itemprop="dateModified" datetime="2025-09-18T10:58:56+00:00">2025-09-18</time>
+                <time title="Modified: 2025-09-18 13:06:21" itemprop="dateModified" datetime="2025-09-18T13:06:21+00:00">2025-09-18</time>
               </span>
 
           
@@ -968,7 +1006,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-18 10:58:56" itemprop="dateModified" datetime="2025-09-18T10:58:56+00:00">2025-09-18</time>
+                <time title="Modified: 2025-09-18 13:06:21" itemprop="dateModified" datetime="2025-09-18T13:06:21+00:00">2025-09-18</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1070,7 +1108,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-18 10:58:56" itemprop="dateModified" datetime="2025-09-18T10:58:56+00:00">2025-09-18</time>
+                <time title="Modified: 2025-09-18 13:06:21" itemprop="dateModified" datetime="2025-09-18T13:06:21+00:00">2025-09-18</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1186,7 +1224,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-18 10:58:56" itemprop="dateModified" datetime="2025-09-18T10:58:56+00:00">2025-09-18</time>
+                <time title="Modified: 2025-09-18 13:06:21" itemprop="dateModified" datetime="2025-09-18T13:06:21+00:00">2025-09-18</time>
               </span>
 
           
@@ -1567,7 +1605,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-18 10:58:56" itemprop="dateModified" datetime="2025-09-18T10:58:56+00:00">2025-09-18</time>
+                <time title="Modified: 2025-09-18 13:06:21" itemprop="dateModified" datetime="2025-09-18T13:06:21+00:00">2025-09-18</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1642,7 +1680,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-18 10:58:56" itemprop="dateModified" datetime="2025-09-18T10:58:56+00:00">2025-09-18</time>
+                <time title="Modified: 2025-09-18 13:06:21" itemprop="dateModified" datetime="2025-09-18T13:06:21+00:00">2025-09-18</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
