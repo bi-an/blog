@@ -193,6 +193,107 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/02/24/TCL%E5%85%A5%E9%97%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/02/24/TCL%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">TCL入门</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-02-24 16:03:38" itemprop="dateCreated datePublished" datetime="2025-02-24T16:03:38+00:00">2025-02-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-18 10:58:56" itemprop="dateModified" datetime="2025-09-18T10:58:56+00:00">2025-09-18</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="TCL-Main"><a href="#TCL-Main" class="headerlink" title="TCL_Main"></a>TCL_Main</h2><p><code>Tcl_Main</code>的简化流程：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">Tcl_Main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[], Tcl_AppInitProc *appInitProc)</span> </span>&#123;</span><br><span class="line">    Tcl_Interp *interp;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 创建一个新的 Tcl 解释器</span></span><br><span class="line">    interp = <span class="built_in">Tcl_CreateInterp</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调用应用程序初始化函数</span></span><br><span class="line">    <span class="keyword">if</span> ((*appInitProc)(interp) != TCL_OK) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;Application initialization failed: %s\n&quot;</span>, <span class="built_in">Tcl_GetStringResult</span>(interp));</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 进入 Tcl 事件循环</span></span><br><span class="line">    <span class="built_in">Tcl_MainLoop</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="花括号的用法"><a href="#花括号的用法" class="headerlink" title="花括号的用法"></a>花括号的用法</h2><p>在Tcl中，花括号 <code>&#123;&#125;</code> 有多种用法，主要用于分组、延迟解析、创建列表和字典等。以下是花括号的主要用法及示例：</p>
+<ol>
+<li><p>分组代码块<br>花括号用于将一段代码分组，使其作为一个整体传递或执行。</p>
+ <figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> &#123;[<span class="keyword">catch</span> &#123;myProc&#125; msg]&#125; &#123;</span><br><span class="line">    <span class="keyword">puts</span> <span class="string">&quot;An error occurred: $msg&quot;</span></span><br><span class="line">&#125; else &#123;</span><br><span class="line">    <span class="keyword">puts</span> <span class="string">&quot;myProc executed successfully&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>延迟解析<br>花括号内的内容不会立即解析，直到需要时才会被解析。这在处理包含特殊字符的字符串时非常有用。</p>
+ <figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> script &#123;<span class="keyword">puts</span> <span class="string">&quot;Hello, World!&quot;</span>&#125;</span><br><span class="line"><span class="keyword">eval</span> <span class="variable">$script</span>  <span class="comment">;# 输出 &quot;Hello, World!&quot;</span></span><br></pre></td></tr></table></figure>
+
+ <figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> &#123;[<span class="keyword">catch</span> &#123;myProc&#125; msg]&#125; &#123;</span><br><span class="line">    <span class="keyword">puts</span> <span class="string">&quot;An error occurred: $msg&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>创建列表<br>花括号用于创建列表，列表中的元素可以包含空格或特殊字符。</p>
+ <figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> myList &#123;one two three&#125;</span><br><span class="line"><span class="keyword">puts</span> [<span class="keyword">lindex</span> <span class="variable">$myList</span> <span class="number">1</span>]  <span class="comment">;# 输出 &quot;two&quot;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>创建字典<br>花括号用于创建字典，字典中的键值对可以包含空格或特殊字符。</p>
+ <figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> myDict &#123;key1 value1 key2 value2&#125;</span><br><span class="line"><span class="keyword">puts</span> [<span class="keyword">dict</span> get <span class="variable">$myDict</span> key1]  <span class="comment">;# 输出 &quot;value1&quot;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>多行字符串<br>花括号用于创建多行字符串，字符串中的换行符和空格会被保留。</p>
+ <figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> multiLineString &#123;</span><br><span class="line">    This is a multi-line</span><br><span class="line">    <span class="keyword">string</span> in Tcl.</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">puts</span> <span class="variable">$multiLineString</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>保护特殊字符<br>花括号用于保护特殊字符，使其不被解释为命令或变量。</p>
+ <figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> specialChars &#123;This is a &#123;special&#125; <span class="keyword">string</span> with [brackets] and <span class="variable">$dollar</span> signs.&#125;</span><br><span class="line"><span class="keyword">puts</span> <span class="variable">$specialChars</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在控制结构中使用<br>花括号用于控制结构（如 if、while、for 等）中的条件和代码块。</p>
+ <figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> x <span class="number">10</span></span><br><span class="line"><span class="keyword">if</span> &#123;<span class="variable">$x</span> &gt; <span class="number">5</span>&#125; &#123;</span><br><span class="line">    <span class="keyword">puts</span> <span class="string">&quot;x is greater than 5&quot;</span></span><br><span class="line">&#125; else &#123;</span><br><span class="line">    <span class="keyword">puts</span> <span class="string">&quot;x is 5 or less&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>定义过程<br>花括号用于定义过程的参数和主体。</p>
+ <figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">proc</span><span class="title"> greet</span> &#123;name&#125; &#123;</span><br><span class="line">    <span class="keyword">puts</span> <span class="string">&quot;Hello, $name!&quot;</span></span><br><span class="line">&#125;</span><br><span class="line">greet <span class="string">&quot;Tcl User&quot;</span>  <span class="comment">;# 输出 &quot;Hello, Tcl User!&quot;</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="global-和-varaible"><a href="#global-和-varaible" class="headerlink" title="global 和 varaible"></a>global 和 varaible</h2><p><code>global</code> 和 <code>variable</code> 用于声明该变量来自全局还是当前命名空间。</p>
+<p>注意：两者都是声明，不是定义。</p>
+<figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> i <span class="number">20</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> <span class="keyword">eval</span> test &#123;</span><br><span class="line">    <span class="comment">;# variable i</span></span><br><span class="line">    <span class="comment">;# i没有被事先声明为名字空间的变量，则会引用全局变量i</span></span><br><span class="line">    <span class="keyword">for</span> &#123; <span class="keyword">set</span> i <span class="number">1</span>&#125; &#123; <span class="variable">$i</span> &lt;=<span class="number">5</span>&#125; &#123; <span class="keyword">incr</span> i&#125; &#123;</span><br><span class="line">        <span class="keyword">puts</span> -nonewline <span class="string">&quot;i=$i; &quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">puts</span> <span class="string">&quot;\n&quot;</span></span><br><span class="line">    <span class="comment">;# 由于没有全局的j，所以j被默认视作命名空间内部变量，引用时必须加上命名空间为前缀</span></span><br><span class="line">    <span class="keyword">for</span> &#123;<span class="keyword">set</span> j <span class="number">1</span>&#125; &#123; <span class="variable">$j</span>&lt;=<span class="number">5</span>&#125; &#123;<span class="keyword">incr</span> j&#125; &#123;</span><br><span class="line">        <span class="keyword">puts</span> -nonewline <span class="string">&quot;j=$j; &quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">puts</span> <span class="string">&quot;\n&quot;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">puts</span> <span class="variable">$i</span></span><br><span class="line"><span class="keyword">puts</span> <span class="variable">$test::j</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">;#注意i的定义处被注释了</span></span><br><span class="line"><span class="comment">#set i 20</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> <span class="keyword">eval</span> test &#123;</span><br><span class="line">    <span class="comment">;# 这里的 global 声明无效，因为没有在全局定义i</span></span><br><span class="line">    <span class="keyword">global</span> i</span><br><span class="line">    <span class="comment">;# 此处的i仍然是命令空间内部的</span></span><br><span class="line">    <span class="keyword">for</span> &#123; <span class="keyword">set</span> i <span class="number">1</span>&#125; &#123; <span class="variable">$i</span> &lt;=<span class="number">5</span>&#125; &#123; <span class="keyword">incr</span> i&#125; &#123;</span><br><span class="line">        <span class="keyword">puts</span> -nonewline <span class="string">&quot;i=$i; &quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">;# 错误！</span></span><br><span class="line"><span class="keyword">puts</span> <span class="variable">$i</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;# 正确</span></span><br><span class="line"><span class="keyword">puts</span> <span class="variable">$test::i</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="TCL-C-打印堆栈"><a href="#TCL-C-打印堆栈" class="headerlink" title="TCL C++ 打印堆栈"></a>TCL C++ 打印堆栈</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">MyCommand</span><span class="params">(ClientData clientData, Tcl_Interp *interp, <span class="type">int</span> objc, Tcl_Obj *<span class="type">const</span> objv[])</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 打印调用命令</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; objc; ++i) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Arg[%d]: %s\n&quot;</span>, <span class="built_in">Tcl_GetString</span>(objv[i]));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 打印堆栈信息（可选）</span></span><br><span class="line">    <span class="built_in">Tcl_Eval</span>(interp, <span class="string">&quot;puts \&quot;Call stack:\&quot;; for &#123;set i 0&#125; &#123;$i &lt;= [info level]&#125; &#123;incr i&#125; &#123;puts \&quot;  [info level $i]\&quot;&#125;&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> TCL_OK;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/01/17/IC/2.%E5%9F%BA%E4%BA%8EVerilog%E7%9A%84%E6%95%B0%E5%AD%97IC%E8%AE%BE%E8%AE%A1%E6%96%B9%E6%B3%95/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,7 +325,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-17 03:16:34" itemprop="dateModified" datetime="2025-09-17T03:16:34+00:00">2025-09-17</time>
+                <time title="Modified: 2025-09-18 10:58:56" itemprop="dateModified" datetime="2025-09-18T10:58:56+00:00">2025-09-18</time>
               </span>
 
           
@@ -521,7 +622,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-17 03:16:34" itemprop="dateModified" datetime="2025-09-17T03:16:34+00:00">2025-09-17</time>
+                <time title="Modified: 2025-09-18 10:58:56" itemprop="dateModified" datetime="2025-09-18T10:58:56+00:00">2025-09-18</time>
               </span>
 
           
@@ -847,7 +948,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-17 03:16:34" itemprop="dateModified" datetime="2025-09-17T03:16:34+00:00">2025-09-17</time>
+                <time title="Modified: 2025-09-18 10:58:56" itemprop="dateModified" datetime="2025-09-18T10:58:56+00:00">2025-09-18</time>
               </span>
 
           
@@ -1028,7 +1129,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-17 03:16:34" itemprop="dateModified" datetime="2025-09-17T03:16:34+00:00">2025-09-17</time>
+                <time title="Modified: 2025-09-18 10:58:56" itemprop="dateModified" datetime="2025-09-18T10:58:56+00:00">2025-09-18</time>
               </span>
 
           
@@ -1096,7 +1197,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-17 03:16:34" itemprop="dateModified" datetime="2025-09-17T03:16:34+00:00">2025-09-17</time>
+                <time title="Modified: 2025-09-18 10:58:56" itemprop="dateModified" datetime="2025-09-18T10:58:56+00:00">2025-09-18</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1179,7 +1280,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-17 03:16:34" itemprop="dateModified" datetime="2025-09-17T03:16:34+00:00">2025-09-17</time>
+                <time title="Modified: 2025-09-18 10:58:56" itemprop="dateModified" datetime="2025-09-18T10:58:56+00:00">2025-09-18</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1312,7 +1413,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-17 03:16:34" itemprop="dateModified" datetime="2025-09-17T03:16:34+00:00">2025-09-17</time>
+                <time title="Modified: 2025-09-18 10:58:56" itemprop="dateModified" datetime="2025-09-18T10:58:56+00:00">2025-09-18</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1396,7 +1497,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-17 03:16:34" itemprop="dateModified" datetime="2025-09-17T03:16:34+00:00">2025-09-17</time>
+                <time title="Modified: 2025-09-18 10:58:56" itemprop="dateModified" datetime="2025-09-18T10:58:56+00:00">2025-09-18</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1486,7 +1587,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-17 03:16:34" itemprop="dateModified" datetime="2025-09-17T03:16:34+00:00">2025-09-17</time>
+                <time title="Modified: 2025-09-18 10:58:56" itemprop="dateModified" datetime="2025-09-18T10:58:56+00:00">2025-09-18</time>
               </span>
 
           
@@ -1519,81 +1620,6 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
 <p>当执行 <code>rpcgen infile</code> 命令时，由于 “abc.h” 不存在，可能会报错。</p>
 <p>但是如果在句首添加一个 <code>%</code> 符号，则可以绕过检查。</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">%#include &quot;abc.h&quot;</span><br></pre></td></tr></table></figure>
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/05/08/english/Hair/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/05/08/english/Hair/" class="post-title-link" itemprop="url">Hair</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-05-08 22:10:46" itemprop="dateCreated datePublished" datetime="2024-05-08T22:10:46+00:00">2024-05-08</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-17 03:16:34" itemprop="dateModified" datetime="2025-09-17T03:16:34+00:00">2025-09-17</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/English/" itemprop="url" rel="index"><span itemprop="name">English</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Link"><a href="#Link" class="headerlink" title="Link"></a>Link</h2><p><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=EzFtsYC4pPg&t=344s">Free English Class! Topic: Hair! 🧔🏽💇✂️ (Lesson Only)</a></p>
-<h2 id="Words-Phrases"><a href="#Words-Phrases" class="headerlink" title="Words&#x2F;Phrases"></a>Words&#x2F;Phrases</h2><p>eyelashes<br>makeup<br>hairstyle&#x2F;hairdo<br>get my hair done<br>hair gel<br>buzz cut<br>helmet<br>When you have a lot of hair, the helmet makes your hair flat.<br>hair colouring</p>
-
       
     </div>
 
@@ -1679,7 +1705,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">104</span>
+          <span class="site-state-item-count">105</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1692,7 +1718,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-count">47</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

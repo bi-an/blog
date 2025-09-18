@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="运行时 so 的加载顺序   优先级 来源 说明    🔺 1 LD_PRELOAD 环境变量 强制优先加载指定库，最高优先级，可用于函数替换   🔺 2 rpath（编译时指定） 使用 -Wl,-rpath&#x3D;… 编译时嵌入的路径，仅作用于当前程序（已废弃：因为优先级过高，且影响间接依赖项。推荐使用 runpath，没有这两个缺点。）   🔺 3 LD_LIBRARY_PATH 环">
+<meta property="og:type" content="article">
+<meta property="og:title" content="编译时链接和运行时链接">
+<meta property="og:url" content="https://bi-an.github.io/blog/2025/09/18/cpp/%E7%BC%96%E8%AF%91%E6%97%B6%E9%93%BE%E6%8E%A5%E5%92%8C%E8%BF%90%E8%A1%8C%E6%97%B6%E9%93%BE%E6%8E%A5/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="运行时 so 的加载顺序   优先级 来源 说明    🔺 1 LD_PRELOAD 环境变量 强制优先加载指定库，最高优先级，可用于函数替换   🔺 2 rpath（编译时指定） 使用 -Wl,-rpath&#x3D;… 编译时嵌入的路径，仅作用于当前程序（已废弃：因为优先级过高，且影响间接依赖项。推荐使用 runpath，没有这两个缺点。）   🔺 3 LD_LIBRARY_PATH 环">
+<meta property="og:locale">
+<meta property="article:published_time" content="2025-09-18T18:57:08.000Z">
+<meta property="article:modified_time" content="2025-09-18T10:58:56.748Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="编译">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2025/09/18/cpp/%E7%BC%96%E8%AF%91%E6%97%B6%E9%93%BE%E6%8E%A5%E5%92%8C%E8%BF%90%E8%A1%8C%E6%97%B6%E9%93%BE%E6%8E%A5/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>编译时链接和运行时链接 | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-resource">
+
+    <a href="/blog/resources/" rel="section"><i class="fa fa-paperclip fa-fw"></i>Resource</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/18/cpp/%E7%BC%96%E8%AF%91%E6%97%B6%E9%93%BE%E6%8E%A5%E5%92%8C%E8%BF%90%E8%A1%8C%E6%97%B6%E9%93%BE%E6%8E%A5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          编译时链接和运行时链接
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2025-09-18 18:57:08 / Modified: 10:58:56" itemprop="dateCreated datePublished" datetime="2025-09-18T18:57:08+00:00">2025-09-18</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="运行时-so-的加载顺序"><a href="#运行时-so-的加载顺序" class="headerlink" title="运行时 so 的加载顺序"></a>运行时 so 的加载顺序</h2><table>
+<thead>
+<tr>
+<th align="center">优先级</th>
+<th align="center">来源</th>
+<th align="center">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">🔺 1</td>
+<td align="center">LD_PRELOAD 环境变量</td>
+<td align="center">强制优先加载指定库，最高优先级，可用于函数替换</td>
+</tr>
+<tr>
+<td align="center">🔺 2</td>
+<td align="center">rpath（编译时指定）</td>
+<td align="center">使用 -Wl,-rpath&#x3D;… 编译时嵌入的路径，仅作用于当前程序（已废弃：因为优先级过高，且影响间接依赖项。推荐使用 runpath，没有这两个缺点。）</td>
+</tr>
+<tr>
+<td align="center">🔺 3</td>
+<td align="center">LD_LIBRARY_PATH 环境变量</td>
+<td align="center">运行时设置的库搜索路径，影响当前 shell 会话</td>
+</tr>
+<tr>
+<td align="center">🔺 4</td>
+<td align="center">runpath（编译时指定）</td>
+<td align="center">使用 -Wl,-rpath 设置的路径，但优先级低于 LD_LIBRARY_PATH</td>
+</tr>
+<tr>
+<td align="center">🔺 5</td>
+<td align="center">&#x2F;etc&#x2F;ld.so.cache</td>
+<td align="center">由 ldconfig 生成的缓存，包含 &#x2F;etc&#x2F;ld.so.conf 中的路径</td>
+</tr>
+<tr>
+<td align="center">🔺 6</td>
+<td align="center">默认系统路径</td>
+<td align="center">&#x2F;lib, &#x2F;usr&#x2F;lib, &#x2F;lib64, &#x2F;usr&#x2F;lib64 等标准目录</td>
+</tr>
+</tbody></table>
+<h3 id="动态链接器（Dynamic-Linker）"><a href="#动态链接器（Dynamic-Linker）" class="headerlink" title="动态链接器（Dynamic Linker）"></a>动态链接器（Dynamic Linker）</h3><p>以上的 so 的加载顺序，是由 <strong>动态链接器（Dynamic Linker）</strong> 完成的。</p>
+<p>每个 ELF 可执行文件在头部指定了它的动态链接器路径：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ readelf -l your_program | grep interpreter</span><br><span class="line">[Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]</span><br></pre></td></tr></table></figure>
+
+<p>这个链接器负责在程序启动时加载所需的动态库，包括 libc.so.6（glibc 的主库）。</p>
+<p>注意：<code>ld.so</code>（这是一个简称）和 <code>ld</code> 完全不是一个东西，<code>ld</code> 是一个可执行程序，在编译期使用，见下<br>文<a href="#%E7%BC%96%E8%AF%91%E6%97%B6%E9%93%BE%E6%8E%A5%E5%99%A8%EF%BC%88ld%EF%BC%89">编译时链接器（ld）</a>。</p>
+<ul>
+<li><code>ld.so</code> 既是 so 也是可执行文件：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ file /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2</span><br><span class="line">/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2: ELF 64-bit LSB shared object, x86-64, version 1 (GNU/Linux), dynamically linked, BuildID[sha1]=e4de036b19e4768e7591b596c4be9f9015f2d28a, stripped</span><br></pre></td></tr></table></figure>
+
+<p>普通程序的 ELF 文件中有一个 PT_INTERP 段，指定了这个链接器的路径。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ file /usr/bin/ls</span><br><span class="line">/usr/bin/ls: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=36b86f957a1be53733633d184c3a3354f3fc7b12, <span class="keyword">for</span> GNU/Linux 3.2.0, stripped</span><br><span class="line"></span><br><span class="line">$ file /lib/x86_64-linux-gnu/libc.so.6</span><br><span class="line">/lib/x86_64-linux-gnu/libc.so.6: ELF 64-bit LSB shared object, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=cd410b710f0f094c6832edd95931006d883af48e, <span class="keyword">for</span> GNU/Linux 3.2.0, stripped</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>动态链接器 ld.so 本身也依赖共享库（如 libc.so.6），但它又是负责加载共享库的工具</li>
+</ul>
+<p>动态链接器是一个“自举”程序：</p>
+<ul>
+<li>它是由 Linux 内核直接加载并执行，不依赖其他库来启动。</li>
+<li>它的启动代码是 静态编译的，也就是说，它的最小启动逻辑不依赖 libc.so.6。</li>
+<li>在启动后，它才会去加载 libc.so.6 和其他 .so 文件，完成符号解析和初始化。</li>
+<li>有趣的是，libc.so.6 又依赖 ld.so 来加载。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">你运行 ./myapp</span><br><span class="line">↓</span><br><span class="line">内核读取 ELF → 找到 PT_INTERP 段 → 加载 ld.so</span><br><span class="line">↓</span><br><span class="line">ld.so 启动（靠自身静态代码）</span><br><span class="line">↓</span><br><span class="line">ld.so 加载 libc.so.6、libstdc++.so.6 等共享库</span><br><span class="line">↓</span><br><span class="line">ld.so 跳转到 myapp 的入口地址（main）</span><br></pre></td></tr></table></figure>
+
+<p>如果 libc.so.6 丢失怎么办？</p>
+<p>有开发者分享过真实案例，当系统误删了 libc.so.6 ，几乎所有命令都无法运行。但你仍然可以：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/lib64/ld-linux-x86-64.so.2 /bin/ln -s /lib64/libc-2.33.so /lib64/libc.so.6</span><br></pre></td></tr></table></figure>
+
+<p>这利用了 ld.so 的自举能力，手动加载 libc 并执行命令，从而恢复系统。</p>
+<h3 id="ldd-检查"><a href="#ldd-检查" class="headerlink" title="ldd 检查"></a>ldd 检查</h3><p><code>ldd</code> (List Dynamic Dependencies) 是一个 shell 脚本，用于查看一个可执行文件或共享库所依赖的动态链接<br>库的命令。</p>
+<p>它的思路是：模拟 运行时链接器 的行为。</p>
+<ol>
+<li><p>设置环境变量来触发动态链接器 (ld-linux.so) 输出依赖信息，但是不真正执行程序。如：</p>
+<ul>
+<li><code>LD_TRACE_LOADED_OBJECTS=1</code></li>
+<li><code>LD_WARN</code>, <code>LD_BIND_NOW</code>, <code>LD_VERBOSE</code> 等</li>
+</ul>
+</li>
+<li><p>调用动态链接器查找 so .</p>
+</li>
+</ol>
+<p>局限性：</p>
+<ul>
+<li>使用 <code>dlopen()</code> 动态加载库，<code>ldd</code> 是无法检测到的</li>
+</ul>
+<h3 id="补充工具"><a href="#补充工具" class="headerlink" title="补充工具"></a>补充工具</h3><ul>
+<li><code>readelf -d binary | grep -i rpath</code>：查看 ELF 文件中的 RPATH 或 RUNPATH</li>
+<li><code>ldconfig -p</code>：查看系统缓存中有哪些库</li>
+<li><code>strace -e openat ./your_program</code>：查看运行时实际打开了哪些库文件</li>
+<li><code>LD_DEBUG=libs ./your_program</code>：调试动态库加载过程</li>
+</ul>
+<h2 id="编译时-so-的查找顺序"><a href="#编译时-so-的查找顺序" class="headerlink" title="编译时 so 的查找顺序"></a>编译时 so 的查找顺序</h2><p>GCC 查找 glibc 的路径顺序：</p>
+<p>🧠 编译阶段（查找头文件）</p>
+<table>
+<thead>
+<tr>
+<th align="center">优先级</th>
+<th align="center">路径来源</th>
+<th align="center">示例路径</th>
+<th align="center">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">1️⃣</td>
+<td align="center">显式指定 -I 参数</td>
+<td align="center">gcc -I&#x2F;custom&#x2F;include</td>
+<td align="center">用户手动指定，优先级最高</td>
+</tr>
+<tr>
+<td align="center">2️⃣</td>
+<td align="center">-isystem 指定系统头文件路径</td>
+<td align="center">gcc -isystem &#x2F;custom&#x2F;sysinclude</td>
+<td align="center">优先级高于默认路径但低于 -I</td>
+</tr>
+<tr>
+<td align="center">3️⃣</td>
+<td align="center">环境变量 CPATH</td>
+<td align="center">&#x2F;opt&#x2F;common&#x2F;include</td>
+<td align="center">适用于所有语言，优先于默认路径</td>
+</tr>
+<tr>
+<td align="center">4️⃣</td>
+<td align="center">环境变量 C_INCLUDE_PATH</td>
+<td align="center">&#x2F;opt&#x2F;glibc-2.28&#x2F;include</td>
+<td align="center">仅对 C 文件有效，优先于默认路径</td>
+</tr>
+<tr>
+<td align="center">5️⃣</td>
+<td align="center">环境变量 CPLUS_INCLUDE_PATH</td>
+<td align="center">&#x2F;opt&#x2F;cpp&#x2F;include</td>
+<td align="center">仅对 C++ 文件有效，优先于默认路径</td>
+</tr>
+<tr>
+<td align="center">6️⃣</td>
+<td align="center">GCC 默认系统路径</td>
+<td align="center">&#x2F;usr&#x2F;include</td>
+<td align="center">最后兜底路径</td>
+</tr>
+<tr>
+<td align="center">7️⃣</td>
+<td align="center">内核头文件路径（特殊场景）</td>
+<td align="center">&#x2F;usr&#x2F;src&#x2F;linux&#x2F;include</td>
+<td align="center">编译内核模块或驱动时使用</td>
+</tr>
+</tbody></table>
+<ul>
+<li><code>-I</code> 和 <code>-isystem</code> 都是命令行参数，但 <code>-isystem</code> 会将路径标记为“系统路径”，避免某些警告。</li>
+<li>环境变量如 <code>CPATH</code> 和 <code>C_INCLUDE_PATH</code> 是在没有显式参数时的补充手段。</li>
+<li>默认路径 <code>/usr/include</code> 是 GCC 安装时配置的，可以通过 <code>gcc -xc -E -v -</code> 查看完整搜索路径。</li>
+</ul>
+<p>🔗 链接阶段（查找库文件）</p>
+<table>
+<thead>
+<tr>
+<th align="center">优先级</th>
+<th align="center">来源类型</th>
+<th align="center">是否可覆盖</th>
+<th align="center">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">1️⃣</td>
+<td align="center">显式命令行参数 -L</td>
+<td align="center">✅</td>
+<td align="center">最优先，用户指定的库路径</td>
+</tr>
+<tr>
+<td align="center">2️⃣</td>
+<td align="center">-rpath-link 参数</td>
+<td align="center">✅</td>
+<td align="center">链接器查找间接依赖库时使用</td>
+</tr>
+<tr>
+<td align="center">3️⃣</td>
+<td align="center">环境变量 LIBRARY_PATH</td>
+<td align="center">✅</td>
+<td align="center">编译时使用，优先于默认路径</td>
+</tr>
+<tr>
+<td align="center">4️⃣</td>
+<td align="center">–sysroot 指定根路径</td>
+<td align="center">✅</td>
+<td align="center">用于交叉编译，影响所有路径解析</td>
+</tr>
+<tr>
+<td align="center">5️⃣</td>
+<td align="center">specs 文件配置</td>
+<td align="center">✅</td>
+<td align="center">GCC 内部配置，可自定义行为</td>
+</tr>
+<tr>
+<td align="center">6️⃣</td>
+<td align="center">默认系统路径 &#x2F;lib, &#x2F;usr&#x2F;lib, &#x2F;lib64</td>
+<td align="center">❌</td>
+<td align="center">最后兜底路径</td>
+</tr>
+</tbody></table>
+<h3 id="编译时链接器（ld）"><a href="#编译时链接器（ld）" class="headerlink" title="编译时链接器（ld）"></a>编译时链接器（ld）</h3><p>编译时链接器（ld） 和 运行时动态链接器 不是同一个东西：</p>
+<table>
+<thead>
+<tr>
+<th align="center">特性</th>
+<th align="center">编译时链接器 (<code>ld</code>)</th>
+<th align="center">运行时动态链接器 (<code>ld-linux.so</code>)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">执行时机</td>
+<td align="center">编译阶段</td>
+<td align="center">程序启动时</td>
+</tr>
+<tr>
+<td align="center">作用</td>
+<td align="center">生成可执行文件</td>
+<td align="center">加载 .so 库并绑定符号</td>
+</tr>
+<tr>
+<td align="center">由谁调用</td>
+<td align="center">编译器（如 gcc）</td>
+<td align="center">操作系统加载器</td>
+</tr>
+<tr>
+<td align="center">是否参与运行过程</td>
+<td align="center">❌ 不参与</td>
+<td align="center">✅ 参与</td>
+</tr>
+</tbody></table>
+<h2 id="glibc"><a href="#glibc" class="headerlink" title="glibc"></a>glibc</h2><p>glibc 是特殊的 so ，它封装了系统调用，所以 Linux 系统本身也依赖它。</p>
+<p>C 语言允许编译时链接和运行时链接分开，所以常常遇到这样奇怪的问题：</p>
+<ul>
+<li>在本机编译、链接，在本机不能运行：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./myapp: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.33&#x27; not found (required by ./myapp)</span><br></pre></td></tr></table></figure>
+
+<p>这是因为 gcc 在编译时指定的 glibc 和系统运行时的 glibc 不一样：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">$ strings /lib/x86_64-linux-gnu/libc.so.6 | grep GLIBC_</span><br><span class="line">GLIBC_2.2.5</span><br><span class="line">...</span><br><span class="line">GLIBC_2.31</span><br><span class="line"></span><br><span class="line">$ strings ./myapp | grep GLIBCXX_</span><br><span class="line">GLIBC_2.3</span><br><span class="line">...</span><br><span class="line">GLIBCXX_2.33</span><br></pre></td></tr></table></figure>
+
+<p><code>/lib/x86_64-linux-gnu/libc.so.6</code> 中确实没有 <code>GLIBC_2.33</code> 的符号。</p>
+<p>如果你的系统中有多个 glibc ，那么这种问题可以通过上面“运行时 so 的加载顺序”，使用环境变量调整。</p>
+<p>但是，这种对 glibc 的依赖可能是间接的：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">ls</span> /path/to/gcc/v14.2.0/lib64 | grep libstdc++.so</span><br><span class="line">libstdc++.so</span><br><span class="line">libstdc++.so.6</span><br><span class="line"></span><br><span class="line">$ ldd /path/to/gcc/v14.2.0/lib64/libstdc++.so.6</span><br><span class="line">        linux-vdso.so.1 (0x00007ffd965f4000)</span><br><span class="line">        libm.so.6 =&gt; /usr/lib64/libm.so.6 (0x0000147a213a9000)</span><br><span class="line">        libc.so.6 =&gt; /usr/lib64/libc.so.6 (0x0000147a20fe4000)</span><br><span class="line">        /lib64/ld-linux-x86-64.so.2 (0x0000147a219ea000)</span><br><span class="line">        libgcc_s.so.1 =&gt; /path/to/gcc/v14.2.0/lib64/libgcc_s.so.1 (0x0000147a21be4000)</span><br></pre></td></tr></table></figure>
+
+<p>此时，如果你的编译和运行的机器不是同一台（意味着运行时 &#x2F;usr&#x2F;lib64&#x2F;libc.so.6 的文件和编译期不一致），<br>这时候就基本没有没有办法了。理论上，你可以下载一个与编译期相同的 libc.so.6 ，但是你无法保证系统的动<br>态链接器 <code>/lib64/ld-linux-x86-64.so.2</code> 与所下载的 libc.so.6 兼容。而 <code>/lib64/ld-linux-x86-64.so.2</code><br>路径是无法通过环境变量修改的，因为它是内核在程序启动时直接加载的，它的路径是硬编码在 ELF 可执行文件<br>中的。</p>
+<p>所以最好的方式，是在编译时就确认 GCC 的 glibc 和系统运行时一致。</p>
+<h3 id="检查当前-GCC-使用的-glibc-路径"><a href="#检查当前-GCC-使用的-glibc-路径" class="headerlink" title="检查当前 GCC 使用的 glibc 路径"></a>检查当前 GCC 使用的 glibc 路径</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gcc -print-file-name=libc.so</span><br><span class="line">g++ -print-file-name=libstdc++.so</span><br><span class="line">gcc -print-search-dirs</span><br></pre></td></tr></table></figure>
+
+<h3 id="确认当前系统的-glibc-和-libstdc-版本"><a href="#确认当前系统的-glibc-和-libstdc-版本" class="headerlink" title="确认当前系统的 glibc 和 libstdc++ 版本"></a>确认当前系统的 glibc 和 libstdc++ 版本</h3><p>✅ 查看 glibc 版本（即 libc.so）</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ldd --version</span><br><span class="line"><span class="comment"># 或者</span></span><br><span class="line">getconf GNU_LIBC_VERSION</span><br></pre></td></tr></table></figure>
+
+<p>✅ 查看 libstdc++ 版本（C++ 标准库）</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">strings /usr/lib*/libstdc++.so.6 | grep GLIBCXX</span><br></pre></td></tr></table></figure>
+
+<p>你会看到类似：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">GLIBCXX_3.4.21</span><br><span class="line">GLIBCXX_3.4.26</span><br></pre></td></tr></table></figure>
+
+<p>这些是你系统支持的 C++ ABI 版本。</p>
+<h3 id="系统默认路径"><a href="#系统默认路径" class="headerlink" title="系统默认路径"></a>系统默认路径</h3><p>由 &#x2F;etc&#x2F;ld.so.conf 和 ldconfig 决定</p>
+<p>通常包括：</p>
+<ul>
+<li>&#x2F;lib64&#x2F;</li>
+<li>&#x2F;usr&#x2F;lib64&#x2F;</li>
+<li>&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;（Debian&#x2F;Ubuntu）</li>
+</ul>
+<p>你可以运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ldconfig -p | grep libc.so.6</span><br></pre></td></tr></table></figure>
+
+<p>来查看系统当前可用的 libc.so.6 版本和路径。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/%E7%BC%96%E8%AF%91/" rel="tag"># 编译</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2025/09/16/concurrency/%E5%B9%B6%E5%8F%91%E4%B8%AD%E7%9A%84%E5%86%85%E5%AD%98%E5%9B%9E%E6%94%B6/" rel="prev" title="并发中的内存回收">
+      <i class="fa fa-chevron-left"></i> 并发中的内存回收
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E6%97%B6-so-%E7%9A%84%E5%8A%A0%E8%BD%BD%E9%A1%BA%E5%BA%8F"><span class="nav-text">运行时 so 的加载顺序</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5%E5%99%A8%EF%BC%88Dynamic-Linker%EF%BC%89"><span class="nav-text">动态链接器（Dynamic Linker）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ldd-%E6%A3%80%E6%9F%A5"><span class="nav-text">ldd 检查</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A1%A5%E5%85%85%E5%B7%A5%E5%85%B7"><span class="nav-text">补充工具</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E6%97%B6-so-%E7%9A%84%E6%9F%A5%E6%89%BE%E9%A1%BA%E5%BA%8F"><span class="nav-text">编译时 so 的查找顺序</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E6%97%B6%E9%93%BE%E6%8E%A5%E5%99%A8%EF%BC%88ld%EF%BC%89"><span class="nav-text">编译时链接器（ld）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#glibc"><span class="nav-text">glibc</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A3%80%E6%9F%A5%E5%BD%93%E5%89%8D-GCC-%E4%BD%BF%E7%94%A8%E7%9A%84-glibc-%E8%B7%AF%E5%BE%84"><span class="nav-text">检查当前 GCC 使用的 glibc 路径</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A1%AE%E8%AE%A4%E5%BD%93%E5%89%8D%E7%B3%BB%E7%BB%9F%E7%9A%84-glibc-%E5%92%8C-libstdc-%E7%89%88%E6%9C%AC"><span class="nav-text">确认当前系统的 glibc 和 libstdc++ 版本</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E9%BB%98%E8%AE%A4%E8%B7%AF%E5%BE%84"><span class="nav-text">系统默认路径</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">105</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">47</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://cuda-doc.readthedocs.io/" title="https:&#x2F;&#x2F;cuda-doc.readthedocs.io" rel="noopener" target="_blank">CUDA中文手册</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://infiniband-doc.readthedocs.io/" title="https:&#x2F;&#x2F;infiniband-doc.readthedocs.io&#x2F;" rel="noopener" target="_blank">InfiniBand中文手册</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
