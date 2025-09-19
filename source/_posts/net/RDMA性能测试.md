@@ -7,10 +7,10 @@ tags: RDMA
 
 ## 命令速查表
 
-- `ib_` → Benchmark：性能测试工具
-- `ibv_` → Verbs：编程与设备信息
-- `ib` → Fabric：网络拓扑与诊断
-- `opensm` → 管理器：子网控制核心
+- `ib_` → **Benchmark**：性能测试工具
+- `ibv_` → **Verbs**：编程与设备信息
+- `ib` → **Fabric**：网络拓扑与诊断
+- `opensm` → **管理器**：子网控制核心
 
 ### 网络拓扑与状态诊断（`ib` 前缀）
 
@@ -56,7 +56,7 @@ tags: RDMA
 ## 物理硬件
 
 - HCA 可能有多个物理端口 (port)：每个 port 有一个 LID 。
-- 每个 port 可能有多个通道 (lane) ：用 `1x`, `1z`, `4x`, `8x` 等表示。
+- 每个 port 可能有多个通道 (lane) ：用 `1x`, `2x`, `4x`, `8x` 等表示。
 - 总速率：`总速率 = 每个 port 的 lane 数 × 每个 lane 的速率 × port 数量`。
 - port 和 lane 是有物理硬件决定的。
 
@@ -96,3 +96,33 @@ tags: RDMA
 |   QP（逻辑通信通道）   |       ✅ 必须管理        |
 |  Memory Region（MR）   |       ✅ 必须注册        |
 | Completion Queue（CQ） |    ✅ 必须轮询或处理     |
+
+## 带宽测试
+
+### 理论带宽
+
+```bash
+lspci | grep -i infiniband
+```
+
+然后通过阅读产品说明书，确定理论带宽。
+
+### 协商带宽
+
+实际部署的速率，可能与 HCA 、线缆、交换机都相关，所以实际会有一个协商速率。
+
+```bash
+ibstat
+```
+
+### 实际带宽测试
+
+发送速率：
+
+```bash
+# Server 端（等待连接）
+ib_send_bw -d mlx5_0 -a
+
+# Client 端（发起连接）
+ib_send_bw -d mlx5_0 -a <server_ip>
+```

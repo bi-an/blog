@@ -115,7 +115,11 @@ setenv P4EDITOR 'code --wait'
 - Clangd：语言服务器，提供 VSCode、Vim、Emacs 等编辑器的智能补全、跳转、诊断等功能。
   - clangd 比 Microsoft 的 C/C++ 插件跳转更快，它可以手动安装到系统，也可以直接用 VSCode 的
     Extensions 市场安装（Remote SSH 也支持）。
-  - compile_commands.json 是 clangd 的眼睛，把这个文件放在项目根目录，可以显著提高跳转速度。
+  - compile_commands.json 是 clangd 的眼睛，把这个文件放在项目根目录或在 clangd 中手动配置其路径，可
+    以显著提高跳转速度。
+  - clangd 补充配置：
+    - 在项目根目录创建 `.clangd` 文件；
+    - 创建 `~/.config/clangd/config.yaml` 。
 - Clang-Tidy：静态分析工具，用于检查代码质量、风格、潜在错误
 - Include-What-You-Use (IWYU)：分析并清理多余的 #include 指令
 - Clang-Format：在复杂项目中更好地格式化代码
