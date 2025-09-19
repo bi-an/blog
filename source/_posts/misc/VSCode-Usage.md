@@ -108,21 +108,27 @@ setenv P4EDITOR 'code --wait'
 
 ### compile_commands.json
 
-🔧 Clang 生态工具（最主要用户）这些工具依赖 compile_commands.json 来正确解析代码：
+🔧 Clang 生态工具（最主要用户）
 
-Clangd：语言服务器，提供 VSCode、Vim、Emacs 等编辑器的智能补全、跳转、诊断等功能
+这些工具依赖 compile_commands.json 来正确解析代码：
 
-Clang-Tidy：静态分析工具，用于检查代码质量、风格、潜在错误
+- Clangd：语言服务器，提供 VSCode、Vim、Emacs 等编辑器的智能补全、跳转、诊断等功能。
+  - clangd 比 Microsoft 的 C/C++ 插件跳转更快，它可以手动安装到系统，也可以直接用 VSCode 的
+    Extensions 市场安装（Remote SSH 也支持）。
+  - compile_commands.json 是 clangd 的眼睛，把这个文件放在项目根目录，可以显著提高跳转速度。
+- Clang-Tidy：静态分析工具，用于检查代码质量、风格、潜在错误
+- Include-What-You-Use (IWYU)：分析并清理多余的 #include 指令
+- Clang-Format：在复杂项目中更好地格式化代码
 
-Include-What-You-Use (IWYU)：分析并清理多余的 #include 指令
+🖥️ 智能 IDE 和编辑器 VSCode：
 
-Clang-Format：在复杂项目中更好地格式化代码
+通过 C/C++ 插件读取 compile_commands.json 来加速跳转和补全
 
-🖥️ 智能 IDE 和编辑器 VSCode：通过 C/C++ 插件读取 compile_commands.json 来加速跳转和补全
+- CLion、QtCreator：这些 IDE 会自动识别并使用该文件来构建项目模型
 
-CLion、QtCreator：这些 IDE 会自动识别并使用该文件来构建项目模型
+🛠️ 构建工具和生成方式 CMake：
 
-🛠️ 构建工具和生成方式 CMake：最常见的生成方式，只需添加参数：
+最常见的生成方式，只需添加参数：
 
 ```bash
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
@@ -131,8 +137,3 @@ cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
 就会在构建目录中生成该文件
 
 Bear 工具：适用于非 CMake 项目（如 Makefile），通过拦截编译命令生成该文件
-
-clangd 比 Microsoft 的 C/C++ 插件跳转更快，它可以手动安装到系统，也可以直接用 VSCode 的 Extensions
-市场安装（Remote SSH 也支持）。
-
-compile_commands.json 是 clangd 的眼睛，把这个文件放在项目根目录，可以显著提高跳转速度。
