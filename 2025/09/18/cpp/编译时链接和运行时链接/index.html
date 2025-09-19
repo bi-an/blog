@@ -20,15 +20,15 @@
     var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="运行时 so 的加载顺序   优先级 来源 说明    🔺 1 LD_PRELOAD 环境变量 强制优先加载指定库，最高优先级，可用于函数替换   🔺 2 rpath（编译时指定） 使用 -Wl,-rpath&#x3D;… 编译时嵌入的路径，仅作用于当前程序（已废弃：因为优先级过高，且影响间接依赖项。推荐使用 runpath，没有这两个缺点。）   🔺 3 LD_LIBRARY_PATH 环">
+  <meta name="description" content="令所有 C&#x2F;C++ 程序员头疼的事，莫过于环境的搭建和兼容。这往往发生在链接阶段，分为两种：  编译时链接 运行时链接  读完本文，你将能解决大部分的环境问题。 运行时 so 的加载顺序   优先级 来源 说明    🔺 1 LD_PRELOAD 环境变量 强制优先加载指定库，最高优先级，可用于函数替换   🔺 2 rpath（编译时指定） 使用 -Wl,-rpath&#x3D;…">
 <meta property="og:type" content="article">
 <meta property="og:title" content="编译时链接和运行时链接">
 <meta property="og:url" content="https://bi-an.github.io/blog/2025/09/18/cpp/%E7%BC%96%E8%AF%91%E6%97%B6%E9%93%BE%E6%8E%A5%E5%92%8C%E8%BF%90%E8%A1%8C%E6%97%B6%E9%93%BE%E6%8E%A5/index.html">
 <meta property="og:site_name" content="江南人物的博客">
-<meta property="og:description" content="运行时 so 的加载顺序   优先级 来源 说明    🔺 1 LD_PRELOAD 环境变量 强制优先加载指定库，最高优先级，可用于函数替换   🔺 2 rpath（编译时指定） 使用 -Wl,-rpath&#x3D;… 编译时嵌入的路径，仅作用于当前程序（已废弃：因为优先级过高，且影响间接依赖项。推荐使用 runpath，没有这两个缺点。）   🔺 3 LD_LIBRARY_PATH 环">
+<meta property="og:description" content="令所有 C&#x2F;C++ 程序员头疼的事，莫过于环境的搭建和兼容。这往往发生在链接阶段，分为两种：  编译时链接 运行时链接  读完本文，你将能解决大部分的环境问题。 运行时 so 的加载顺序   优先级 来源 说明    🔺 1 LD_PRELOAD 环境变量 强制优先加载指定库，最高优先级，可用于函数替换   🔺 2 rpath（编译时指定） 使用 -Wl,-rpath&#x3D;…">
 <meta property="og:locale">
 <meta property="article:published_time" content="2025-09-18T18:57:08.000Z">
-<meta property="article:modified_time" content="2025-09-18T13:18:02.021Z">
+<meta property="article:modified_time" content="2025-09-19T11:18:35.737Z">
 <meta property="article:author" content="bi-an">
 <meta property="article:tag" content="编译">
 <meta name="twitter:card" content="summary">
@@ -221,10 +221,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2025-09-18 18:57:08 / Modified: 13:18:02" itemprop="dateCreated datePublished" datetime="2025-09-18T18:57:08+00:00">2025-09-18</time>
+              <time title="Created: 2025-09-18 18:57:08" itemprop="dateCreated datePublished" datetime="2025-09-18T18:57:08+00:00">2025-09-18</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-19 11:18:35" itemprop="dateModified" datetime="2025-09-19T11:18:35+00:00">2025-09-19</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -246,7 +252,13 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h2 id="运行时-so-的加载顺序"><a href="#运行时-so-的加载顺序" class="headerlink" title="运行时 so 的加载顺序"></a>运行时 so 的加载顺序</h2><table>
+        <p>令所有 C&#x2F;C++ 程序员头疼的事，莫过于环境的搭建和兼容。这往往发生在链接阶段，分为两种：</p>
+<ul>
+<li>编译时链接</li>
+<li>运行时链接</li>
+</ul>
+<p>读完本文，你将能解决大部分的环境问题。</p>
+<h2 id="运行时-so-的加载顺序"><a href="#运行时-so-的加载顺序" class="headerlink" title="运行时 so 的加载顺序"></a>运行时 so 的加载顺序</h2><table>
 <thead>
 <tr>
 <th align="center">优先级</th>
@@ -533,9 +545,12 @@
 <p>但是，这种对 glibc 的依赖可能是间接的：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">ls</span> /path/to/gcc/v14.2.0/lib64 | grep libstdc++.so</span><br><span class="line">libstdc++.so</span><br><span class="line">libstdc++.so.6</span><br><span class="line"></span><br><span class="line">$ ldd /path/to/gcc/v14.2.0/lib64/libstdc++.so.6</span><br><span class="line">        linux-vdso.so.1 (0x00007ffd965f4000)</span><br><span class="line">        libm.so.6 =&gt; /usr/lib64/libm.so.6 (0x0000147a213a9000)</span><br><span class="line">        libc.so.6 =&gt; /usr/lib64/libc.so.6 (0x0000147a20fe4000)</span><br><span class="line">        /lib64/ld-linux-x86-64.so.2 (0x0000147a219ea000)</span><br><span class="line">        libgcc_s.so.1 =&gt; /path/to/gcc/v14.2.0/lib64/libgcc_s.so.1 (0x0000147a21be4000)</span><br></pre></td></tr></table></figure>
 
-<p>此时，如果你的编译和运行的机器不是同一台（意味着运行时 &#x2F;usr&#x2F;lib64&#x2F;libc.so.6 的文件和编译期不一致），<br>这时候就基本没有没有办法了。理论上，你可以下载一个与编译期相同的 libc.so.6 ，但是你无法保证系统的动<br>态链接器 <code>/lib64/ld-linux-x86-64.so.2</code> 与所下载的 libc.so.6 兼容。而 <code>/lib64/ld-linux-x86-64.so.2</code><br>路径是无法通过环境变量修改的，因为它是内核在程序启动时直接加载的，它的路径是硬编码在 ELF 可执行文件<br>中的。</p>
+<p>此时，如果你的编译和运行的机器不是同一台（意味着运行时 &#x2F;usr&#x2F;lib64&#x2F;libc.so.6 文件和编译期不一致），这<br>时候就基本没有没有办法了。理论上，你可以下载一个与编译期相同的 libc.so.6 ，但是你无法保证系统的动态<br>链接器 <code>/lib64/ld-linux-x86-64.so.2</code> 与所下载的 libc.so.6 兼容。而 <code>/lib64/ld-linux-x86-64.so.2</code> 路<br>径是无法通过环境变量修改的，因为它是内核在程序启动时直接加载的，它的路径是硬编码在 ELF 可执行文件中<br>的。</p>
 <p>所以最好的方式，是在编译时就确认 GCC 的 glibc 和系统运行时一致。</p>
-<h3 id="检查当前-GCC-使用的-glibc-路径"><a href="#检查当前-GCC-使用的-glibc-路径" class="headerlink" title="检查当前 GCC 使用的 glibc 路径"></a>检查当前 GCC 使用的 glibc 路径</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gcc -print-file-name=libc.so</span><br><span class="line">g++ -print-file-name=libstdc++.so</span><br><span class="line">gcc -print-search-dirs</span><br></pre></td></tr></table></figure>
+<h3 id="检查当前-GCC-使用的-glibc-路径"><a href="#检查当前-GCC-使用的-glibc-路径" class="headerlink" title="检查当前 GCC 使用的 glibc 路径"></a>检查当前 GCC 使用的 glibc 路径</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ gcc --print-file-name=libc.so.6</span><br><span class="line">$ g++ --print-file-name=libstdc++.so.6</span><br><span class="line">$ gcc -print-search-dirs</span><br></pre></td></tr></table></figure>
+
+<p>示例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ /path/to/gcc/v14.2.0/bin/g++ --print-file-name=libstdc++.so.6</span><br><span class="line">/path/toData/gcc-v14.2.0/x86_64/lib64/libstdc++.so.6</span><br></pre></td></tr></table></figure>
 
 <h3 id="确认当前系统的-glibc-和-libstdc-版本"><a href="#确认当前系统的-glibc-和-libstdc-版本" class="headerlink" title="确认当前系统的 glibc 和 libstdc++ 版本"></a>确认当前系统的 glibc 和 libstdc++ 版本</h3><p>✅ 查看 glibc 版本（即 libc.so）</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ldd --version</span><br><span class="line"><span class="comment"># 或者</span></span><br><span class="line">getconf GNU_LIBC_VERSION</span><br></pre></td></tr></table></figure>
@@ -579,7 +594,10 @@
     <a href="/blog/2025/09/16/concurrency/%E5%B9%B6%E5%8F%91%E4%B8%AD%E7%9A%84%E5%86%85%E5%AD%98%E5%9B%9E%E6%94%B6/" rel="prev" title="并发中的内存回收">
       <i class="fa fa-chevron-left"></i> 并发中的内存回收
     </a></div>
-      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/blog/2025/09/19/net/RDMA%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/" rel="next" title="RDMA 性能测试">
+      RDMA 性能测试 <i class="fa fa-chevron-right"></i>
+    </a></div>
     </div>
       </footer>
     
@@ -654,20 +672,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">105</span>
+          <span class="site-state-item-count">106</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-count">14</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">47</span>
+        <span class="site-state-item-count">48</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

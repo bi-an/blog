@@ -193,6 +193,309 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/19/net/RDMA%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/09/19/net/RDMA%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/" class="post-title-link" itemprop="url">RDMA 性能测试</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2025-09-19 12:10:57 / Modified: 11:18:35" itemprop="dateCreated datePublished" datetime="2025-09-19T12:10:57+00:00">2025-09-19</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">网络</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="命令速查表"><a href="#命令速查表" class="headerlink" title="命令速查表"></a>命令速查表</h2><ul>
+<li><code>ib_</code> → <strong>Benchmark</strong>：性能测试工具</li>
+<li><code>ibv_</code> → <strong>Verbs</strong>：编程与设备信息</li>
+<li><code>ib</code> → <strong>Fabric</strong>：网络拓扑与诊断</li>
+<li><code>opensm</code> → <strong>管理器</strong>：子网控制核心</li>
+</ul>
+<h3 id="网络拓扑与状态诊断（ib-前缀）"><a href="#网络拓扑与状态诊断（ib-前缀）" class="headerlink" title="网络拓扑与状态诊断（ib 前缀）"></a>网络拓扑与状态诊断（<code>ib</code> 前缀）</h3><table>
+<thead>
+<tr>
+<th align="center">命令</th>
+<th align="center">功能说明</th>
+<th align="center">推荐场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">ibstat</td>
+<td align="center">查看本地 HCA 的端口状态和速率</td>
+<td align="center">快速确认端口是否 LinkUp</td>
+</tr>
+<tr>
+<td align="center">iblinkinfo</td>
+<td align="center">显示整个网络的链路连接拓扑</td>
+<td align="center">检查交换机与节点连接情况</td>
+</tr>
+<tr>
+<td align="center">ibnetdiscover</td>
+<td align="center">构建子网拓扑图（基于 SM）</td>
+<td align="center">网络可视化、拓扑分析</td>
+</tr>
+<tr>
+<td align="center">ibdiagnet</td>
+<td align="center">深度诊断 InfiniBand 网络问题</td>
+<td align="center">性能瓶颈、错误帧分析</td>
+</tr>
+<tr>
+<td align="center">ibsysstat</td>
+<td align="center">查看系统级 InfiniBand 状态</td>
+<td align="center">多节点状态汇总</td>
+</tr>
+</tbody></table>
+<h3 id="RDMA-编程与设备信息（ibv-前缀）"><a href="#RDMA-编程与设备信息（ibv-前缀）" class="headerlink" title="RDMA 编程与设备信息（ibv_ 前缀）"></a>RDMA 编程与设备信息（<code>ibv_</code> 前缀）</h3><table>
+<thead>
+<tr>
+<th align="center">命令</th>
+<th align="center">功能说明</th>
+<th align="center">推荐场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">ibv_devinfo</td>
+<td align="center">查看本地 RDMA 网卡设备信息</td>
+<td align="center">网卡识别、端口状态确认</td>
+</tr>
+<tr>
+<td align="center">ibv_devices</td>
+<td align="center">列出所有支持 RDMA 的设备</td>
+<td align="center">多网卡环境初始化</td>
+</tr>
+<tr>
+<td align="center">ibv_rc_pingpong</td>
+<td align="center">使用 RC QP 测试点对点通信</td>
+<td align="center">RDMA 编程验证</td>
+</tr>
+<tr>
+<td align="center">ibv_srq_pingpong</td>
+<td align="center">使用共享接收队列测试通信</td>
+<td align="center">SRQ 场景验证</td>
+</tr>
+<tr>
+<td align="center">ibv_ud_pingpong</td>
+<td align="center">使用 UD QP 测试通信</td>
+<td align="center">多播或无连接场景测试</td>
+</tr>
+</tbody></table>
+<h3 id="性能测试与基准评估（ib-前缀）"><a href="#性能测试与基准评估（ib-前缀）" class="headerlink" title="性能测试与基准评估（ib_ 前缀）"></a>性能测试与基准评估（<code>ib_</code> 前缀）</h3><table>
+<thead>
+<tr>
+<th align="center">命令</th>
+<th>功能说明</th>
+<th>推荐场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">ib_send_bw</td>
+<td>测试 RDMA 发送带宽</td>
+<td>点对点性能评估</td>
+</tr>
+<tr>
+<td align="center">ib_read_bw</td>
+<td>测试 RDMA 读带宽</td>
+<td>存储访问场景评估</td>
+</tr>
+<tr>
+<td align="center">ib_write_bw</td>
+<td>测试 RDMA 写带宽</td>
+<td>写密集型应用测试</td>
+</tr>
+<tr>
+<td align="center">ib_send_lat</td>
+<td>测试发送延迟</td>
+<td>延迟敏感应用调优</td>
+</tr>
+<tr>
+<td align="center">ib_read_lat</td>
+<td>测试读延迟</td>
+<td>存储延迟分析</td>
+</tr>
+<tr>
+<td align="center">ib_write_lat</td>
+<td>测试写延迟</td>
+<td>写延迟分析</td>
+</tr>
+<tr>
+<td align="center">ib_pingpong</td>
+<td>简单点对点通信测试（旧版）</td>
+<td>快速连通性验证</td>
+</tr>
+</tbody></table>
+<h3 id="管理与配置辅助工具"><a href="#管理与配置辅助工具" class="headerlink" title="管理与配置辅助工具"></a>管理与配置辅助工具</h3><table>
+<thead>
+<tr>
+<th align="center">命令</th>
+<th align="center">功能说明</th>
+<th align="center">推荐场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">opensm</td>
+<td align="center">启动子网管理器（SM）</td>
+<td align="center">小规模集群或测试环境</td>
+</tr>
+<tr>
+<td align="center">perfquery</td>
+<td align="center">查询端口性能计数器</td>
+<td align="center">错误帧、丢包分析</td>
+</tr>
+<tr>
+<td align="center">saquery</td>
+<td align="center">查询子网代理信息</td>
+<td align="center">LID&#x2F;GID 映射验证</td>
+</tr>
+<tr>
+<td align="center">sminfo</td>
+<td align="center">查看 SM 状态信息</td>
+<td align="center">SM 健康检查</td>
+</tr>
+</tbody></table>
+<h2 id="物理硬件"><a href="#物理硬件" class="headerlink" title="物理硬件"></a>物理硬件</h2><ul>
+<li>HCA 可能有多个物理端口 (port)：每个 port 有一个 LID 。</li>
+<li>每个 port 可能有多个通道 (lane) ：用 <code>1x</code>, <code>2x</code>, <code>4x</code>, <code>8x</code> 等表示。</li>
+<li>总速率：<code>总速率 = 每个 port 的 lane 数 × 每个 lane 的速率 × port 数量</code>。</li>
+<li>port 和 lane 是有物理硬件决定的。</li>
+</ul>
+<h3 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h3><ul>
+<li><p>通道是物理层的能力</p>
+<ul>
+<li>每个 InfiniBand 或 PCIe 接口由若干个 lane 组成，每个 lane 是一对差分信号线（发送 + 接收）。</li>
+<li>比如：<ul>
+<li>x1 表示 1 个 lane → 最低带宽</li>
+<li>x4 表示 4 个 lane → 常见于 EDR（100G）</li>
+<li>x8 表示 8 个 lane → HDR&#x2F;NDR（200G&#x2F;400G）</li>
+<li>x12 是更高端的聚合方式 → 超大带宽（如 600G）</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>“部署”决定你能否用满这些通道</p>
+<ul>
+<li>如果你部署的是 x4 的 HCA + x4 的交换机 + x4 的线缆，你就能跑满 4 个 lane。</li>
+<li>如果你部署的是 x8 的 HCA，但只用了 x4 的线缆，你只能跑 4 个 lane，剩下的通道闲置。</li>
+<li>如果你部署的是 x12 的交换机，但 HCA 只有 x4，你也只能用其中一部分。</li>
+</ul>
+</li>
+</ul>
+<p>举个例子：HDR 200G 的部署选择</p>
+<table>
+<thead>
+<tr>
+<th align="center">部署方式</th>
+<th align="center">通道数</th>
+<th align="center">实际带宽</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><code>HCA: x4</code> + <code>Cable: x4</code> + <code>Switch: x4</code></td>
+<td align="center">4</td>
+<td align="center">200 Gbps</td>
+</tr>
+<tr>
+<td align="center"><code>HCA: x8</code> + <code>Cable: x4</code> + <code>Switch: x4</code></td>
+<td align="center">4</td>
+<td align="center">200 Gbps（x8 闲置一半）</td>
+</tr>
+<tr>
+<td align="center"><code>HCA: x8</code> + <code>Cable: x8</code> + <code>Switch: x8</code></td>
+<td align="center">8</td>
+<td align="center">400 Gbps</td>
+</tr>
+</tbody></table>
+<p>只有在部署中三者都匹配时，才能真正跑满所有通道。</p>
+<h3 id="程序员关注的层面"><a href="#程序员关注的层面" class="headerlink" title="程序员关注的层面"></a>程序员关注的层面</h3><table>
+<thead>
+<tr>
+<th align="center">层级</th>
+<th align="center">程序员是否需要控制</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">Lane（物理通道）</td>
+<td align="center">❌ 不需要</td>
+</tr>
+<tr>
+<td align="center">Port（物理接口）</td>
+<td align="center">✅ 可选（如多 port HCA）</td>
+</tr>
+<tr>
+<td align="center">QP（逻辑通信通道）</td>
+<td align="center">✅ 必须管理</td>
+</tr>
+<tr>
+<td align="center">Memory Region（MR）</td>
+<td align="center">✅ 必须注册</td>
+</tr>
+<tr>
+<td align="center">Completion Queue（CQ）</td>
+<td align="center">✅ 必须轮询或处理</td>
+</tr>
+</tbody></table>
+<h2 id="带宽测试"><a href="#带宽测试" class="headerlink" title="带宽测试"></a>带宽测试</h2><h3 id="理论带宽"><a href="#理论带宽" class="headerlink" title="理论带宽"></a>理论带宽</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lspci | grep -i infiniband</span><br></pre></td></tr></table></figure>
+
+<p>然后通过阅读产品说明书，确定理论带宽。</p>
+<h3 id="协商带宽"><a href="#协商带宽" class="headerlink" title="协商带宽"></a>协商带宽</h3><p>实际部署的速率，可能与 HCA 、线缆、交换机都相关，所以实际会有一个协商速率。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ibstat</span><br></pre></td></tr></table></figure>
+
+<h3 id="实际带宽测试"><a href="#实际带宽测试" class="headerlink" title="实际带宽测试"></a>实际带宽测试</h3><p>发送速率：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Server 端（等待连接）</span></span><br><span class="line">ib_send_bw -d mlx5_0 -a</span><br><span class="line"></span><br><span class="line"><span class="comment"># Client 端（发起连接）</span></span><br><span class="line">ib_send_bw -d mlx5_0 -a &lt;server_ip&gt;</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/18/cpp/%E7%BC%96%E8%AF%91%E6%97%B6%E9%93%BE%E6%8E%A5%E5%92%8C%E8%BF%90%E8%A1%8C%E6%97%B6%E9%93%BE%E6%8E%A5/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -216,10 +519,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2025-09-18 18:57:08 / Modified: 13:18:02" itemprop="dateCreated datePublished" datetime="2025-09-18T18:57:08+00:00">2025-09-18</time>
+              <time title="Created: 2025-09-18 18:57:08" itemprop="dateCreated datePublished" datetime="2025-09-18T18:57:08+00:00">2025-09-18</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-19 11:18:35" itemprop="dateModified" datetime="2025-09-19T11:18:35+00:00">2025-09-19</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -241,7 +550,13 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="运行时-so-的加载顺序"><a href="#运行时-so-的加载顺序" class="headerlink" title="运行时 so 的加载顺序"></a>运行时 so 的加载顺序</h2><table>
+          <p>令所有 C&#x2F;C++ 程序员头疼的事，莫过于环境的搭建和兼容。这往往发生在链接阶段，分为两种：</p>
+<ul>
+<li>编译时链接</li>
+<li>运行时链接</li>
+</ul>
+<p>读完本文，你将能解决大部分的环境问题。</p>
+<h2 id="运行时-so-的加载顺序"><a href="#运行时-so-的加载顺序" class="headerlink" title="运行时 so 的加载顺序"></a>运行时 so 的加载顺序</h2><table>
 <thead>
 <tr>
 <th align="center">优先级</th>
@@ -528,9 +843,12 @@
 <p>但是，这种对 glibc 的依赖可能是间接的：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">ls</span> /path/to/gcc/v14.2.0/lib64 | grep libstdc++.so</span><br><span class="line">libstdc++.so</span><br><span class="line">libstdc++.so.6</span><br><span class="line"></span><br><span class="line">$ ldd /path/to/gcc/v14.2.0/lib64/libstdc++.so.6</span><br><span class="line">        linux-vdso.so.1 (0x00007ffd965f4000)</span><br><span class="line">        libm.so.6 =&gt; /usr/lib64/libm.so.6 (0x0000147a213a9000)</span><br><span class="line">        libc.so.6 =&gt; /usr/lib64/libc.so.6 (0x0000147a20fe4000)</span><br><span class="line">        /lib64/ld-linux-x86-64.so.2 (0x0000147a219ea000)</span><br><span class="line">        libgcc_s.so.1 =&gt; /path/to/gcc/v14.2.0/lib64/libgcc_s.so.1 (0x0000147a21be4000)</span><br></pre></td></tr></table></figure>
 
-<p>此时，如果你的编译和运行的机器不是同一台（意味着运行时 &#x2F;usr&#x2F;lib64&#x2F;libc.so.6 的文件和编译期不一致），<br>这时候就基本没有没有办法了。理论上，你可以下载一个与编译期相同的 libc.so.6 ，但是你无法保证系统的动<br>态链接器 <code>/lib64/ld-linux-x86-64.so.2</code> 与所下载的 libc.so.6 兼容。而 <code>/lib64/ld-linux-x86-64.so.2</code><br>路径是无法通过环境变量修改的，因为它是内核在程序启动时直接加载的，它的路径是硬编码在 ELF 可执行文件<br>中的。</p>
+<p>此时，如果你的编译和运行的机器不是同一台（意味着运行时 &#x2F;usr&#x2F;lib64&#x2F;libc.so.6 文件和编译期不一致），这<br>时候就基本没有没有办法了。理论上，你可以下载一个与编译期相同的 libc.so.6 ，但是你无法保证系统的动态<br>链接器 <code>/lib64/ld-linux-x86-64.so.2</code> 与所下载的 libc.so.6 兼容。而 <code>/lib64/ld-linux-x86-64.so.2</code> 路<br>径是无法通过环境变量修改的，因为它是内核在程序启动时直接加载的，它的路径是硬编码在 ELF 可执行文件中<br>的。</p>
 <p>所以最好的方式，是在编译时就确认 GCC 的 glibc 和系统运行时一致。</p>
-<h3 id="检查当前-GCC-使用的-glibc-路径"><a href="#检查当前-GCC-使用的-glibc-路径" class="headerlink" title="检查当前 GCC 使用的 glibc 路径"></a>检查当前 GCC 使用的 glibc 路径</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gcc -print-file-name=libc.so</span><br><span class="line">g++ -print-file-name=libstdc++.so</span><br><span class="line">gcc -print-search-dirs</span><br></pre></td></tr></table></figure>
+<h3 id="检查当前-GCC-使用的-glibc-路径"><a href="#检查当前-GCC-使用的-glibc-路径" class="headerlink" title="检查当前 GCC 使用的 glibc 路径"></a>检查当前 GCC 使用的 glibc 路径</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ gcc --print-file-name=libc.so.6</span><br><span class="line">$ g++ --print-file-name=libstdc++.so.6</span><br><span class="line">$ gcc -print-search-dirs</span><br></pre></td></tr></table></figure>
+
+<p>示例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ /path/to/gcc/v14.2.0/bin/g++ --print-file-name=libstdc++.so.6</span><br><span class="line">/path/toData/gcc-v14.2.0/x86_64/lib64/libstdc++.so.6</span><br></pre></td></tr></table></figure>
 
 <h3 id="确认当前系统的-glibc-和-libstdc-版本"><a href="#确认当前系统的-glibc-和-libstdc-版本" class="headerlink" title="确认当前系统的 glibc 和 libstdc++ 版本"></a>确认当前系统的 glibc 和 libstdc++ 版本</h3><p>✅ 查看 glibc 版本（即 libc.so）</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ldd --version</span><br><span class="line"><span class="comment"># 或者</span></span><br><span class="line">getconf GNU_LIBC_VERSION</span><br></pre></td></tr></table></figure>
@@ -603,7 +921,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-18 13:18:02" itemprop="dateModified" datetime="2025-09-18T13:18:02+00:00">2025-09-18</time>
+                <time title="Modified: 2025-09-19 11:18:35" itemprop="dateModified" datetime="2025-09-19T11:18:35+00:00">2025-09-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -697,7 +1015,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-18 13:18:02" itemprop="dateModified" datetime="2025-09-18T13:18:02+00:00">2025-09-18</time>
+                <time title="Modified: 2025-09-19 11:18:35" itemprop="dateModified" datetime="2025-09-19T11:18:35+00:00">2025-09-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -826,7 +1144,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-18 13:18:02" itemprop="dateModified" datetime="2025-09-18T13:18:02+00:00">2025-09-18</time>
+                <time title="Modified: 2025-09-19 11:18:35" itemprop="dateModified" datetime="2025-09-19T11:18:35+00:00">2025-09-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -935,7 +1253,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-18 13:18:02" itemprop="dateModified" datetime="2025-09-18T13:18:02+00:00">2025-09-18</time>
+                <time title="Modified: 2025-09-19 11:18:35" itemprop="dateModified" datetime="2025-09-19T11:18:35+00:00">2025-09-19</time>
               </span>
 
           
@@ -1012,7 +1330,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-18 13:18:02" itemprop="dateModified" datetime="2025-09-18T13:18:02+00:00">2025-09-18</time>
+                <time title="Modified: 2025-09-19 11:18:35" itemprop="dateModified" datetime="2025-09-19T11:18:35+00:00">2025-09-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1114,7 +1432,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-18 13:18:02" itemprop="dateModified" datetime="2025-09-18T13:18:02+00:00">2025-09-18</time>
+                <time title="Modified: 2025-09-19 11:18:35" itemprop="dateModified" datetime="2025-09-19T11:18:35+00:00">2025-09-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1230,7 +1548,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-18 13:18:02" itemprop="dateModified" datetime="2025-09-18T13:18:02+00:00">2025-09-18</time>
+                <time title="Modified: 2025-09-19 11:18:35" itemprop="dateModified" datetime="2025-09-19T11:18:35+00:00">2025-09-19</time>
               </span>
 
           
@@ -1611,7 +1929,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-18 13:18:02" itemprop="dateModified" datetime="2025-09-18T13:18:02+00:00">2025-09-18</time>
+                <time title="Modified: 2025-09-19 11:18:35" itemprop="dateModified" datetime="2025-09-19T11:18:35+00:00">2025-09-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1637,168 +1955,6 @@
           <h2 id="使用共享内存优化"><a href="#使用共享内存优化" class="headerlink" title="使用共享内存优化"></a>使用共享内存优化</h2><p><a href='https://postimg.cc/BjfXcPQ9' target='_blank'><img src='https://i.postimg.cc/dVLrFGb1/matrix-Mul.png' border='0' alt='matrix-Mul'/></a></p>
 <figure class="highlight cpp"><figcaption><span>matrixMul.cpp</span><a href="/blog/downloads/code/cuda/matrixMul.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Matrix multiplication (CUDA Kernel) on the device: C = A * B</span></span><br><span class="line"><span class="comment"> * wA is A&#x27;s width and wB is B&#x27;s width</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="type">int</span> BLOCK_SIZE&gt; <span class="function">__global__ <span class="type">void</span> <span class="title">MatrixMulCUDA</span><span class="params">(<span class="type">float</span> *C, <span class="type">float</span> *A, <span class="type">float</span> *B, <span class="type">int</span> wA, <span class="type">int</span> wB)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="comment">// Block index</span></span><br><span class="line">    <span class="type">int</span> bx = blockIdx.x;</span><br><span class="line">    <span class="type">int</span> by = blockIdx.y;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Thread index</span></span><br><span class="line">    <span class="type">int</span> tx = threadIdx.x;</span><br><span class="line">    <span class="type">int</span> ty = threadIdx.y;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Index of the first sub-matrix of A processed by the block</span></span><br><span class="line">    <span class="type">int</span> aBegin = wA * BLOCK_SIZE * by;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Index of the last sub-matrix of A processed by the block</span></span><br><span class="line">    <span class="type">int</span> aEnd = aBegin + wA - <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Step size used to iterate through the sub-matrices of A</span></span><br><span class="line">    <span class="type">int</span> aStep = BLOCK_SIZE;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Index of the first sub-matrix of B processed by the block</span></span><br><span class="line">    <span class="type">int</span> bBegin = BLOCK_SIZE * bx;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Step size used to iterate through the sub-matrices of B</span></span><br><span class="line">    <span class="type">int</span> bStep = BLOCK_SIZE * wB;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Csub is used to store the element of the block sub-matrix</span></span><br><span class="line">    <span class="comment">// that is computed by the thread</span></span><br><span class="line">    <span class="type">float</span> Csub = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Loop over all the sub-matrices of A and B</span></span><br><span class="line">    <span class="comment">// required to compute the block sub-matrix</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> a = aBegin, b = bBegin; a &lt;= aEnd; a += aStep, b += bStep) {</span><br><span class="line">        <span class="comment">// Declaration of the shared memory array As used to</span></span><br><span class="line">        <span class="comment">// store the sub-matrix of A</span></span><br><span class="line">        __shared__ <span class="type">float</span> As[BLOCK_SIZE][BLOCK_SIZE];</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Declaration of the shared memory array Bs used to</span></span><br><span class="line">        <span class="comment">// store the sub-matrix of B</span></span><br><span class="line">        __shared__ <span class="type">float</span> Bs[BLOCK_SIZE][BLOCK_SIZE];</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Load the matrices from device memory</span></span><br><span class="line">        <span class="comment">// to shared memory; each thread loads</span></span><br><span class="line">        <span class="comment">// one element of each matrix</span></span><br><span class="line">        As[ty][tx] = A[a + wA * ty + tx];</span><br><span class="line">        Bs[ty][tx] = B[b + wB * ty + tx];</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Synchronize to make sure the matrices are loaded</span></span><br><span class="line">        __syncthreads();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Multiply the two matrices together;</span></span><br><span class="line">        <span class="comment">// each thread computes one element</span></span><br><span class="line">        <span class="comment">// of the block sub-matrix</span></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> unroll</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> k = <span class="number">0</span>; k &lt; BLOCK_SIZE; ++k) {</span><br><span class="line">            Csub += As[ty][k] * Bs[k][tx];</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Synchronize to make sure that the preceding</span></span><br><span class="line">        <span class="comment">// computation is done before loading two new</span></span><br><span class="line">        <span class="comment">// sub-matrices of A and B in the next iteration</span></span><br><span class="line">        __syncthreads();</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Write the block sub-matrix to device memory;</span></span><br><span class="line">    <span class="comment">// each thread writes one element</span></span><br><span class="line">    <span class="type">int</span> c               = wB * BLOCK_SIZE * by + BLOCK_SIZE * bx;</span><br><span class="line">    C[c + wB * ty + tx] = Csub;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
 
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/02/concurrency/%E4%BA%BA%E4%BA%BA%E9%83%BD%E7%9C%8B%E5%BE%97%E6%87%82%E7%9A%84%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/09/02/concurrency/%E4%BA%BA%E4%BA%BA%E9%83%BD%E7%9C%8B%E5%BE%97%E6%87%82%E7%9A%84%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/" class="post-title-link" itemprop="url">人人都看得懂的内存模型</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-09-02 11:10:13" itemprop="dateCreated datePublished" datetime="2025-09-02T11:10:13+00:00">2025-09-02</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-18 13:18:02" itemprop="dateModified" datetime="2025-09-18T13:18:02+00:00">2025-09-18</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="术语"><a href="#术语" class="headerlink" title="术语"></a>术语</h2><p>内存模型（Memory Model）是定义<strong>数据一致性</strong>与<strong>执行顺序</strong>规则的一组规范。</p>
-<p>关键概念：</p>
-<ol>
-<li>原子性：操作不可打断；如果同时修改，硬件会串行排队。</li>
-<li>可见性：对其他核心（即<strong>其他线程</strong>）可见，也就是 load 指令可以读到最新值。</li>
-<li>顺序性：禁止<strong>本线程</strong>内的指令重排序。所以可以用作同步点。</li>
-</ol>
-<p>所有原子变量都满足原子性。但是其他两者不一定满足，由内存序定义。</p>
-<p>比如原子自增 fetch_add(relaxed) 是线程安全的，但是无法使用 load 指令读到最新的结果。</p>
-<h2 id="缓存一致性协议-MESI"><a href="#缓存一致性协议-MESI" class="headerlink" title="缓存一致性协议 (MESI)"></a>缓存一致性协议 (MESI)</h2><table>
-<thead>
-<tr>
-<th align="center">状态</th>
-<th align="center">含义</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">M (Modified)</td>
-<td align="center">缓存行已被修改，只有当前 CPU 拥有，主内存未更新</td>
-</tr>
-<tr>
-<td align="center">E (Exclusive)</td>
-<td align="center">缓存行未被修改，只有当前 CPU 拥有，与主内存一致</td>
-</tr>
-<tr>
-<td align="center">S (Shared)</td>
-<td align="center">缓存行未被修改，多个 CPU 拥有，与主内存一致</td>
-</tr>
-<tr>
-<td align="center">I (Invalid)</td>
-<td align="center">缓存行无效，必须重新从主内存加载</td>
-</tr>
-</tbody></table>
-<h2 id="relaxed-内存序"><a href="#relaxed-内存序" class="headerlink" title="relaxed 内存序"></a>relaxed 内存序</h2><p>术语：</p>
-<ol>
-<li>保证原子性：整个操作不可被打断；不一定立即回写主内存，可能暂时把结果放在 Store Buffer 中。</li>
-<li>不保证顺序：编译器和CPU可能对指令重排序。</li>
-<li>不保证可见性：其他核心不一定立即可见。</li>
-</ol>
-<p>说人话：</p>
-<ol>
-<li>原子性：原子操作是串行的（由硬件排队）</li>
-<li>不保证可见性：<ul>
-<li>load 操作是并行的，并且不保证看到最新值。</li>
-<li>“可见性”是针对程序员的，因为对于 relaxed ，没有任何指令可以保证 load 拿到最新值。它可能直接从自己的缓存行中把旧值返回给你。</li>
-<li>硬件本身是知道最新值的，它会根据 MESI 来保证自己当时拿到的是最新值（但是无法通过指令告知你）。</li>
-</ul>
-</li>
-<li>不保证顺序：不是同步点，无法保证前后指令与程序员的编写顺序一致。</li>
-</ol>
-<table>
-<thead>
-<tr>
-<th align="center">层级</th>
-<th align="center">机制</th>
-<th align="center">作用</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">指令级</td>
-<td align="center">原子指令（如 LOCK XADD）</td>
-<td align="center">保证操作不可打断</td>
-</tr>
-<tr>
-<td align="center">缓存级</td>
-<td align="center">MESI 协议</td>
-<td align="center">控制缓存行访问，避免冲突</td>
-</tr>
-<tr>
-<td align="center">编译器级</td>
-<td align="center">编译器屏障</td>
-<td align="center">防止指令重排</td>
-</tr>
-<tr>
-<td align="center">CPU级</td>
-<td align="center">内存屏障</td>
-<td align="center">保证执行顺序</td>
-</tr>
-<tr>
-<td align="center">高级机制</td>
-<td align="center">事务性内存</td>
-<td align="center">实现复杂原子逻辑（可选）</td>
-</tr>
-</tbody></table>
-<h2 id="release-acquire-语义"><a href="#release-acquire-语义" class="headerlink" title="release-acquire 语义"></a>release-acquire 语义</h2><h2 id="指令重排序"><a href="#指令重排序" class="headerlink" title="指令重排序"></a>指令重排序</h2><ol>
-<li>编译器指令重排：编译器屏障防止指令重排</li>
-<li>CPU 乱序执行：内存屏障保证执行顺序。</li>
-</ol>
-<h2 id="原子指令"><a href="#原子指令" class="headerlink" title="原子指令"></a>原子指令</h2><p>原子指令（如 LOCK XADD）：保证操作不可打断</p>
-<h2 id="Load-Store-Buffer"><a href="#Load-Store-Buffer" class="headerlink" title="Load &#x2F; Store Buffer"></a>Load &#x2F; Store Buffer</h2><h2 id="缓存行"><a href="#缓存行" class="headerlink" title="缓存行"></a>缓存行</h2><h2 id="内存屏障"><a href="#内存屏障" class="headerlink" title="内存屏障"></a>内存屏障</h2>
       
     </div>
 
@@ -1884,20 +2040,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">105</span>
+          <span class="site-state-item-count">106</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-count">14</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">47</span>
+        <span class="site-state-item-count">48</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
