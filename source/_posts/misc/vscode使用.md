@@ -1,5 +1,5 @@
 ---
-title: VSCode 使用方法
+title: vscode 使用
 date: 2024-01-24 17:26:44
 categories: Misc
 tags: vscode
@@ -121,6 +121,8 @@ setenv P4EDITOR 'code --wait'
     - 在项目根目录创建 `.clangd` 文件；
     - 创建 `~/.config/clangd/config.yaml` 。
   - [clangd 安装方式](https://clangd.llvm.org/installation.html)
+    - 如果系统没有 clangd server，vscode-server 在安装 clangd 插件的时候也会提示安装；如果点击安装，
+      则会安装在 vscode-server 默认文件夹。
 - Clang-Tidy：静态分析工具，用于检查代码质量、风格、潜在错误
 - Include-What-You-Use (IWYU)：分析并清理多余的 #include 指令
 - Clang-Format：在复杂项目中更好地格式化代码
