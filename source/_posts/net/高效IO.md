@@ -7,30 +7,144 @@ tags: IO
 
 ## 高效的 IO 函数
 
-- sendfile
-- mmap + write
-- splice
-- readv
+- `sendfile`
+- `mmap` + `write`
+- `splice`
+- `readv` / `writev`：一次性读写多个缓冲区，减少系统调用 `read`/`write`的次数。
 
 ### 零拷贝 (Zero copy)
 
 #### 文件到网络（最常见）
 
-- sendfile(2)：一次系统调用把文件页直接从内核页缓存写到 socket（常用于 HTTP 文件静态服务）。
-  - sendfile 通常能做到真正内核态零拷贝（文件页直接 DMA 到 NIC），但受限于协议（例如 SSL/TLS 会破坏）。
-  - 输入必须是普通文件（regular file），支持 O_RDONLY 的磁盘文件或内核页缓存。
-  - 不支持：管道、socket、设备文件（大多数特殊设备）、字符设备。
-- splice(2) + vmsplice(2)：把数据在文件/pipe/socket 之间在内核内移动，避免用户态拷贝。可以做“文件 -> pipe -> socket”的零拷贝链路。
-  - splice 输入/输出都可以是 pipe, socket, file（部分限制）。
-- mmap + writev：把文件映射到用户地址空间（避免 read 系列复制），但仍会发生从用户到内核的复制（写时）。适合随机访问、共享映射场景。
+参考
+：[玩转 Linux 内核：超硬核，基于 mmap 和零拷贝实现高效的内存共享](https://zhuanlan.zhihu.com/p/642866437)
 
-| 特性         | sendfile           | splice                                   | vmsplice           |
-| ------------ | ------------------ | ---------------------------------------- | ------------------ |
+##### `read` + `write`
+
+从磁盘读取文件，发送到网络：
+
+1. `read`:
+   1. DMA 拷贝：磁盘 → 内核页缓存；
+   2. CPU 拷贝：内核页缓存 → 用户缓冲区。
+2. `write`:
+   1. CPU 拷贝：用户缓冲区 → 内核 socket 缓冲区；
+   2. DMA 拷贝：内核 socket 缓冲区 → 网卡。
+
+发生了 4 次拷贝、4 次上下文切换（每次系统调用都会发生两次上下文切换：用户态 → 内核态，内核态 → 用户
+态）。
+
+#### `mmap` + `write`
+
+`mmap` 的本质：虚拟地址（用户空间） → 物理页
+
+将一段 用户空间的虚拟地址空间 映射到某个物理资源（文件、设备、或匿名页）上：
+
+|        mmap 类型         |                   说明                   |
+| :----------------------: | :--------------------------------------: |
+|         映射文件         | 映射到关联文件的内核页缓存（page cache） |
+|     匿名内存（RAM）      |               映射到物理页               |
+| 映射设备（如 GPU、FPGA） |              映射到设备地址              |
+
+1. `mmap`：
+   1. DMA 拷贝：磁盘 → 内核页缓存（同时也是用户空间可见的）；
+2. `write`:
+   1. CPU 拷贝：内核页缓存 → 内核 socket 缓冲区；
+   2. DMA 拷贝：内核 socket 缓冲区 → 网卡。
+
+发生了 3 次拷贝、4 次上下文切换。
+
+##### `sendfile`
+
+函数签名：
+
+```c
+ssize_t sendfile(int out_fd, int in_fd, off_t *offset, size_t count);
+```
+
+一次系统调用 `sendfile` 就可以完成从 磁盘文件 → 网卡 的拷贝。
+
+1. DMA 拷贝：磁盘 → 内核磁盘缓冲区；
+2. CPU 拷贝：内核磁盘缓冲区 → 内核 socket 缓冲区；
+3. DMA 拷贝：内核 socket 缓冲区 → 网卡。
+
+发生了 3 次拷贝、2 次上下文切换。
+
+注意到，`sendfile` 方法 IO 数据对用户空间完全不可见，所以只能适用于完全不需要用户空间处理的情况，比
+如静态文件服务器。
+
+`sendfile` 被称为“零拷贝”，因为完全绕过用户空间，没有用户空间和内核空间的数据拷贝。
+
+- `mmap` + `write` 只是多了一次系统调用（多了 2 次上下文切换），但是一般不称为零拷贝，因为它本质上是
+  把文件内容映射到用户空间，并且数据传输还是要 `write` 来完成。
+- `io_uring` 是异步 IO，核心机制之一就是通过 `mmap` 映射共享环形缓冲区。
+
+##### `splice`
+
+函数签名：
+
+```c
+ssize_t splice(int fd_in, loff_t *off_in,
+               int fd_out, loff_t *off_out,
+               size_t len, unsigned int flags);
+```
+
+`splice` 把数据从一个文件描述符“拼接”到另一个文件描述符，而其中至少一个必须是管道（pipe）。
+
+为什么一定要 pipe 参与？
+
+- pipe 是内核态缓冲区 pipe 是一种特殊的内核对象，拥有自己的 buffer（pipe buffer）。、
+
+  - splice 利用 pipe buffer 来暂存数据，避免用户空间拷贝。
+  - pipe buffer 是通用 buffer ，是隔离的、一次性消费的，适合做数据通路。
+
+- 普通文件或 socket 虽然也有缓冲区（页缓存、socket buffer），但是它们不属于通用的缓冲区：
+
+  - socket buffer 的数据必须经过 TCP/IP 协议栈处理（如分片、拥塞控制、校验等）。
+  - 页缓存属于文件系统，且可能被多进程共享（COW，写时复制）。
+
+示例：
+
+```c
+int pipefd[2];
+pipe(pipefd);
+
+// 文件 → pipe
+splice(file_fd, NULL, pipefd[1], NULL, len, SPLICE_F_MOVE);
+
+// pipe → socket
+splice(pipefd[0], NULL, socket_fd, NULL, len, SPLICE_F_MOVE);
+```
+
+##### `vmsplice`
+
+函数签名：
+
+```c
+ssize_t vmsplice(int fd, const struct iovec *iov,
+                 unsigned long nr_segs, unsigned int flags);
+```
+
+`vmsplice` 将用户空间的内存页映射到 pipe buffer 。
+
+示例：
+
+```c
+struct iovec iov = { .iov_base = user_buf, .iov_len = len };
+vmsplice(pipefd[1], &iov, 1, SPLICE_F_GIFT);
+splice(pipefd[0], NULL, socket_fd, NULL, len, 0);
+```
+
+`vmsplice` 几乎总是需要与 `splice` 协作使用，因为 `vmsplice` 本身只能将用户空间的内存页映射到一个
+pipe 中，而不能直接发送到 socket 或写入文件。
+
+| 特性         | sendfile            | splice                                    | vmsplice            |
+| ------------ | ------------------- | ----------------------------------------- | ------------------- |
 | 零拷贝       | ✅（文件 → socket） | ✅（文件/pipe/socket → 文件/pipe/socket） | ✅（用户页 → pipe） |
-| 输入源       | 文件               | 文件 / pipe / socket                     | 用户缓冲区         |
-| 输出目标     | Socket             | 文件 / pipe / socket                     | Pipe               |
-| 用户空间参与 | 不参与             | 不参与                                   | 用户页作为数据源   |
+| 输入源       | 文件                | 文件 / pipe / socket                      | 用户缓冲区          |
+| 输出目标     | Socket              | 文件 / pipe / socket                      | Pipe                |
+| 用户空间参与 | 不参与              | 不参与                                    | 用户页作为数据源    |
 
+完整示例：
 
 ```cpp
 #include <unistd.h>
@@ -71,21 +185,26 @@ int main() {
 
 #### 网络到网络 / 用户态网卡绕过
 
-- AF_XDP / XDP / Netmap / PF_RING / DPDK：绕开传统 kernel network stack，把网卡队列直接映射到用户态缓冲区（NUMA/hugepages），实现用户态零拷贝和超低延迟。
-- RDMA（InfiniBand / RoCE）：RDMA NIC 通过 DMA 直接把远端内存读写到本地内存，完全绕过 CPU 复制（需要硬件与协议支持）。
+- AF_XDP / XDP / Netmap / PF_RING / DPDK：绕开传统 kernel network stack，把网卡队列直接映射到用户态
+  缓冲区（NUMA/hugepages），实现用户态零拷贝和超低延迟。
+- RDMA（InfiniBand / RoCE）：RDMA NIC 通过 DMA 直接把远端内存读写到本地内存，完全绕过 CPU 复制（需要
+  硬件与协议支持）。
 
 #### 加密 / TLS 场景
 
-常规 TLS（OpenSSL）会在用户态做加密，破坏零拷贝。可用内核 TLS（KTLS）或 NIC TLS/offload 实现零拷贝出网（把加密放内核或网卡）。
+常规 TLS（OpenSSL）会在用户态做加密，破坏零拷贝。可用内核 TLS（KTLS）或 NIC TLS/offload 实现零拷贝出
+网（把加密放内核或网卡）。
 
 #### 存储层
 
-- O_DIRECT / direct I/O：绕过 page cache，用户空间 buffer 与磁盘 DMA 直接交互，但要求对齐（页/块对齐）。
+- O_DIRECT / direct I/O：绕过 page cache，用户空间 buffer 与磁盘 DMA 直接交互，但要求对齐（页/块对齐
+  ）。
 - mmap + msync：对于某些场景可以减少复制（但写回仍会有开销）。
 
 #### 异步 I/O 与零拷贝
 
-io_uring（modern Linux）支持零拷贝模式（例如 splice/sendfile 的异步提交、SQE/ CQE），并且可以做更高效的批处理。
+io_uring（modern Linux）支持零拷贝模式（例如 splice/sendfile 的异步提交、SQE/ CQE），并且可以做更高
+效的批处理。
 
 ### Page cache 和异步 IO
 
@@ -94,7 +213,8 @@ https://www.xiaolincoding.com/os/8_network_system/zero_copy.html#%E5%A6%82%E4%BD
 - O_DIRECT: 绕过操作系统缓存，直接读写磁盘，可以避免缓存延迟，提高性能。可用于：
   - 数据库系统：对性能要求极高，且直接操作磁盘数据。
   - 存储设置：如 SSD、硬盘，直接与硬件设备进行高效的 I/O 操作。
-  - 注意：由于绕过了缓存，所以 read 如果小于当前数据包的大小，则本次 read 后，内核会直接丢弃多余的数据。这是为了避免多余的数据在内存中驻留。
+  - 注意：由于绕过了缓存，所以 read 如果小于当前数据包的大小，则本次 read 后，内核会直接丢弃多余的数
+    据。这是为了避免多余的数据在内存中驻留。
 
 ### 散布读写 (Scatter read/write)
 
@@ -106,7 +226,6 @@ https://www.xiaolincoding.com/os/8_network_system/zero_copy.html#%E5%A6%82%E4%BD
 - 避免多次系统调用；
 - 直接分块读取，不需要额外用户态 memcpy 到不同的块。
 
-
 ## IO 复用
 
 - select
@@ -114,28 +233,36 @@ https://www.xiaolincoding.com/os/8_network_system/zero_copy.html#%E5%A6%82%E4%BD
 - epoll
 - 非阻塞 IO
 
-如果 select / poll / epoll 通知可读写，那么一定可读写吗？
-答案是不一定。因为内核不是 **实时地** 检查内核缓冲区是否有空间或有数据，所以内核的通知有时间差和虚假性。
-而 epoll 等函数只关注事件变化，不检查缓冲区。这样可以提高效率。
-最终的结果就是鼓励用户程序尝试，但是不保证一定成功，也就是可能阻塞。所以需要非阻塞 IO 来进一步提高性能。
+如果 select / poll / epoll 通知可读写，那么一定可读写吗？答案是不一定。因为内核不是 **实时地** 检查
+内核缓冲区是否有空间或有数据，所以内核的通知有时间差和虚假性。而 epoll 等函数只关注事件变化，不检查
+缓冲区。这样可以提高效率。最终的结果就是鼓励用户程序尝试，但是不保证一定成功，也就是可能阻塞。所以需
+要非阻塞 IO 来进一步提高性能。
 
 ### epoll
 
-- 减少数据拷贝：select / poll 只有一个函数，这会要求每次调用都必须将描述事件的数据从用户空间复制到内核空间；所以 epoll 拆分成三个函数，用户可以向内核直接注册事件数据；
-- 红黑树：epoll 事件数据是用红黑树来记录，增删查改的时间复杂度为 O(logn) ；select / poll 是线性扫描，时间复杂度 O(n) 。红黑树需要额外的空间，所以这是空间换时间的办法。
+- 减少数据拷贝：select / poll 只有一个函数，这会要求每次调用都必须将描述事件的数据从用户空间复制到内
+  核空间；所以 epoll 拆分成三个函数，用户可以向内核直接注册事件数据；
+- 红黑树：epoll 事件数据是用红黑树来记录，增删查改的时间复杂度为 O(logn) ；select / poll 是线性扫描
+  ，时间复杂度 O(n) 。红黑树需要额外的空间，所以这是空间换时间的办法。
 
 #### `EPOLLONESHOT`
 
 阅读 manual：
 
-> Since  even  with  edge-triggered  epoll,  multiple events can be generated upon receipt of multiple chunks of data, the caller has the option to specify the EPOLLONESHOT flag, to tell epoll to disable the associated file descriptor after the receipt of an event  with  epoll_wait(2).   When the EPOLLONESHOT flag is specified, it is the caller's responsibility to rearm the file descriptor using epoll_ctl(2) with EPOLL_CTL_MOD.
+> Since even with edge-triggered epoll, multiple events can be generated upon receipt of multiple
+> chunks of data, the caller has the option to specify the EPOLLONESHOT flag, to tell epoll to
+> disable the associated file descriptor after the receipt of an event with epoll_wait(2). When the
+> EPOLLONESHOT flag is specified, it is the caller's responsibility to rearm the file descriptor
+> using epoll_ctl(2) with EPOLL_CTL_MOD.
 
-如果某个文件描述符上有多个数据块到达，那么即使是边沿触发也无法保证事件只通知一次。这可能是由于数据包过大被分片，或者是新数据到达。
+如果某个文件描述符上有多个数据块到达，那么即使是边沿触发也无法保证事件只通知一次。这可能是由于数据包
+过大被分片，或者是新数据到达。
+
 - 这在单线程程序上不会有太大影响，因为对同一个 fd 不会造成重复读写。
-- 多线程程序中，fd 准备好后，我们常常将这个 fd 交给某个线程去处理。此时如果 fd 有新的事件，会造成多线程处理同一个 fd 的情况。
+- 多线程程序中，fd 准备好后，我们常常将这个 fd 交给某个线程去处理。此时如果 fd 有新的事件，会造成多
+  线程处理同一个 fd 的情况。
   - 为了避免竞争，要么加锁；要么使用内核的 ONESHOT 机制。后者由内核保证，无锁，更高效。
 - `EPOLLONSHOT` 需要调用者自行 reset 这个标志。
-
 
 ## 参考
 
