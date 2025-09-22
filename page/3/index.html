@@ -224,7 +224,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-22 12:51:37" itemprop="dateModified" datetime="2025-09-22T12:51:37+00:00">2025-09-22</time>
+                <time title="Modified: 2025-09-22 15:44:04" itemprop="dateModified" datetime="2025-09-22T15:44:04+00:00">2025-09-22</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -298,7 +298,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-22 12:51:37" itemprop="dateModified" datetime="2025-09-22T12:51:37+00:00">2025-09-22</time>
+                <time title="Modified: 2025-09-22 15:44:03" itemprop="dateModified" datetime="2025-09-22T15:44:03+00:00">2025-09-22</time>
               </span>
 
           
@@ -431,7 +431,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-22 12:51:37" itemprop="dateModified" datetime="2025-09-22T12:51:37+00:00">2025-09-22</time>
+                <time title="Modified: 2025-09-22 15:44:03" itemprop="dateModified" datetime="2025-09-22T15:44:03+00:00">2025-09-22</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -594,7 +594,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-22 12:51:37" itemprop="dateModified" datetime="2025-09-22T12:51:37+00:00">2025-09-22</time>
+                <time title="Modified: 2025-09-22 15:44:04" itemprop="dateModified" datetime="2025-09-22T15:44:04+00:00">2025-09-22</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -618,24 +618,106 @@
 
       
           <h2 id="高效的-IO-函数"><a href="#高效的-IO-函数" class="headerlink" title="高效的 IO 函数"></a>高效的 IO 函数</h2><ul>
-<li>sendfile</li>
-<li>mmap + write</li>
-<li>splice</li>
-<li>readv</li>
+<li><code>sendfile</code></li>
+<li><code>mmap</code> + <code>write</code></li>
+<li><code>splice</code></li>
+<li><code>readv</code> &#x2F; <code>writev</code>：一次性读写多个缓冲区，减少系统调用 <code>read</code>&#x2F;<code>write</code>的次数。</li>
 </ul>
-<h3 id="零拷贝-Zero-copy"><a href="#零拷贝-Zero-copy" class="headerlink" title="零拷贝 (Zero copy)"></a>零拷贝 (Zero copy)</h3><h4 id="文件到网络（最常见）"><a href="#文件到网络（最常见）" class="headerlink" title="文件到网络（最常见）"></a>文件到网络（最常见）</h4><ul>
-<li>sendfile(2)：一次系统调用把文件页直接从内核页缓存写到 socket（常用于 HTTP 文件静态服务）。<ul>
-<li>sendfile 通常能做到真正内核态零拷贝（文件页直接 DMA 到 NIC），但受限于协议（例如 SSL&#x2F;TLS 会破坏）。</li>
-<li>输入必须是普通文件（regular file），支持 O_RDONLY 的磁盘文件或内核页缓存。</li>
-<li>不支持：管道、socket、设备文件（大多数特殊设备）、字符设备。</li>
+<h3 id="零拷贝-Zero-copy"><a href="#零拷贝-Zero-copy" class="headerlink" title="零拷贝 (Zero copy)"></a>零拷贝 (Zero copy)</h3><h4 id="文件到网络（最常见）"><a href="#文件到网络（最常见）" class="headerlink" title="文件到网络（最常见）"></a>文件到网络（最常见）</h4><p>参考<br>：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/642866437">玩转 Linux 内核：超硬核，基于 mmap 和零拷贝实现高效的内存共享</a></p>
+<h5 id="read-write"><a href="#read-write" class="headerlink" title="read + write"></a><code>read</code> + <code>write</code></h5><p>从磁盘读取文件，发送到网络：</p>
+<ol>
+<li><code>read</code>:<ol>
+<li>DMA 拷贝：磁盘 → 内核页缓存；</li>
+<li>CPU 拷贝：内核页缓存 → 用户缓冲区。</li>
+</ol>
+</li>
+<li><code>write</code>:<ol>
+<li>CPU 拷贝：用户缓冲区 → 内核 socket 缓冲区；</li>
+<li>DMA 拷贝：内核 socket 缓冲区 → 网卡。</li>
+</ol>
+</li>
+</ol>
+<p>发生了 4 次拷贝、4 次上下文切换（每次系统调用都会发生两次上下文切换：用户态 → 内核态，内核态 → 用户<br>态）。</p>
+<h4 id="mmap-write"><a href="#mmap-write" class="headerlink" title="mmap + write"></a><code>mmap</code> + <code>write</code></h4><p><code>mmap</code> 的本质：虚拟地址（用户空间） → 物理页</p>
+<p>将一段 用户空间的虚拟地址空间 映射到某个物理资源（文件、设备、或匿名页）上：</p>
+<table>
+<thead>
+<tr>
+<th align="center">mmap 类型</th>
+<th align="center">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">映射文件</td>
+<td align="center">映射到关联文件的内核页缓存（page cache）</td>
+</tr>
+<tr>
+<td align="center">匿名内存（RAM）</td>
+<td align="center">映射到物理页</td>
+</tr>
+<tr>
+<td align="center">映射设备（如 GPU、FPGA）</td>
+<td align="center">映射到设备地址</td>
+</tr>
+</tbody></table>
+<ol>
+<li><code>mmap</code>：<ol>
+<li>DMA 拷贝：磁盘 → 内核页缓存（同时也是用户空间可见的）；</li>
+</ol>
+</li>
+<li><code>write</code>:<ol>
+<li>CPU 拷贝：内核页缓存 → 内核 socket 缓冲区；</li>
+<li>DMA 拷贝：内核 socket 缓冲区 → 网卡。</li>
+</ol>
+</li>
+</ol>
+<p>发生了 3 次拷贝、4 次上下文切换。</p>
+<h5 id="sendfile"><a href="#sendfile" class="headerlink" title="sendfile"></a><code>sendfile</code></h5><p>函数签名：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">ssize_t</span> <span class="title function_">sendfile</span><span class="params">(<span class="type">int</span> out_fd, <span class="type">int</span> in_fd, <span class="type">off_t</span> *offset, <span class="type">size_t</span> count)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>一次系统调用 <code>sendfile</code> 就可以完成从 磁盘文件 → 网卡 的拷贝。</p>
+<ol>
+<li>DMA 拷贝：磁盘 → 内核磁盘缓冲区；</li>
+<li>CPU 拷贝：内核磁盘缓冲区 → 内核 socket 缓冲区；</li>
+<li>DMA 拷贝：内核 socket 缓冲区 → 网卡。</li>
+</ol>
+<p>发生了 3 次拷贝、2 次上下文切换。</p>
+<p>注意到，<code>sendfile</code> 方法 IO 数据对用户空间完全不可见，所以只能适用于完全不需要用户空间处理的情况，比<br>如静态文件服务器。</p>
+<p><code>sendfile</code> 被称为“零拷贝”，因为完全绕过用户空间，没有用户空间和内核空间的数据拷贝。</p>
+<ul>
+<li><code>mmap</code> + <code>write</code> 只是多了一次系统调用（多了 2 次上下文切换），但是一般不称为零拷贝，因为它本质上是<br>把文件内容映射到用户空间，并且数据传输还是要 <code>write</code> 来完成。</li>
+<li><code>io_uring</code> 是异步 IO，核心机制之一就是通过 <code>mmap</code> 映射共享环形缓冲区。</li>
+</ul>
+<h5 id="splice"><a href="#splice" class="headerlink" title="splice"></a><code>splice</code></h5><p>函数签名：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">ssize_t</span> <span class="title function_">splice</span><span class="params">(<span class="type">int</span> fd_in, <span class="type">loff_t</span> *off_in,</span></span><br><span class="line"><span class="params">               <span class="type">int</span> fd_out, <span class="type">loff_t</span> *off_out,</span></span><br><span class="line"><span class="params">               <span class="type">size_t</span> len, <span class="type">unsigned</span> <span class="type">int</span> flags)</span>;</span><br></pre></td></tr></table></figure>
+
+<p><code>splice</code> 把数据从一个文件描述符“拼接”到另一个文件描述符，而其中至少一个必须是管道（pipe）。</p>
+<p>为什么一定要 pipe 参与？</p>
+<ul>
+<li><p>pipe 是内核态缓冲区 pipe 是一种特殊的内核对象，拥有自己的 buffer（pipe buffer）。、</p>
+<ul>
+<li>splice 利用 pipe buffer 来暂存数据，避免用户空间拷贝。</li>
+<li>pipe buffer 是通用 buffer ，是隔离的、一次性消费的，适合做数据通路。</li>
 </ul>
 </li>
-<li>splice(2) + vmsplice(2)：把数据在文件&#x2F;pipe&#x2F;socket 之间在内核内移动，避免用户态拷贝。可以做“文件 -&gt; pipe -&gt; socket”的零拷贝链路。<ul>
-<li>splice 输入&#x2F;输出都可以是 pipe, socket, file（部分限制）。</li>
+<li><p>普通文件或 socket 虽然也有缓冲区（页缓存、socket buffer），但是它们不属于通用的缓冲区：</p>
+<ul>
+<li>socket buffer 的数据必须经过 TCP&#x2F;IP 协议栈处理（如分片、拥塞控制、校验等）。</li>
+<li>页缓存属于文件系统，且可能被多进程共享（COW，写时复制）。</li>
 </ul>
 </li>
-<li>mmap + writev：把文件映射到用户地址空间（避免 read 系列复制），但仍会发生从用户到内核的复制（写时）。适合随机访问、共享映射场景。</li>
 </ul>
+<p>示例：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> pipefd[<span class="number">2</span>];</span><br><span class="line">pipe(pipefd);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 文件 → pipe</span></span><br><span class="line">splice(file_fd, <span class="literal">NULL</span>, pipefd[<span class="number">1</span>], <span class="literal">NULL</span>, len, SPLICE_F_MOVE);</span><br><span class="line"></span><br><span class="line"><span class="comment">// pipe → socket</span></span><br><span class="line">splice(pipefd[<span class="number">0</span>], <span class="literal">NULL</span>, socket_fd, <span class="literal">NULL</span>, len, SPLICE_F_MOVE);</span><br></pre></td></tr></table></figure>
+
+<h5 id="vmsplice"><a href="#vmsplice" class="headerlink" title="vmsplice"></a><code>vmsplice</code></h5><p>函数签名：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">ssize_t</span> <span class="title function_">vmsplice</span><span class="params">(<span class="type">int</span> fd, <span class="type">const</span> <span class="keyword">struct</span> iovec *iov,</span></span><br><span class="line"><span class="params">                 <span class="type">unsigned</span> <span class="type">long</span> nr_segs, <span class="type">unsigned</span> <span class="type">int</span> flags)</span>;</span><br></pre></td></tr></table></figure>
+
+<p><code>vmsplice</code> 将用户空间的内存页映射到 pipe buffer 。</p>
+<p>示例：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">iovec</span> <span class="title">iov</span> =</span> &#123; .iov_base = user_buf, .iov_len = len &#125;;</span><br><span class="line">vmsplice(pipefd[<span class="number">1</span>], &amp;iov, <span class="number">1</span>, SPLICE_F_GIFT);</span><br><span class="line">splice(pipefd[<span class="number">0</span>], <span class="literal">NULL</span>, socket_fd, <span class="literal">NULL</span>, len, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+
+<p><code>vmsplice</code> 几乎总是需要与 <code>splice</code> 协作使用，因为 <code>vmsplice</code> 本身只能将用户空间的内存页映射到一个<br>pipe 中，而不能直接发送到 socket 或写入文件。</p>
 <table>
 <thead>
 <tr>
@@ -670,24 +752,25 @@
 <td>用户页作为数据源</td>
 </tr>
 </tbody></table>
+<p>完整示例：</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/uio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> pipefd[<span class="number">2</span>];</span><br><span class="line">    <span class="built_in">pipe</span>(pipefd); <span class="comment">// pipefd[1] 写端, pipefd[0] 读端</span></span><br><span class="line"></span><br><span class="line">    <span class="type">char</span> buf[] = <span class="string">&quot;Hello zero-copy via vmsplice!&quot;</span>;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">iovec</span> iov;</span><br><span class="line">    iov.iov_base = buf;</span><br><span class="line">    iov.iov_len = <span class="built_in">sizeof</span>(buf);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 用户缓冲区插入 pipe</span></span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="comment">// flags = SPLICE_F_GIFT ：</span></span><br><span class="line">    <span class="comment">// 内核“接管”了这些页（把页的所有权赠送给内核）。</span></span><br><span class="line">    <span class="comment">// 应用不能再修改 iov 指向的缓冲区，否则会产生数据竞争或内核数据损坏。</span></span><br><span class="line">    <span class="comment">// 这个模式能确保 真正零拷贝，但代价是用户缓冲区失去控制权。</span></span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="comment">// flags = 0</span></span><br><span class="line">    <span class="comment">// 在 vmsplice 返回后可以安全修改 iov 的内容</span></span><br><span class="line">    <span class="comment">// flags=0时，vmsplice默认采用SPLICE_F_MOVE尝试移动内存页，若失败则回退到拷贝；而write始终执行拷贝</span></span><br><span class="line">    <span class="type">ssize_t</span> n = <span class="built_in">vmsplice</span>(pipefd[<span class="number">1</span>], &amp;iov, <span class="number">1</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (n &lt; <span class="number">0</span>) &#123; <span class="built_in">perror</span>(<span class="string">&quot;vmsplice&quot;</span>); <span class="keyword">return</span> <span class="number">1</span>; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 从 pipe 读出</span></span><br><span class="line">    <span class="type">char</span> out[<span class="number">64</span>];</span><br><span class="line">    n = <span class="built_in">read</span>(pipefd[<span class="number">0</span>], out, <span class="built_in">sizeof</span>(out));</span><br><span class="line">    <span class="built_in">write</span>(STDOUT_FILENO, out, n); <span class="comment">// 输出到终端</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <h4 id="网络到网络-用户态网卡绕过"><a href="#网络到网络-用户态网卡绕过" class="headerlink" title="网络到网络 &#x2F; 用户态网卡绕过"></a>网络到网络 &#x2F; 用户态网卡绕过</h4><ul>
-<li>AF_XDP &#x2F; XDP &#x2F; Netmap &#x2F; PF_RING &#x2F; DPDK：绕开传统 kernel network stack，把网卡队列直接映射到用户态缓冲区（NUMA&#x2F;hugepages），实现用户态零拷贝和超低延迟。</li>
-<li>RDMA（InfiniBand &#x2F; RoCE）：RDMA NIC 通过 DMA 直接把远端内存读写到本地内存，完全绕过 CPU 复制（需要硬件与协议支持）。</li>
+<li>AF_XDP &#x2F; XDP &#x2F; Netmap &#x2F; PF_RING &#x2F; DPDK：绕开传统 kernel network stack，把网卡队列直接映射到用户态<br>缓冲区（NUMA&#x2F;hugepages），实现用户态零拷贝和超低延迟。</li>
+<li>RDMA（InfiniBand &#x2F; RoCE）：RDMA NIC 通过 DMA 直接把远端内存读写到本地内存，完全绕过 CPU 复制（需要<br>硬件与协议支持）。</li>
 </ul>
-<h4 id="加密-TLS-场景"><a href="#加密-TLS-场景" class="headerlink" title="加密 &#x2F; TLS 场景"></a>加密 &#x2F; TLS 场景</h4><p>常规 TLS（OpenSSL）会在用户态做加密，破坏零拷贝。可用内核 TLS（KTLS）或 NIC TLS&#x2F;offload 实现零拷贝出网（把加密放内核或网卡）。</p>
+<h4 id="加密-TLS-场景"><a href="#加密-TLS-场景" class="headerlink" title="加密 &#x2F; TLS 场景"></a>加密 &#x2F; TLS 场景</h4><p>常规 TLS（OpenSSL）会在用户态做加密，破坏零拷贝。可用内核 TLS（KTLS）或 NIC TLS&#x2F;offload 实现零拷贝出<br>网（把加密放内核或网卡）。</p>
 <h4 id="存储层"><a href="#存储层" class="headerlink" title="存储层"></a>存储层</h4><ul>
-<li>O_DIRECT &#x2F; direct I&#x2F;O：绕过 page cache，用户空间 buffer 与磁盘 DMA 直接交互，但要求对齐（页&#x2F;块对齐）。</li>
+<li>O_DIRECT &#x2F; direct I&#x2F;O：绕过 page cache，用户空间 buffer 与磁盘 DMA 直接交互，但要求对齐（页&#x2F;块对齐<br>）。</li>
 <li>mmap + msync：对于某些场景可以减少复制（但写回仍会有开销）。</li>
 </ul>
-<h4 id="异步-I-O-与零拷贝"><a href="#异步-I-O-与零拷贝" class="headerlink" title="异步 I&#x2F;O 与零拷贝"></a>异步 I&#x2F;O 与零拷贝</h4><p>io_uring（modern Linux）支持零拷贝模式（例如 splice&#x2F;sendfile 的异步提交、SQE&#x2F; CQE），并且可以做更高效的批处理。</p>
+<h4 id="异步-I-O-与零拷贝"><a href="#异步-I-O-与零拷贝" class="headerlink" title="异步 I&#x2F;O 与零拷贝"></a>异步 I&#x2F;O 与零拷贝</h4><p>io_uring（modern Linux）支持零拷贝模式（例如 splice&#x2F;sendfile 的异步提交、SQE&#x2F; CQE），并且可以做更高<br>效的批处理。</p>
 <h3 id="Page-cache-和异步-IO"><a href="#Page-cache-和异步-IO" class="headerlink" title="Page cache 和异步 IO"></a>Page cache 和异步 IO</h3><p><a target="_blank" rel="noopener" href="https://www.xiaolincoding.com/os/8_network_system/zero_copy.html#%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9B%B6%E6%8B%B7%E8%B4%9D">https://www.xiaolincoding.com/os/8_network_system/zero_copy.html#%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9B%B6%E6%8B%B7%E8%B4%9D</a></p>
 <ul>
 <li>O_DIRECT: 绕过操作系统缓存，直接读写磁盘，可以避免缓存延迟，提高性能。可用于：<ul>
 <li>数据库系统：对性能要求极高，且直接操作磁盘数据。</li>
 <li>存储设置：如 SSD、硬盘，直接与硬件设备进行高效的 I&#x2F;O 操作。</li>
-<li>注意：由于绕过了缓存，所以 read 如果小于当前数据包的大小，则本次 read 后，内核会直接丢弃多余的数据。这是为了避免多余的数据在内存中驻留。</li>
+<li>注意：由于绕过了缓存，所以 read 如果小于当前数据包的大小，则本次 read 后，内核会直接丢弃多余的数<br>据。这是为了避免多余的数据在内存中驻留。</li>
 </ul>
 </li>
 </ul>
@@ -706,19 +789,19 @@
 <li>epoll</li>
 <li>非阻塞 IO</li>
 </ul>
-<p>如果 select &#x2F; poll &#x2F; epoll 通知可读写，那么一定可读写吗？<br>答案是不一定。因为内核不是 <strong>实时地</strong> 检查内核缓冲区是否有空间或有数据，所以内核的通知有时间差和虚假性。<br>而 epoll 等函数只关注事件变化，不检查缓冲区。这样可以提高效率。<br>最终的结果就是鼓励用户程序尝试，但是不保证一定成功，也就是可能阻塞。所以需要非阻塞 IO 来进一步提高性能。</p>
+<p>如果 select &#x2F; poll &#x2F; epoll 通知可读写，那么一定可读写吗？答案是不一定。因为内核不是 <strong>实时地</strong> 检查<br>内核缓冲区是否有空间或有数据，所以内核的通知有时间差和虚假性。而 epoll 等函数只关注事件变化，不检查<br>缓冲区。这样可以提高效率。最终的结果就是鼓励用户程序尝试，但是不保证一定成功，也就是可能阻塞。所以需<br>要非阻塞 IO 来进一步提高性能。</p>
 <h3 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h3><ul>
-<li>减少数据拷贝：select &#x2F; poll 只有一个函数，这会要求每次调用都必须将描述事件的数据从用户空间复制到内核空间；所以 epoll 拆分成三个函数，用户可以向内核直接注册事件数据；</li>
-<li>红黑树：epoll 事件数据是用红黑树来记录，增删查改的时间复杂度为 O(logn) ；select &#x2F; poll 是线性扫描，时间复杂度 O(n) 。红黑树需要额外的空间，所以这是空间换时间的办法。</li>
+<li>减少数据拷贝：select &#x2F; poll 只有一个函数，这会要求每次调用都必须将描述事件的数据从用户空间复制到内<br>核空间；所以 epoll 拆分成三个函数，用户可以向内核直接注册事件数据；</li>
+<li>红黑树：epoll 事件数据是用红黑树来记录，增删查改的时间复杂度为 O(logn) ；select &#x2F; poll 是线性扫描<br>，时间复杂度 O(n) 。红黑树需要额外的空间，所以这是空间换时间的办法。</li>
 </ul>
 <h4 id="EPOLLONESHOT"><a href="#EPOLLONESHOT" class="headerlink" title="EPOLLONESHOT"></a><code>EPOLLONESHOT</code></h4><p>阅读 manual：</p>
 <blockquote>
-<p>Since  even  with  edge-triggered  epoll,  multiple events can be generated upon receipt of multiple chunks of data, the caller has the option to specify the EPOLLONESHOT flag, to tell epoll to disable the associated file descriptor after the receipt of an event  with  epoll_wait(2).   When the EPOLLONESHOT flag is specified, it is the caller’s responsibility to rearm the file descriptor using epoll_ctl(2) with EPOLL_CTL_MOD.</p>
+<p>Since even with edge-triggered epoll, multiple events can be generated upon receipt of multiple<br>chunks of data, the caller has the option to specify the EPOLLONESHOT flag, to tell epoll to<br>disable the associated file descriptor after the receipt of an event with epoll_wait(2). When the<br>EPOLLONESHOT flag is specified, it is the caller’s responsibility to rearm the file descriptor<br>using epoll_ctl(2) with EPOLL_CTL_MOD.</p>
 </blockquote>
-<p>如果某个文件描述符上有多个数据块到达，那么即使是边沿触发也无法保证事件只通知一次。这可能是由于数据包过大被分片，或者是新数据到达。</p>
+<p>如果某个文件描述符上有多个数据块到达，那么即使是边沿触发也无法保证事件只通知一次。这可能是由于数据包<br>过大被分片，或者是新数据到达。</p>
 <ul>
 <li>这在单线程程序上不会有太大影响，因为对同一个 fd 不会造成重复读写。</li>
-<li>多线程程序中，fd 准备好后，我们常常将这个 fd 交给某个线程去处理。此时如果 fd 有新的事件，会造成多线程处理同一个 fd 的情况。<ul>
+<li>多线程程序中，fd 准备好后，我们常常将这个 fd 交给某个线程去处理。此时如果 fd 有新的事件，会造成多<br>线程处理同一个 fd 的情况。<ul>
 <li>为了避免竞争，要么加锁；要么使用内核的 ONESHOT 机制。后者由内核保证，无锁，更高效。</li>
 </ul>
 </li>
@@ -775,7 +858,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-22 12:51:37" itemprop="dateModified" datetime="2025-09-22T12:51:37+00:00">2025-09-22</time>
+                <time title="Modified: 2025-09-22 15:44:04" itemprop="dateModified" datetime="2025-09-22T15:44:04+00:00">2025-09-22</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1162,7 +1245,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-22 12:51:37" itemprop="dateModified" datetime="2025-09-22T12:51:37+00:00">2025-09-22</time>
+                <time title="Modified: 2025-09-22 15:44:04" itemprop="dateModified" datetime="2025-09-22T15:44:04+00:00">2025-09-22</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1469,7 +1552,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-22 12:51:37" itemprop="dateModified" datetime="2025-09-22T12:51:37+00:00">2025-09-22</time>
+                <time title="Modified: 2025-09-22 15:44:04" itemprop="dateModified" datetime="2025-09-22T15:44:04+00:00">2025-09-22</time>
               </span>
 
           
@@ -1698,7 +1781,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-22 12:51:37" itemprop="dateModified" datetime="2025-09-22T12:51:37+00:00">2025-09-22</time>
+                <time title="Modified: 2025-09-22 15:44:04" itemprop="dateModified" datetime="2025-09-22T15:44:04+00:00">2025-09-22</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1819,7 +1902,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-22 12:51:37" itemprop="dateModified" datetime="2025-09-22T12:51:37+00:00">2025-09-22</time>
+                <time title="Modified: 2025-09-22 15:44:03" itemprop="dateModified" datetime="2025-09-22T15:44:03+00:00">2025-09-22</time>
               </span>
 
           
@@ -1968,7 +2051,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-22 12:51:37" itemprop="dateModified" datetime="2025-09-22T12:51:37+00:00">2025-09-22</time>
+                <time title="Modified: 2025-09-22 15:44:04" itemprop="dateModified" datetime="2025-09-22T15:44:04+00:00">2025-09-22</time>
               </span>
 
           
