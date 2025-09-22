@@ -120,6 +120,7 @@ setenv P4EDITOR 'code --wait'
   - clangd 补充配置：
     - 在项目根目录创建 `.clangd` 文件；
     - 创建 `~/.config/clangd/config.yaml` 。
+  - [clangd 安装方式](https://clangd.llvm.org/installation.html)
 - Clang-Tidy：静态分析工具，用于检查代码质量、风格、潜在错误
 - Include-What-You-Use (IWYU)：分析并清理多余的 #include 指令
 - Clang-Format：在复杂项目中更好地格式化代码
