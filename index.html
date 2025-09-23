@@ -193,7 +193,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/19/net/RDMA%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/23/rdma/RDMA%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -207,7 +207,410 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2025/09/19/net/RDMA%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/" class="post-title-link" itemprop="url">RDMA 性能测试</a>
+            <a href="/blog/2025/09/23/rdma/RDMA%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5/" class="post-title-link" itemprop="url">RDMA 建立连接</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2025-09-23 16:30:08 / Modified: 10:57:10" itemprop="dateCreated datePublished" datetime="2025-09-23T16:30:08+00:00">2025-09-23</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/RDMA/" itemprop="url" rel="index"><span itemprop="name">RDMA</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="RDMA-vs-TCP-IP-连接标识字段"><a href="#RDMA-vs-TCP-IP-连接标识字段" class="headerlink" title="RDMA vs TCP&#x2F;IP 连接标识字段"></a>RDMA vs TCP&#x2F;IP 连接标识字段</h2><table>
+<thead>
+<tr>
+<th align="center">字段名称</th>
+<th align="center">全称</th>
+<th align="center">作用说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">GID</td>
+<td align="center">Global Identifier</td>
+<td align="center">标识设备，类似于 IP 地址，128 位；RoCEv2 中为 IPv6 映射地址，InfiniBand 中由设备 GUID + 路由信息生成</td>
+</tr>
+<tr>
+<td align="center">QPN</td>
+<td align="center">Queue Pair Number</td>
+<td align="center">标识会话，每个 RDMA 会话使用一个 QP，QPN 是其唯一编号，类似于 TCP 的端口号</td>
+</tr>
+<tr>
+<td align="center">PSN</td>
+<td align="center">Packet Sequence Number</td>
+<td align="center">初始化连接时使用，用于数据包排序和连接建立，类似于 TCP 的序列号</td>
+</tr>
+<tr>
+<td align="center">LID</td>
+<td align="center">Local Identifier（可选）</td>
+<td align="center">InfiniBand fabric 中的本地路由地址，类似于交换机端口编号，仅在 InfiniBand 中使用</td>
+</tr>
+</tbody></table>
+<h2 id="InfiniBand-的连接建立流程（RC-模式）"><a href="#InfiniBand-的连接建立流程（RC-模式）" class="headerlink" title="InfiniBand 的连接建立流程（RC 模式）"></a>InfiniBand 的连接建立流程（RC 模式）</h2><table>
+<thead>
+<tr>
+<th align="center">阶段</th>
+<th align="center">状态</th>
+<th align="center">含义</th>
+<th align="center">关键配置项</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">1️⃣ INIT</td>
+<td align="center">IBV_QPS_INIT</td>
+<td align="center">初始化 QP</td>
+<td align="center">本地端口、访问权限、P_Key 等</td>
+</tr>
+<tr>
+<td align="center">2️⃣ RTR</td>
+<td align="center">IBV_QPS_RTR</td>
+<td align="center">Ready to Receive</td>
+<td align="center">远端 QPN、LID&#x2F;GID、PSN、MTU 等</td>
+</tr>
+<tr>
+<td align="center">3️⃣ RTS</td>
+<td align="center">IBV_QPS_RTS</td>
+<td align="center">Ready to Send</td>
+<td align="center">本地 PSN、重试参数、超时设置等</td>
+</tr>
+</tbody></table>
+<p>类比 TCP 的三次握手。</p>
+<p>为什么不像 TCP 那样自动握手？ InfiniBand 的设计目标是：</p>
+<ul>
+<li>极低延迟：避免协议协商，直接由应用控制连接建立。</li>
+<li>高吞吐：硬件直接处理数据流，减少内核干预。</li>
+<li>可预测性强：状态转换明确，调试和优化更容易。</li>
+<li>适用于受控环境：如 HPC、AI 训练、数据库加速，通常用于 HPC 或数据中心，不像 TCP 那样暴露在公网，不<br>需要防止恶意连接。（所以 QPN 一般是用户指定，且常常是顺序的；这与 TCP 的初始序列号截然不同）</li>
+</ul>
+<p>注：MTU 对比表</p>
+<table>
+<thead>
+<tr>
+<th align="center">技术类型</th>
+<th align="center">支持的 MTU 值（字节）</th>
+<th align="center">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">Ethernet（标准）</td>
+<td align="center">1500</td>
+<td align="center">最常见的默认值，适用于大多数网络设备</td>
+</tr>
+<tr>
+<td align="center">InfiniBand</td>
+<td align="center">256, 512, 1024, 2048, 4096</td>
+<td align="center">固定值，由硬件和驱动支持</td>
+</tr>
+<tr>
+<td align="center">RoCE (RDMA over Converged Ethernet)</td>
+<td align="center">通常 ≤ Ethernet MTU（如 1500 或 9000）</td>
+<td align="center">实际使用值需减去 RoCE 协议头和 CRC，常见为 1024 或 4096</td>
+</tr>
+<tr>
+<td align="center">iWARP</td>
+<td align="center">受 TCP&#x2F;IP 栈限制，通常 ≤ 1500</td>
+<td align="center">依赖传统以太网 MTU，性能受限</td>
+</tr>
+</tbody></table>
+<p>InfiniBand 的 MTU 值由头文件 <code>&lt;infiniband/verbs.h&gt;</code> 定义：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">ibv_mtu</span> &#123;</span></span><br><span class="line">	IBV_MTU_256  = <span class="number">1</span>,</span><br><span class="line">	IBV_MTU_512  = <span class="number">2</span>,</span><br><span class="line">	IBV_MTU_1024 = <span class="number">3</span>,</span><br><span class="line">	IBV_MTU_2048 = <span class="number">4</span>,</span><br><span class="line">	IBV_MTU_4096 = <span class="number">5</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h2><p><a target="_blank" rel="noopener" href="https://infiniband-doc.readthedocs.io/zh-cn/latest/8_ibv_examples/8_2_RDMA_RC_code.html">源码</a></p>
+<h3 id="resources-create"><a href="#resources-create" class="headerlink" title="resources_create"></a>resources_create</h3><ol>
+<li>TCP 建立连接 → 保存到 res.sock</li>
+<li>ibv_get_device_list</li>
+<li>ibv_get_device_name → 保存到 res.dev_name</li>
+<li>ibv_open_device → 保存到 res.ib_ctx</li>
+<li>ibv_query_port → 保存到 res.ib_port, res.port_attr</li>
+<li>ibv_alloc_pd → 保存到 res.pd</li>
+<li>ibv_create_cq → 保存到 res.cq</li>
+<li>malloc → 保存到 res.buf</li>
+<li>ibv_reg_mr → 保存到 res.mr</li>
+<li>ibv_create_qp → 保存到 res.qp</li>
+</ol>
+<h3 id="connect-qp"><a href="#connect-qp" class="headerlink" title="connect_qp"></a>connect_qp</h3><ol>
+<li>如果指定 gid_idx ，则以 ib_ctx 和 ib_port 调用 ibv_query_gid 查询本地的 gid；否则用 0 初始化<br>gid。</li>
+<li>填充 cm_con_data_t 结构体：<code>addr</code>(即 <code>res.buf</code>)、<code>mr-&gt;rkey</code>、<code>qp-&gt;qp_num</code>、<code>port_attr.lid</code></li>
+<li>通过 TCP socket 交换 cm_con_data_t 的信息，将远端 cm_con_data_t 保存到 res.remote_props</li>
+<li>调用 modify_qp_to_init（使用 ibv_modify_qp 修改 QP 的状态：RESET → INIT）</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th align="center">参数字段</th>
+<th>作用描述</th>
+<th>是否必须设置</th>
+<th>设置原因</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">attr.qp_state &#x3D; IBV_QPS_INIT</td>
+<td>设置 QP 的目标状态为 INIT</td>
+<td>是</td>
+<td>明确告诉 HCA 要将 QP 转换到 INIT 状态</td>
+</tr>
+<tr>
+<td align="center">attr.port_num &#x3D; config.ib_port</td>
+<td>指定使用的物理端口号</td>
+<td>是</td>
+<td>多端口设备必须指定端口，否则无法建立连接</td>
+</tr>
+<tr>
+<td align="center">attr.pkey_index &#x3D; 0</td>
+<td>设置 P_Key 索引</td>
+<td>是</td>
+<td>InfiniBand 使用 P_Key 进行分区管理，默认使用索引 0</td>
+</tr>
+<tr>
+<td align="center"><code>attr.qp_access_flags = IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE</code></td>
+<td>设置本地和远程访问权限</td>
+<td>是</td>
+<td>决定远程节点是否能读写你的内存，必须在 INIT 状态设置</td>
+</tr>
+<tr>
+<td align="center"><code>flags = IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_ACCESS_FLAGS</code></td>
+<td>指定哪些字段有效并应用到 QP 属性结构体中</td>
+<td>是</td>
+<td>ibv_modify_qp 需要知道哪些字段是有效的，否则不会应用这些设置</td>
+</tr>
+</tbody></table>
+<p>注：InfiniBand 的分区类似以太网的 VLAN</p>
+<ul>
+<li>同一分区内的节点可以互通</li>
+<li>不同分区之间默认无法通信</li>
+<li>分区成员可以通过默认分区与 Subnet Manager 通信（如 IO 节点）</li>
+</ul>
+<ol start="5">
+<li>客户端调用 post_receive<ol>
+<li>准备 scatter&#x2F;gatter entry：sge.addr, sge.length, seg.lkey</li>
+<li>准备 receive work request: wr_id, next（多个 receive wr 可以组成一个链表，一起提交）,<br>sge_list（sge 数组，多个不同内存区域的 sge 可一起提交）。</li>
+<li>调用 ibv_post_recv 提交 receive wr。</li>
+</ol>
+</li>
+<li>modify_qp_to_rtr：修改 QP 状态为 Readay to Receive：INIT → RTR</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th align="center">字段&#x2F;参数名</th>
+<th align="center">类型&#x2F;值</th>
+<th align="center">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">remote_qpn</td>
+<td align="center">uint32_t</td>
+<td align="center">远端 QP 编号，用于建立连接。</td>
+</tr>
+<tr>
+<td align="center">dlid</td>
+<td align="center">uint16_t</td>
+<td align="center">Destination LID：远端设备的本地标识符，用于本地路由。d 表示 destination（目的地）。</td>
+</tr>
+<tr>
+<td align="center">dgid</td>
+<td align="center">uint8_t*</td>
+<td align="center">Destination GID：远端设备的全局标识符，用于全局寻址。d 表示 destination（目的地）。</td>
+</tr>
+<tr>
+<td align="center">attr.qp_state</td>
+<td align="center">IBV_QPS_RTR</td>
+<td align="center">设置 QP 状态为 Ready to Receive。</td>
+</tr>
+<tr>
+<td align="center">attr.path_mtu</td>
+<td align="center">IBV_MTU_256</td>
+<td align="center">设置路径最大传输单元为 256 字节。</td>
+</tr>
+<tr>
+<td align="center">attr.dest_qp_num</td>
+<td align="center">remote_qpn</td>
+<td align="center">指定远端 QP 编号。</td>
+</tr>
+<tr>
+<td align="center">attr.rq_psn</td>
+<td align="center">0</td>
+<td align="center">接收队列的初始包序号。</td>
+</tr>
+<tr>
+<td align="center">attr.max_dest_rd_atomic</td>
+<td align="center">1</td>
+<td align="center">远端最多可处理的 RDMA Read&#x2F;Atomic 请求数。</td>
+</tr>
+<tr>
+<td align="center">attr.min_rnr_timer</td>
+<td align="center">0x12</td>
+<td align="center">最小 RNR 重试等待时间（单位为 655.36 微秒）。</td>
+</tr>
+<tr>
+<td align="center">attr.ah_attr.is_global</td>
+<td align="center">0 或 1</td>
+<td align="center">是否启用全局路由（GID）。</td>
+</tr>
+<tr>
+<td align="center">attr.ah_attr.dlid</td>
+<td align="center">dlid</td>
+<td align="center">设置远端 LID。</td>
+</tr>
+<tr>
+<td align="center">attr.ah_attr.sl</td>
+<td align="center">0</td>
+<td align="center">服务等级（Service Level）。</td>
+</tr>
+<tr>
+<td align="center">attr.ah_attr.src_path_bits</td>
+<td align="center">0</td>
+<td align="center">源路径位，通常为 0。</td>
+</tr>
+<tr>
+<td align="center">attr.ah_attr.port_num</td>
+<td align="center">config.ib_port</td>
+<td align="center">本地端口号。</td>
+</tr>
+<tr>
+<td align="center">attr.ah_attr.grh.dgid</td>
+<td align="center">dgid</td>
+<td align="center">设置远端 GID（如果启用全局路由）。</td>
+</tr>
+<tr>
+<td align="center">attr.ah_attr.grh.flow_label</td>
+<td align="center">0</td>
+<td align="center">GRH 流标签。</td>
+</tr>
+<tr>
+<td align="center">attr.ah_attr.grh.hop_limit</td>
+<td align="center">1</td>
+<td align="center">GRH 跳数限制。</td>
+</tr>
+<tr>
+<td align="center">attr.ah_attr.grh.sgid_index</td>
+<td align="center">config.gid_idx</td>
+<td align="center">本地 GID 索引。</td>
+</tr>
+<tr>
+<td align="center">attr.ah_attr.grh.traffic_class</td>
+<td align="center">0</td>
+<td align="center">GRH 流量类别。</td>
+</tr>
+<tr>
+<td align="center">flags</td>
+<td align="center">多个宏组合</td>
+<td align="center">指定哪些属性字段有效。</td>
+</tr>
+<tr>
+<td align="center">ibv_modify_qp()</td>
+<td align="center">函数调用</td>
+<td align="center">执行 QP 状态修改操作。</td>
+</tr>
+</tbody></table>
+<ol start="7">
+<li>modify_qp_to_rts</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th align="center">参数字段</th>
+<th align="center">含义</th>
+<th align="center">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">attr.qp_state &#x3D; IBV_QPS_RTS</td>
+<td align="center">设置 QP 状态为 RTS</td>
+<td align="center">表示该 QP 已准备好发送数据，是连接建立的最后一步</td>
+</tr>
+<tr>
+<td align="center">attr.timeout &#x3D; 0x12</td>
+<td align="center">超时时间</td>
+<td align="center">单位为 4.096μs，表示发送请求等待 ACK 的最大时间。0x12 ≈ 75μs</td>
+</tr>
+<tr>
+<td align="center">attr.retry_cnt &#x3D; 6</td>
+<td align="center">重试次数</td>
+<td align="center">如果未收到 ACK，最多重试 6 次</td>
+</tr>
+<tr>
+<td align="center">attr.rnr_retry &#x3D; 0</td>
+<td align="center">RNR 重试次数</td>
+<td align="center">对方未准备好接收时的重试次数。0 表示不重试（通常用于 UC 类型）</td>
+</tr>
+<tr>
+<td align="center">attr.sq_psn &#x3D; 0</td>
+<td align="center">Send Queue 的初始 PSN</td>
+<td align="center">PSN（Packet Sequence Number）用于包顺序控制，需与远端匹配</td>
+</tr>
+<tr>
+<td align="center">attr.max_rd_atomic &#x3D; 1</td>
+<td align="center">最大 RDMA Read 请求数</td>
+<td align="center">表示本端最多允许一个未完成的 RDMA Read 请求</td>
+</tr>
+<tr>
+<td align="center">flags</td>
+<td align="center">标志位</td>
+<td align="center">指定哪些字段在 ibv_modify_qp() 中有效，必须与设置的字段匹配</td>
+</tr>
+</tbody></table>
+<ol start="8">
+<li>用 TCP socket 同步交换 dummy 数据，以确保双方都进入 RTS 状态。</li>
+</ol>
+<h3 id="post-send"><a href="#post-send" class="headerlink" title="post_send"></a>post_send</h3>
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/19/rdma/RDMA%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/09/19/rdma/RDMA%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/" class="post-title-link" itemprop="url">RDMA 性能测试</a>
         </h2>
 
         <div class="post-meta">
@@ -224,7 +627,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-22 15:54:11" itemprop="dateModified" datetime="2025-09-22T15:54:11+00:00">2025-09-22</time>
+                <time title="Modified: 2025-09-23 10:57:10" itemprop="dateModified" datetime="2025-09-23T10:57:10+00:00">2025-09-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -232,7 +635,7 @@
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">网络</span></a>
+                  <a href="/blog/categories/RDMA/" itemprop="url" rel="index"><span itemprop="name">RDMA</span></a>
                 </span>
             </span>
 
@@ -533,7 +936,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-22 15:54:11" itemprop="dateModified" datetime="2025-09-22T15:54:11+00:00">2025-09-22</time>
+                <time title="Modified: 2025-09-23 10:57:10" itemprop="dateModified" datetime="2025-09-23T10:57:10+00:00">2025-09-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -927,7 +1330,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-22 15:54:11" itemprop="dateModified" datetime="2025-09-22T15:54:11+00:00">2025-09-22</time>
+                <time title="Modified: 2025-09-23 10:57:10" itemprop="dateModified" datetime="2025-09-23T10:57:10+00:00">2025-09-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1021,7 +1424,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-22 15:54:11" itemprop="dateModified" datetime="2025-09-22T15:54:11+00:00">2025-09-22</time>
+                <time title="Modified: 2025-09-23 10:57:10" itemprop="dateModified" datetime="2025-09-23T10:57:10+00:00">2025-09-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1150,7 +1553,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-22 15:54:11" itemprop="dateModified" datetime="2025-09-22T15:54:11+00:00">2025-09-22</time>
+                <time title="Modified: 2025-09-23 10:57:10" itemprop="dateModified" datetime="2025-09-23T10:57:10+00:00">2025-09-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1259,7 +1662,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-22 15:54:11" itemprop="dateModified" datetime="2025-09-22T15:54:11+00:00">2025-09-22</time>
+                <time title="Modified: 2025-09-23 10:57:10" itemprop="dateModified" datetime="2025-09-23T10:57:10+00:00">2025-09-23</time>
               </span>
 
           
@@ -1336,7 +1739,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-22 15:54:11" itemprop="dateModified" datetime="2025-09-22T15:54:11+00:00">2025-09-22</time>
+                <time title="Modified: 2025-09-23 10:57:10" itemprop="dateModified" datetime="2025-09-23T10:57:10+00:00">2025-09-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1438,7 +1841,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-22 15:54:11" itemprop="dateModified" datetime="2025-09-22T15:54:11+00:00">2025-09-22</time>
+                <time title="Modified: 2025-09-23 10:57:10" itemprop="dateModified" datetime="2025-09-23T10:57:10+00:00">2025-09-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1554,7 +1957,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-22 15:54:11" itemprop="dateModified" datetime="2025-09-22T15:54:11+00:00">2025-09-22</time>
+                <time title="Modified: 2025-09-23 10:57:10" itemprop="dateModified" datetime="2025-09-23T10:57:10+00:00">2025-09-23</time>
               </span>
 
           
@@ -1900,81 +2303,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/03/cuda/CUDA%E7%9F%A9%E9%98%B5%E4%B9%98%E6%B3%95/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/09/03/cuda/CUDA%E7%9F%A9%E9%98%B5%E4%B9%98%E6%B3%95/" class="post-title-link" itemprop="url">CUDA矩阵乘法</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-09-03 09:23:17" itemprop="dateCreated datePublished" datetime="2025-09-03T09:23:17+00:00">2025-09-03</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-22 15:54:11" itemprop="dateModified" datetime="2025-09-22T15:54:11+00:00">2025-09-22</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/CUDA/" itemprop="url" rel="index"><span itemprop="name">CUDA</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="使用共享内存优化"><a href="#使用共享内存优化" class="headerlink" title="使用共享内存优化"></a>使用共享内存优化</h2><p><a href='https://postimg.cc/BjfXcPQ9' target='_blank'><img src='https://i.postimg.cc/dVLrFGb1/matrix-Mul.png' border='0' alt='matrix-Mul'/></a></p>
-<figure class="highlight cpp"><figcaption><span>matrixMul.cpp</span><a href="/blog/downloads/code/cuda/matrixMul.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Matrix multiplication (CUDA Kernel) on the device: C = A * B</span></span><br><span class="line"><span class="comment"> * wA is A&#x27;s width and wB is B&#x27;s width</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="type">int</span> BLOCK_SIZE&gt; <span class="function">__global__ <span class="type">void</span> <span class="title">MatrixMulCUDA</span><span class="params">(<span class="type">float</span> *C, <span class="type">float</span> *A, <span class="type">float</span> *B, <span class="type">int</span> wA, <span class="type">int</span> wB)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="comment">// Block index</span></span><br><span class="line">    <span class="type">int</span> bx = blockIdx.x;</span><br><span class="line">    <span class="type">int</span> by = blockIdx.y;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Thread index</span></span><br><span class="line">    <span class="type">int</span> tx = threadIdx.x;</span><br><span class="line">    <span class="type">int</span> ty = threadIdx.y;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Index of the first sub-matrix of A processed by the block</span></span><br><span class="line">    <span class="type">int</span> aBegin = wA * BLOCK_SIZE * by;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Index of the last sub-matrix of A processed by the block</span></span><br><span class="line">    <span class="type">int</span> aEnd = aBegin + wA - <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Step size used to iterate through the sub-matrices of A</span></span><br><span class="line">    <span class="type">int</span> aStep = BLOCK_SIZE;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Index of the first sub-matrix of B processed by the block</span></span><br><span class="line">    <span class="type">int</span> bBegin = BLOCK_SIZE * bx;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Step size used to iterate through the sub-matrices of B</span></span><br><span class="line">    <span class="type">int</span> bStep = BLOCK_SIZE * wB;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Csub is used to store the element of the block sub-matrix</span></span><br><span class="line">    <span class="comment">// that is computed by the thread</span></span><br><span class="line">    <span class="type">float</span> Csub = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Loop over all the sub-matrices of A and B</span></span><br><span class="line">    <span class="comment">// required to compute the block sub-matrix</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> a = aBegin, b = bBegin; a &lt;= aEnd; a += aStep, b += bStep) {</span><br><span class="line">        <span class="comment">// Declaration of the shared memory array As used to</span></span><br><span class="line">        <span class="comment">// store the sub-matrix of A</span></span><br><span class="line">        __shared__ <span class="type">float</span> As[BLOCK_SIZE][BLOCK_SIZE];</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Declaration of the shared memory array Bs used to</span></span><br><span class="line">        <span class="comment">// store the sub-matrix of B</span></span><br><span class="line">        __shared__ <span class="type">float</span> Bs[BLOCK_SIZE][BLOCK_SIZE];</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Load the matrices from device memory</span></span><br><span class="line">        <span class="comment">// to shared memory; each thread loads</span></span><br><span class="line">        <span class="comment">// one element of each matrix</span></span><br><span class="line">        As[ty][tx] = A[a + wA * ty + tx];</span><br><span class="line">        Bs[ty][tx] = B[b + wB * ty + tx];</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Synchronize to make sure the matrices are loaded</span></span><br><span class="line">        __syncthreads();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Multiply the two matrices together;</span></span><br><span class="line">        <span class="comment">// each thread computes one element</span></span><br><span class="line">        <span class="comment">// of the block sub-matrix</span></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> unroll</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> k = <span class="number">0</span>; k &lt; BLOCK_SIZE; ++k) {</span><br><span class="line">            Csub += As[ty][k] * Bs[k][tx];</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Synchronize to make sure that the preceding</span></span><br><span class="line">        <span class="comment">// computation is done before loading two new</span></span><br><span class="line">        <span class="comment">// sub-matrices of A and B in the next iteration</span></span><br><span class="line">        __syncthreads();</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Write the block sub-matrix to device memory;</span></span><br><span class="line">    <span class="comment">// each thread writes one element</span></span><br><span class="line">    <span class="type">int</span> c               = wB * BLOCK_SIZE * by + BLOCK_SIZE * bx;</span><br><span class="line">    C[c + wB * ty + tx] = Csub;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2046,7 +2374,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">106</span>
+          <span class="site-state-item-count">107</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -2059,7 +2387,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">48</span>
+        <span class="site-state-item-count">47</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
