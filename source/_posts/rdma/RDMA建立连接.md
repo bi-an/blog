@@ -93,7 +93,7 @@ enum ibv_mtu {
 - 分区成员可以通过默认分区与 Subnet Manager 通信（如 IO 节点）
 
 5. 客户端调用 post_receive
-   1. 准备 scatter/gatter entry：sge.addr, sge.length, seg.lkey
+   1. 准备 scatter/gather entry：sge.addr, sge.length, seg.lkey
    2. 准备 receive work request: wr_id, next（多个 receive wr 可以组成一个链表，一起提交）,
       sge_list（sge 数组，多个不同内存区域的 sge 可一起提交）。
    3. 调用 ibv_post_recv 提交 receive wr。
@@ -139,7 +139,10 @@ enum ibv_mtu {
 
 ### post_send
 
-IBV_SEND_SIGNALED 的作用
+1. 准备 scatter/gather entry: addr, length, lkey
+2. 准备 send work request: remote_addr, rkey, opcode, send_flags
+
+`IBV_SEND_SIGNALED` 的作用
 
 |     功能     | 说明                                                        |
 | :----------: | ----------------------------------------------------------- |
@@ -147,7 +150,38 @@ IBV_SEND_SIGNALED 的作用
 | 用于异步通知 | 应用程序可以通过轮询或事件机制检测哪些请求完成了。          |
 |  提高可控性  | 你可以选择只对关键请求设置该标志，减少 CQE 数量，降低开销。 |
 
-为什么不对每个请求都设置？性能考虑：每个 CQE 都会占用资源，频繁生成会增加 CQ 处理负担。
+性能考虑：每个 CQE 都会占用资源，频繁生成会增加 CQ 处理负担。
 
-- 优化策略：可以只对每 N 个请求设置 IBV_SEND_SIGNALED，比如每 64 个请求生成一个 CQE。
+- 周期性 Signaled WR：可以只对每 N 个请求设置 IBV_SEND_SIGNALED，比如每 64 个请求生成一个 CQE。
+- 通过检查这个 WC 的 wr_id，你可以间接推断前面的 N 个 WR 已经完成（因为 InfiniBand 保证顺序完成）。
 - 避免 CQ 溢出：如果 CQ 太小而你对每个请求都设置了 SIGNALED，可能导致 CQ 溢出（CQ overrun）。
+
+3. 调用 ibv_post_send
+
+RNR 状态： Receiver Not Ready（接收方未准备好）
+
+触发条件：
+
+- 当发送方发送消息时，接收方的接收队列中没有足够的接收请求（Receive Request）来处理该消息。
+- 接收方会返回一个 RNR NACK（Negative Acknowledgement） 给发送方，表示暂时无法接收。
+
+发送方的处理流程：
+
+- 收到 RNR NACK 后，发送方会根据该 NACK 中指定的 RNR 重试等待时间（RNR Timer）进行等待。
+- 等待时间结束后，发送方会尝试重新发送消息。
+- 如果接收方在重试期间发布了新的接收请求，消息将被成功接收并返回 ACK。
+- 如果多次重试后仍未成功（超过最大 RNR 重试次数），发送方会报告一个 RNR 重试错误 的工作完成状态
+  （Work Completion）。
+
+### poll_completion
+
+ibv_poll_cq
+
+### resources_destroy
+
+- ibv_destroy_qp
+- ibv_dereg_mr
+- ibv_destroy_cq
+- ibv_dealloc_pd
+- ibv_close_device
+- close: socket
