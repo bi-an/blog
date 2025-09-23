@@ -1,5 +1,5 @@
 ---
-title: RDMA 建立连接
+title: RDMA RC 通信
 date: 2025-09-23 16:30:08
 categories: RDMA
 tags: InfiniBand
