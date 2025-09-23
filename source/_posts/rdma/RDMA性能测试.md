@@ -1,8 +1,8 @@
 ---
 title: RDMA 性能测试
 date: 2025-09-19 12:10:57
-categories: 网络
-tags: RDMA
+categories: RDMA
+tags: InfiniBand
 ---
 
 ## 命令速查表
