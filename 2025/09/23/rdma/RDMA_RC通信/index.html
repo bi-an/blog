@@ -22,18 +22,18 @@
 
   <meta name="description" content="RDMA vs TCP&#x2F;IP 连接标识字段   字段名称 全称 作用说明    GID Global Identifier 标识设备，类似于 IP 地址，128 位；RoCEv2 中为 IPv6 映射地址，InfiniBand 中由设备 GUID + 路由信息生成   QPN Queue Pair Number 标识会话，每个 RDMA 会话使用一个 QP，QPN 是其唯一编号，类似于">
 <meta property="og:type" content="article">
-<meta property="og:title" content="RDMA 建立连接">
-<meta property="og:url" content="https://bi-an.github.io/blog/2025/09/23/rdma/RDMA%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5/index.html">
+<meta property="og:title" content="RDMA RC 通信">
+<meta property="og:url" content="https://bi-an.github.io/blog/2025/09/23/rdma/RDMA_RC%E9%80%9A%E4%BF%A1/index.html">
 <meta property="og:site_name" content="江南人物的博客">
 <meta property="og:description" content="RDMA vs TCP&#x2F;IP 连接标识字段   字段名称 全称 作用说明    GID Global Identifier 标识设备，类似于 IP 地址，128 位；RoCEv2 中为 IPv6 映射地址，InfiniBand 中由设备 GUID + 路由信息生成   QPN Queue Pair Number 标识会话，每个 RDMA 会话使用一个 QP，QPN 是其唯一编号，类似于">
 <meta property="og:locale">
 <meta property="article:published_time" content="2025-09-23T16:30:08.000Z">
-<meta property="article:modified_time" content="2025-09-23T11:02:37.780Z">
+<meta property="article:modified_time" content="2025-09-23T14:39:34.304Z">
 <meta property="article:author" content="bi-an">
 <meta property="article:tag" content="InfiniBand">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://bi-an.github.io/blog/2025/09/23/rdma/RDMA%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5/">
+<link rel="canonical" href="https://bi-an.github.io/blog/2025/09/23/rdma/RDMA_RC%E9%80%9A%E4%BF%A1/">
 
 
 <script id="page-configurations">
@@ -46,7 +46,7 @@
   };
 </script>
 
-  <title>RDMA 建立连接 | 江南人物的博客</title>
+  <title>RDMA RC 通信 | 江南人物的博客</title>
   
 
 
@@ -199,7 +199,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/23/rdma/RDMA%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/23/rdma/RDMA_RC%E9%80%9A%E4%BF%A1/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -212,7 +212,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          RDMA 建立连接
+          RDMA RC 通信
         </h1>
 
         <div class="post-meta">
@@ -223,7 +223,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2025-09-23 16:30:08 / Modified: 11:02:37" itemprop="dateCreated datePublished" datetime="2025-09-23T16:30:08+00:00">2025-09-23</time>
+              <time title="Created: 2025-09-23 16:30:08 / Modified: 14:39:34" itemprop="dateCreated datePublished" datetime="2025-09-23T16:30:08+00:00">2025-09-23</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -411,7 +411,7 @@
 </ul>
 <ol start="5">
 <li>客户端调用 post_receive<ol>
-<li>准备 scatter&#x2F;gatter entry：sge.addr, sge.length, seg.lkey</li>
+<li>准备 scatter&#x2F;gather entry：sge.addr, sge.length, seg.lkey</li>
 <li>准备 receive work request: wr_id, next（多个 receive wr 可以组成一个链表，一起提交）,<br>sge_list（sge 数组，多个不同内存区域的 sge 可一起提交）。</li>
 <li>调用 ibv_post_recv 提交 receive wr。</li>
 </ol>
@@ -582,7 +582,11 @@
 <ol start="8">
 <li>用 TCP socket 同步交换 dummy 数据，以确保双方都进入 RTS 状态。</li>
 </ol>
-<h3 id="post-send"><a href="#post-send" class="headerlink" title="post_send"></a>post_send</h3><p>IBV_SEND_SIGNALED 的作用</p>
+<h3 id="post-send"><a href="#post-send" class="headerlink" title="post_send"></a>post_send</h3><ol>
+<li>准备 scatter&#x2F;gather entry: addr, length, lkey</li>
+<li>准备 send work request: remote_addr, rkey, opcode, send_flags</li>
+</ol>
+<p><code>IBV_SEND_SIGNALED</code> 的作用</p>
 <table>
 <thead>
 <tr>
@@ -603,10 +607,36 @@
 <td>你可以选择只对关键请求设置该标志，减少 CQE 数量，降低开销。</td>
 </tr>
 </tbody></table>
-<p>为什么不对每个请求都设置？性能考虑：每个 CQE 都会占用资源，频繁生成会增加 CQ 处理负担。</p>
+<p>性能考虑：每个 CQE 都会占用资源，频繁生成会增加 CQ 处理负担。</p>
 <ul>
-<li>优化策略：可以只对每 N 个请求设置 IBV_SEND_SIGNALED，比如每 64 个请求生成一个 CQE。</li>
+<li>周期性 Signaled WR：可以只对每 N 个请求设置 IBV_SEND_SIGNALED，比如每 64 个请求生成一个 CQE。</li>
+<li>通过检查这个 WC 的 wr_id，你可以间接推断前面的 N 个 WR 已经完成（因为 InfiniBand 保证顺序完成）。</li>
 <li>避免 CQ 溢出：如果 CQ 太小而你对每个请求都设置了 SIGNALED，可能导致 CQ 溢出（CQ overrun）。</li>
+</ul>
+<ol start="3">
+<li>调用 ibv_post_send</li>
+</ol>
+<p>RNR 状态： Receiver Not Ready（接收方未准备好）</p>
+<p>触发条件：</p>
+<ul>
+<li>当发送方发送消息时，接收方的接收队列中没有足够的接收请求（Receive Request）来处理该消息。</li>
+<li>接收方会返回一个 RNR NACK（Negative Acknowledgement） 给发送方，表示暂时无法接收。</li>
+</ul>
+<p>发送方的处理流程：</p>
+<ul>
+<li>收到 RNR NACK 后，发送方会根据该 NACK 中指定的 RNR 重试等待时间（RNR Timer）进行等待。</li>
+<li>等待时间结束后，发送方会尝试重新发送消息。</li>
+<li>如果接收方在重试期间发布了新的接收请求，消息将被成功接收并返回 ACK。</li>
+<li>如果多次重试后仍未成功（超过最大 RNR 重试次数），发送方会报告一个 RNR 重试错误 的工作完成状态<br>（Work Completion）。</li>
+</ul>
+<h3 id="poll-completion"><a href="#poll-completion" class="headerlink" title="poll_completion"></a>poll_completion</h3><p>ibv_poll_cq</p>
+<h3 id="resources-destroy"><a href="#resources-destroy" class="headerlink" title="resources_destroy"></a>resources_destroy</h3><ul>
+<li>ibv_destroy_qp</li>
+<li>ibv_dereg_mr</li>
+<li>ibv_destroy_cq</li>
+<li>ibv_dealloc_pd</li>
+<li>ibv_close_device</li>
+<li>close: socket</li>
 </ul>
 
     </div>
@@ -688,7 +718,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#RDMA-vs-TCP-IP-%E8%BF%9E%E6%8E%A5%E6%A0%87%E8%AF%86%E5%AD%97%E6%AE%B5"><span class="nav-text">RDMA vs TCP&#x2F;IP 连接标识字段</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#InfiniBand-%E7%9A%84%E8%BF%9E%E6%8E%A5%E5%BB%BA%E7%AB%8B%E6%B5%81%E7%A8%8B%EF%BC%88RC-%E6%A8%A1%E5%BC%8F%EF%BC%89"><span class="nav-text">InfiniBand 的连接建立流程（RC 模式）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%AD%A5%E9%AA%A4"><span class="nav-text">步骤</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#resources-create"><span class="nav-text">resources_create</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#connect-qp"><span class="nav-text">connect_qp</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#post-send"><span class="nav-text">post_send</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#RDMA-vs-TCP-IP-%E8%BF%9E%E6%8E%A5%E6%A0%87%E8%AF%86%E5%AD%97%E6%AE%B5"><span class="nav-text">RDMA vs TCP&#x2F;IP 连接标识字段</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#InfiniBand-%E7%9A%84%E8%BF%9E%E6%8E%A5%E5%BB%BA%E7%AB%8B%E6%B5%81%E7%A8%8B%EF%BC%88RC-%E6%A8%A1%E5%BC%8F%EF%BC%89"><span class="nav-text">InfiniBand 的连接建立流程（RC 模式）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%AD%A5%E9%AA%A4"><span class="nav-text">步骤</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#resources-create"><span class="nav-text">resources_create</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#connect-qp"><span class="nav-text">connect_qp</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#post-send"><span class="nav-text">post_send</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#poll-completion"><span class="nav-text">poll_completion</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#resources-destroy"><span class="nav-text">resources_destroy</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
