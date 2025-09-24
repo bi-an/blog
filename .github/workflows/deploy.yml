@@ -1,18 +1,19 @@
-name: Deploy Hexo to GitHub Pages
+name: Deploy Hexo with Submodule
 
 on:
   push:
     branches:
-      - main  # 监听主分支的推送
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout main repo with submodules
         uses: actions/checkout@v4
         with:
-          submodules: true  # 若使用主题子模块，需要开启
+          submodules: recursive  # 关键：递归拉取所有子模块
+          fetch-depth: 0         # 确保获取完整历史
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -21,14 +22,16 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm install
+          cd themes/next && npm install && cd ../..
 
       - name: Generate static files
-        run: npm run build  # 假设 package.json 中 build 对应 hexo generate
+        run: npm run build
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: main  # 部署到主分支
-          publish_dir: ./public  # Hexo 生成的静态文件目录
+          publish_branch: gh-pages  # 或你的部署分支
+          publish_dir: ./public
