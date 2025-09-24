@@ -72,6 +72,7 @@ In AWK, `BEGIN` and `END` are special patterns that allow you to execute code be
 
 1. 找出一个未使用的port
 
+{% raw %}
 {% tabs Code %}
 
 <!-- tab Makefile -->
@@ -121,3 +122,5 @@ s.close()
 <!-- endtab -->
 
 {% endtabs %}
+
+{% endraw %}
