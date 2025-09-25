@@ -188,6 +188,176 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/07/23/cpp/shell%E8%AF%AF%E5%AF%BC%E6%80%A7%E9%94%99%E8%AF%AFNo-such-file-or-directory/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/07/23/cpp/shell%E8%AF%AF%E5%AF%BC%E6%80%A7%E9%94%99%E8%AF%AFNo-such-file-or-directory/" class="post-title-link" itemprop="url">shell 误导性错误 No such file or directory</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-07-23 19:26:26" itemprop="dateCreated datePublished" datetime="2025-07-23T19:26:26+00:00">2025-07-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-09-25 02:19:42" itemprop="dateModified" datetime="2025-09-25T02:19:42+00:00">2025-09-25</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="📝-现象描述"><a href="#📝-现象描述" class="headerlink" title="📝 现象描述"></a>📝 现象描述</h2><p>当你运行一个 ELF 可执行文件（比如一个 32-bit 的程序），而它依赖的 loader 或共享库找不到 时，Shell 会提示：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bash: ./a.out: No such file or directory</span><br></pre></td></tr></table></figure>
+
+<p>但其实，这个“文件”确实存在，问题出在它 依赖的 loader 文件或库文件找不到，进而导致 execve() 系统调用失败。</p>
+<p>我们从 内核执行路径 角度来解析这背后的原理。</p>
+<h2 id="🧠Linux-内部逻辑解析"><a href="#🧠Linux-内部逻辑解析" class="headerlink" title="🧠Linux 内部逻辑解析"></a>🧠Linux 内部逻辑解析</h2><ol>
+<li>Shell 运行程序的过程</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./my_app</span><br></pre></td></tr></table></figure>
+
+<p>Shell 实际做的是调用 execve() 系统调用：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">execve(<span class="string">&quot;./my_app&quot;</span>, argv, envp);</span><br></pre></td></tr></table></figure>
+
+<p>这是 Linux 加载并运行一个程序的唯一入口。</p>
+<ol start="2">
+<li>execve() 做了什么？</li>
+</ol>
+<p>内核执行 execve() 时，它会：</p>
+<p>🔹 Step 1: 打开并读取 ELF 头（文件的前几个字节）<br>从而判断这是一个 ELF 可执行文件、脚本，还是其他格式。</p>
+<p>🔹 Step 2: 检查 ELF 的架构位数、ABI、动态链接需求<br>对于动态链接程序，它会在 ELF 头中读取如下字段：</p>
+<ul>
+<li>e_ident[EI_CLASS]: 32-bit 或 64-bit</li>
+<li>e_interpreter: 这是最关键的！</li>
+</ul>
+<ol start="3">
+<li>e_interpreter 是什么？</li>
+</ol>
+<p>这是 ELF 文件里定义的 “程序解释器路径”（interpreter path）。即这个程序运行时，系统需要先加载谁来帮它加载剩下的动态库。</p>
+<p>可以通过 <code>readelf -l my_app</code> 查看：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ readelf -l ./my_app | grep interpreter</span><br><span class="line"></span><br><span class="line">[Requesting program interpreter: /lib/ld-linux.so.2]</span><br></pre></td></tr></table></figure>
+
+<p>比如：<code>/lib/ld-linux.so.2</code> 是 32-bit 程序使用的 loader。</p>
+<ol start="4">
+<li>如果这个 loader 不存在，会发生什么？</li>
+</ol>
+<ul>
+<li>execve() 尝试打开 ELF 指定的解释器（&#x2F;lib&#x2F;ld-linux.so.2）</li>
+<li>如果该文件不存在，open() 失败</li>
+<li>整个 execve() 调用失败</li>
+<li>错误代码是 ENOENT（2），代表：</li>
+</ul>
+<blockquote>
+<p>“No such file or directory”</p>
+</blockquote>
+<p>但这并不是说 你运行的那个文件 .&#x2F;my_app 不存在，而是 它依赖的解释器不在系统中，导致整个执行失败。</p>
+<h2 id="🤯-为什么这么误导？"><a href="#🤯-为什么这么误导？" class="headerlink" title="🤯 为什么这么误导？"></a>🤯 为什么这么误导？</h2><p>因为 shell（bash&#x2F;zsh）调用 execve() 失败后，只看到了 errno &#x3D; ENOENT，它默认解释为：</p>
+<blockquote>
+<p>“你指定的那个文件路径不存在”</p>
+</blockquote>
+<p>而不是更深层次的：</p>
+<blockquote>
+<p>“文件存在，但它需要的 loader 不存在”</p>
+</blockquote>
+<p>这是 shell 的 历史遗留行为，没有细分 errno 背后语义。</p>
+<h2 id="🧪-举个实际例子"><a href="#🧪-举个实际例子" class="headerlink" title="🧪 举个实际例子"></a>🧪 举个实际例子</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$ file ./a.out</span><br><span class="line">./a.out: ELF 32-bit LSB executable, Intel 80386, ...</span><br><span class="line"></span><br><span class="line">$ readelf -l ./a.out | grep interpreter</span><br><span class="line">[Requesting program interpreter: /lib/ld-linux.so.2]</span><br><span class="line"></span><br><span class="line">$ <span class="built_in">ls</span> /lib/ld-linux.so.2</span><br><span class="line"><span class="built_in">ls</span>: cannot access <span class="string">&#x27;/lib/ld-linux.so.2&#x27;</span>: No such file or directory</span><br><span class="line"></span><br><span class="line">$ ./a.out</span><br><span class="line">bash: ./a.out: No such file or directory  ❌</span><br></pre></td></tr></table></figure>
+
+<p>实际上是 缺少解释器 <code>/lib/ld-linux.so.2</code>，而不是 a.out 本身。</p>
+<h2 id="✅-总结"><a href="#✅-总结" class="headerlink" title="✅ 总结"></a>✅ 总结</h2><table>
+<thead>
+<tr>
+<th>层级</th>
+<th>行为</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>用户</td>
+<td>输入 <code>./prog</code></td>
+</tr>
+<tr>
+<td>Shell</td>
+<td>调用 <code>execve(&quot;./prog&quot;, ...)</code></td>
+</tr>
+<tr>
+<td>内核</td>
+<td>解析 ELF，发现 <code>interpreter</code> 是 <code>/lib/ld-linux.so.2</code></td>
+</tr>
+<tr>
+<td>内核</td>
+<td>找不到解释器，返回 <code>ENOENT</code></td>
+</tr>
+<tr>
+<td>Shell</td>
+<td>报 <code>No such file or directory</code> ❌（误导性）</td>
+</tr>
+</tbody></table>
+<h2 id="🛠️-Bonus：编译-32-bit-程序"><a href="#🛠️-Bonus：编译-32-bit-程序" class="headerlink" title="🛠️ Bonus：编译 32-bit 程序"></a>🛠️ Bonus：编译 32-bit 程序</h2><ol>
+<li>编写一个简单的 C 程序</li>
+</ol>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// hello.c</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Hello from 32-bit program!\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>编译成 32 bit 程序</li>
+</ol>
+<p>需要先安装 32-bit 编译支持：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install gcc-multilib</span><br></pre></td></tr></table></figure>
+
+<p>然后编译：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -m32 hello.c -o hello32</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>验证是否是 32-bit ELF 可执行文件</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">file hello32</span><br></pre></td></tr></table></figure>
+
+<p>输出应类似：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hello32: ELF 32-bit LSB executable, Intel 80386, ...</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/04/16/dlfcn/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -219,7 +389,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-24 14:21:34" itemprop="dateModified" datetime="2025-09-24T14:21:34+00:00">2025-09-24</time>
+                <time title="Modified: 2025-09-25 02:19:42" itemprop="dateModified" datetime="2025-09-25T02:19:42+00:00">2025-09-25</time>
               </span>
 
           
@@ -286,7 +456,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-24 14:21:34" itemprop="dateModified" datetime="2025-09-24T14:21:34+00:00">2025-09-24</time>
+                <time title="Modified: 2025-09-25 02:19:42" itemprop="dateModified" datetime="2025-09-25T02:19:42+00:00">2025-09-25</time>
               </span>
 
           
@@ -551,7 +721,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-24 14:21:34" itemprop="dateModified" datetime="2025-09-24T14:21:34+00:00">2025-09-24</time>
+                <time title="Modified: 2025-09-25 02:19:42" itemprop="dateModified" datetime="2025-09-25T02:19:42+00:00">2025-09-25</time>
               </span>
 
           
@@ -652,7 +822,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-24 14:21:34" itemprop="dateModified" datetime="2025-09-24T14:21:34+00:00">2025-09-24</time>
+                <time title="Modified: 2025-09-25 02:19:42" itemprop="dateModified" datetime="2025-09-25T02:19:42+00:00">2025-09-25</time>
               </span>
 
           
@@ -949,7 +1119,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-24 14:21:34" itemprop="dateModified" datetime="2025-09-24T14:21:34+00:00">2025-09-24</time>
+                <time title="Modified: 2025-09-25 02:19:42" itemprop="dateModified" datetime="2025-09-25T02:19:42+00:00">2025-09-25</time>
               </span>
 
           
@@ -1275,7 +1445,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-24 14:21:34" itemprop="dateModified" datetime="2025-09-24T14:21:34+00:00">2025-09-24</time>
+                <time title="Modified: 2025-09-25 02:19:42" itemprop="dateModified" datetime="2025-09-25T02:19:42+00:00">2025-09-25</time>
               </span>
 
           
@@ -1456,7 +1626,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-24 14:21:34" itemprop="dateModified" datetime="2025-09-24T14:21:34+00:00">2025-09-24</time>
+                <time title="Modified: 2025-09-25 02:19:42" itemprop="dateModified" datetime="2025-09-25T02:19:42+00:00">2025-09-25</time>
               </span>
 
           
@@ -1524,7 +1694,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-24 14:21:34" itemprop="dateModified" datetime="2025-09-24T14:21:34+00:00">2025-09-24</time>
+                <time title="Modified: 2025-09-25 02:19:42" itemprop="dateModified" datetime="2025-09-25T02:19:42+00:00">2025-09-25</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1607,7 +1777,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-24 14:21:34" itemprop="dateModified" datetime="2025-09-24T14:21:34+00:00">2025-09-24</time>
+                <time title="Modified: 2025-09-25 02:19:42" itemprop="dateModified" datetime="2025-09-25T02:19:42+00:00">2025-09-25</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1705,90 +1875,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/06/linux/File-Exists/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/09/06/linux/File-Exists/" class="post-title-link" itemprop="url">File Exists</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-09-06 18:09:03" itemprop="dateCreated datePublished" datetime="2024-09-06T18:09:03+00:00">2024-09-06</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-09-24 14:21:34" itemprop="dateModified" datetime="2025-09-24T14:21:34+00:00">2025-09-24</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="判断文件是否存在"><a href="#判断文件是否存在" class="headerlink" title="判断文件是否存在"></a>判断文件是否存在</h1><h2 id="相关函数"><a href="#相关函数" class="headerlink" title="相关函数"></a>相关函数</h2><ul>
-<li><code>access</code></li>
-<li><code>stat</code></li>
-<li><code>inotify_node</code></li>
-<li><code>opendir</code></li>
-<li><code>readdir</code></li>
-</ul>
-<h2 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h2><p>文件系统并不会实时刷新缓存，尤其是在网络文件系统中。这会导致文件即使已经创建，<code>access</code>或<code>stat</code>函数依然返回”No such file”。<br>但是<code>ls</code>可以看到文件，这是因为<code>ls</code>和<code>access</code>函数的实现机制不同。</p>
-<p>例如：</p>
-<p>在<code>NFS</code>文件系统中，创建文件之后立即调用<code>stat</code>命令查看文件，<code>stat</code>会报告“文件不存在”。<br>删除文件之后立即调用<code>stat</code>命令查看文件，发现<code>stat</code>依然可以看到该文件。</p>
-<p>我们可以改用<code>readdir</code>来读取目录，因为目录会被更快地更新缓存。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1860,7 +1946,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">107</span>
+          <span class="site-state-item-count">108</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
