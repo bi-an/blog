@@ -123,6 +123,10 @@ setenv P4EDITOR 'code --wait'
   - [clangd 安装方式](https://clangd.llvm.org/installation.html)
     - 如果系统没有 clangd server，vscode-server 在安装 clangd 插件的时候也会提示安装；如果点击安装，
       则会安装在 vscode-server 默认文件夹。
+    - 如果 VSCode 没有提示安装 clangd ，那么
+      - 打开命令面板（Cmd+Shift+P 或 Ctrl+Shift+P）
+      - 输入并执行：Restart Language Server
+      - 此时，左下角会提示 “clangd server 未安装，是否安装”
 - Clang-Tidy：静态分析工具，用于检查代码质量、风格、潜在错误
 - Include-What-You-Use (IWYU)：分析并清理多余的 #include 指令
 - Clang-Format：在复杂项目中更好地格式化代码
