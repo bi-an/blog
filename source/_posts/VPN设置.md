@@ -346,7 +346,9 @@ google-chrome &
 或者在启动命令中直接指定代理：
 
 ```bash
-google-chrome --proxy-server="http://127.0.0.1:7890"
+google-chrome --proxy-server="http://127.0.0.1:7890" &
+# 或
+google-chrome --proxy-server="socks5://127.0.0.1:7891" &
 
 # 或以下方式
 curl -x http://127.0.0.1:7890 https://www.google.com
