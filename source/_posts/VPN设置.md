@@ -262,3 +262,147 @@ Acquire::https::Proxy "http://127.0.0.1:7890";
 ### 方法四：配置 iptables + redsocks（实现真正的全局转发）
 
 适合高级用户，WSL2 使用 TUN 模式实现系统级全局代理。这比较复杂，建议在需要所有流量强制走代理时使用。TODO
+
+
+## mihomo（clash meta内核）
+
+下载地址： https://github.com/MetaCubeX/mihomo/releases （clash meta内核）
+
+1. 启动：
+
+```
+INFO[2025-11-28T11:21:31.004426816+08:00] RESTful API listening at: [::]:9090          
+INFO[2025-11-28T11:21:31.013225892+08:00] Sniffer is closed                            
+INFO[2025-11-28T11:21:31.013530808+08:00] HTTP proxy listening at: [::]:7890           
+INFO[2025-11-28T11:21:31.013646756+08:00] SOCKS proxy listening at: [::]:7891
+```
+
+可以看到clash创建了前置代理，http代理端口为：7890 ，socks5代理端口为：7891 ，RESTful API的端口是9090 (这些端口不同版本可能不一样，实际以终端输入的为准)
+
+说明：
+- 通过访问 http 代理和 socks5 代理都可以让流量经过代理。
+- RESTful API 可以用于控制 VPN 的配置方式。
+- **命令行版 mihomo 默认不会自动设置系统代理。**
+
+
+2. 设置系统代理或浏览器代理。
+
+方法一：手动设置系统代理（推荐）
+
+在 Windows 系统中：
+
+    打开 设置 → 网络和 Internet → 代理
+
+    在 手动设置代理 部分，打开开关
+
+    填写以下信息：
+
+        地址: 127.0.0.1
+
+        端口: 7890 (这是 mihomo 的默认 HTTP 代理端口)
+
+    点击 保存
+
+在 macOS 系统中：
+
+    打开 系统设置 → 网络 → 选择当前网络连接 → 详细信息 → 代理
+
+    勾选 网页代理（HTTP） 和 安全网页代理（HTTPS）
+
+    服务器填写 127.0.0.1，端口填写 7890
+
+    点击 好 应用设置
+
+在 Linux 系统中（GNOME）：
+
+    打开 设置 → 网络 → 网络代理
+
+    选择 手动
+
+    在 HTTP 和 HTTPS 代理中填写：
+
+        服务器: 127.0.0.1
+
+        端口: 7890
+
+    点击 应用
+
+完成设置后，Chrome 应该立即就能通过代理访问外网了。
+
+
+方法二：使用命令行工具设置代理（临时方案）
+
+如果您不想修改系统设置，可以临时设置环境变量：
+
+```bash
+# 在启动 Chrome 前设置环境变量（Linux/macOS）
+export http_proxy=http://127.0.0.1:7890
+export https_proxy=http://127.0.0.1:7890
+
+# 然后启动 Chrome
+google-chrome &
+```
+
+或者在启动命令中直接指定代理：
+
+```bash
+google-chrome --proxy-server="http://127.0.0.1:7890"
+
+# 或以下方式
+curl -x http://127.0.0.1:7890 https://www.google.com
+curl -x socks5://127.0.0.1:7891 https://www.google.com
+curl --socks5 127.0.0.1:7891 https://www.google.com
+```
+
+方法三：在chrome浏览器或者firefox浏览器的SwitchyOmega或者Zero Omega插件里配置代理
+
+注：浏览器代理只针对当前浏览器，其他应用的流量不会通过代理。
+
+1. RESTful 控制台
+
+可以通过web控制面板RESTful API切换节点和模式，可用下面两个来控制。
+
+https://d.metacubex.one/ 或者 https://yacd.metacubex.one/
+
+注：原理说明
+
+步骤 1：用户访问 Yacd 网站
+
+```text
+用户浏览器 → https://yacd.metacubex.one
+```
+
+- 浏览器加载 Yacd 的静态资源（HTML、JS、CSS）
+- 所有代码在浏览器沙箱环境中运行
+
+
+步骤 2：Yacd 尝试连接本地 API
+
+```javascript
+// Yacd 代码中的连接逻辑
+const apiUrl = 'http://127.0.0.1:9090';
+
+// 发送预检请求 (Preflight Request)
+fetch(apiUrl + '/configs', {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+```
+
+步骤 3：浏览器执行 CORS 检查
+
+```text
+浏览器发送 OPTIONS 预检请求到 127.0.0.1:9090
+    ↓
+mihomo 返回允许的 CORS 头部
+    ↓
+浏览器确认安全，发送实际请求
+```
+
+步骤 4：建立双向通信
+
+- 配置操作：通过 HTTP PATCH/PUT 请求
+- 实时数据：通过 WebSocket 或 Server-Sent Events (SSE)
+- 流量监控：持续的 HTTP 流或 WebSocket 连接
