@@ -268,6 +268,14 @@ Acquire::https::Proxy "http://127.0.0.1:7890";
 
 下载地址： https://github.com/MetaCubeX/mihomo/releases （clash meta内核）
 
+架构示意图：
+
+```text
+你的浏览器（客户端） → localhost:7890 (Clash监听) → 外网代理服务器 → 目标网站
+    ↑                      ↑                          ↑           ↑
+ (终极客户端)          (代理客户端)                (中间服务器)   (目标服务器)
+```
+
 1. 启动：
 
 ```
