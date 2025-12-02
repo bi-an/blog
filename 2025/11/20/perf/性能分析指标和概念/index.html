@@ -20,20 +20,20 @@
     var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="性能指标CPU时间函数调用的 CPU 时间:  Inclusive time: total cpu time, include all functions it calls. Exclusive time: only the time used by the function itself, exclusive all its children.  Refer to here.  Wall tim">
+  <meta name="description" content="CPU 硬件层次概念 Package → 整个处理器封装，包含一个或多个 die。 Socket (S) → 主板上的物理 CPU 插槽 Die (D) → 封装里的裸片（可能有多个 chiplet&#x2F;die） Core (C) → die 上的计算核心 Thread (T) → 核心里的硬件线程（SMT&#x2F;超线程），即逻辑处理器  假设一台双路服务器，每个 socket 上的 C">
 <meta property="og:type" content="article">
-<meta property="og:title" content="性能分析">
-<meta property="og:url" content="https://bi-an.github.io/blog/2025/07/31/cpp/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/index.html">
+<meta property="og:title" content="性能分析指标和概念">
+<meta property="og:url" content="https://bi-an.github.io/blog/2025/11/20/perf/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E6%8C%87%E6%A0%87%E5%92%8C%E6%A6%82%E5%BF%B5/index.html">
 <meta property="og:site_name" content="江南人物的博客">
-<meta property="og:description" content="性能指标CPU时间函数调用的 CPU 时间:  Inclusive time: total cpu time, include all functions it calls. Exclusive time: only the time used by the function itself, exclusive all its children.  Refer to here.  Wall tim">
+<meta property="og:description" content="CPU 硬件层次概念 Package → 整个处理器封装，包含一个或多个 die。 Socket (S) → 主板上的物理 CPU 插槽 Die (D) → 封装里的裸片（可能有多个 chiplet&#x2F;die） Core (C) → die 上的计算核心 Thread (T) → 核心里的硬件线程（SMT&#x2F;超线程），即逻辑处理器  假设一台双路服务器，每个 socket 上的 C">
 <meta property="og:locale">
-<meta property="article:published_time" content="2025-07-31T15:43:15.000Z">
-<meta property="article:modified_time" content="2025-11-28T08:17:29.010Z">
+<meta property="article:published_time" content="2025-11-20T15:54:29.000Z">
+<meta property="article:modified_time" content="2025-12-02T14:58:39.919Z">
 <meta property="article:author" content="bi-an">
 <meta property="article:tag" content="c&#x2F;cpp">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://bi-an.github.io/blog/2025/07/31/cpp/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/">
+<link rel="canonical" href="https://bi-an.github.io/blog/2025/11/20/perf/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E6%8C%87%E6%A0%87%E5%92%8C%E6%A6%82%E5%BF%B5/">
 
 
 <script id="page-configurations">
@@ -46,7 +46,7 @@
   };
 </script>
 
-  <title>性能分析 | 江南人物的博客</title>
+  <title>性能分析指标和概念 | 江南人物的博客</title>
   
 
 
@@ -194,7 +194,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/07/31/cpp/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/11/20/perf/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E6%8C%87%E6%A0%87%E5%92%8C%E6%A6%82%E5%BF%B5/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -207,7 +207,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          性能分析
+          性能分析指标和概念
         </h1>
 
         <div class="post-meta">
@@ -217,15 +217,24 @@
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2025-07-31 15:43:15" itemprop="dateCreated datePublished" datetime="2025-07-31T15:43:15+00:00">2025-07-31</time>
+              <time title="Created: 2025-11-20 15:54:29" itemprop="dateCreated datePublished" datetime="2025-11-20T15:54:29+00:00">2025-11-20</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
               </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E6%80%A7%E8%83%BD/" itemprop="url" rel="index"><span itemprop="name">性能</span></a>
+                </span>
+            </span>
 
           
 
@@ -238,71 +247,125 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h2 id="性能指标"><a href="#性能指标" class="headerlink" title="性能指标"></a>性能指标</h2><h3 id="CPU时间"><a href="#CPU时间" class="headerlink" title="CPU时间"></a>CPU时间</h3><p><strong>函数调用的 CPU 时间:</strong></p>
-<ul>
-<li><code>Inclusive time</code>: total cpu time, include all functions it calls.</li>
-<li><code>Exclusive time</code>: only the time used by the function itself, exclusive all its children.</li>
+        <h2 id="CPU-硬件层次概念"><a href="#CPU-硬件层次概念" class="headerlink" title="CPU 硬件层次概念"></a>CPU 硬件层次概念</h2><ul>
+<li>Package → 整个处理器封装，包含一个或多个 die。</li>
+<li>Socket (S) → 主板上的物理 CPU 插槽</li>
+<li>Die (D) → 封装里的裸片（可能有多个 chiplet&#x2F;die）</li>
+<li>Core (C) → die 上的计算核心</li>
+<li>Thread (T) → 核心里的硬件线程（SMT&#x2F;超线程），即逻辑处理器</li>
 </ul>
-<p>Refer to <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/15760447/what-is-the-meaning-of-incl-cpu-time-excl-cpu-time-incl-real-cpu-time-excl-re/74426370">here</a>.</p>
+<p>假设一台双路服务器，每个 socket 上的 CPU 封装里有两个 die，每个 die 有 8 个核心：</p>
+<ul>
+<li><code>S0-D0-C0</code> → Socket 0 上 Die 0 的 Core 0</li>
+<li><code>S0-D1-C3</code> → Socket 0 上 Die 1 的 Core 3</li>
+<li><code>S1-D0-C7</code> → Socket 1 上 Die 0 的 Core 7</li>
+</ul>
+<p>如果开启超线程，还可能进一步细分为：</p>
+<ul>
+<li><code>S0-D0-C0-T0</code> → Socket 0, Die 0, Core 0, Thread 0</li>
+<li><code>S0-D0-C0-T1</code> → Socket 0, Die 0, Core 0, Thread 1</li>
+</ul>
+<p>可以用命令 <code>lscpu</code> 或 <code>cat /proc/cpuinfo</code> 来查看逻辑 CPU ID 与 Socket&#x2F;Core&#x2F;Thread 的对应关系。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ lscpu</span><br><span class="line">...</span><br><span class="line">    Thread(s) per core:  2</span><br><span class="line">    Core(s) per socket:  4</span><br><span class="line">    Socket(s):           1</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">总逻辑 CPU 数量 = 1 × 4 × 2 = 8</span><br></pre></td></tr></table></figure>
+
+<p>nproc 输出的是 逻辑 CPU 数</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">nproc</span></span><br><span class="line">8</span><br></pre></td></tr></table></figure>
+
+<h2 id="CPU-微架构概念"><a href="#CPU-微架构概念" class="headerlink" title="CPU 微架构概念"></a>CPU 微架构概念</h2><ul>
+<li>Pipeline：指令执行的分阶段过程（取指、解码、执行、写回）。</li>
+<li>Width：每周期最多能发射多少条 uops（如 4‑wide）。</li>
+<li>Slot：每周期的发射机会，宽度决定 slot 数。</li>
+<li>ROB (Reorder Buffer)：乱序执行的关键结构，保证指令按程序顺序退休。</li>
+<li>Scheduler：调度器，决定哪些 uops 在某周期进入执行端口。</li>
+<li>Execution Ports：后端的执行单元入口，比如整数 ALU、浮点 FPU、Load&#x2F;Store。</li>
+<li>Branch Predictor：预测分支走向，减少流水线停顿。</li>
+</ul>
+<h2 id="存储与层次结构"><a href="#存储与层次结构" class="headerlink" title="存储与层次结构"></a>存储与层次结构</h2><ul>
+<li>Registers：CPU 内部的寄存器，最快的存储。</li>
+<li>Cache：分层缓存（L1、L2、L3），用于减少访存延迟。</li>
+<li>LLC (Last Level Cache)：最后一级缓存，通常是 L3，多个核心共享。</li>
+<li>Memory Controller：负责和 DRAM 通信。</li>
+<li>NUMA (Non-Uniform Memory Access)：多 socket 系统里，内存访问延迟因位置不同而不同。</li>
+</ul>
+<h2 id="性能分析相关"><a href="#性能分析相关" class="headerlink" title="性能分析相关"></a>性能分析相关</h2><ul>
+<li>IPC (Instructions Per Cycle)：每周期平均执行的指令数。</li>
+<li>ILP (Instruction-Level Parallelism)：指令级并行度，程序能提供多少独立指令。</li>
+<li>Topdown Metrics：Retiring、Bad Speculation、Frontend Bound、Backend Bound。</li>
+<li>BE&#x2F;Core vs BE&#x2F;Mem：后端瓶颈是算力不足还是访存延迟。</li>
+<li>CPI (Cycles Per Instruction)：每条指令平均耗费的周期数。</li>
+</ul>
+<h2 id="Top-Down-Microarchitecture-Analysis-TMA"><a href="#Top-Down-Microarchitecture-Analysis-TMA" class="headerlink" title="Top-Down Microarchitecture Analysis (TMA)"></a>Top-Down Microarchitecture Analysis (TMA)</h2><p>这是 Intel 提出的一个 CPU 性能瓶颈分析框架。它的核心思想是：把 CPU 每个周期的 发射机会（slot） 分门<br>别类，逐层细分，最终定位到性能瓶颈的根源。</p>
+<p>Topdown 是分层树状结构：</p>
+<ul>
+<li>Level 1：Retiring &#x2F; Bad Speculation &#x2F; Frontend Bound &#x2F; Backend Bound</li>
+<li>Level 2：Backend Bound → BE&#x2F;Core、BE&#x2F;Mem</li>
+<li>Level 3：BE&#x2F;Mem → L1 Bound、L2 Bound、DRAM Bound</li>
+</ul>
 <ol>
-<li><p>Wall time: total time the process used, containing IO time.</p>
-</li>
-<li><p>CPU usage (CPU利用率) &#x3D; CPU time &#x2F; Wall time.</p>
-</li>
-<li><p>real&#x2F;user&#x2F;system time</p>
-<ul>
-<li><strong>Real</strong> is wall clock time - time from start to finish of the call. This is all elapsed time including time slices used by other processes and time the process spends blocked (for example if it is waiting for I&#x2F;O to complete).</li>
-<li><strong>User</strong> is the amount of CPU time spent in user-mode code (outside the kernel) within the process. This is only actual CPU time used in executing the process. Other processes and time the process spends blocked do not count towards this figure.</li>
-<li><strong>Sys</strong> is the amount of CPU time spent in the kernel within the process. This means executing CPU time spent in system calls within the kernel, as opposed to library code, which is still running in user-space. Like ‘user’, this is only CPU time used by the process. See below for a brief description of kernel mode (also known as ‘supervisor’ mode) and the system call mechanism.</li>
-</ul>
-<p> Refer to <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1">here</a>.</p>
-</li>
-<li><p>CPU 时间可能大于墙上时间：</p>
-<p>这是因为 CPU 时间是所有 CPU 核的运行时间的累加和，墙上时间则是实际的时间。此时 CPU 利用率大于 100%. （这是自己的理解）</p>
-</li>
-<li><p>TODO: Is CPU time in <em>flame graph</em> sum of all the CPU time? Or is it the wall time when CPU works?</p>
-</li>
+<li>Level 1: 顶层四大分类</li>
 </ol>
-<h3 id="计时工具：timer"><a href="#计时工具：timer" class="headerlink" title="计时工具：timer"></a>计时工具：<code>timer</code></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ /usr/bin/time -p <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
-
-<p>Or,</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ time <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
-
-<p>其中（参考<a target="_blank" rel="noopener" href="https://ostechnix.com/how-to-find-the-execution-time-of-a-command-or-process-in-linux/">链接</a>），</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">type</span> -a time</span><br><span class="line">time is a shell keyword</span><br><span class="line">time is /usr/bin/time</span><br></pre></td></tr></table></figure>
-
-
-<h2 id="分析工具"><a href="#分析工具" class="headerlink" title="分析工具"></a>分析工具</h2><ul>
-<li>Performance Analyzer</li>
-<li>Thread Analyzer</li>
-<li>gprof</li>
-<li>DDT&#x2F;gdb</li>
-</ul>
-<h3 id="Performance-Analyzer"><a href="#Performance-Analyzer" class="headerlink" title="Performance Analyzer"></a>Performance Analyzer</h3><p>Oracle Developer Studio 提供了多种工具：Performance Analyzer、Thread Analyzer。</p>
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afagg.html#OSSPAgrkam">Performance Analyzer 官方文档</a></p>
-</blockquote>
-<p><strong>1. 收集数据</strong></p>
-<p>使用 <code>collect</code> 命令收集数据（<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afadn.html#scrolltoc">官方文档</a>）。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">collect collect-options program program-arguments</span><br></pre></td></tr></table></figure>
-
-<p><strong>2. 开始性能分析</strong></p>
-<p>使用 <code>analyzer</code> 命令进行性能分析（<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afafs.html#scrolltoc">官方文档</a>）。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">analyzer [control-options] [experiment | experiment-list]</span><br></pre></td></tr></table></figure>
-
-<p>例如：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">analyzer -c test.1.er test.4.er</span><br></pre></td></tr></table></figure>
-
-<h3 id="Thread-Analyzer"><a href="#Thread-Analyzer" class="headerlink" title="Thread Analyzer"></a>Thread Analyzer</h3><blockquote>
-<p><a target="_blank" rel="noopener" href="https://www.oracle.com/application-development/technologies/developerstudio-features.html#thread-analyzer-tab">Thread Analyzer 官方文档</a></p>
-</blockquote>
-<h3 id="gprof"><a href="#gprof" class="headerlink" title="gprof"></a>gprof</h3><p>gprof(GNU profiler)是GNU binutils工具集中的一个工具，linux系统当中会自带这个工具。它可以分析程序的性能，能给出函数调用时间、调用次数和调用关系，找出程序的瓶颈所在。在编译和链接选项中都加入-pg之后，gcc会在每个函数中插入代码片段，用于记录函数间的调用关系和调用次数，并采集函数的调用时间。</p>
+<p>在每个周期的 slot 中，CPU 的工作被划分为四类：</p>
 <ul>
-<li><a target="_blank" rel="noopener" href="https://ftp.gnu.org/old-gnu/Manuals/gprof-2.9.1/html_mono/gprof.html">gprof官方文档</a></li>
-<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/luronggui/article/-details/118141262">使用方法</a></li>
-<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/385842627">博客</a></li>
+<li><p>Retiring</p>
+<ul>
+<li>指令成功退休（完成执行并写回结果）。</li>
+<li>这是“有用工作”，比例越高说明 CPU 利用率越好。</li>
 </ul>
-<h3 id="DDT"><a href="#DDT" class="headerlink" title="DDT"></a>DDT</h3><p><a target="_blank" rel="noopener" href="https://www.linaroforge.com/linaroDdt">DDT</a></p>
+</li>
+<li><p>Bad Speculation</p>
+<ul>
+<li>由于错误预测（如分支预测失败、错误路径执行）导致的浪费。</li>
+<li>这些 slot 最终没有产生有效结果。</li>
+</ul>
+</li>
+<li><p>Frontend Bound (FE)</p>
+<ul>
+<li>前端受限：取指、解码、指令缓存不足。</li>
+<li>CPU 等待指令进入流水线。</li>
+</ul>
+</li>
+<li><p>Backend Bound (BE)</p>
+<ul>
+<li>后端受限：执行单元或数据不可用。</li>
+<li>CPU 等待算力资源或内存数据。</li>
+</ul>
+</li>
+</ul>
+<p>这四类加起来 ≈ 100%，覆盖了所有 slot 的去向。</p>
+<ol start="2">
+<li>Level 2: Backend 的进一步细分</li>
+</ol>
+<ul>
+<li>BE&#x2F;Core<ul>
+<li>后端瓶颈主要来自核心执行资源不足（算术逻辑单元、浮点单元、端口冲突）。</li>
+<li>程序算力密集。</li>
+</ul>
+</li>
+<li>BE&#x2F;Mem<ul>
+<li>后端瓶颈主要来自访存延迟（缓存未命中、DRAM 访问慢）。</li>
+<li>程序内存密集。</li>
+</ul>
+</li>
+</ul>
+<ol start="3">
+<li>Level 3: BE&#x2F;Mem 的进一步细分</li>
+</ol>
+<ul>
+<li>L1 Bound</li>
+<li>L2 Bound</li>
+<li>L3 Bound</li>
+<li>DRAM Bound</li>
+</ul>
+<h3 id="Roofline"><a href="#Roofline" class="headerlink" title="Roofline"></a>Roofline</h3><h2 id="性能分析工具"><a href="#性能分析工具" class="headerlink" title="性能分析工具"></a>性能分析工具</h2><ol>
+<li>perf (Linux)</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/andikleen/pmu-tools">Intel® pmu-tools</a> ：对 perf 的封装</li>
+<li><a target="_blank" rel="noopener" href="https://www.intel.com/content/www/us/en/developer/tools/oneapi/advisor-download.html">Intel Advisor</a></li>
+</ol>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
+<li>perf-ninja: <a target="_blank" rel="noopener" href="https://github.com/dendibakh/perf-ninja">代码</a> +<br><a target="_blank" rel="noopener" href="https://www.youtube.com/playlist?list=PLRWO2AL1QAV6bJAU2kgB4xfodGID43Y5d">视频</a></li>
+</ol>
 
     </div>
 
@@ -321,12 +384,12 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/blog/2025/07/31/cpp/%E6%B7%B7%E5%90%88%E7%BC%96%E8%AF%91/" rel="prev" title="混合编译">
-      <i class="fa fa-chevron-left"></i> 混合编译
+    <a href="/blog/2025/09/24/concurrency/memory_order%E5%AE%9E%E9%AA%8C/" rel="prev" title="memory_order测试">
+      <i class="fa fa-chevron-left"></i> memory_order测试
     </a></div>
       <div class="post-nav-item">
-    <a href="/blog/2025/08/01/concurrency/%E7%BA%BF%E7%A8%8B%E7%8A%B6%E6%80%81%E8%BD%AC%E6%8D%A2/" rel="next" title="线程状态转换">
-      线程状态转换 <i class="fa fa-chevron-right"></i>
+    <a href="/blog/2025/11/21/perf/core-bound/" rel="next" title="Core Bound">
+      Core Bound <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
       </footer>
@@ -386,7 +449,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E6%8C%87%E6%A0%87"><span class="nav-text">性能指标</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#CPU%E6%97%B6%E9%97%B4"><span class="nav-text">CPU时间</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%A1%E6%97%B6%E5%B7%A5%E5%85%B7%EF%BC%9Atimer"><span class="nav-text">计时工具：timer</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7"><span class="nav-text">分析工具</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Performance-Analyzer"><span class="nav-text">Performance Analyzer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Thread-Analyzer"><span class="nav-text">Thread Analyzer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#gprof"><span class="nav-text">gprof</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DDT"><span class="nav-text">DDT</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#CPU-%E7%A1%AC%E4%BB%B6%E5%B1%82%E6%AC%A1%E6%A6%82%E5%BF%B5"><span class="nav-text">CPU 硬件层次概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CPU-%E5%BE%AE%E6%9E%B6%E6%9E%84%E6%A6%82%E5%BF%B5"><span class="nav-text">CPU 微架构概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AD%98%E5%82%A8%E4%B8%8E%E5%B1%82%E6%AC%A1%E7%BB%93%E6%9E%84"><span class="nav-text">存储与层次结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E7%9B%B8%E5%85%B3"><span class="nav-text">性能分析相关</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Top-Down-Microarchitecture-Analysis-TMA"><span class="nav-text">Top-Down Microarchitecture Analysis (TMA)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Roofline"><span class="nav-text">Roofline</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7"><span class="nav-text">性能分析工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-text">参考</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -402,20 +465,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">108</span>
+          <span class="site-state-item-count">115</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-count">15</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">47</span>
+        <span class="site-state-item-count">49</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

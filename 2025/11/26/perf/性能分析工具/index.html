@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="性能分析工具   工具 类型&#x2F;定位 attach 支持 分析范围 特点 与 perf 的关系 开源&#x2F;商业授权 适用人群    Oracle Performance Analyzer (PA) 企业级性能分析器，Oracle Developer Studio 套件 ✅ 用户态程序 (C&#x2F;C++&#x2F;Java&#x2F;Fortran&#x2F;Scala)，并行应">
+<meta property="og:type" content="article">
+<meta property="og:title" content="性能分析工具">
+<meta property="og:url" content="https://bi-an.github.io/blog/2025/11/26/perf/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="性能分析工具   工具 类型&#x2F;定位 attach 支持 分析范围 特点 与 perf 的关系 开源&#x2F;商业授权 适用人群    Oracle Performance Analyzer (PA) 企业级性能分析器，Oracle Developer Studio 套件 ✅ 用户态程序 (C&#x2F;C++&#x2F;Java&#x2F;Fortran&#x2F;Scala)，并行应">
+<meta property="og:locale">
+<meta property="article:published_time" content="2025-11-26T10:12:33.000Z">
+<meta property="article:modified_time" content="2025-12-02T14:58:39.919Z">
+<meta property="article:author" content="bi-an">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2025/11/26/perf/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>性能分析工具 | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/11/26/perf/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          性能分析工具
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-11-26 10:12:33" itemprop="dateCreated datePublished" datetime="2025-11-26T10:12:33+00:00">2025-11-26</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="性能分析工具"><a href="#性能分析工具" class="headerlink" title="性能分析工具"></a>性能分析工具</h2><table>
+<thead>
+<tr>
+<th>工具</th>
+<th align="center">类型&#x2F;定位</th>
+<th align="center">attach 支持</th>
+<th align="center">分析范围</th>
+<th align="center">特点</th>
+<th align="center">与 perf 的关系</th>
+<th align="center">开源&#x2F;商业授权</th>
+<th align="center">适用人群</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Oracle Performance Analyzer (PA)</td>
+<td align="center">企业级性能分析器，Oracle Developer Studio 套件</td>
+<td align="center">✅</td>
+<td align="center">用户态程序 (C&#x2F;C++&#x2F;Java&#x2F;Fortran&#x2F;Scala)，并行应用</td>
+<td align="center">GUI 丰富，低开销采样，函数&#x2F;源代码&#x2F;指令级分析</td>
+<td align="center">独立工具</td>
+<td align="center">商业软件 (Oracle Developer Studio)</td>
+<td align="center">企业&#x2F;科研环境下的应用开发者</td>
+</tr>
+<tr>
+<td>perf</td>
+<td align="center">Linux 内核自带性能分析框架</td>
+<td align="center">✅</td>
+<td align="center">用户态 + 内核态 + 硬件事件</td>
+<td align="center">功能全面，支持调用链、硬件计数器，生态丰富 (eBPF, flamegraph)</td>
+<td align="center">基础框架</td>
+<td align="center">开源 (GPL，Linux 内核自带)</td>
+<td align="center">系统工程师，底层性能调优</td>
+</tr>
+<tr>
+<td>gprofng</td>
+<td align="center">GNU 新一代应用性能分析器</td>
+<td align="center">✅</td>
+<td align="center">用户态程序 (C&#x2F;C++&#x2F;Java&#x2F;Scala)，跨平台</td>
+<td align="center">基于实验目录，支持 GUI，跨语言，继承 Oracle PA 思路</td>
+<td align="center">独立工具</td>
+<td align="center">开源 (GNU 工具链)</td>
+<td align="center">应用开发者，跨平台性能优化</td>
+</tr>
+<tr>
+<td>gprof</td>
+<td align="center">经典 GNU 性能分析器 (1980s)</td>
+<td align="center">❌</td>
+<td align="center">用户态程序 (C&#x2F;C++)</td>
+<td align="center">需编译时 -pg，生成 gmon.out，功能有限，不支持多线程&#x2F;attach</td>
+<td align="center">独立工具</td>
+<td align="center">开源 (GNU 工具链)</td>
+<td align="center">学术&#x2F;教学场景，简单函数级分析</td>
+</tr>
+<tr>
+<td>Intel PMU Tools</td>
+<td align="center">Intel 提供的硬件性能计数器工具集</td>
+<td align="center">✅</td>
+<td align="center">硬件事件 (CPU pipeline、cache、branch、memory)</td>
+<td align="center">基于 PMU，提供 top-down 分析，解释微架构瓶颈</td>
+<td align="center">依赖 perf 收集数据，属于 perf 的增强解释层</td>
+<td align="center">开源 (MIT&#x2F;Apache 许可，Intel GitHub 提供)</td>
+<td align="center">系统&#x2F;性能工程师，硬件级调优</td>
+</tr>
+<tr>
+<td>Intel Advisor</td>
+<td align="center">高级性能优化工具 (Intel oneAPI 套件)</td>
+<td align="center">✅</td>
+<td align="center">用户态程序，尤其是 HPC 应用</td>
+<td align="center">提供矢量化分析、内存访问优化、并行化建议，GUI 支持</td>
+<td align="center">独立工具</td>
+<td align="center">商业软件 (Intel oneAPI 套件，部分免费版)</td>
+<td align="center">HPC 开发者，科学计算优化</td>
+</tr>
+<tr>
+<td>Intel VTune Profiler</td>
+<td align="center">深度性能分析器</td>
+<td align="center">✅</td>
+<td align="center">CPU&#x2F;GPU&#x2F;FPGA、内存、线程、I&#x2F;O、微架构</td>
+<td align="center">微架构级剖析，支持 cache、pipeline、分支预测，功能全面</td>
+<td align="center">独立工具，但可结合 perf 数据</td>
+<td align="center">商业软件 (Intel oneAPI 套件，提供免费社区版)</td>
+<td align="center">系统&#x2F;性能工程师，硬件与应用优化</td>
+</tr>
+<tr>
+<td>Linaro MAP (Arm Forge MAP)</td>
+<td align="center">HPC 并行应用性能分析器</td>
+<td align="center">✅</td>
+<td align="center">MPI、OpenMP、UPC 等大规模并行应用</td>
+<td align="center">低开销采样，跨节点整体分析，源代码行级耗时展示，GUI 可视化</td>
+<td align="center">独立工具</td>
+<td align="center">商业软件 (Arm Forge 套件，需许可证)</td>
+<td align="center">HPC 开发者，超级计算机环境</td>
+</tr>
+</tbody></table>
+<p><strong>差异总结</strong></p>
+<ul>
+<li>Oracle PA &#x2F; gprofng：应用层性能分析，强调 GUI 和跨语言支持。</li>
+<li>perf：系统级通用工具，是底层框架。</li>
+<li>gprof：老工具，功能有限，不支持 attach。</li>
+<li>Intel PMU Tools：基于 perf，提供 Intel CPU 微架构解释，是 perf 的增强解释层。</li>
+<li>Intel Advisor：智能优化建议工具，适合 HPC 和科学计算。</li>
+<li>Intel VTune Profiler：深度剖析工具，能揭示硬件微架构瓶颈，适合单节点和复杂应用。</li>
+<li>Linaro MAP：专为 HPC 并行应用设计，低开销，跨节点整体性能分析。</li>
+</ul>
+<p><strong>结论</strong></p>
+<ul>
+<li>应用层性能分析：Oracle PA、gprofng</li>
+<li>系统&#x2F;内核级调优：perf</li>
+<li>硬件级微架构分析：Intel PMU Tools、Intel VTune Profiler</li>
+<li>智能优化建议 (HPC)：Intel Advisor</li>
+<li>大规模并行应用分析 (HPC)：Linaro MAP</li>
+</ul>
+<p>👉 可以把它们看作一个层次结构：</p>
+<ul>
+<li>gprof → gprofng&#x2F;Oracle PA → perf → Intel PMU Tools&#x2F;VTune → Advisor&#x2F;MAP</li>
+<li>逐步从函数级分析 → 应用性能 → 系统级 → 硬件级 → HPC 并行整体优化。</li>
+</ul>
+<h3 id="Performance-Analyzer"><a href="#Performance-Analyzer" class="headerlink" title="Performance Analyzer"></a>Performance Analyzer</h3><p>Oracle Developer Studio 提供了多种工具：Performance Analyzer、Thread Analyzer。</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afagg.html#OSSPAgrkam">Performance Analyzer 官方文档</a></p>
+</blockquote>
+<h4 id="收集数据"><a href="#收集数据" class="headerlink" title="收集数据"></a>收集数据</h4><p>使用 <code>collect</code> 命令收集数据<br>（<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afadn.html#scrolltoc">官方文档</a>）。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">collect collect-options program program-arguments</span><br></pre></td></tr></table></figure>
+
+<h4 id="开始性能分析"><a href="#开始性能分析" class="headerlink" title="开始性能分析"></a>开始性能分析</h4><p>使用 <code>analyzer</code> 命令进行性能分析<br>（<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afafs.html#scrolltoc">官方文档</a>）。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">analyzer [control-options] [experiment | experiment-list]</span><br></pre></td></tr></table></figure>
+
+<p>例如：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">analyzer -c test.1.er test.4.er</span><br></pre></td></tr></table></figure>
+
+<h3 id="Thread-Analyzer"><a href="#Thread-Analyzer" class="headerlink" title="Thread Analyzer"></a>Thread Analyzer</h3><blockquote>
+<p><a target="_blank" rel="noopener" href="https://www.oracle.com/application-development/technologies/developerstudio-features.html#thread-analyzer-tab">Thread Analyzer 官方文档</a></p>
+</blockquote>
+<h2 id="计时"><a href="#计时" class="headerlink" title="计时"></a>计时</h2><h3 id="计时工具-time"><a href="#计时工具-time" class="headerlink" title="计时工具 time"></a>计时工具 <code>time</code></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ /usr/bin/time -p <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
+
+<p>Or,</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ time <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
+
+<p>其中（参<br>考<a target="_blank" rel="noopener" href="https://ostechnix.com/how-to-find-the-execution-time-of-a-command-or-process-in-linux/">链接</a>），</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">type</span> -a time</span><br><span class="line">time is a shell keyword</span><br><span class="line">time is /usr/bin/time</span><br></pre></td></tr></table></figure>
+
+<h3 id="软件和硬件定时器"><a href="#软件和硬件定时器" class="headerlink" title="软件和硬件定时器"></a>软件和硬件定时器</h3><p><a target="_blank" rel="noopener" href="https://weedge.github.io/perf-book-cn/zh/chapters/2-Measuring-Performance/2-5_SW_and_HW_Timers_cn.html">https://weedge.github.io/perf-book-cn/zh/chapters/2-Measuring-Performance/2-5_SW_and_HW_Timers_cn.html</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2025/11/21/perf/Bad-Speculation/" rel="prev" title="Bad Speculation">
+      <i class="fa fa-chevron-left"></i> Bad Speculation
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2025/11/26/concurrency/%E5%B9%B6%E5%8F%91%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/" rel="next" title="并发调试工具">
+      并发调试工具 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7"><span class="nav-text">性能分析工具</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Performance-Analyzer"><span class="nav-text">Performance Analyzer</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%94%B6%E9%9B%86%E6%95%B0%E6%8D%AE"><span class="nav-text">收集数据</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BC%80%E5%A7%8B%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90"><span class="nav-text">开始性能分析</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Thread-Analyzer"><span class="nav-text">Thread Analyzer</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%A1%E6%97%B6"><span class="nav-text">计时</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%A1%E6%97%B6%E5%B7%A5%E5%85%B7-time"><span class="nav-text">计时工具 time</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BD%AF%E4%BB%B6%E5%92%8C%E7%A1%AC%E4%BB%B6%E5%AE%9A%E6%97%B6%E5%99%A8"><span class="nav-text">软件和硬件定时器</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">115</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">49</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://cuda-doc.readthedocs.io/" title="https:&#x2F;&#x2F;cuda-doc.readthedocs.io" rel="noopener" target="_blank">CUDA中文手册</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://infiniband-doc.readthedocs.io/" title="https:&#x2F;&#x2F;infiniband-doc.readthedocs.io&#x2F;" rel="noopener" target="_blank">InfiniBand中文手册</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -188,6 +188,1399 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/25/linux/Regular-Expression/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/25/linux/Regular-Expression/" class="post-title-link" itemprop="url">Regular Expression</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-25 13:13:41" itemprop="dateCreated datePublished" datetime="2024-01-25T13:13:41+00:00">2024-01-25</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="regexp"><a href="#regexp" class="headerlink" title="regexp"></a>regexp</h2><h2 id="ERegExp"><a href="#ERegExp" class="headerlink" title="ERegExp"></a>ERegExp</h2><h2 id="Wildcard-Glob"><a href="#Wildcard-Glob" class="headerlink" title="Wildcard&#x2F;Glob"></a>Wildcard&#x2F;Glob</h2><p><code>man 7 glob</code></p>
+<blockquote>
+<p>glob - globbing pathnames. glob is a shell built-in.</p>
+<p>主要用于匹配带有通配符的文件路径。其匹配字符串的能力比正则表达式弱。</p>
+<p>它最初是贝尔实验室 Unix 系统上的一个名叫 glob 的命令（glob 是 global 的缩写），用于展开命令行中的通配符。后来系统提供了该功能的 C 语言库函数glob()，知名的 shell 解释器就使用了该接口，shell 脚本和命令行中使用的 glob 模式匹配功能便源自于此。——见<a target="_blank" rel="noopener" href="https://juejin.cn/post/6844904077801816077">博客</a>。</p>
+</blockquote>
+<p><a target="_blank" rel="noopener" href="https://tldp.org/LDP/GNU-Linux-Tools-Summary/html/x11655.htm">Wildcards</a></p>
+<p><code>&#123;&#125;</code>严格来讲不属于glob的范畴，其在shell表示一个分组，见：<a target="_blank" rel="noopener" href="https://www.linux.com/topic/desktop/all-about-curly-braces-bash/">All about {Curly Braces} in Bash</a>。</p>
+<h2 id="sed"><a href="#sed" class="headerlink" title="sed"></a>sed</h2><h2 id="awk"><a href="#awk" class="headerlink" title="awk"></a>awk</h2><p><a target="_blank" rel="noopener" href="https://www.ibm.com/docs/nl/aix/7.2?topic=awk-command">awk Command</a></p>
+<h3 id="格式"><a href="#格式" class="headerlink" title="格式"></a>格式</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">awk -F<span class="string">&#x27; *|:&#x27;</span> <span class="string">&#x27;/LISTEN/&#123;print $2&#125;&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>其中，<code>-F</code>表示分隔符；<br><code> *|:</code>是一个正则表达式，表示以”一个或多个空格”或”:”作为分隔符；<br>再其后的<code>//</code>中是另一个正则表达式，用于匹配文本；<br><code>&#123;&#125;</code>中是action。</p>
+<h3 id="条件判断"><a href="#条件判断" class="headerlink" title="条件判断"></a>条件判断</h3><p><a target="_blank" rel="noopener" href="https://tecadmin.net/awk-conditional-statements/">if-else in awk</a><br><a target="_blank" rel="noopener" href="https://unix.stackexchange.com/questions/660178/how-to-use-and-and-or-together-in-an-awk-program">use AND and OR in an awk program</a></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">awk <span class="string">&#x27;&#123;if ($1 &gt; 49151 &amp;&amp; $1 &lt; 65536) &#123;print $1&#125; &#125;&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>等价于</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">awk <span class="string">&#x27;$1 &gt; 49151 &amp;&amp; $1 &lt; 65536&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="BEGIN-END"><a href="#BEGIN-END" class="headerlink" title="BEGIN&#x2F;END"></a>BEGIN&#x2F;END</h3><p>In AWK, <code>BEGIN</code> and <code>END</code> are special patterns that allow you to execute code before processing the input (<code>BEGIN</code>) or after processing all the input (<code>END</code>).</p>
+<ul>
+<li>The <code>BEGIN</code> block is executed once at the beginning of the AWK program and it is typically used for initializing variables or performing setup tasks.</li>
+<li>The <code>END</code> block is executed once after processing all input, and it is commonly used for final caclucations, summaries, or printing results.</li>
+</ul>
+<h3 id="Special-symbols"><a href="#Special-symbols" class="headerlink" title="Special symbols"></a>Special symbols</h3><ul>
+<li><code>$</code> 用于引用field，例如<code>$1</code>代表第一个field（典型来说是第一列）。</li>
+<li><code>NF</code> 表示number of filed，假设一共有7列，那么<code>$NF</code>与<code>$7</code>等价。</li>
+</ul>
+<h2 id="grep"><a href="#grep" class="headerlink" title="grep"></a>grep</h2><h2 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h2><ol>
+<li>找出一个未使用的port</li>
+</ol>
+
+{% tabs Code %}
+
+<!-- tab Makefile -->
+
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># &quot;$$&quot;是为了转义&quot;$&quot;</span></span><br><span class="line">max_port=<span class="variable">$(<span class="built_in">shell</span> netstat -antulpen 2&gt; /dev/null \</span></span><br><span class="line"><span class="variable">    | awk -F&#x27; *&#x27; &#x27;/^(tcp|udp)</span>/&#123;print $$4&#125;&#x27; | cut -d: -f 2 \</span><br><span class="line">    | egrep <span class="string">&quot;\w&quot;</span> | sort | tail -1)</span><br><span class="line"><span class="comment">#$(warning $&#123;max_port&#125;)</span></span><br><span class="line">port=<span class="variable">$(<span class="built_in">shell</span> expr <span class="variable">$(max_port)</span> + 1)</span></span><br><span class="line"><span class="comment">#$(warning $&#123;port&#125;)</span></span><br></pre></td></tr></table></figure>
+
+<!-- endtab -->
+
+<!-- tab Bash -->
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 从1025开始找出已经存在的端口，如果相邻端口的gap大于1，则返回“当前端口号+1”</span></span><br><span class="line">netstat -ant | awk <span class="string">&#x27;&#123;print $4&#125;&#x27;</span> \</span><br><span class="line">    | awk -F: <span class="string">&#x27;&#123;if ($NF ~ /^[0-9]+$/ &amp;&amp; $NF &gt; 1024) &#123;print $NF&#125;&#125;&#x27;</span> \</span><br><span class="line">    | awk <span class="string">&#x27;BEGIN &#123;prev = 1024&#125; </span></span><br><span class="line"><span class="string">        &#123;if ($1 - prev &gt; 1) &#123; port = prev + 1; exit&#125; else &#123; prev = $1&#125;&#125; </span></span><br><span class="line"><span class="string">        END &#123; if (port==&quot;&quot;) &#123;print prev + 1&#125; else &#123;print port&#125;&#125;&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<!-- endtab -->
+
+<!-- tab Python-->
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#这不是正则表达式</span></span><br><span class="line"><span class="comment">#以0端口为参数创建一个socket，则系统会自动选择一个未使用的端口号</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#one-line mode:</span></span><br><span class="line"><span class="comment">#python -c &#x27;import socket; s=socket.socket(); s.bind((&quot;&quot;, 0)); print(s.getsockname()[1]); s.close()&#x27;</span></span><br><span class="line"><span class="keyword">import</span> socket</span><br><span class="line"></span><br><span class="line">s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)</span><br><span class="line">s.bind((<span class="string">&#x27;&#x27;</span>, <span class="number">0</span>))</span><br><span class="line">addr = s.getsockname()</span><br><span class="line"><span class="built_in">print</span>(addr[<span class="number">1</span>])</span><br><span class="line">s.close()</span><br></pre></td></tr></table></figure>
+
+<!-- endtab -->
+
+{% endtabs %}
+
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/24/english/The-Killings-at-Badger-s-Drift/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/24/english/The-Killings-at-Badger-s-Drift/" class="post-title-link" itemprop="url">The Killings at Badger's Drift</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-24 17:39:03" itemprop="dateCreated datePublished" datetime="2024-01-24T17:39:03+00:00">2024-01-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/English/" itemprop="url" rel="index"><span itemprop="name">English</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Video"><a href="#Video" class="headerlink" title="Video"></a>Video</h2><p>视频：<a target="_blank" rel="noopener" href="https://tubitv.com/tv-shows/521987/s01-e01-the-killings-at-badgers-drift">链接</a>。</p>
+<p>影片名：Midsomer Murders, S01:E01, <a target="_blank" rel="noopener" href="https://www.google.com/search?q=+Badger%27s+Drift+&rlz=1C1GCEJ_enUS1023US1023&ei=fnuzZJivL96x0PEP4MunkAc&ved=0ahUKEwiY5oz5upKAAxXeGDQIHeDlCXIQ4dUDCBA&uact=5&oq=+Badger%27s+Drift+&gs_lp=Egxnd3Mtd2l6LXNlcnAiECBCYWRnZXIncyBEcmlmdCAyBxAuGBMYgAQyDRAuGBMYgAQYxwEYrwEyBxAAGBMYgAQyBxAAGBMYgAQyCRAAGBMYgAQYCjIHEAAYExiABDIHEAAYExiABDIHEAAYExiABDIHEAAYExiABDIHEAAYExiABDIWEC4YExiABBiXBRjcBBjeBBjgBNgBAUj3MFCYDViYDXAFeAGQAQCYAb0CoAG9AqoBAzMtMbgBA8gBAPgBAvgBAcICChAAGEcY1gQYsAPiAwQYACBBiAYBkAYKugYGCAEQARgU&sclient=gws-wiz-serp">The Killings at Badger’s Drift</a></p>
+<p>S01:E01 - Season 01 : Episode 01，第1季第1集。episode，插曲（某事件；某事发生的短暂时间）；剧集（<a target="_blank" rel="noopener" href="https://www.ldoceonline.com/dictionary/episode">一般一周更新放映一次</a>）。</p>
+<p>midsomer - <a target="_blank" rel="noopener" href="https://www.wordnik.com/words/midsomer">midsummer的过时写法</a>。本片中是<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Midsomer_Murders">一个虚构的英格兰县</a>，影片开头有一个路牌，写着：“Badger’s Drift, Midsomer’s best kept village”，意思大概是，Badger’s Drift是Midsomer保存最好的村庄。</p>
+<h2 id="开幕介绍"><a href="#开幕介绍" class="headerlink" title="开幕介绍"></a>开幕介绍</h2><p>Screenplay by Anthony Horowitz - Screenplay 剧本。</p>
+<p>From the novel by Caroline Graham</p>
+<p>Starring - 主演</p>
+<p>Directed by - 导演是</p>
+<p>caption - 字幕。</p>
+<p>subtitle - 字幕。</p>
+<h2 id="第一幕-Emily之死"><a href="#第一幕-Emily之死" class="headerlink" title="第一幕 Emily之死"></a>第一幕 Emily之死</h2><h3 id="村落小路上"><a href="#村落小路上" class="headerlink" title="村落小路上"></a>村落小路上</h3><p>-[Doctor] Hello, Missis Simpson. Have a very good afternoon.</p>
+<p>bright playful music - 明快俏皮的音乐。</p>
+<p>Daily Mirror, forward with the people. 这是一块招牌上的字样。《每日镜报》的口号是“与人民同行”，The Sun’s slogan was ‘Forward with the People’, which had been adopted by the Mirror in 1945 and only recently dropped. - 参见谷歌快照《<a target="_blank" rel="noopener" href="https://webcache.googleusercontent.com/search?q=cache:32HydJ4eVUYJ:https://www.gale.com/intl/essays/adrian-bingham-introduction-daily-mirror&cd=9&hl=zh-CN&ct=clnk&gl=us">An Introduction to the Daily Mirror</a>》。hayday好天气，全盛时期。hay干草。</p>
+<p>-[Lucy] Ah, sneaking off, aren’t you, Emily? 偷偷溜走，不是吗？</p>
+<p>-[Emily] I wouldn’t call it sneaking, Lucy. Anyway, who’s talking? You’ve been out all day! 我不会称它为溜。不管怎样，是谁在说话？你自己已经出去一整天了！</p>
+<p>-I’m not gonna tell you where. 我不会告诉你我去了哪里。</p>
+<p>-You didn’t find it? 你没有找到？</p>
+<p>-No. 没有。</p>
+<p>-You’ll be buying me tea this year, my dear. You wait and see! 今年你会给我买茶，你等着看！</p>
+<p>-Chance would be a fine thing! 有机会（让我给你买茶）就好了！</p>
+<p>pros and cons - <a target="_blank" rel="noopener" href="https://www.merriam-webster.com/dictionary/pros%20and%20cons">优点和缺点</a>。</p>
+<h3 id="树林"><a href="#树林" class="headerlink" title="树林"></a>树林</h3><p>birds chirp - 鸟儿叽叽喳喳。</p>
+<p>Spurred coral root - 刺珊瑚根。spur马刺。”It’s an orchid（兰花）, not a flower.”</p>
+<p>padlock clicks - 挂锁咔咔声。</p>
+<p>camera clicks - 相机咔咔声。</p>
+<p>man moans - 男人呻吟。</p>
+<p>man pants - 男人喘息。pant喘气。</p>
+<p>bird flaps - 鸟儿拍飞。</p>
+<p>Emily shrieks - Emily尖叫。</p>
+<h3 id="Emily回家路上"><a href="#Emily回家路上" class="headerlink" title="Emily回家路上"></a>Emily回家路上</h3><p>brakes screech - 刹车声。brake刹车，screech发出尖叫、噪声。</p>
+<h3 id="Emily家"><a href="#Emily家" class="headerlink" title="Emily家"></a>Emily家</h3><p>slow sinister music - sinister险恶的。</p>
+<p>bees buzz - 蜜蜂嗡嗡。</p>
+<p>beehive cottage - 蜂巢小屋。beehive &#x2F;ˈbiː.haɪv&#x2F; 蜂窝；cottage &#x2F;ˈkɑː.t̬ɪdʒ&#x2F; &#x2F;ˈkɒt.ɪdʒ&#x2F;小屋。</p>
+<p>cat meows - meow &#x2F;ˌmiˈaʊ&#x2F; 喵</p>
+<p>Come on, out you go - 来，你出去。</p>
+<p>door thuds - 门砰的一声。thud &#x2F;θʌd&#x2F; 撞击声，砰。</p>
+<p>dial up phone rattles - 拨号嘎嘎声。rattle 拨浪鼓；嘎嘎声。</p>
+<p>door rattles.</p>
+<p>bangs. - to (cause something to) make a sudden very loud noise or noises.</p>
+<p>birds squawk - 鸟叫（不好的声音）。squawk - (of a bird) to make an unpleasantly loud, sharp noise.</p>
+<p>door knocks - 敲门声。</p>
+<p>door knob screeches - 门把手尖叫（声）。</p>
+<p>intense sinister music - 激烈险恶的音乐。</p>
+<p>dark dreamy music - 黑暗梦幻的音乐。</p>
+<h2 id="第二幕-初步调查"><a href="#第二幕-初步调查" class="headerlink" title="第二幕 初步调查"></a>第二幕 初步调查</h2><p>-This is it, here, Sir.</p>
+<p>-Really, Troy? I’d never have guessed.</p>
+<p>crowd chatters - 人群闲聊。</p>
+<p>We only ever meet when there’s a corpse. - 我们只有在有尸体的时候会见面。corpose - 尸体。ever - at any time: Nothing ever happened in this evening. Have you ever gone to London?</p>
+<p>broken neck - 脖子断了。</p>
+<p>scuff marks on the carpet - 地毯上有磨损痕迹。scuff vt. 磨损，擦伤。</p>
+<p>a blow to the back of the neck and then dragged over here - 颈后遭到一击，然后被拖到这里。</p>
+<p>spinster - 老处女。</p>
+<p>The old girl who lives opposite - 住在对面的老姑娘。</p>
+<p>She slammed the door for a start - 她猛地关上门。slam 猛撞。</p>
+<p>She didn’t padlock her tricycle - 她没有锁上三轮车。padlock 挂锁。tricycle 三轮车。</p>
+<p>There’s no reflection on you, Chief Inspector, but to leave her tricycle like that, she must have been very upset. 总督察，对你来说没有什么反应（没有什么好奇怪的），但是就这样把她的三轮车丢下，她一定很沮丧。</p>
+<p>-I’ll have to go over tomorrow. I still haven’t told the bees. - go over: to make one’s way 开辟新的路。 i.g. go over to store for supplies. 去商店购买日用品。</p>
+<p>-I’m sorry?</p>
+<p>-Well you have to tell the bees when someone dies. Otherwise they just clear off. - <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Telling_the_bees">Telling the bees</a> 养蜂人有一个传统，会将重大事件（生老病死婚姻等）告诉蜜蜂，否则上天会使养蜂家庭受到惩罚（比如本片中Miss Bellringer 说蜜蜂会全部走开）。</p>
+<p>clock bell chimes - 钟声响起。chime &#x2F;tʃaɪm&#x2F; 1.（钟）响起（尤其是告诉你到几点了）；2. 与某某相同或具有相同的效果：e.g. Her views on life didn’t chime with mine. 她的人生观和我不太一致。</p>
+<p>tower bell rings.</p>
+<p>-Clear off her rocker, if you ask me. - rock: 岩石；前后摇晃，rock music摇滚乐。rocker，摇椅，（摇椅等下面的）两条弯木（用来摇晃）之一；off one’s rocker: 处于极度混乱或精神不健全的状态。in a state marked by extreme confusion or mental unsoundness: … he felt dizzy, slightly off his rocker at this extraordinary assailment of his senses.</p>
+<p>-You didn’t believed her?</p>
+<p>-Well, what she got to go on? A slammed door and a trike that wasn’t padlocked. It’s a waste of time.</p>
+<p>undertaker - 殡仪员。</p>
+<p>-I based in Causton but <strong>it happens</strong> I live here in Badger’s Drift and I thought I ought to <strong>pop by</strong>. Miss Simpson was a client. 我在Causton上班，但是碰巧我住这里。pop by: 顺便过来一下；pop, (spoken) to go somewhere for a short time.</p>
+<p>-I’m sorry?</p>
+<p>-She’d pre-paid. Our <strong>Satin</strong> Service. It’s one of our complete funeral packages. Very <strong>up-market</strong>, although between you and me. I let her have it at a discount (sniffs). She taught my mom, you know. - Satin，缎面，绸缎，这里应该指服务的等级，类似金卡会员、银卡会员。</p>
+<p>-What can I do for you, Mister Rainbird?</p>
+<p>-I was wondering if I could take her, <strong>the deceased</strong>. - decease&#x3D;death. the deceased去世的人。</p>
+<p>-Oh, I’m afraid that won’t be possible for a little while.</p>
+<p>-Oh! You do suspect some naughtiness. It was her neck, I undertand. 你确实怀疑有一些捣蛋鬼。致命伤在颈部，我知道的。- naughty 顽皮的；naughtiness 名词，顽皮。</p>
+<p>-[Troy] Who told you that?</p>
+<p>-Come on, everybody knows that by now. It’s that sort of village.</p>
+<p>-[Troy] Well, you can’t have the body yet. All right? Sir?</p>
+<p>-[to Barnaby] Oh, I see you’ve got a right constable there. You let me know when you’re ready for me.</p>
+<p>-[Troy] See the car?</p>
+<p>-Yes.</p>
+<p>-You wouldn’t have thought they were so well paid, would you, undertakers? 你应该没有想到殡仪员会获得如此高的报酬，不是吗？</p>
+<p>-Check the camera, and the telephones. Find out what calls did Miss Simpson made after six o’clock.</p>
+<p>-So you’re taking it seriously then, sir?</p>
+<p>-No, Troy, I’m just filling in time until tea.</p>
+<p>-Right! Oh, camera and telephone, right. What about you?</p>
+<p>-I must find a doctor.</p>
+<p>-Something wrong, sir?</p>
+<p>-Emily Simpson’s doctor, Troy. Maybe she did suffer from dizzy spells. Maybe she did just fail. Either way, I want to know. - spell 拼写；咒语。</p>
+<h3 id="医生的家里"><a href="#医生的家里" class="headerlink" title="医生的家里"></a>医生的家里</h3><p>医生的招牌：</p>
+<pre><code>DR. TREVOR LESSITER
+M.B B.S M.R.C.G.P
+
+PHSICIAN &amp; SURGEON
+</code></pre>
+<p>DR. - Doctor。Trevor Lessiter是医生的名字。</p>
+<p>M.B B.S - Bachelor of Medicine, Bachelor of Surgery 内外全科医学士</p>
+<p>M.R.C.G.P - Membership of the Royal College of General Practitioners 英国皇家全科医生学院会员资格。pratitioner 从业者。general pratitioner 全科医生。</p>
+<p>She is remarkably fit for her age. - 在她这个年龄，她显得非常健康。fit 健康的。</p>
+<p>I liked to drop in at the end of my rounds. You know, glass of sherry and all that. - go round to sb’s house 拜访某人。 drop in - 顺便过来。</p>
+<p>cricket 板球。</p>
+<p>But she never <a target="_blank" rel="noopener" href="https://www.collinsdictionary.com/zh/dictionary/english/get-around-to">got round to</a> saying what it was. - 她没能说出来是什么事。get round to 做成了一件你因其他事情被耽搁了事。</p>
+<p>I’ve got to talk to someone. - 我得这个人说说话。have (got) to 不得不。</p>
+<p>-Did she say what it was?</p>
+<p>-No.</p>
+<p>-Didn’t you press her?</p>
+<p>-We’re not meant to. - 我们不是故意的。</p>
+<p>-And there was nothing more?</p>
+<p>-I’m sorry, Inspector. I know there was something else but I can’t think. 我知道还有些事情，但是我想不起来。</p>
+<p>-Well, if it does come to you, can you give us ring? 当你想起来，能不能给我们一个电话。</p>
+<p>-Yes, of course.</p>
+<p>ring off - 挂断电话。</p>
+<p>Inspector - 督察。</p>
+<p>scrambled eggs - 炒鸡蛋。scramble 争夺。</p>
+<p>Stuck with a heavy object as yet unidentified at the base of the neck. 脖子根部被一个尚未辨认的重物卡住。</p>
+<p>sombre music - 阴沉的音乐。</p>
+<p>The grass flattened, brambles broken. 草被压扁了，荆棘断了。</p>
+<p>What, you think someone’s been having it away? 你认为有人把它们拿走了？</p>
+<p>Two people bonking? 两个人搏斗&#x2F;性交？</p>
+<p>tweezers - 镊子。</p>
+<p>-A piece of black fibre. 一片黑色纤维。</p>
+<p>-Off their clothes. 从他们的衣服上掉下来的？</p>
+<p>-No, I don’t think so. I’d say a blanket or rug, something like that. 我认为是毯子或地毯。</p>
+<p>I want the whole place gone over. - <a target="_blank" rel="noopener" href="https://www.collinsdictionary.com/zh/dictionary/english/go-over">go over</a> 仔细检查。</p>
+<p>Do you really think that’s what it came down to, sir? 你真的认为这就是问题所在吗？</p>
+<p>Unless it was adultery. 除非是通奸。</p>
+<p>I suppose they could have been arse-bandits. - 我猜想可能他们是屁股小偷（同性恋）。arse（粗鲁的词）屁股。bandit 有武器的小偷。</p>
+<p>You mean “homesexuals”, Troy?  Troy，你是说同性恋？</p>
+<p>You are as politically correct as <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Nuremberg_rallies">Nuremberg rally</a>. 你和纽伦堡集会（德国纳粹一年一度的党代会）一样政治正确。</p>
+<h3 id="Rainbird家"><a href="#Rainbird家" class="headerlink" title="Rainbird家"></a>Rainbird家</h3><p>eerie music - 怪异的音乐。</p>
+<p>pot to kettle. 把锅里（的水）倒到壶里，应该是上茶的意思。（影片中，茶水是装在瓷壶里）</p>
+<p>eyrie - 是 aerie 的另一种写法，鹰巢。an elevated often secluded dwelling, structure, or position 较高且通常僻静的住宅、结构或位置。<a target="_blank" rel="noopener" href="https://www.collinsdictionary.com/zh/dictionary/e%3Cb%3Englis%3C/b%3Eh/eyrie">If you refer to a place such as a house or a castle as an eyrie, you mean it is built high up and is difficult to reach.</a></p>
+<p>My hide. Yes, I’m a keen observer of wild life, birds. 我的隐藏爱好，我喜欢观察野生动物——鸟。</p>
+<p>I thought I saw a pair of binoculars. 我想我看见了一副望远镜。</p>
+<p>trolley 手推车。</p>
+<p>Do help yourself. 请自便。</p>
+<p>widower - 鳏夫。widow 寡妇。</p>
+<p>The clubs are anchovy. Salmon spread in the hearts. Marmite spades and potted meat diamonds.</p>
+<p>梅花状的anchovy。Salmon spread是心形的。黑桃状的Marmite。方块状的potted meat. - potted: preserved in a pot, jar, or can: potted meat.</p>
+<p>Not that you’ll find her there. 并不是说你会在那里找到她。</p>
+<p>Done very nicely for herself. 为自己做得很好。</p>
+<p>-Iced sombrero, constable. - Iced sombrero冰阔边帽（应该是这种形状的食物），constable 警员。constabulary 警察局。</p>
+<p>-No, thank you. And I’m a sergeant.</p>
+<p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Police_ranks_of_the_United_Kingdom">大不列颠警察等级（由高到低）</a>：</p>
+<p>Chief constable, Deputy chief constable, Assistant chief constable, Chief superintendent总警司, Superintendent警司, Chief inspector总督察, Inspector督察, Sergeant警长, Constable警员. - 参考<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/zh-hans/%E5%80%AB%E6%95%A6%E8%AD%A6%E5%AF%9F%E5%BB%B3">维基百科</a>。</p>
+<p>Detective是警察的前缀之一，比如Detective Chief Inspector。这种警察一般穿便衣，职位和职级和制服警察一样。</p>
+<p>-I mean what are you likely to see flying at that time? 我的意思你那个时候想要看什么飞禽？</p>
+<p>-Owls. 猫头鹰。</p>
+<p>These two give me the creeps. 这两个人让我毛骨悚然。<a target="_blank" rel="noopener" href="https://dictionary.cambridge.org/us/dictionary/english/creep">give someone the creeps</a> - to cause someone to have uncomfortable feelings of nervousness or fear:</p>
+<p>-You don’t suppose it was him in the woods, do you? 你该不会认为是他在树林里吧？</p>
+<p>-I somehow doubt it, Troy. 我有点怀疑。</p>
+<p>They certainly had it in for her. 他们当然是为了她。</p>
+<h3 id="Barnaby家"><a href="#Barnaby家" class="headerlink" title="Barnaby家"></a>Barnaby家</h3><p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/%27Tis_Pity_She%27s_a_Whore">‘Tis Pity She’s a Whore</a>. 可惜她是一个妓女，John Ford 导演的音乐剧。’Tis 是 it is 的缩写。</p>
+<p>Would you go through my lines with me? 你可以帮我一起练习一下台词吗？</p>
+<p>I doubt he’ll have time. 我怀疑他是否有时间。</p>
+<p>quail - 鹌鹑。</p>
+<p>(Telephone rings) I’ll get it. 我去接电话。</p>
+<p>In the pond behind the quarry. 在采石场后面的池塘里。</p>
+<p>-Think what the police would make of it if their forensic people got hold of it. 想想警察会怎么想，如果他们的法医人员拿到了它。<a target="_blank" rel="noopener" href="https://dictionary.cambridge.org/us/dictionary/english/make-of">make of</a> - to have an impression or understanding about something. 对某事有印象或有了解。</p>
+<p>-They’d have a field day. 他们会度过愉快的一天。<a target="_blank" rel="noopener" href="https://dictionary.cambridge.org/us/dictionary/english/field-day">field day</a> 特殊的一天。</p>
+<p>-This is the big one, Denny. This is going to make us very, very rich. 这是最重要的，这会让我变得非常富有。</p>
+<p>Two colomns in the local rag and a coroner’s re-port. - coroner 验尸官。</p>
+<h3 id="Tye-House"><a href="#Tye-House" class="headerlink" title="Tye House"></a>Tye House</h3><p>tyres screech - 轮胎尖叫声。</p>
+<p>bright upbeat music - 明亮欢快的音乐。upbeat 乐观的。</p>
+<p>-How the other half live?</p>
+<p>-Rather less then half I’d say. 我说目前还不是（富豪的）另一半。</p>
+<p>estate manager - 物业经理。</p>
+<p>-I don’t suppose you were in the village at any time at between six and eight on Wednesday? 我想你周三六点到八点之间的任何时间都不会在村子里？</p>
+<p>-No. Don’t remember where I was. Out in the fields. 不在。不太记得我去了哪里。我出去到田野里去了。</p>
+<p>drawing room - 客厅。</p>
+<p>late wife - 已故的妻子。</p>
+<p>as a matter of fact - 事实上。</p>
+<p>-If it’s not too painful, sir, I’d be interested to know how your wife died. 如果不是太痛苦的话，先生，我很想知道你妻子是怎么死的。</p>
+<p>-It is painful. And I don’t see how it’s relevant. 很痛苦。并且我没有看到（这两件事的）相关性。</p>
+<p>-Miss Simpson could have known your wife as Annabella. As a nick name, pet name or something like that. If there is a connection - - Simpson女士可能知道你的妻子是Annabella，一个昵称、爱称或其他啥的。</p>
+<p>-There is no connection.</p>
+<p>-We need to be sure.</p>
+<p>-(sighs) If you insist. It was two years ago… 如果你坚持的话。</p>
+<p>And Bella’s sister had come along. Phyllis, Phyllis Cadell. She didn’t shoot that ofen and I always wondered why she closed that day of all days. - Bella的姐妹Phyllis Cadell也来了，她不经常射击，我常常想知道，为什么那天她整天关门（可能是有个私人商店）。</p>
+<p>He’d come as a beater, to scare the birds. 他来的任务敲击吓唬鸟。</p>
+<p>I suppose it’s always easy to talk about these thing with hindsight but I’m often felt think we were ill-fated that day. 我想事后谈论这些事情总是很容易的，但我常常觉得我们那天运气不好。</p>
+<p>Bella tripped on a root and twisted her ankle rather badly. - Bella被树根绊倒并且脚踝被扭伤得非常严重。</p>
+<p>But by the time ambullance arrived it was all over. 但当救护车到达时，一切都结束了。</p>
+<p>dog whines - 狗呜呜声。</p>
+<p>generator - 发电机。</p>
+<p>marquee - 帐篷。</p>
+<p>You finished it, I take it? （警官）你的问讯结束了吧？我可以做其他的事情吧？</p>
+<p>He was a sort of guardian. 他是某种守护者。</p>
+<p>We won’t take up any more or your time. 我们不再占用您的时间了。</p>
+<p>exhale - 呼气。</p>
+<p>But I do what I can even I’m quite worn out. - 我尽我所能帮忙，即使我累坏了。wear 磨损。</p>
+<p>mistress - 女主人，具有权威或控制地位的女人；情妇。</p>
+<p>Henry has a cottage on the estate and I’m being pensioned off there. I’m quite looking forward to it.</p>
+<p>Pathetic. - 可怜的。</p>
+<p>She was scared shitless. - 她被吓得屁滚尿流。</p>
+<p>You do have a way with words, don’t you?</p>
+<p>What are we investigating, sir? Emily Simpson or Belly Trace?</p>
+<p>There’s no point asking me about it. 没有必要问我这个问题。</p>
+<p>I don’t have anything to do with the village. And the village doesn’t have much to do with me.我和那村子没有任何关系。那村子和我也没有太大关系。</p>
+<p>-Could you tell me where you were on last Wednesday?</p>
+<p>-No. I don’t know. Maybe I’m here, I’m most days. </p>
+<p>-Not much of life. 没什么生活。</p>
+<p>-My work is my life. You wouldn’t understand that. 我的工作就是我的生活。你不会理解这一点。I might have gone for a walk or something, I don’t remember.</p>
+<p>Missis - Miss, Misses 小姐。</p>
+<p>I ran hell for leather back to Tye House. - hell表示程度，加强语气。</p>
+<p>I’ll say one thing for Katherine. She certainly doesn’t come cheap. 我要为Katherine说一件事，她的价格当然不便宜。</p>
+<h3 id="Barnaby家-1"><a href="#Barnaby家-1" class="headerlink" title="Barnaby家"></a>Barnaby家</h3><p>intense uneasy music - 强烈不安的音乐。</p>
+<p>-This noble creature was in every part. So angel-like, so glorious, that a woman, who was not human, as was I – 这个高贵的生物无处不在。</p>
+<p>-Had not been but human. 只不过是人类。</p>
+<p>-Who had not been but human, as was I. Would have kneeled to him and begged for love. 谁不是人类，就像我一样。会向他下跪并乞爱。You, why you are not worthy once to name. His name without true worship, or indeed. Unless you kneeled, to have another name him. 你，为何连一次的名字都不配。 他的名字没有真正的崇拜，或者说确实如此。 除非你跪下来给他起另一个名字</p>
+<p>-What was he called?</p>
+<p>-We not come to that. 我们并没有谈到这个。Let it suffice that you shall have the glory. 只要你拥有荣耀就足够了。To father what so brave a father got. 对于父亲来说，一个父亲有多么勇敢。</p>
+<p>That sounded good. It’s coming along.</p>
+<p>She’s wonderful. We’re gonna have to go up and see it.</p>
+<p>-If I ever manage to learn it all. 如果我能学会这一切就好了。manage to do 设法做，（尽管有困难）成功做。</p>
+<p>I’ve got a nice Pot-au-feu in the deep freeze. 我有一份美味的冷冻炖锅。<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Pot-au-feu">Pot-au-feu</a> (&#x2F;ˌpɒtoʊˈfɜːr&#x2F;; French: [pɔt‿o fø] ( listen); “pot on the fire”) is a French dish of slowly boiled meat and vegetables, usually served as two courses: first the broth (bouillon) and then the meat (bouilli) and vegetables.</p>
+<p>horse nickers - nicker: 1, (of a horse) give a soft, low, breathy whinny. 2, a nickering sound.</p>
+<p>white lilies - 白百合。</p>
+<p>This is the Satin Service.</p>
+<p>Whimsical sombre music - 异想天开的忧郁音乐。</p>
+<p>You’ve withdrawn 500 pounds from our joint reserve account. 您已经从我们的联合储蓄账户中提取了500英镑。</p>
+<p>overdraw - 透支。</p>
+<p>I thought I’d leave you two to bicker in private. 我想我应该让你俩私下斗嘴。</p>
+<p>I know that my redeemer liveth, and that he shall stand upon the last on the earth. Whom I shall see for myself, and mine eyes shall behold, and not another.（祷告）我知道我的救世主还活着。- mine 用在元音之前，相当于my.</p>
+<p>Missis Rainbird no more a bird-wather than I am. - Rainbird女士和我一样都不是鸟类观察者。</p>
+<p>personalised Porsche. 个性化的保时捷。</p>
+<p>Rain stopped play. 雨停止了比赛。</p>
+<p>His wife’s just as bad. 他的妻子同样糟糕。</p>
+<p>It’s early closing. 关门还早呀。</p>
+<p>There’s something wrong and something that doesn’t add up. 有些地方出了问题，有些地方不合逻辑。</p>
+<p>Maybe he was. Maybe he simply mistaken in his account. But he wasn’t telling us the truth. 他可能是（在撒谎），也可能只是记错了。但是他没有告诉我们事实。</p>
+<p>Why did he run all the way back to Tye House to call the ambullance when the accident happened on the other side of the village? 事故发生在村子的另一边，为什么他还要千里迢迢跑回The House叫救护车呢？</p>
+<p>-It seems they’re all bloody liars. 看起来他们都是该死的撒谎者。bloody - used to express anger or to emphasize what you are saying in a slightly rude way.</p>
+<p>-One of them is something more. 其中一个有更多东西。</p>
+<p>Forasmuch as it hath pleased Almighty God of his great mercy to take unto himself, the soul of our dear sister here departed, we therefore commit her body to the ground; earth to earth, ashes to ashes, dust to dust; Amen.</p>
+<p>It’s early days yet. 现在还早呢。</p>
+<p>Not for poor Emily.</p>
+<p>Come and have sherry. 来喝杯雪莉酒吧！I feel the need of a drink. I’m afraid funerals do that for me. 我觉得需要喝一杯，恐怕葬礼对我来说就是这样。</p>
+<p>polio - 脊髓灰质炎。</p>
+<p>pensive music - pensive沉思的。</p>
+<p>She adored him. Still does for all I know. - 她崇拜&#x2F;喜欢他，据我所知（for all I know）仍然如此。</p>
+<p>She was Herry’s ward. 她是Herry的被监护人。</p>
+<p>Herry sort of adopted them. - Herry有点收养了他们。</p>
+<p>set them up in a gamekeeper’s cottage on the estate. - 把他们放在庄园的猎场看守人的小屋里。</p>
+<p>They are very young then, barely in their teens. - 他们那时候还很小，才十几岁。</p>
+<p>nanny - 保姆。</p>
+<p>There was a nanny, Mary Sharpe, Nanny Sharpe, which was meant to look after them. - 有一个保姆，叫Sharpe，是为了照顾他们。</p>
+<p>-But she had a terrible time. 但是她度过了一段糟糕的时光。</p>
+<p>-In what way? 以什么样的方式？</p>
+<p>-The children were always fighting. Endless rows. - 孩子们总是打架，无休止地争吵。row 可数名词，争吵：<a target="_blank" rel="noopener" href="https://www.collinsdictionary.com/zh/dictionary/english/row">A row is a serious disagreement between people or organizations</a>.</p>
+<p>In the end, Mary upped and left. - 最后，Mary起身离开了。up 动词，增加；突然离开：<a target="_blank" rel="noopener" href="https://www.collinsdictionary.com/zh/dictionary/english/up">If you up and leave a place, you go away from it, often suddenly or unexpectedly</a>.</p>
+<p>Now she’s retired down on the coast. 现在她在海边退休了。</p>
+<p>-If you ask me, Katherine is the one to look out for. 如果你问我，凯瑟琳是值得留意的人。</p>
+<p>-Meaning? 意思是？</p>
+<p>-That girl is far too beautiful for other people’s good. 那个女孩太漂亮了，不利于别人。That girl is far too beautiful for other people’s good. If she was found bonking in the wood, she has the most to lose. 如果她被发现在树林里打滚（性交），她的损失将是最大的。</p>
+<p>She’s got a point. 她说得有道理。</p>
+<p>it barks its head off. 它拼命狂叫。its head在这里表示强烈程度。You’d have heard it a mile away! 你一英里外都能听见它。</p>
+<p>Damn! Do you know, for a minute I thought I had the whole thing solved. 该死！你知道吗，有一瞬间我以为我已经解决了整个问题。</p>
+<p>I think I deserve another Marron Lyonnaise. - 我认为我值得再来一份我值得再来一份马龙·里昂酱。</p>
+<p>I want their clothes bagged and down forensics. - 我想把他们的衣服打包并取证。forensics法医。</p>
+<p>What a mess. - 真是一团糟。</p>
+<p>She’s being treated for shock outside, no surprise. - 她休克了，正在外面接受治疗，这并不奇怪。shock休克。</p>
+<p>Don’t expect to get much sense. - 不要指望得到太多意义。</p>
+<p>You’d better come up and take a look at this. 你最好过来看看这个。</p>
+<p>-You’re not going to believe it. 你不会相信的。</p>
+<p>-On the contrary, Troy, I rather think I will. 恰恰相反，我觉得我会相信的。</p>
+<p>What was it she said, sir? 先生，她说了什么？</p>
+<p>Listen to this: At 10:30 a.m. Mister and Missis W crossed over by post box to avoid Miss G. 10点30分，W先生和W小姐穿过邮政信箱以避免G小姐。</p>
+<p>11:00 a.m. A called on Miss S., stayed 15 minutes. 上午11:00，A拜访了S小姐，停留了15分钟。</p>
+<p>There must be a couple of hundred entries in this file alone. 仅这个文件中就得有上百个条目。May thousands of them over the years. 可能有这几年的上千条记录。</p>
+<p>I want them all taken down. 我希望他们都被记录下来了。<a target="_blank" rel="noopener" href="https://www.collinsdictionary.com/zh/dictionary/english-chinese/take-down">take down</a> 1, 记录write down; 2, 拆除dismantle: wall, fence etc.</p>
+<p>We’re gonna have to go through the whole lot of them. 我们不得不要把它们全部浏览一遍。</p>
+<p>blackmail - n. &amp; vt. 勒索。</p>
+<p>She wasn’t a bad old stick. 她不是一个很坏的人。</p>
+<p>She is a bit perculiar, her and her son. Him being au undertaker and all. - 她和她的儿子有点奇怪。他是殡仪馆的承办人等等。perculiar - 奇特的。</p>
+<p>But she was very good for me, in her own way, very good to me.</p>
+<p>One is getting wed. 将要结婚的那个。</p>
+<p>-That’s a bend just ahead. 前面就是一个转弯。</p>
+<p>-Now, I’ve seen it, sir. 我看到了。</p>
+<p>And do me a favor, Troy, when we get there, if we get there, park at the bottom of the lane. 帮我一个忙，特洛伊，当我们到达那里时，如果我们到达那里，请将车停在车道的底部。</p>
+<p>yells - 呼喊。</p>
+<p>Sometimes you really make me sick. 有时你真的让我感到恶心。</p>
+<p>I don’t care if you marry him for money, but why can’t you come clean and admit it? 我不在乎你嫁给他是不是为了钱，但你不坦白承认。come clean 坦白说出来。admit 承认。</p>
+<p>It’s not like that. 不是那样的。</p>
+<p>So what is it like? Tying yourself to a bloody cripple at your age. 在你这个年纪，把自己绑在一个该死的瘸子身上。tying - tie的现在分词。</p>
+<p>That bloody cripple looked after us. If it hadn’t been for him, we wouldn’t have had a home. We wouldn’t have had anything.</p>
+<p>Yes, he’s getting his pound of flesh, isn’t he? - 是的，他正在得到一磅肉（意思是买到回报）。</p>
+<p>He’s not buying me, Michael.</p>
+<p>So what is he doing then? Renting you by the hour? 那他现在是做什么？按小时租赁你吗？</p>
+<p>slaps - 拍击。</p>
+<p>Alright, then. Don’t come to our wedding. Henry and I are better off without you. 那好吧。不要来参加我们的婚礼。没有你，亨利和我会过得更好。be better off - If you say that someone would be better off doing something, you are advising them to do it or expressing the opinion that it would benefit them to do it: If you’ve got bags you’re better off taking a taxi.</p>
+<p>I won’t bother buying a present, then!</p>
+<p>-Do you want to go follow her, sir?</p>
+<p>-No, Troy, I’d like to take a closer look in here.</p>
+<p>-What? Go in without a warrant? Isn’t that a bit? - 什么？没有搜查令就进去？warrant - 保证；值得，有必要；搜查令；做某事的依据。</p>
+<p>-You have a problem, Troy?</p>
+<p>-No, no. Just glad I didn’t suggest it. 只是庆幸我没如此建议。</p>
+<p>-If anybody finds us, you did.</p>
+<p>-Pity. 真遗憾。</p>
+<p>-Locked? 锁上了？</p>
+<p>-Yep.</p>
+<p>-I can force it. 我可以强行弄开它。</p>
+<p>Thank you all the same.</p>
+<p>-Mom gone to bed? 妈妈已经睡了吗？</p>
+<p>-Hours ago. 几小时前（就睡了）。What’s all this? 这到底是什么？</p>
+<p>-Notebooks. Iris Rainbrid took a Neighbourhood Watch to unheard of extremes. - Iris Rainbrid将邻里守望者组织带到了前所未闻的极端。extreme - 极端。</p>
+<p>You wouldn’t think that one small village could have so much trouble bubbling under the surface.</p>
+<p>-Was it very horrid? The bodies.</p>
+<p>-I’ve seen worse.</p>
+<p>I’m one more step further down the road. - 我在路上又向前迈进了一步。</p>
+<p>-I haven’t read lines with you. How’s it going?</p>
+<p>-Oh well, four acts down, one to go. - 四幕已结束，还剩一幕。</p>
+<p>-Yes, I suppost it’s the last act that really matters. 是的，我认为真正重要的是最后一幕。</p>
+<p>car rumbles - 车隆隆地。</p>
+<p>peacock hoots - 孔雀叫。</p>
+<p>It’s out of the question. - 这是不可能的。</p>
+<p>Voice of sanity. 理智的声音。</p>
+<p>Parish Council - 教区议会。</p>
+<p>It was only later I realised. 后来我才意识到。</p>
+<p>Everything’s over, it’s all slipping away. 一切都结束了，一切都过去了。</p>
+<p>-I don’t suppose you saw anyone in the woods? 我想你在树林里没有看到任何人吧？</p>
+<p>-No. 没有看到。</p>
+<p>Phillips Codell, I’m here arresting you on suspicion of the murder of Bella Trace on 26th of June 1995.</p>
+<p>You don’t have to say anything, but it may harm your defence if you do not mention when questioned something that you reply on in court. Anything you do say may be given in evidence.</p>
+<p>He was in that wheelchair and she just couldn’t cope.</p>
+<p>It’s something one does in the country. 这是国内每个人都会做的事情。</p>
+<p>I took a hip flask, filled with vodka and I kept on drinking. It was the only that I could get the courge.</p>
+<p>All the dead birds. The noise, the blood that made me feel sick and dizzy. 到处都是死鸟。噪音、血液让我感到恶心和头晕。</p>
+<p>I didn’t think I was gonna be able to do it.</p>
+<p>I doubled back behind the trees and managed to hide. - 我折回树后并设法躲了起来。double back, to turn and go back in the direction you have come from.</p>
+<p>Then I waited until I had a clear shot. And then. I shot her. 然后我就等到了清晰的视角。然后，我就开枪打了她。第一个shot是“镜头”的意思，第二个shot，是shoot的过去式及过去分词。</p>
+<p>It was terrible. I saw her pitch forward and fall to the ground. - 太可怕了。我看到她向前倾倒，倒在了地上。pitch, to move or be moved suddenly, especially by throwing or being thrown.</p>
+<p>And then, I just panicked. 然后，我就惊慌失措了。panickis a common misspelling of panic.</p>
+<p>I got up and I ran and I ran.</p>
+<p>I thought then that I’d done it, that I got away with it. 那时我想我已经做到了，我逃脱了惩罚。</p>
+<p>How could I have known that I’d been seen? 我想知道，我是怎么被看见的？</p>
+<p>She put it all in those notebooks, didn’t she? I had to go to that revolting house.</p>
+<p>I expect you’ll be needed more than ever at Tye House now. 我预计Tye House现在比以往任何时候都更需要你。Quite the chatelaine you’ll be, won’t you? Now, what will you have?</p>
+<p>dramatic siniter music - 戏剧性的险恶音乐</p>
+<p>The diamonds are marmite, the spades are jam, the hearts are tuna and the clubs are sandwich spread. 方块是马麦酱，黑桃是果酱，红心是金枪鱼，梅花是三明治。</p>
+<p>spread - 放在面包或饼干上的软质食物（酱）。a soft food for putting on bread and crackers:</p>
+<p>cheese&#x2F;chocolate&#x2F;fish spread</p>
+<p>There’s bread and various spreads for tea.</p>
+<p>voiceover - 画外音。</p>
+<p>How much did they take? 他们拿了多少钱？</p>
+<p>They’d even stopped asking me. They knew I was cleaned out. 他们甚至不再找我要了。他们知道我被掏空了。</p>
+<p>Sir, there’s someone here for you in reception. 先生，有人在接待处等候您。</p>
+<p>There’s something about that story, the shooting party, that still not right.</p>
+<p>You know you featured in here? 你知道你自己被包括在这个笔记本中了吗？</p>
+<p>He was wearing his denims and that cap he wears. 那个人穿着他的牛子裤和帽子。</p>
+<p>brutal - 野蛮的。</p>
+<p>-You again. You don’t give up, do you?</p>
+<p>-Mister Lacey, we’re here in connection with the death of Iris Rainbird.</p>
+<p>-In connection with. You policemen have a wonderful way of expressing yourselves.</p>
+<p>-As you may know, Mister Lacey, she was murdered in a particularly brutal fashion. 你可能知道，莱西先生，她是被以一种特别残酷的方式谋杀的。</p>
+<p>-I hope you’re not looking for insincere expressions of regret on my part, Chief Inspector. 我希望你不是在寻找我不真诚的遗憾表示，总督察。She was a very nasty woman. 她是个令人讨厌的女人。</p>
+<p>-Did you ever go to her house?</p>
+<p>-No.</p>
+<p>-So what would you say if I told you that somebody had been you entering her front door shortly after four o’clock yesterday afternoon?</p>
+<p>-I would say they needed their eyes testing.</p>
+<p>-(Troy) Mister Lacey, we have a warrant here to search these premises. - premises, 某人（一般是公司或组织）拥有的土地和建筑the land and buildings owned by someone, especially by a company or organization. premise, 前提。</p>
+<p>-So how do you explain this, Sir?</p>
+<p>-I can’t! Of course I can’t!</p>
+<p>-Where have you put the clothes?</p>
+<p>-What clothes?</p>
+<p>-The dungarees, the cap and the golves. 工作服、帽子和手套。</p>
+<p>-What?</p>
+<p>-The clothes you wore to kill Iris Rainbird.</p>
+<p>-You’re raving mad! 你疯了吧！rave, to speak in an uncontrolled way, usually because you are upset or angry, or because you are sick.</p>
+<p>I’ve been framed. 我被陷害了。</p>
+<p>a custody death.</p>
+<p>-Maybe we should have put her on suicide watch, sir?</p>
+<p>-Is that a reprimant, Troy? ‘Cause you’re right. This is my fault.</p>
+<p>-Maybe she’s better off this way. All things considered.</p>
+<p>-That is not the point.</p>
+<p>Lacey has been shouting  his mouth off, sir. 莱西一直在大喊大叫。</p>
+<p>door clanks. 门叮当响。</p>
+<p>How nice of you to look in, Chief Inspector.</p>
+<p>-You say what you’ve got to say and get on with it. 你说出你必须说的话，然后继续说下去。</p>
+<p>-I want to go home.</p>
+<p>-Aren’t you, Mister Comedy? You want the truth, Mister Lacey. I’ve had you up to here. 我几乎都查出你的罪了。</p>
+<p>You were in such a hurry to drag me off yesterday. 你昨天那么急着把我拖走。</p>
+<p>mid-morning - 上午中旬。</p>
+<p>Caped Crusader - 斗篷十字军</p>
+<p>He only did the first sketches but they took all day. 他只画了草图，但是这些草图花了一天的时间。</p>
+<p>He said I had a wonderful complicated face.</p>
+<p>He’s a surrealist, is he? 他是超现实主义者，是吗？</p>
+<p>-And since everyone’s always picking on him, you might as well know he was there the night Emily Simpson died too. 既然每个人都在找他的茬，你不妨知道艾米丽·辛普森去世的那天晚上他也在他的工作室里。</p>
+<p>-You’ve seen quite a bit of him, is there something that I ought to know? 你已经和他见过不少次面了，有没有什么事是我该知道的？（你有没有和他发生过什么？）</p>
+<p>-What? Something like you and your Missis Whiplash? Or Barbara and all her boyfriends? No, dad, there’s nothing you need to know at all. 什么事？就像你和Whiplash太太那样吗？或者Barbara和她的那些男朋友一样？没有，爸爸，没有什么事是你应该知道的（我和他没有发生那样的事）。</p>
+<p>In fact I think she may have told us more than she meant to. 事实上我认为她告诉了我们比她本意更多的事情。</p>
+<p>-It’s very good.</p>
+<p>-It’s only Marks and Sparks, I’m afraid. You should have told me you were coming.</p>
+<p>-Marks and Sparks is fine.</p>
+<p>The Lessiter girl backed up his alibi. 莱斯特女孩支持了他的不在场证据。</p>
+<p>It had to be a trick. 这一定是一个诡计。</p>
+<p>car honks. 汽车鸣笛。</p>
+<p>I have to be off. 我要走了。</p>
+<p>Burnham Crescent - Burnham发音为[BUR] + [NUHM]。crescent雕刻成的类似新月的形状。</p>
+<p>Up ahead this road on the left. 往这条路前面的左边走。</p>
+<p>They were not easy children but of course under the circumstances, one had to make allowances. 他们不是好孩子，但当然在这种情况下，人们必须体谅他们。</p>
+<p>Every day it was a slanging match. 每天都是一场谩骂比赛。She’d scream at him and he’d fling himself out of the house.</p>
+<p>cup shatters. 杯子粉碎。</p>
+<p>How could I’ve betrayed them? 我怎么可能背叛他们？</p>
+<p>All she had to do was to hand the dog over to her brother. 她所要做的就是把狗交给她哥哥。</p>
+<p>Why wouldn’t he open the door. Because then she’d have seen the dog and that would have spoiled the whole set-up. 那会破坏整个设计。</p>
+<p>If it hadn’t been for an observant neighbour and an unlocked tricycle, we’d have never been any the wiser. 如果没有细心的邻居和一辆没上锁的三轮车，我们永远不会变得更聪明。</p>
+<p>Yes, they’re clever, weren’t they? Always working off one another.</p>
+<p>Whoever went to the house was wearing overalls and a cap and they probably made sure they were seen at least from behind. - overalls工作服。</p>
+<p>Katherine stabbed them and then she put the knife and the blood-soaked overalls into the basket.</p>
+<p>Bella Trace was just a freak change, wrong place, wrong time.</p>
+<p>makesman - 制造者。</p>
+<p>bludgeon, poison, stab</p>
+<p>sheep bleat - 羊咩咩叫。</p>
+<p>“I’ve been framed.” And he made this sign. It was a coded message. He was warning her to remove the picture. - 我把画装在框里了。frame, 把画装框，When a picture or photograph is framed, it is put in a frame.</p>
+<p>It’d have given the game away, wouldn’t it? 这幅画泄露了这个游戏，不是吗？give away泄露，If you give away information that should be kept secret, you reveal it to other people.</p>
+<p>-It’s powerful. It’s brilliant even in its own way.</p>
+<p>-He had talent.</p>
+<p>-But so twisted.</p>
+<p>-I almost guessed it when we came here. The three bedrooms and only one bed slept in. They pulled the wool right over my eyes.</p>
+<p>-(Troy) When?</p>
+<p>-That time we came here and they were arguing. They really did seem to hate each other, didn’t they? And they couldn’t have staged it for our benefit. Because they didn’t know we were here. Except they did. They saw us in the mirror. And they did put on a show.</p>
+<p>-Poor Emily.</p>
+<p>-(Troy) And poor Annabella. Who was she?</p>
+<p>-I don’t suppose we’ll ever know. </p>
+<p>I hope you’re not gonna fall asleep in this.</p>
+<p>I wouldn’t dream of it.</p>
+<p>Anyway, after what you’ve just been through, a start of incest should be right up your street.</p>
+<p>Come this in sadness from you.</p>
+<p>Let some mystery befall me soon if I dissemble all.</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/24/misc/vscode%E4%BD%BF%E7%94%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/24/misc/vscode%E4%BD%BF%E7%94%A8/" class="post-title-link" itemprop="url">vscode 使用</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-24 17:26:44" itemprop="dateCreated datePublished" datetime="2024-01-24T17:26:44+00:00">2024-01-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Misc/" itemprop="url" rel="index"><span itemprop="name">Misc</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Reduce-the-disk-usage-of-VSCode"><a href="#Reduce-the-disk-usage-of-VSCode" class="headerlink" title="Reduce the disk usage of VSCode"></a>Reduce the disk usage of VSCode</h2><p>以下文件可以删除：</p>
+<ul>
+<li><p>.vscode-server&#x2F;data&#x2F;User&#x2F;workspaceStorage&#x2F;*：几十 GB.</p>
+</li>
+<li><p>.vscode-server：<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/58453967/vscode-remote-ssh-vscode-server-taking-up-a-lot-of-space">参考</a></p>
+</li>
+<li><p>.config: 可以针对每个目录找到相应的程序，比如 Chrome，然后有针对性地删除一些文件。参考<br><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/58453967/vscode-remote-ssh-vscode-server-taking-up-a-lot-of-space">这里</a>。</p>
+</li>
+<li><p>.cache: 和 .config 类似处理，参考<br><a target="_blank" rel="noopener" href="https://superuser.com/questions/366771/what-does-cache-do-it-consumes-a-huge-disk-space">这里</a>。</p>
+<p>.cache&#x2F;vscode-cpptools: This cache folder stores cached precompiled headers or “ipch” files that<br>the IntelliSense engine uses to improve performance. You can limit the size of the cache by<br>changing the setting value of C_Cpp.intelliSenseCacheSize. 参考<br><a target="_blank" rel="noopener" href="https://github.com/microsoft/vscode-cpptools/issues/6594">这里</a>：<br><img src="/blog/image.png" alt="C_Cpp.intelliSenseCacheSize"></p>
+</li>
+</ul>
+<h2 id="Hot-keys"><a href="#Hot-keys" class="headerlink" title="Hot keys"></a>Hot keys</h2><ol>
+<li>跳转到对应大括号：<code>Ctrl Shift \</code></li>
+</ol>
+<h2 id="Debug-code-in-VSCode"><a href="#Debug-code-in-VSCode" class="headerlink" title="Debug code in VSCode"></a>Debug code in VSCode</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://code.visualstudio.com/Docs/editor/debugging#_multitarget-debugging">Debug multiple processes in VSCode</a></li>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/60515935/visual-studio-code-does-not-attach-debugger-to-multi-processes-in-python-using-p">Debug Python Subprocess</a></li>
+</ul>
+<h2 id="Useful-plugins"><a href="#Useful-plugins" class="headerlink" title="Useful plugins"></a>Useful plugins</h2><ul>
+<li><code>Remote - SSH</code>: Windows 连接 Linux。前置条件：Windows 本身需要安装 ssh 命令行工具。</li>
+<li><code>Perforce for VS Code</code>: perforce 工具。</li>
+<li><code>intent-rainbow</code>: 用彩色显示缩进。</li>
+<li><code>C/C++</code></li>
+<li><code>Makefile Tools</code></li>
+<li><code>Verilog Format</code></li>
+<li><code>All in one</code></li>
+<li><code>c/c++ definition generator</code></li>
+<li><code>KoroFileHeader</code>: 参考 <a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/610490070">这里</a>。</li>
+</ul>
+<h2 id="Useful-configurations"><a href="#Useful-configurations" class="headerlink" title="Useful configurations"></a>Useful configurations</h2><p><a target="_blank" rel="noopener" href="https://www.cxyzjd.com/article/weixin_45461426/105936955">自动填充头文件，比如 ifndef 宏</a></p>
+<p>配置文件：</p>
+<ul>
+<li>launch.json</li>
+<li>tasks.json:<br><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/48273346/vscode-command-for-user-input-in-debug-launch-config">ref</a>,<br><a target="_blank" rel="noopener" href="https://code.visualstudio.com/updates/v1_30#_improved-user-input-variables-for-task-and-debug-configurations">ref</a></li>
+</ul>
+<h2 id="使用-VSCode-合并-Perforce-代码"><a href="#使用-VSCode-合并-Perforce-代码" class="headerlink" title="使用 VSCode 合并 Perforce 代码"></a>使用 VSCode 合并 Perforce 代码</h2><p>在 <code>~.cshrc</code> 脚本中添加：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">## Use VSCode to diff/merge the Perforce code</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Refer to:</span></span><br><span class="line"><span class="comment">#  https://github.com/mjcrouch/vscode-perforce/issues/259</span></span><br><span class="line"><span class="comment">#  https://www.perforce.com/manuals/cmdref/Content/CmdRef/p4_resolve.html</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Map p4 resolve arguments to vscode&#x27;s merge editor arguments</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># &#x27;code&#x27; takes: &lt;path1&gt; &lt;path2&gt; &lt;base&gt; &lt;result&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># perforce gives:</span></span><br><span class="line"><span class="comment">#   1 the base file</span></span><br><span class="line"><span class="comment">#   2 the source file (also known as &quot;theirs&quot;)</span></span><br><span class="line"><span class="comment">#   3 the target file (also known as &quot;yours&quot;)</span></span><br><span class="line"><span class="comment">#   4 the merge file.</span></span><br><span class="line">setenv P4MERGE <span class="string">&#x27;code --wait --merge $2 $3 $1 $4&#x27;</span></span><br><span class="line">setenv P4DIFF <span class="string">&#x27;code --wait --diff&#x27;</span></span><br><span class="line">setenv P4EDITOR <span class="string">&#x27;code --wait&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="跳转到定义如何加速"><a href="#跳转到定义如何加速" class="headerlink" title="跳转到定义如何加速"></a>跳转到定义如何加速</h2><p>🚀 解决方案一：切换 IntelliSense 引擎 VSCode 默认使用的是 “Default” 引擎，它功能强但对大型项目解析慢<br>。你可以改成更轻量的 Tag Parser：</p>
+<p>操作步骤：打开 VSCode 设置（Ctrl + ,）</p>
+<p>搜索 C_Cpp.intelliSenseEngine</p>
+<p>将值从 “Default” 改为 “Tag Parser”</p>
+<p>这样跳转速度会明显提升，尤其在大型项目中。</p>
+<p>⚙️ 解决方案二：优化智能提示延迟在设置中调整提示延迟也能改善体验：</p>
+<p>搜索 Editor: Quick Suggestions Delay，设为 10ms 以下</p>
+<p>搜索 Snippets Prevent Quick Suggestions，设为 false</p>
+<p>这些设置可以让提示和跳转更流畅。</p>
+<p>🧠 额外建议关闭未使用的扩展：某些扩展会拖慢性能</p>
+<p>使用 compile_commands.json：如果你用 CMake，可以生成这个文件，让 VSCode 更准确地解析项目结构</p>
+<p>避免打开整个大型项目目录：只打开你正在编辑的子目录，有助于减少分析负担</p>
+<h3 id="compile-commands-json"><a href="#compile-commands-json" class="headerlink" title="compile_commands.json"></a>compile_commands.json</h3><p>🔧 Clang 生态工具（最主要用户）</p>
+<p>这些工具依赖 compile_commands.json 来正确解析代码：</p>
+<ul>
+<li>Clangd：语言服务器，提供 VSCode、Vim、Emacs 等编辑器的智能补全、跳转、诊断等功能。<ul>
+<li>clangd 比 Microsoft 的 C&#x2F;C++ 插件跳转更快，它可以手动安装到系统，也可以直接用 VSCode 的<br>Extensions 市场安装（Remote SSH 也支持）。</li>
+<li>compile_commands.json 是 clangd 的眼睛，把这个文件放在项目根目录或在 clangd 中手动配置其路径，可<br>以显著提高跳转速度。</li>
+<li>clangd 补充配置：<ul>
+<li>在项目根目录创建 <code>.clangd</code> 文件；</li>
+<li>创建 <code>~/.config/clangd/config.yaml</code> 。</li>
+</ul>
+</li>
+<li><a target="_blank" rel="noopener" href="https://clangd.llvm.org/installation.html">clangd 安装方式</a><ul>
+<li>如果系统没有 clangd server，vscode-server 在安装 clangd 插件的时候也会提示安装；如果点击安装，<br>则会安装在 vscode-server 默认文件夹。</li>
+<li>如果 VSCode 没有提示安装 clangd ，那么<ul>
+<li>打开命令面板（Cmd+Shift+P 或 Ctrl+Shift+P）</li>
+<li>输入并执行：Restart Language Server</li>
+<li>此时，左下角会提示 “clangd server 未安装，是否安装”</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Clang-Tidy：静态分析工具，用于检查代码质量、风格、潜在错误</li>
+<li>Include-What-You-Use (IWYU)：分析并清理多余的 #include 指令</li>
+<li>Clang-Format：在复杂项目中更好地格式化代码</li>
+</ul>
+<p>🖥️ 智能 IDE 和编辑器 VSCode：</p>
+<p>通过 C&#x2F;C++ 插件读取 compile_commands.json 来加速跳转和补全</p>
+<ul>
+<li>CLion、QtCreator：这些 IDE 会自动识别并使用该文件来构建项目模型</li>
+</ul>
+<p>🛠️ 构建工具和生成方式 CMake：</p>
+<p>最常见的生成方式，只需添加参数：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..</span><br></pre></td></tr></table></figure>
+
+<p>就会在构建目录中生成该文件</p>
+<p>Bear 工具：适用于非 CMake 项目（如 Makefile），通过拦截编译命令生成该文件</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/%E6%89%93%E5%8D%B0%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%A0%86%E6%A0%88/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/cpp/%E6%89%93%E5%8D%B0%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%A0%86%E6%A0%88/" class="post-title-link" itemprop="url">打印进程堆栈</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 22:33:09" itemprop="dateCreated datePublished" datetime="2024-01-23T22:33:09+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h2><p><a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Backtraces.html">glic Functions</a></p>
+<pre><code>backtrace
+backtrace_symbols
+backtrace_symbols_fd
+</code></pre>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;execinfo.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print_trace</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">static</span> <span class="type">const</span> <span class="type">int</span> SIZE = <span class="number">10</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">void</span>* buffer[SIZE];</span><br><span class="line">    <span class="type">char</span>** strings;</span><br><span class="line">    <span class="type">int</span> size, i;</span><br><span class="line"></span><br><span class="line">    size = <span class="built_in">backtrace</span>(buffer, SIZE);</span><br><span class="line">    strings = <span class="built_in">backtrace_symbols</span>(buffer, size);</span><br><span class="line">    <span class="keyword">if</span> (strings != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Obtained %d stack frames.\n&quot;</span>, size);</span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; size; ++i)</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>, strings[i]);</span><br><span class="line">        <span class="built_in">free</span>(strings);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="第三方库"><a href="#第三方库" class="headerlink" title="第三方库"></a>第三方库</h2><p>breakpad: <a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_45609638/article/details/125090204">https://blog.csdn.net/weixin_45609638/article/details/125090204</a></p>
+<p><a target="_blank" rel="noopener" href="https://juejin.cn/post/6899070041074073614">https://juejin.cn/post/6899070041074073614</a></p>
+<p><a target="_blank" rel="noopener" href="https://juejin.cn/post/7130820896213712927">https://juejin.cn/post/7130820896213712927</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/linux/Build-Linux-Kernel-Module/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/linux/Build-Linux-Kernel-Module/" class="post-title-link" itemprop="url">Build Linux Kernel Module</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 22:24:57" itemprop="dateCreated datePublished" datetime="2024-01-23T22:24:57+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="内核编译"><a href="#内核编译" class="headerlink" title="内核编译"></a>内核编译</h2><p>obj-m: <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/57839941/what-is-the-meaning-of-obj-m-in-linux-device-driver-makefile">链接</a></p>
+<p>make modules: <a target="_blank" rel="noopener" href="https://askubuntu.com/questions/1363530/what-does-make-and-make-modules-do-when-compiling-building-the-kernel">链接</a></p>
+<h2 id="编译内核模块"><a href="#编译内核模块" class="headerlink" title="编译内核模块"></a>编译内核模块</h2><p><a target="_blank" rel="noopener" href="https://tldp.org/LDP/lkmpg/2.6/html/x181.html">文档</a></p>
+<p>Makefile:</p>
+<pre><code>obj-m += hello-1.o
+
+all:
+    make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+
+clean:
+    make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+</code></pre>
+<p><code>make -C</code> changes to a new directory where the new makefiles will be run.</p>
+<p><code>M=$(PWD)</code> defines a variable <code>M</code> which the child makefiles can use.</p>
+<h2 id="命令"><a href="#命令" class="headerlink" title="命令"></a>命令</h2><ul>
+<li><code>insmod</code>: 插入一个模块（.ko）到kernel中。</li>
+<li><code>rmmod</code>: 从内核中删除一个模块。</li>
+<li><code>modprobe</code>: 从内核中增删模块。<code>modprobe</code>从<code>/lib/modules/`uname -r`</code>中搜索所有的模块和其他文件，除了<code>/etc/modprobe.d</code>目录中的可选配置文件（参见<code>modprobe.d(5)</code>）。</li>
+<li><code>lsmod</code>: 显示当前加载的内核模块的状态（即对<code>/proc/modules</code>内容的格式化）。</li>
+<li><code>modinfo</code>: 从命令行指定的内核模块中提取信息，如果没有给出模块名称，那么会搜索<code>/lib/modules/version</code>目录，就像<code>modprobe</code>加载模块时一样。</li>
+<li><code>depmod</code>: 生成<code>modules.dep</code>和映射文件。</li>
+<li><code>dmesg</code>: 打印或控制内核ring buffer（存储kernel message）。</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/misc/PCIE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/misc/PCIE/" class="post-title-link" itemprop="url">Introducation to PCIE</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 22:04:18" itemprop="dateCreated datePublished" datetime="2024-01-23T22:04:18+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Misc/" itemprop="url" rel="index"><span itemprop="name">Misc</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="词汇表（Glossary）"><a href="#词汇表（Glossary）" class="headerlink" title="词汇表（Glossary）"></a>词汇表（Glossary）</h1><ul>
+<li>BAR: base address register.</li>
+<li>PCI configuration space.</li>
+<li>sba: system bus address.</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://wiki.osdev.org/PCI">PCI</a></p>
+<p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/PCI_configuration_space">PCI configurtation space</a></p>
+<pre><code>PCI设备有一组被称为configuratin space的寄存器，并且PCI Express引入了Extended configuration space。configuration space寄存器被映射到memory locations。
+驱动设备和诊断软件必须要有权限访问configuration space，操作系统通常使用APIs来授权访问设备configuration space。
+</code></pre>
+<p>PCI configuration space有两种类型的Header（64 bytes）：</p>
+<h2 id="Header-Type-0x0"><a href="#Header-Type-0x0" class="headerlink" title="Header Type 0x0"></a>Header Type 0x0</h2><style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-rcf9{background-color:#F9F9F9;text-align:left;vertical-align:middle}
+.tg .tg-tbl0{background-color:#F9F9F9;font-weight:bold;text-align:center;vertical-align:middle}
+</style>
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-tbl0">Register</th>
+    <th class="tg-tbl0">Offset</th>
+    <th class="tg-tbl0">Bits 31-24</th>
+    <th class="tg-tbl0">Bits 23-16</th>
+    <th class="tg-tbl0">Bits 15-8</th>
+    <th class="tg-tbl0">Bits 7-0</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-rcf9">0x0</td>
+    <td class="tg-rcf9">0x0</td>
+    <td class="tg-rcf9" colspan="2">Device ID</td>
+    <td class="tg-rcf9" colspan="2">Vendor ID</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x1</td>
+    <td class="tg-rcf9">0x4</td>
+    <td class="tg-rcf9" colspan="2">Status</td>
+    <td class="tg-rcf9" colspan="2">Command</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x2</td>
+    <td class="tg-rcf9">0x8</td>
+    <td class="tg-rcf9">Class code</td>
+    <td class="tg-rcf9">Subclass</td>
+    <td class="tg-rcf9">Prog IF</td>
+    <td class="tg-rcf9">Revision ID</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x3</td>
+    <td class="tg-rcf9">0xC</td>
+    <td class="tg-rcf9">BIST</td>
+    <td class="tg-rcf9">Header type</td>
+    <td class="tg-rcf9">Latency Timer</td>
+    <td class="tg-rcf9">Cache Line Size</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x4</td>
+    <td class="tg-rcf9">0x10</td>
+    <td class="tg-rcf9" colspan="4">Base address #0 (BAR0)</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x5</td>
+    <td class="tg-rcf9">0x14</td>
+    <td class="tg-rcf9" colspan="4">Base address #1 (BAR1)</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x6</td>
+    <td class="tg-rcf9">0x18</td>
+    <td class="tg-rcf9">Secondary Latency Timer</td>
+    <td class="tg-rcf9">Subordinate Bus Number</td>
+    <td class="tg-rcf9">Secondary Bus Number</td>
+    <td class="tg-rcf9">Primary Bus Number</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x7</td>
+    <td class="tg-rcf9">0x1C</td>
+    <td class="tg-rcf9" colspan="2">Secondary Status</td>
+    <td class="tg-rcf9">I/O Limit</td>
+    <td class="tg-rcf9">I/O Base</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x8</td>
+    <td class="tg-rcf9">0x20</td>
+    <td class="tg-rcf9" colspan="2">Memory Limit</td>
+    <td class="tg-rcf9" colspan="2">Memory Base</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x9</td>
+    <td class="tg-rcf9">0x24</td>
+    <td class="tg-rcf9" colspan="2">Prefetchable Memory Limit</td>
+    <td class="tg-rcf9" colspan="2">Prefetchable Memory Base</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xA</td>
+    <td class="tg-rcf9">0x28</td>
+    <td class="tg-rcf9" colspan="4">Prefetchable Base Upper 32 Bits</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xB</td>
+    <td class="tg-rcf9">0x2C</td>
+    <td class="tg-rcf9" colspan="4">Prefetchable Limit Upper 32 Bits</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xC</td>
+    <td class="tg-rcf9">0x30</td>
+    <td class="tg-rcf9" colspan="2">I/O Limit Upper 16 Bits</td>
+    <td class="tg-rcf9" colspan="2">I/O Base Upper 16 Bits</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xD</td>
+    <td class="tg-rcf9">0x34</td>
+    <td class="tg-rcf9" colspan="3">Reserved</td>
+    <td class="tg-rcf9">Capability Pointer</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xE</td>
+    <td class="tg-rcf9">0x38</td>
+    <td class="tg-rcf9" colspan="4">Expansion ROM base address</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xF</td>
+    <td class="tg-rcf9">0x3C</td>
+    <td class="tg-rcf9" colspan="2">Bridge Control</td>
+    <td class="tg-rcf9">Interrupt PIN</td>
+    <td class="tg-rcf9">Interrupt Line</td>
+  </tr>
+</tbody>
+</table>
+
+<h2 id="Header-Type-0x1"><a href="#Header-Type-0x1" class="headerlink" title="Header Type 0x1"></a>Header Type 0x1</h2><style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-rcf9{background-color:#F9F9F9;text-align:left;vertical-align:middle}
+.tg .tg-tbl0{background-color:#F9F9F9;font-weight:bold;text-align:center;vertical-align:middle}
+</style>
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-tbl0">Register</th>
+    <th class="tg-tbl0">Offset</th>
+    <th class="tg-tbl0">Bits 31-24</th>
+    <th class="tg-tbl0">Bits 23-16</th>
+    <th class="tg-tbl0">Bits 15-8</th>
+    <th class="tg-tbl0">Bits 7-0</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-rcf9">0x0</td>
+    <td class="tg-rcf9">0x0</td>
+    <td class="tg-rcf9" colspan="2">Device ID</td>
+    <td class="tg-rcf9" colspan="2">Vendor ID</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x1</td>
+    <td class="tg-rcf9">0x4</td>
+    <td class="tg-rcf9" colspan="2">Status</td>
+    <td class="tg-rcf9" colspan="2">Command</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x2</td>
+    <td class="tg-rcf9">0x8</td>
+    <td class="tg-rcf9">Class code</td>
+    <td class="tg-rcf9">Subclass</td>
+    <td class="tg-rcf9">Prog IF</td>
+    <td class="tg-rcf9">Revision ID</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x3</td>
+    <td class="tg-rcf9">0xC</td>
+    <td class="tg-rcf9">BIST</td>
+    <td class="tg-rcf9">Header type</td>
+    <td class="tg-rcf9">Latency Timer</td>
+    <td class="tg-rcf9">Cache Line Size</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x4</td>
+    <td class="tg-rcf9">0x10</td>
+    <td class="tg-rcf9" colspan="4">Base address #0 (BAR0)</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x5</td>
+    <td class="tg-rcf9">0x14</td>
+    <td class="tg-rcf9" colspan="4">Base address #1 (BAR1)</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x6</td>
+    <td class="tg-rcf9">0x18</td>
+    <td class="tg-rcf9">Secondary Latency Timer</td>
+    <td class="tg-rcf9">Subordinate Bus Number</td>
+    <td class="tg-rcf9">Secondary Bus Number</td>
+    <td class="tg-rcf9">Primary Bus Number</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x7</td>
+    <td class="tg-rcf9">0x1C</td>
+    <td class="tg-rcf9" colspan="2">Secondary Status</td>
+    <td class="tg-rcf9">I/O Limit</td>
+    <td class="tg-rcf9">I/O Base</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x8</td>
+    <td class="tg-rcf9">0x20</td>
+    <td class="tg-rcf9" colspan="2">Memory Limit</td>
+    <td class="tg-rcf9" colspan="2">Memory Base</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x9</td>
+    <td class="tg-rcf9">0x24</td>
+    <td class="tg-rcf9" colspan="2">Prefetchable Memory Limit</td>
+    <td class="tg-rcf9" colspan="2">Prefetchable Memory Base</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xA</td>
+    <td class="tg-rcf9">0x28</td>
+    <td class="tg-rcf9" colspan="4">Prefetchable Base Upper 32 Bits</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xB</td>
+    <td class="tg-rcf9">0x2C</td>
+    <td class="tg-rcf9" colspan="4">Prefetchable Limit Upper 32 Bits</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xC</td>
+    <td class="tg-rcf9">0x30</td>
+    <td class="tg-rcf9" colspan="2">I/O Limit Upper 16 Bits</td>
+    <td class="tg-rcf9" colspan="2">I/O Base Upper 16 Bits</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xD</td>
+    <td class="tg-rcf9">0x34</td>
+    <td class="tg-rcf9" colspan="3">Reserved</td>
+    <td class="tg-rcf9">Capability Pointer</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xE</td>
+    <td class="tg-rcf9">0x38</td>
+    <td class="tg-rcf9" colspan="4">Expansion ROM base address</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xF</td>
+    <td class="tg-rcf9">0x3C</td>
+    <td class="tg-rcf9" colspan="2">Bridge Control</td>
+    <td class="tg-rcf9">Interrupt PIN</td>
+    <td class="tg-rcf9">Interrupt Line</td>
+  </tr>
+</tbody>
+</table>
+
+<pre><code>BAR0
+Memory-mapped I/O (MMIO) registers
+BAR1
+Device memory windows.
+BAR2/3
+Complementary space of BAR1.
+BAR5
+I/O port.
+BAR6
+PCI ROM.
+</code></pre>
+<h1 id="Commands"><a href="#Commands" class="headerlink" title="Commands"></a>Commands</h1><p>lspci</p>
+<p><a target="_blank" rel="noopener" href="https://diego.assencio.com/?index=649b7a71b35fc7ad41e03b6d0e825f07">Interpreting the output of lspci</a></p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://insujang.github.io/2017-04-03/pci-express-i/o-system/">PCI Express I&#x2F;O System</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.pcmag.com/encyclopedia/term/pci-express">PCI Express</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.trentonsystems.com/blog/what-is-pcie">What is PCIe</a></li>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/30190050/what-is-the-base-address-register-bar-in-pcie">What is the Base Address Register (BAR) in PCIe?</a></li>
+<li><a target="_blank" rel="noopener" href="https://utcc.utoronto.ca/~cks/space/blog/linux/PCIeLspciBusAddresses">PCIe bus addresses, lspci, and working out your PCIe bus topology</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/misc/LDAP/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/misc/LDAP/" class="post-title-link" itemprop="url">LDAP</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 21:57:59" itemprop="dateCreated datePublished" datetime="2024-01-23T21:57:59+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Misc/" itemprop="url" rel="index"><span itemprop="name">Misc</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>LDAP, Lightweight Directory Access Protocol.</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://support.bull.com/documentation/byproduct/infra/sw-extremcomp/sw-extremcomp-com/g">Bull Support</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/linux/Drive/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -219,7 +1612,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -303,7 +1696,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -378,7 +1771,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -425,1292 +1818,10 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/concurrency/Thread/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/concurrency/Thread/" class="post-title-link" itemprop="url">Thread</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 21:46:41" itemprop="dateCreated datePublished" datetime="2024-01-23T21:46:41+00:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="sched-setaffinity"><a href="#sched-setaffinity" class="headerlink" title="sched_setaffinity"></a><code>sched_setaffinity</code></h2><p>参考<a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man2/sched_setaffinity.2.html">manpage</a>.</p>
-<p>affinity 表示 CPU 亲缘性：即与哪个更亲，更愿意属于哪一个。</p>
-<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/itjinks/article/details/40477779">https://blog.csdn.net/itjinks/article/details/40477779</a></p>
-<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/itjinks/article/details/40477779">CPU affinity 是一种调度属性(scheduler property), 它可以将一个进程”绑定” 到一个或一组CPU上.</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/misc/GNU-Introducation/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/misc/GNU-Introducation/" class="post-title-link" itemprop="url">GNU Introducation</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 21:45:31" itemprop="dateCreated datePublished" datetime="2024-01-23T21:45:31+00:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Misc/" itemprop="url" rel="index"><span itemprop="name">Misc</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <ul>
-<li><a target="_blank" rel="noopener" href="https://www.gnu.org/">GNU</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.gnu.org/software/">GNU Software</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.gnu.org/software/gnulib/">Gnulib</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.gnu.org/software/make/">Gnumake</a></li>
-</ul>
-<h2 id="libc"><a href="#libc" class="headerlink" title="libc"></a>libc</h2><h3 id="Memory-Protection"><a href="#Memory-Protection" class="headerlink" title="Memory Protection"></a>Memory Protection</h3><p>参见：<a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Memory-Protection.html">文档</a>。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/gdb%E5%85%A5%E9%97%A8/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/cpp/gdb%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">gdb 入门</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 21:44:37" itemprop="dateCreated datePublished" datetime="2024-01-23T21:44:37+00:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="gdb-实现原理"><a href="#gdb-实现原理" class="headerlink" title="gdb 实现原理"></a>gdb 实现原理</h2><p>参考 <a target="_blank" rel="noopener" href="https://www.zhihu.com/people/bi-an-60-46">链接</a>。</p>
-<h2 id="在-vim-emacs-中启动-gdb"><a href="#在-vim-emacs-中启动-gdb" class="headerlink" title="在 vim &#x2F; emacs 中启动 gdb"></a>在 vim &#x2F; emacs 中启动 gdb</h2><p>为什么在 Emacs&#x2F;vim 中运行 GDB？</p>
-<ul>
-<li>统一环境：你可以在 Emacs 中同时查看源代码和调试信息</li>
-<li>快捷键支持：使用 Emacs 的快捷键控制 GDB（如设置断点、单步执行）</li>
-<li>图形化布局：支持多窗口显示，如断点列表、堆栈信息、变量值等</li>
-<li>增强效率：无需离开编辑器即可完成调试任务</li>
-</ul>
-<p>Vim 从 8.1 版本开始内置了一个叫做 Termdebug 的插件，它可以直接在 Vim 中运行 GDB，并显示调试信息。</p>
-<p>✅ 步骤：<br>确保 Vim 版本 ≥ 8.1</p>
-<p>编译你的程序（加上 -g 选项）：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -g my_program.c -o my_program</span><br></pre></td></tr></table></figure>
-
-<p>在 Vim 中加载插件：</p>
-<figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">:packadd termdebug</span><br><span class="line">:Termdebug</span><br></pre></td></tr></table></figure>
-
-<p>Vim 会打开一个新的窗口，显示 GDB 控制台，你可以在里面输入 GDB 命令。</p>
-<p>📖 教程参考：<a target="_blank" rel="noopener" href="https://www.baeldung.com/linux/vim-gdb-integration">Baeldung 的 Vim-GDB 集成指南</a></p>
-<h2 id="gdb-命令"><a href="#gdb-命令" class="headerlink" title="gdb 命令"></a>gdb 命令</h2><ul>
-<li><p><code>thread apply [threadno] [all] args</code> - 将命令传递给一个或多个线程，参见 <a target="_blank" rel="noopener" href="https://developer.apple.com/library/archive/documentation/DeveloperTools/gdb/gdb/gdb_5.html">链接</a>。<br>比如，<code>thread apply all continue</code> 表示将 <code>continue</code> 命令传递给所有线程，也就是让所有线程都继续运行。</p>
-</li>
-<li><p><code>rbreak</code> - Set a breakpoint for all functions matching REGEXP. 参考 <a target="_blank" rel="noopener" href="https://blog.csdn.net/zdl1016/article/details/8708077">链接</a>。</p>
-<p>  e.g. <code>rbreak file.C:.*</code> - 给 file.C 的所有函数加上断点。</p>
-</li>
-<li><p><code>info</code></p>
-<ul>
-<li><code>info inferior</code> - 可以查看当前调试的进程的 PID。另外一种方法是在 gdb 命令行中直接调用 C 函数：<code>print (int)getpid()</code>。参考：<a target="_blank" rel="noopener" href="https://www.qiniu.com/qfans/qnso-36704270">链接</a>。</li>
-<li><code>info source</code> - 当前调试的源文件路径。</li>
-<li><code>info sources &lt;pattern&gt;</code> - 查询源文件路径</li>
-<li><code>info proc</code> - <a target="_blank" rel="noopener" href="https://sourceware.org/gdb/onlinedocs/gdb/Process-Information.html">当前进程信息</a>。<ul>
-<li><code>info proc files</code> - 当前进程打开的文件（和文件描述符）。</li>
-<li><code>info args</code> - 查看函数参数</li>
-<li><code>info locals</code> - 查看局部变量。</li>
-<li><code>info reg</code> 查看寄存器。</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<p>常用寄存器：</p>
-<table>
-<thead>
-<tr>
-<th align="center">寄存器</th>
-<th align="center">用途说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">rax</td>
-<td align="center">函数返回值，乘除法运算</td>
-</tr>
-<tr>
-<td align="center">rbx</td>
-<td align="center">通用寄存器，常用于基址</td>
-</tr>
-<tr>
-<td align="center">rcx</td>
-<td align="center">循环计数器</td>
-</tr>
-<tr>
-<td align="center">rdx</td>
-<td align="center">I&#x2F;O 指针或中间数据</td>
-</tr>
-<tr>
-<td align="center">rdi</td>
-<td align="center">函数第一个参数</td>
-</tr>
-<tr>
-<td align="center">rsi</td>
-<td align="center">函数第二个参数</td>
-</tr>
-<tr>
-<td align="center">rsp</td>
-<td align="center">栈顶指针</td>
-</tr>
-<tr>
-<td align="center">rbp</td>
-<td align="center">栈底指针，栈帧基址</td>
-</tr>
-<tr>
-<td align="center">rip</td>
-<td align="center">当前执行指令地址</td>
-</tr>
-<tr>
-<td align="center">eflags</td>
-<td align="center">运算状态标志，如 ZF（零标志）、CF（进位标志）等</td>
-</tr>
-</tbody></table>
-<p>gdb 的寄存器变量</p>
-<p>x86（32 位）</p>
-<table>
-<thead>
-<tr>
-<th>$eax, $ebx, $ecx, $edx</th>
-<th>通用寄存器</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>$esi, $edi</td>
-<td>源 &#x2F; 目标索引寄存器</td>
-</tr>
-<tr>
-<td>$esp</td>
-<td>栈顶指针（Stack Pointer）</td>
-</tr>
-<tr>
-<td>$ebp</td>
-<td>栈底指针（Base Pointer）</td>
-</tr>
-<tr>
-<td>$eip</td>
-<td>指令指针（下一条执行的指令地址）</td>
-</tr>
-<tr>
-<td>$eflags</td>
-<td>标志寄存器（保存条件标志）</td>
-</tr>
-</tbody></table>
-<p>x86_64（64 位）</p>
-<table>
-<thead>
-<tr>
-<th align="center">寄存器</th>
-<th align="center">说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">$rax, $rbx, $rcx, $rdx</td>
-<td align="center">通用寄存器（64 位）</td>
-</tr>
-<tr>
-<td align="center">$rsi, $rdi</td>
-<td align="center">参数寄存器</td>
-</tr>
-<tr>
-<td align="center">$rsp</td>
-<td align="center">栈顶指针</td>
-</tr>
-<tr>
-<td align="center">$rbp</td>
-<td align="center">栈底指针</td>
-</tr>
-<tr>
-<td align="center">$rip</td>
-<td align="center">指令指针</td>
-</tr>
-<tr>
-<td align="center">$r8~$r15</td>
-<td align="center">扩展通用寄存器</td>
-</tr>
-<tr>
-<td align="center">$eflags</td>
-<td align="center">标志寄存器</td>
-</tr>
-</tbody></table>
-<ul>
-<li><code>show</code><ul>
-<li><code>show environment</code> 查看全局变量</li>
-<li><code>set environment &lt;var&gt;=&lt;value&gt;</code> 设置环境变量</li>
-</ul>
-</li>
-<li><code>attach</code> - 连接到正在运行的进程。与 <code>gdb -p</code> 效果相同。</li>
-<li><code>detach</code> - 取消连接的进程。</li>
-<li><code>handle &lt;signal&gt; print pass nostop</code> - 捕获信号（比如 <code>SIGSEGV</code>）并且忽略它。<code>handle &lt;signal nostop</code>。<ul>
-<li><code>pass</code> 表示 gdb 会将捕获到的信号发回给被调试的进程。</li>
-</ul>
-</li>
-<li><code>set</code> - 修改变量的值，比如 <code>set x=10</code>（或 <code>set var x=10</code>）将变量 <code>x</code> 的值改为 <code>10</code>。参考 <a target="_blank" rel="noopener" href="https://blog.csdn.net/yasi_xi/article/details/12784507">博客</a>。</li>
-<li><code>show directories</code></li>
-<li><code>print</code> - gdb 默认设置打印字符串的长度为 200；更改打印最大长度：<code>set print elements &lt;number-of-elements&gt;</code>，<code>0</code> 表示 unlimited.<br>    - 打印数组: <code>print arr[0]@3</code> ，其中 <code>@3</code> 表示打印 3 个元素。<br>    - 以十六进制打印：<code>p/x &lt;var&gt;</code></li>
-<li><code>ptype &lt;variable name&gt;</code> - 打印变量类型。</li>
-<li><code>finish</code> - 从函数中返回，并打印函数返回值（即使函数的 return 语句很复杂，也可以获取返回值）。</li>
-<li><code>frame &lt;n&gt;</code> - 跳转到某个栈帧。</li>
-<li><code>up</code> 跳转到上一个栈帧</li>
-<li><code>x/FMT</code>: <code>x</code> 表示 <code>examine</code> ，查看内存。<ul>
-<li><code>/i</code> 表示 <code>instruction</code> ，即查看汇编指令。</li>
-<li><code>/g</code> 表示 <code>giant word</code> ，即每次查看 8 字节。<ul>
-<li><code>x/g 0x400000</code> 查看地址 0x400000 处的 8 字节内容（以十六进制显示）</li>
-<li><code>x/4g $rsp</code> 查看当前栈指针 <code>$rsp</code> 指向的连续 4 个 8 字节值（共 32 字节）</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th align="center">命令</th>
-<th align="center">说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">x&#x2F;g</td>
-<td align="center">默认十六进制显示 8 字节内容</td>
-</tr>
-<tr>
-<td align="center">x&#x2F;dg</td>
-<td align="center">十进制显示 8 字节内容</td>
-</tr>
-<tr>
-<td align="center">x&#x2F;ug</td>
-<td align="center">无符号十进制显示 8 字节内容</td>
-</tr>
-<tr>
-<td align="center">x&#x2F;tg</td>
-<td align="center">二进制显示 8 字节内容</td>
-</tr>
-<tr>
-<td align="center">x&#x2F;fg</td>
-<td align="center">浮点数格式显示 8 字节内容（double）</td>
-</tr>
-</tbody></table>
-<h2 id="环境变量"><a href="#环境变量" class="headerlink" title="环境变量"></a>环境变量</h2><p>见 <a target="_blank" rel="noopener" href="https://www.irya.unam.mx/computo/sites/manuales/fce12/debugger/cl/commandref/gdb_mode/cmd_set_environm.htm">链接</a></p>
-<h2 id="断点"><a href="#断点" class="headerlink" title="断点"></a>断点</h2><p>添加断点：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">break file:line_no</span><br></pre></td></tr></table></figure>
-
-<p>查看断点：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">info break</span><br></pre></td></tr></table></figure>
-
-<p>删除第 2 个断点：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">delete 2</span><br></pre></td></tr></table></figure>
-
-
-<h3 id="条件断点"><a href="#条件断点" class="headerlink" title="条件断点"></a>条件断点</h3><p>参考：<a target="_blank" rel="noopener" href="http://c.biancheng.net/view/8255.html">博客</a>、<a target="_blank" rel="noopener" href="https://ftp.gnu.org/old-gnu/Manuals/gdb/html_node/gdb_28.html">文档</a>。</p>
-<p><code>break ... if cond</code></p>
-<h3 id="观察断点"><a href="#观察断点" class="headerlink" title="观察断点"></a>观察断点</h3><h3 id="捕捉断点"><a href="#捕捉断点" class="headerlink" title="捕捉断点"></a>捕捉断点</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">try...catch</span><br></pre></td></tr></table></figure>
-
-<h3 id="打印长度的限制"><a href="#打印长度的限制" class="headerlink" title="打印长度的限制"></a>打印长度的限制</h3><ul>
-<li>Value sizes - 参考：<a target="_blank" rel="noopener" href="https://sourceware.org/gdb/onlinedocs/gdb/Value-Sizes.html">文档</a></li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">set</span> max-value-size bytes</span><br><span class="line"><span class="built_in">set</span> max-value-size unlimited</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><p>打印字符长度限制</p>
-<p>gdb 默认设置打印字符串的长度为 200；更改打印最大长度：<code>set print elements</code></p>
-</li>
-</ul>
-<h2 id="coredump"><a href="#coredump" class="headerlink" title="coredump"></a>coredump</h2><p>gdb 命令：<code>gcore</code>。</p>
-<p><a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man5/core.5.html">Reference</a></p>
-<h2 id="WSL-无法使用-gdb"><a href="#WSL-无法使用-gdb" class="headerlink" title="WSL 无法使用 gdb"></a>WSL 无法使用 gdb</h2><p>WSL 指 Windows 虚拟机。</p>
-<p><a target="_blank" rel="noopener" href="https://github.com/microsoft/WSL/issues/8516">解决方法</a>：</p>
-<p>安装 <a target="_blank" rel="noopener" href="https://launchpad.net/~ubuntu-support-team/+archive/ubuntu/gdb">PPA 的 daily build 版本</a></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo add-apt-repository ppa:ubuntu-support-team/gdb</span><br><span class="line">sudo apt update</span><br><span class="line">sudo apt install gdb</span><br></pre></td></tr></table></figure>
-
-<h2 id="gdb-attach-权限报错"><a href="#gdb-attach-权限报错" class="headerlink" title="gdb attach 权限报错"></a>gdb attach 权限报错</h2><p>This is due to kernel hardening in Linux; you can disable this behavior by <code>echo 0 &gt; /proc/sys/kernel/yama/ptrace_scope</code> or by modifying it in <code>/etc/sysctl.d/10-ptrace.conf</code>.</p>
-<p><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/19215177/how-to-solve-ptrace-operation-not-permitted-when-trying-to-attach-gdb-to-a-pro">How to solve “ptrace operation not permitted” when trying to attach GDB to a process?</a></p>
-<h2 id="gdb-debug-forks"><a href="#gdb-debug-forks" class="headerlink" title="gdb debug forks"></a>gdb debug forks</h2><p><a target="_blank" rel="noopener" href="https://www-zeuthen.desy.de/unix/unixguide/infohtml/gdb/Forks.html">Reference</a></p>
-<p>By default, when a program forks, gdb will continue to debug the parent process and the child process will run unimpeded.</p>
-<p>If you want to follow the child process instead of the parent process, use the command set <code>follow-fork-mode</code>.</p>
-<p><code>set follow-fork-mode mode</code><br>Set the debugger response to a program call of <code>fork</code> or <code>vfork</code>. A call to fork or vfork creates a new process. The mode argument can be:<br><code>parent</code><br>The original process is debugged after a fork. The child process runs unimpeded. This is the default.<br><code>child</code><br>The new process is debugged after a fork. The parent process runs unimpeded.<br><code>ask</code><br>gdb 会提示让你选择 <code>parent</code> 还是 <code>child</code> 。</p>
-<p><code>show follow-fork-mode</code><br>Display the current debugger response to a fork or vfork call.<br>On Linux, if you want to debug both the parent and child processes, use the command set detach-on-fork.</p>
-<p><code>set detach-on-fork mode</code><br>Tells gdb whether to detach one of the processes after a fork, or retain debugger control over them both.<br><code>on</code><br>The child process (or parent process, depending on the value of follow-fork-mode) will be detached and allowed to run independently. This is the default.<br><code>off</code><br>Both processes will be held under the control of gdb. One process (child or parent, depending on the value of follow-fork-mode) is debugged as usual, while the other is held suspended.</p>
-<p><code>show detach-on-fork</code><br>Show whether detach-on-fork mode is on&#x2F;off.</p>
-<p>If you issue a run command to gdb after an exec call executes, the new target restarts. To restart the parent process, use the file command with the parent executable name as its argument. By default, after an exec call executes, gdb discards the symbols of the previous executable image. You can change this behaviour with the set follow-exec-mode command.</p>
-<p>set follow-exec-mode mode<br>Set debugger response to a program call of exec. An exec call replaces the program image of a process.<br>follow-exec-mode can be:</p>
-<p><code>new</code><br>gdb creates a new inferior and rebinds the process to this new inferior. The program the process was running before the exec call can be restarted afterwards by restarting the original inferior.<br>For example:</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">(gdb) info inferiors</span><br><span class="line">(gdb) info inferior</span><br><span class="line">  Id   Description   Executable</span><br><span class="line">* 1    &lt;null&gt;        prog1</span><br><span class="line">(gdb) run</span><br><span class="line">process 12020 is executing new program: prog2</span><br><span class="line">Program exited normally.</span><br><span class="line">(gdb) info inferiors</span><br><span class="line">  Id   Description   Executable</span><br><span class="line">* 2    &lt;null&gt;        prog2</span><br><span class="line">  1    &lt;null&gt;        prog1</span><br></pre></td></tr></table></figure>
-
-<p><code>same</code><br>gdb keeps the process bound to the same inferior. The new executable image replaces the previous executable loaded in the inferior. Restarting the inferior after the exec call, with e.g., the run command, restarts the executable the process was running after the exec call. This is the default mode.<br>For example:</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">(gdb) info inferiors</span><br><span class="line">  Id   Description   Executable</span><br><span class="line">* 1    &lt;null&gt;        prog1</span><br><span class="line">(gdb) run</span><br><span class="line">process 12020 is executing new program: prog2</span><br><span class="line">Program exited normally.</span><br><span class="line">(gdb) info inferiors</span><br><span class="line">  Id   Description   Executable</span><br><span class="line">* 1    &lt;null&gt;        prog2</span><br></pre></td></tr></table></figure>
-
-<h2 id="Setting-Catchpoints"><a href="#Setting-Catchpoints" class="headerlink" title="Setting Catchpoints"></a>Setting Catchpoints</h2><p><a target="_blank" rel="noopener" href="https://www-zeuthen.desy.de/unix/unixguide/infohtml/gdb/Set-Catchpoints.html#Set-Catchpoints">Reference</a></p>
-<h2 id="gdb-redirect-to-a-log-file"><a href="#gdb-redirect-to-a-log-file" class="headerlink" title="gdb redirect to a log file"></a>gdb redirect to a log file</h2><p>You need to enable logging:</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">(gdb) set logging on</span><br><span class="line">Now GDB will log to ./gdb.txt. You can tell it which file to use:</span><br><span class="line"></span><br><span class="line">(gdb) set logging file my_god_object.log</span><br><span class="line">And you can examine the current logging configuration:</span><br><span class="line"></span><br><span class="line">(gdb) show logging</span><br></pre></td></tr></table></figure>
-
-<p>更新：新版本 gdb 采用 <code>set logging enabled on</code> 。</p>
-<p>记录输入的命令：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) set trace-commands on</span><br></pre></td></tr></table></figure>
-
-<p><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/5941158/gdb-print-to-file-instead-of-stdout">Refercence</a></p>
-<h2 id="权限限制"><a href="#权限限制" class="headerlink" title="权限限制"></a>权限限制</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cat</span> /proc/sys/kernel/yama/ptrace_scope</span><br><span class="line">3</span><br></pre></td></tr></table></figure>
-
-<p>Yama 是 Linux 内核中的一个 安全模块（LSM：Linux Security Module），专门用于加强进程间的访问控制，尤其是对 ptrace 系统调用的限制。<br>Yama 的主要目的是防止恶意程序通过 ptrace 附加到其他进程（包括 gdb, strace, pstack, gstack 等），从而窃取数据或注入代码。</p>
-<table>
-<thead>
-<tr>
-<th align="center">值</th>
-<th align="center">模式名称</th>
-<th align="center">含义说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">0</td>
-<td align="center">经典模式</td>
-<td align="center">允许同一用户调试其权限范围内的任意进程（只要目标进程是 “可转储” 的）。适合开发环境。</td>
-</tr>
-<tr>
-<td align="center">1</td>
-<td align="center">受限模式（默认）</td>
-<td align="center">只允许调试直接子进程，或拥有 CAP_SYS_PTRACE 权限的进程。更安全，适合大多数系统。</td>
-</tr>
-<tr>
-<td align="center">2</td>
-<td align="center">管理员模式</td>
-<td align="center">只有 root 或具备 CAP_SYS_PTRACE 的进程可以使用 ptrace。适合高安全场景。</td>
-</tr>
-<tr>
-<td align="center">3</td>
-<td align="center">完全禁用</td>
-<td align="center">所有进程（包括 root）都无法使用 ptrace。彻底禁止调试行为，适合极端安全需求。</td>
-</tr>
-</tbody></table>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/gcc%E5%85%A5%E9%97%A8/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/cpp/gcc%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">gcc 入门</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 21:44:11" itemprop="dateCreated datePublished" datetime="2024-01-23T21:44:11+00:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="递归处理顺序"><a href="#递归处理顺序" class="headerlink" title="递归处理顺序"></a>递归处理顺序</h2><p>gcc 的输入文件和库是从左往右处理的。也就是说，以下命令是错误的：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -L. -la main.cc</span><br></pre></td></tr></table></figure>
-
-<p>链接器处理到某个目标文件（如 main.cc 编译后的目标代码）时，如果遇到未解析的符号（比如 f() ），<br>它会从接下来的库中查找这些符号。因此顺序非常重要。</p>
-<p>这里，-L. -la 选项在 main.cc 之前，链接器会首先尝试从 liba.so 中查找引用的符号，<br>但是，因为此时 main.cc 还未被处理，所以链接器还不知道有对 liba.so 中的函数 f() 的引用。<br>到了 main.cc ，链接器解析出引用，但它不会回头再去 liba.so 中查找，导致报错：”undefined reference to f()”。</p>
-<p>正确的命令如下：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc main.cc -L. -la</span><br></pre></td></tr></table></figure>
-
-<p>注意：liba.so 的指定必须去掉 lib 和 .so ，也就是说不允许直接指定“库文件名”，而是只能指定“库名”。<br>如果想直接指定库文件名，那么应该把 liba.so 当成输入文件：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc main.cc ./liba.so</span><br></pre></td></tr></table></figure>
-
-<h2 id="属性语法（Attribute-Syntax）"><a href="#属性语法（Attribute-Syntax）" class="headerlink" title="属性语法（Attribute Syntax）"></a>属性语法（Attribute Syntax）</h2><p>参考：<a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/gcc-3.2/gcc/Attribute-Syntax.html#Attribute%20Syntax">官方文档</a>。</p>
-<h3 id="函数属性（Function-Attributes）"><a href="#函数属性（Function-Attributes）" class="headerlink" title="函数属性（Function Attributes）"></a>函数属性（Function Attributes）</h3><p>参考：</p>
-<ul>
-<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/11621043/how-should-i-properly-use-attribute-format-printf-x-y-inside-a-class">stackoverflow</a></li>
-<li><a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/gcc-3.2/gcc/Function-Attributes.html">gcc官方文档：Function Attributes</a></li>
-</ul>
-<p>属性列举：</p>
-<ul>
-<li><p><code>format (archetype, string-index, first-to-check)</code></p>
-<p>  format 属性，指定函数采用 printf、scanf、strftime 或 strfmon 风格的参数，<br>  这些参数应根据格式字符串（format string）进行类型检查（type-checked）。<br>  类型检查发生在编译期。</p>
-<p>  举例：</p>
-  <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">extern</span> <span class="type">int</span></span></span><br><span class="line"><span class="function"><span class="title">my_printf</span> <span class="params">(<span class="type">void</span> *my_object, <span class="type">const</span> <span class="type">char</span> *my_format, ...)</span></span></span><br><span class="line"><span class="function">    __<span class="title">attribute__</span> <span class="params">((format (printf, <span class="number">2</span>, <span class="number">3</span>)))</span></span>;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><code>archetype</code>决定format string应该如何解释。<br>可选为<code>printf</code>、<code>scanf</code>、<code>strftime</code>或<code>strfmon</code>（也可以使用<code>__printf__</code>、<code>__scanf__</code>、<code>__strftime__</code>或<code>__strfmon__</code>）。</li>
-<li><code>string-index</code>指定哪个参数是format string（从1开始）。</li>
-<li><code>first-to-check</code>指定format string对应的第一个参数的序号。<br>对于那些无法检查参数的函数（比如<code>vprintf</code>），该参数指定为<code>0</code>。在这种情况下，编译器仅检查format string的一致性。对于<code>strftime</code>格式，该参数必须为<code>0</code>。</li>
-</ul>
-</li>
-</ul>
-<h2 id="选项"><a href="#选项" class="headerlink" title="选项"></a>选项</h2><ul>
-<li><code>-save-temps</code>: 可以保留所有中间文件，例如预编译文件、汇编文件、目标文件等。</li>
-</ul>
-<h2 id="符号可见性"><a href="#符号可见性" class="headerlink" title="符号可见性"></a>符号可见性</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">pragma</span> GCC visibility push(hidden)</span></span><br><span class="line"></span><br><span class="line">__attribute__((__visibility__(<span class="string">&quot;default&quot;</span>)))</span><br></pre></td></tr></table></figure>
-
-<p>gcc 编译选项：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -fvisibility=hidden ...</span><br></pre></td></tr></table></figure>
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/core-dump/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/cpp/core-dump/" class="post-title-link" itemprop="url">core dump</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 21:42:51" itemprop="dateCreated datePublished" datetime="2024-01-23T21:42:51+00:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="ulimit"><a href="#ulimit" class="headerlink" title="ulimit"></a><code>ulimit</code></h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#查看配置</span></span><br><span class="line"><span class="built_in">ulimit</span> -a</span><br><span class="line"><span class="comment">#设置core file size</span></span><br><span class="line"><span class="built_in">ulimit</span> -c unlimited</span><br></pre></td></tr></table></figure>
-
-<p><code>ulimit</code>只对当前终端有效。</p>
-<p>以下两种方法对所有用户和终端有效：</p>
-<ol>
-<li>在<code>/etc/security/limits.conf</code>中设置（redhat衍生系linux）。</li>
-<li>或注释掉<code>/etc/profile</code>中的这一行： <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># No core files by default</span></span><br><span class="line"><span class="built_in">ulimit</span> -S -c 0 &gt; /dev/null 2&gt;&amp;1</span><br></pre></td></tr></table></figure></li>
-</ol>
-<h2 id="core-pattern"><a href="#core-pattern" class="headerlink" title="core_pattern"></a>core_pattern</h2><h3 id="core-pattern解释"><a href="#core-pattern解释" class="headerlink" title="core_pattern解释"></a>core_pattern解释</h3><p>见<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2065912/core-dumped-but-core-file-is-not-in-the-current-directory">链接</a>。</p>
-<p>Read <a target="_blank" rel="noopener" href="http://www.kernel.org/doc/Documentation/sysctl/kernel.txt">&#x2F;usr&#x2F;src&#x2F;linux&#x2F;Documentation&#x2F;sysctl&#x2F;kernel.txt</a>.</p>
-<pre><code>core_pattern is used to specify a core dumpfile pattern name.
-</code></pre>
-<p>在系统启动时，<a target="_blank" rel="noopener" href="https://wiki.ubuntu.com/Apport">Apport</a>（crash reporting service）会生成配置文件<code>/proc/sys/kernel/core_pattern</code>。参考<a target="_blank" rel="noopener" href="https://askubuntu.com/questions/420410/how-to-permanently-edit-the-core-pattern-file">这里</a>。</p>
-<p>Apport uses <code>/proc/sys/kernel/core_pattern</code> to directly pipe the core dump into <code>apport</code>:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cat</span> /proc/sys/kernel/core_pattern</span><br><span class="line">|/usr/share/apport/apport %p %s %c</span><br><span class="line">$ </span><br></pre></td></tr></table></figure>
-
-<p>Note that even if <code>ulimit</code> is set to disabled core files (by specyfing a core file size of zero using <code>ulimit -c 0</code>), <code>apport</code> will still capture the crash.</p>
-<p>For intercepting Python crashes it installs a <code>/etc/python*/sitecustomize.py</code> to call apport on unhandled exceptions.</p>
-<p>其中，<code>/usr/share/apport/apport</code>是一个python脚本。</p>
-<p>以下是core_pattern文件的参数说明（参考Linux Manual Page：<code>man core</code>）：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">%c - Core file size soft resource limit of crashing process (since Linux 2.6.24).</span><br><span class="line">%p - insert pid into filename 添加pid</span><br><span class="line">%u - insert current uid into filename 添加当前uid</span><br><span class="line">%g - insert current gid into filename 添加当前gid</span><br><span class="line">%s - insert signal that caused the coredump into the filename 添加导致产生core的信号</span><br><span class="line">%t - insert UNIX time that the coredump occurred into filename 添加core文件生成时的unix时间</span><br><span class="line">%h - insert hostname where the coredump happened into filename 添加主机名</span><br><span class="line">%e - insert coredumping executable name into filename 添加命令名</span><br><span class="line"></span><br><span class="line">If the first character of the pattern is a &#x27;|&#x27;, the kernel will treat the rest of the pattern as a command to run. The core dump will be written to the standard input of that program instead of to a file.</span><br></pre></td></tr></table></figure>
-
-<p>Apport的拦截组件默认是关闭的：</p>
-<p>Apport itself is running at all times because it collects crash data for whoopsie (see <a target="_blank" rel="noopener" href="https://wiki.ubuntu.com/ErrorTracker">ErrorTracker</a>). However, the crash interception component is still disabled. To enable it permanently, do:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo nano /etc/apport/crashdb.conf</span><br></pre></td></tr></table></figure>
-
-<p>… and add a hash symbol # in the beginning of the following line:</p>
-<pre><code>&#39;problem_types&#39;: [&#39;Bug&#39;, &#39;Package&#39;],
-</code></pre>
-<p>To disable crash reporting just remove the hash symbol.</p>
-<h3 id="设置core-pattern"><a href="#设置core-pattern" class="headerlink" title="设置core_pattern"></a>设置core_pattern</h3><p>见<a target="_blank" rel="noopener" href="https://www.cnblogs.com/xiaodoujiaohome/p/6222895.html">链接</a>。</p>
-<ol>
-<li><p>&#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;core_uses_pid可以控制产生的core文件的文件名中是否添加pid作为扩展，如果添加则文件内容为1，否则为0；</p>
-</li>
-<li><p>&#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;core_pattern可以设置格式化的core文件保存位置或文件名：</p>
- <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cat</span> /proc/sys/kernel/core_pattern</span><br><span class="line">|/usr/share/apport/apport %p %s %c</span><br><span class="line">$ <span class="built_in">echo</span> <span class="string">&quot;/corefile/core-%e-%p-%t&quot;</span> &gt; /proc/sys/kernel/core_pattern</span><br></pre></td></tr></table></figure>
-
-
-<p> 你可以用下列方式来完成：</p>
- <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#查看所有sysctl所有变量的值。</span></span><br><span class="line">sysctl -a</span><br><span class="line"><span class="comment">#设置变量kernel.core_pattern为如下值。</span></span><br><span class="line">sudo sysctl -w kernel.core_pattern=/tmp/core-%e.%p.%h.%t</span><br></pre></td></tr></table></figure>
-
-<p> 这些操作一旦计算机重启，则会丢失，如果你想持久化这些操作，可以在 &#x2F;etc&#x2F;sysctl.conf文件中增加：</p>
- <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kernel.core_pattern=/tmp/core%p</span><br></pre></td></tr></table></figure>
-
-<p> 加好后，如果你想不重启看看效果的话，则用下面的命令：</p>
- <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sysctl -p /etc/sysctl.conf</span><br></pre></td></tr></table></figure></li>
-</ol>
-<h2 id="相关命令行工具"><a href="#相关命令行工具" class="headerlink" title="相关命令行工具"></a>相关命令行工具</h2><p>参考资料：</p>
-<p>Linux Manual Page: <a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man5/core.5.html"><code>man core</code></a></p>
-<pre><code>SEE ALSO
-    bash(1),  coredumpctl(1),  gdb(1),  getrlimit(2), mmap(2), prctl(2), sigaction(2), elf(5), proc(5), pthreads(7), signal(7), systemd-coredump(8)
-</code></pre>
-<h2 id="Segment-Fault排查"><a href="#Segment-Fault排查" class="headerlink" title="Segment Fault排查"></a>Segment Fault排查</h2><p>参考<a target="_blank" rel="noopener" href="https://www.wtango.com/%E6%AE%B5%E9%94%99%E8%AF%AFsegmentation-fault%E4%BA%A7%E7%94%9F%E7%9A%84%E5%8E%9F%E5%9B%A0%E4%BB%A5%E5%8F%8A%E8%B0%83%E8%AF%95%E6%96%B9%E6%B3%95/">链接</a>。</p>
-<ol>
-<li><p>dmesg + nm + addr2line</p>
-<p>addr2line只能找出executable的行号；如果是shared libraries，请使用gdb。参考<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2549214/interpreting-segfault-messages">这里</a>。</p>
-<p>dmesg输出的含义：</p>
-<p>ip: 表示instruction pointer.</p>
-</li>
-<li><p>fprintf</p>
-</li>
-<li><p>gdb</p>
-</li>
-<li><p>signal(SIGSEGV,handler)</p>
-</li>
-<li><p>valgrind<br>参考：<br> <a target="_blank" rel="noopener" href="https://jvns.ca/blog/2018/04/28/debugging-a-segfault-on-linux/">博客</a><br> <a target="_blank" rel="noopener" href="https://valgrind.org/docs/manual/ms-manual.html">文档</a><br> <a target="_blank" rel="noopener" href="https://courses.cs.washington.edu/courses/cse326/05wi/valgrind-doc/ms_main.html">可以使用PostScript查看图形化结果</a></p>
-</li>
-<li><p>heaptrack</p>
-<p> 见<a target="_blank" rel="noopener" href="https://github.com/KDE/heaptrack">github仓库</a></p>
-</li>
-<li><p>Jemalloc</p>
-<p> 见<a target="_blank" rel="noopener" href="https://jemalloc.net/">官网</a></p>
-</li>
-</ol>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/%E7%BC%96%E8%AF%91%E5%92%8C%E9%93%BE%E6%8E%A5/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/cpp/%E7%BC%96%E8%AF%91%E5%92%8C%E9%93%BE%E6%8E%A5/" class="post-title-link" itemprop="url">编译和链接</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 21:36:08" itemprop="dateCreated datePublished" datetime="2024-01-23T21:36:08+00:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="编译主要步骤"><a href="#编译主要步骤" class="headerlink" title="编译主要步骤"></a>编译主要步骤</h2><p>参考<a target="_blank" rel="noopener" href="https://blog.csdn.net/chen1415886044/article/details/104537547">博客</a></p>
-<ol>
-<li>预处理</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -E test.c -o test.i</span><br></pre></td></tr></table></figure>
-
-<ol start="2">
-<li><p>编译</p>
-<p> 编译是将高级语言（例如C、C++、Jave等）代码转换成机器码的过程。<br> 编译可以分成多个阶段，包括词法分析、语法分析、语义分析、优化和代码生成。<br> 编译器首先将源代码转换一种中间表示（通常是汇编代码或字节码），然后再将其转换为目标机器的机器代码。<br> 经过编译的代码通常是二进制的，可以直接在目标机器上执行。</p>
-</li>
-</ol>
-<p>先生成汇编代码：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -S test.i -o test.s</span><br></pre></td></tr></table></figure>
-
-<ol start="3">
-<li><p>汇编</p>
-<p> 将汇编代码转成机器码。</p>
-</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -c test.s -o test.o</span><br></pre></td></tr></table></figure>
-
-<ol start="4">
-<li><p>链接</p>
-<p> 该目标文件与其他目标文件、库文件、启动文件等链接起来生成可执行文件。</p>
-</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc test.o -o <span class="built_in">test</span></span><br></pre></td></tr></table></figure>
-
-<p>Note: 可以使用 <code>-save-temps</code> 选项以保留编译过程中的所有中间文件：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -save-temps test.c</span><br></pre></td></tr></table></figure>
-
-<h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><h2 id="C-名称修饰"><a href="#C-名称修饰" class="headerlink" title="C++名称修饰"></a>C++名称修饰</h2><p><code>Name mangling (C++ only)</code>: 名称修饰，也称为名称重整、名称改编。参见链接<a target="_blank" rel="noopener" href="https://www.ibm.com/docs/en/i/7.2?topic=linkage-name-mangling-c-only">1</a>、<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E5%90%8D%E5%AD%97%E4%BF%AE%E9%A5%B0">2</a>。</p>
-<h3 id="环境变量"><a href="#环境变量" class="headerlink" title="环境变量"></a>环境变量</h3><p>参考：<code>man ld.so</code></p>
-<pre><code>PATH
-LD_LIBRARY_PATH
-LD_PRELOAD  在程序运行时，强制优先加载指定的共享库，即使系统中已有其他版本。常用于调试、性能分析、函数拦截（hook）等。
-            只在运行时生效。
-            优先级高于 rpath、LD_LIBRARY_PATH 等。
-            可以用来“注入”库，修改程序行为。
-LD_DEBUG
-
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">LD_DEBUG=libs ./your_executable 2&gt;&amp;1 | grep tcl</span><br></pre></td></tr></table></figure>
-</code></pre>
-<h3 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h3><h3 id="命令"><a href="#命令" class="headerlink" title="命令"></a>命令</h3><p>参考：<code>man ld.so</code>, <code>man vdso</code>, <code>man elf</code>, <a target="_blank" rel="noopener" href="https://linux.die.net/man/1/scanelf">scanelf</a></p>
-<pre><code>ld(1), ldd(1), pldd(1), sprof(1), dlopen(3),getauxval(3), elf(5), capabilities(7),
-rtld-audit(7), ldconfig(8), sln(8), vdso(7), as(1), elfedit(1), gdb(1), nm(1),
-objcopy(1), objdump(1), patchelf(1), readelf(1), size(1), strings(1), strip(1),
-execve(2), dl_iterate_phdr(3), core(5), ld.so(8)
-</code></pre>
-<p>ldconfig</p>
-<pre><code>配置动态连接器（dynamic linker）的运行时绑定（dynamic bindings）。
-如果你刚刚安装好共享库（so的版本号被更新），可能需要运行ldconfig：
-    sudo ldconfig
-通常需要超级用户来运行ldconfig，因为可能对需要某些root用户所有的目录和文件有写入权限。
-lddconfig 为从以下目录找到的共享库创建必要的 links 和 cache ( `/etc/ld.so.cache` )：
-    command line指定的目录；
-    /etc/ld.so.conf文件中指定的目录；
-    受信任的目录: /lib, /lib64, /usr/lib, /usr/lib64 。
-该 cache 被运行时连接器（run-time linker） ld.so 或 ld-linux.so 使用。
-注意：如果 so 的版本号没有更新，而只更新了代码，那么 ldconfig 可能不起作用，executable 可能还是链接旧 so 上（如果旧 so 没有被删）。
-
-ldconfig 尝试基于该库连接的 C 库来推断 ELF 库（比如 libc5 或 libc6/glibc）的类型。
-
-一些现有的库没有包含足够的信息来推断其类型。
-因此， /etc/ld.so.conf 文件格式允许指定期望的类型。
-这只在这些 ELF 库不能被解决的情况下使用。
-
-ldconfig 期望的符号链接有某种特定的形式，比如：
-
-    libfoo.so -&gt; libfoo.so.1 -&gt; libfoo.so.1.12
-
-其中，中间的文件 libfoo.so.1 是库的 SONAME 。
-
-如果不遵循这种格式可能会导致升级后的兼容性问题。
-</code></pre>
-<p>ldd</p>
-<pre><code>描述：
-    ldd调用标准动态连接器（见 ld.so(8)），并且将环境变量 LD_TRACE_LODADED_OBJECTS 为 1 。
-    这会让动态连接器检查程序的动态依赖，并且寻找（根据 ld.so(8) 描述的规则）
-    和加载满足这些依赖的目标。对于每一条依赖，
-    ldd 显示匹配的目标的位置和其载入处的16进制地址。
-    （linux-vdso和ld-linux共享依赖是特殊的；见vdso(7)和ld.so(8)）
-
-安全性：
-    注意，在某些情况下，一些版本的ldd可能会尝试通过直接运行程序（可能导致程序中的ELF解释器
-    或程序本身的运行）来获取依赖信息。
-
-    因此，永远不要在不受信任的可执行文件上使用ldd，因为会导致随意代码的运行。更安全替代方法为：
-        $ objdump -p /path/to/program | grep NEEDED
-    注意，这种替代方法只会显示该可执行文件的直接依赖，而ldd显示该可执行文件的整个依赖树。
-
-解释ldd的输出:
-$ ldd -v libibsupport_real.so 
-./libibsupport_real.so: /usr/lib64/libibverbs.so.1: version `IBVERBS_1.8&#39; not found (required by ./libibsupport_real.so)
-    linux-vdso.so.1 =&gt;  (0x00002ad3e49e3000)
-    libibverbs.so.1 =&gt; /usr/lib64/libibverbs.so.1 (0x00002ad3e589b000)
-    ...
-
-    Version information:
-    ./libibsupport_real.so:
-            libgcc_s.so.1 (GCC_3.0) =&gt; /usr/lib64/libgcc_s.so.1
-            libibverbs.so.1 (IBVERBS_1.8) =&gt; not found
-            libibverbs.so.1 (IBVERBS_1.1) =&gt; /usr/lib64/libibverbs.so.1
-            ...
-    /usr/lib64/libnl-3.so.200:
-                libm.so.6 (GLIBC_2.2.5) =&gt; /usr/lib64/libm.so.6
-                ...
-在&quot;Version information&quot;中，&quot;libgcc_s.so.1 (GCC_3.0) =&gt; /usr/lib64/libgcc_s.so.1&quot;表示：
-    &quot;libgcc_s.so.1&quot;指定一个shared library的名字（libgcc_s.so.1是GCC runtime library的一部分），该shared library为&quot;./libibsupport_real.so&quot;所依赖；
-    &quot;(GCC_3.0)&quot;表明&quot;libgcc_s.so.1&quot;需要3.0版本及以上的GNU Compiler Collection (GCC)；
-    &quot;=&gt;&quot;指出满足依赖的shared library；
-    &quot;/usr/lib64/libgcc_s.so.1&quot;是满足要求的shared library的路径。
-</code></pre>
-<p>  <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/34428037/how-to-interpret-the-output-of-the-ldd-program">ldd output说明</a></p>
-<p>sprof</p>
-<p>参考：<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/881074/how-to-use-sprof">stackoverflows</a></p>
-<p>objdump</p>
-<pre><code>[-p|--private-headers]
-[-x|--all-headers]
-</code></pre>
-<p>readelf</p>
-<pre><code>[-d|--dynamic]
-</code></pre>
-<h3 id="文件"><a href="#文件" class="headerlink" title="文件"></a>文件</h3><pre><code>/lib/ld.so
-    Run-time linker/loader.
-/etc/ld.so.conf
-    File containing a list of directories, one per line, in which to search for libraries.
-/etc/ld.so.cache
-    File containing an ordered list of libraries found in the directories specified in /etc/ld.so.conf, as well as those found in the trusted directories.
-
-The trusted directories:
-    /lib
-    /lib64
-    /usr/lib
-    /usr/lib64
-</code></pre>
-<p>ld.so</p>
-<pre><code>名字
-    ld.so, ld-linux.so - 动态连接/加载器。
-
-简介
-    动态连接器可以被间接运行或直接运行。
-    间接运行：
-        运行某些动态连接程序或共享库。在这种情况下，不能向动态连接器传递命令行选项；并且在ELF情况下，存储在程序的.interp section中的动态连接器被执行。
-    直接运行：
-        /lib/ld-linux.so.* [OPTIONS] [PRAGRAM [ARGUMENTS]]
-
-描述
-    ld.so 和 ld-linux.so* 寻找和加载程序所需的共享对象（共享库），准备程序的运行，然后运行它。
-
-    如果在编译期没有向 ld(1) 指定 -static 选项，则Linux二进制文件需要动态连接（在运行时连接）。
-</code></pre>
-<h3 id="SONAME"><a href="#SONAME" class="headerlink" title="SONAME"></a>SONAME</h3><p>参考：<code>man ldconfig</code><br>参考：<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Soname">SONAME Wiki</a></p>
-<blockquote>
-<p>GNU linker使用 -hname 或 -soname&#x3D;name 来指定该库的library name field。<br>在内部，linker会创建一个 DT_SONAME field并且用 name 来填充它。</p>
-</blockquote>
-<ol>
-<li>指定SONAME：</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#Use ld:</span></span><br><span class="line">$ ld -shared -soname libexample.so.1 -o libexample.so.1.2.3 file1.o file2.o</span><br><span class="line"><span class="comment">#Use gcc or g++:</span></span><br><span class="line">$ gcc -shared -Wl,-soname,libexample.so.1 -o libexample.so.1.2.3 file1.o file2.o</span><br></pre></td></tr></table></figure>
-
-<ol start="2">
-<li>安装时创建软链接：</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ln</span> -s libexample.so.1.2.3 libexample.so.1</span><br><span class="line"><span class="built_in">ln</span> -s libexample.so.1 libexample.so</span><br></pre></td></tr></table></figure>
-
-<ol start="3">
-<li>查看SONAME：</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#Use objdump</span></span><br><span class="line">$ objdump -p libexample.so.1.3 | grep SONAME</span><br><span class="line">  SONAME               libexample.so.1</span><br><span class="line"><span class="comment">#Use readelf</span></span><br><span class="line">$ readelf -d libexample.so | grep SONAME</span><br><span class="line"> 0x000000000000000e (SONAME)             Library soname: [libexample.so.1]</span><br></pre></td></tr></table></figure>
-
-<h3 id="符号版本控制（symbol-versioning）"><a href="#符号版本控制（symbol-versioning）" class="headerlink" title="符号版本控制（symbol versioning）"></a>符号版本控制（symbol versioning）</h3><h4 id="定制函数版本："><a href="#定制函数版本：" class="headerlink" title="定制函数版本："></a>定制函数版本：</h4><ol>
-<li>example.c中定义函数<code>my_printf</code>：</li>
-</ol>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">my_printf</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* format)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%s&quot;</span>, format);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ol start="2">
-<li>version_script.txt中定义函数的版本为<code>VERSION_1</code>：</li>
-</ol>
-<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">VERSION_1 &#123;</span><br><span class="line"> global:</span><br><span class="line">   my_printf;</span><br><span class="line"> local:</span><br><span class="line">   *;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<ol start="3">
-<li>编译时指定<code>version_script.txt</code>为version-script：</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -shared -Wl,--version-script=version_script.txt -o libexample.so example.o</span><br></pre></td></tr></table></figure>
-
-<p>其中，<code>-Wl,</code>引出连接器选项。</p>
-<ol start="4">
-<li>查看：<ol>
-<li>使用<code>readelf -sW libexample.so</code>查看函数<code>my_printf</code>的版本号（”VERSION_1”）：</li>
-</ol>
-</li>
-</ol>
-<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Symbol table &#x27;.dynsym&#x27; contains 8 entries:</span><br><span class="line">   Num:    Value          Size Type    Bind   Vis      Ndx Name</span><br><span class="line">     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND </span><br><span class="line">     1: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_deregisterTMCloneTable</span><br><span class="line">     2: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND printf@GLIBC_2.2.5 (3)</span><br><span class="line">     3: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND __gmon_start__</span><br><span class="line">     4: 0000000000000000     0 NOTYPE  WEAK   DEFAULT  UND _ITM_registerTMCloneTable</span><br><span class="line">     5: 0000000000000000     0 FUNC    WEAK   DEFAULT  UND __cxa_finalize@GLIBC_2.2.5 (3)</span><br><span class="line">     6: 0000000000001105    39 FUNC    GLOBAL DEFAULT   13 my_printf@@VERSION_1</span><br><span class="line">     7: 0000000000000000     0 OBJECT  GLOBAL DEFAULT  ABS VERSION_1</span><br></pre></td></tr></table></figure>
-
-<ol start="2">
-<li>使用<code>objdump -T libexample.so</code></li>
-<li>使用<code>nm -D libexample.so</code></li>
-</ol>
-<h4 id="实现同一个函数有多个版本"><a href="#实现同一个函数有多个版本" class="headerlink" title="实现同一个函数有多个版本"></a>实现同一个函数有多个版本</h4><ol>
-<li>编写源代码</li>
-</ol>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;foo version 1.0\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo_v2</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;foo_v2 version 2.0\n&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ol start="2">
-<li>编写版本脚本</li>
-</ol>
-<p>例如，version_script.map文件如下：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">VERS_1.0 &#123;</span><br><span class="line">    global: <span class="comment"># global表示符号全局可见；默认为局部（也可能通过local显式声明为局部），不会被导出</span></span><br><span class="line">        foo;</span><br><span class="line">&#125; VERS_1.1;</span><br><span class="line"></span><br><span class="line">VERS_1.1 &#123;</span><br><span class="line">    global:</span><br><span class="line">        foo_v2;</span><br><span class="line">    foo; <span class="comment"># VER_1.1继承自VER_1.0</span></span><br><span class="line">         <span class="comment"># 1. foo在VER_1.0中已经声明为了global，不需要再次声明global</span></span><br><span class="line">         <span class="comment"># 2. 当然可以再次显式声明为global，但是这不是推荐的做法</span></span><br><span class="line">         <span class="comment"># 3. 假设foo在VER_1.0中不是global，此处声明为global，</span></span><br><span class="line">         <span class="comment"># 会将原本不是global的foo变得全局可见</span></span><br><span class="line">         <span class="comment"># 4. 我们其实无需再次导出foo，因为除非我们显式隐藏（使用local关键字），foo就在</span></span><br><span class="line">         <span class="comment"># VER_1.1是和VER_1.0中的可见性保持一致</span></span><br><span class="line">         <span class="comment"># 5. 如果希望在VER_1.1中的foo与VER_1.0有不同的行为，那么需要再次将其导出</span></span><br><span class="line">&#125; VERS_2.0;</span><br><span class="line"></span><br><span class="line">VERS_2.0 &#123;</span><br><span class="line">    global:</span><br><span class="line">        foo_v2</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<p>VER_1.1继承了VER_1.0的全部符号，同时VER_1.1可以增加或修改符号。</p>
-<p>VER_1.0：第一个版本，导出foo符号；<br>VER_1.1：第二个版本，引入foo_v2，并重新导出foo；</p>
-<h4 id="程序依赖的库版本"><a href="#程序依赖的库版本" class="headerlink" title="程序依赖的库版本"></a>程序依赖的库版本</h4><p>有如下简单代码：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// file: main.cc</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>正常编译：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ main.cc -o a.out</span><br></pre></td></tr></table></figure>
-
-<p>查看符号：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">strings a.out</span><br></pre></td></tr></table></figure>
-
-<p>你会发现其中有一些版本信息：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">GLIBC_2.2.5</span><br><span class="line">GLIBC_2.34</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
-
-<p>这是因为编译器和链接器生成库或可执行文件时，会根据系统上安装的glibc版本（因为库和可执行文件依赖glibc），<br>为库或可执行文件的函数符号附加上特定的版本信息。<br>为了保证向下兼容，glibc通过符号控制保留了多个版本的符号，支持老版本的软件能在较新的系统上运行。<br>例如，如果某个函数在glibc2.2.5中引入，它可以继续保留在之后的版本中，但符号标记为GLIBC_2.2.5。</p>
-<h3 id="ELF"><a href="#ELF" class="headerlink" title="ELF"></a>ELF</h3><pre><code>ELF - Executable and Linking Format.
-ELF描述了normal executable files、relocatable object files、core files和shared objects的格式。
-</code></pre>
-<p>参考：<code>man elf</code>, <a target="_blank" rel="noopener" href="http://chuquan.me/2018/05/21/elf-introduce/">博客:elf介绍</a>。</p>
-<h3 id="链接名"><a href="#链接名" class="headerlink" title="链接名"></a>链接名</h3><p>参考：<a target="_blank" rel="noopener" href="https://littlebee1024.github.io/learning_book/booknotes/cxydzwxy/link/dynamic/#_16">程序员的自我修养</a>, <code>man ld</code></p>
-<p>GCC的提供了不同的方法指定链接的共享库：</p>
-<ul>
-<li><p><code>l&lt;link_name&gt;</code>参数</p>
-<p>  指定需要链接的共享库lib<link_name>.so</p>
-</li>
-<li><p><code>l:&lt;filename&gt;</code>参数</p>
-<p>  通过文件名指定共享库，参考LD手册</p>
-</li>
-<li><p>全路径指定</p>
-</li>
-<li><p><code>Wl,-static</code>参数</p>
-<p>  指定查找静态库，通过-Wl,-Bdynamic恢复成动态库查找</p>
-</li>
-</ul>
-<h3 id="链接器选项"><a href="#链接器选项" class="headerlink" title="链接器选项"></a>链接器选项</h3><p>参考：<code>man ld</code></p>
-<pre><code>ld - The GNU linker
-</code></pre>
-<p>选项：</p>
-<pre><code>-rpath=dir
-    添加一个目录到运行时库搜寻路径中。
-</code></pre>
-<p>gcc通过 <code>-Wl</code> 前缀指定链接器选项，例如：</p>
-<pre><code> gcc -Wl,--start-group foo.o bar.o -Wl,--end-group
- gcc -Wl,-rpath,&#39;$ORIGIN/../lib&#39;
-
--rpath-link
-    用于在链接时指定额外的共享库搜索路径。在编译/链接阶段，告诉链接器去哪里找间接依赖的共享库。只影响构建过程，不影响运行时行为。
-    当你链接一个共享库（比如 libfoo.so），而这个库又依赖其他共享库（比如 libbar.so），如果这些依赖库不在标准路径中，链接器可能找不到它们。这时就可以用 -rpath-link 来告诉链接器去哪里找这些“间接依赖”的库。
-</code></pre>
-<table>
-<thead>
-<tr>
-<th>选项</th>
-<th>用途</th>
-<th>生效时间</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>-L</td>
-<td>添加库搜索路径</td>
-<td>链接时</td>
-</tr>
-<tr>
-<td>-rpath-link</td>
-<td>添加间接依赖库的搜索路径</td>
-<td>链接时</td>
-</tr>
-<tr>
-<td>-Wl,-rpath</td>
-<td>将路径写入可执行文件供运行时使用</td>
-<td>运行时</td>
-</tr>
-<tr>
-<td>LD_LIBRARY_PATH</td>
-<td>环境变量，指定运行时库路径</td>
-<td>运行时</td>
-</tr>
-</tbody></table>
-<h3 id="Tips"><a href="#Tips" class="headerlink" title="Tips"></a>Tips</h3><ol>
-<li><a target="_blank" rel="noopener" href="https://unix.stackexchange.com/questions/120015/how-to-find-out-the-dynamic-libraries-executables-loads-when-run">How to find out the dynamic libraries are loaded when running an executable?</a></li>
-</ol>
-<p>Answer:</p>
-<ul>
-<li><code>ldd /path/to/program</code></li>
-<li><code>objdump -p /path/to/program | grep NEEDED</code></li>
-<li><code>lddtree</code> (from <code>pax-utils</code>) or <code>readelf -d /bin/ls | grep &#39;NEEDED&#39;</code></li>
-<li><code>lsof -p PID | grep mem</code></li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ pidof nginx</span><br><span class="line">6920 6919</span><br><span class="line"></span><br><span class="line">$ lsof -p 6919 | grep mem</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><code>strace -e trace=open myprogram</code></li>
-</ul>
-<p><code>ldd</code> and <code>lsof</code> show the libraries loaded either directly or at a given moment. They do not account for libraries loaded via <code>dlopen</code> (or discarded by <code>dlclose</code>). You can get a better picture of this using <code>strace</code>.</p>
-<ul>
-<li><code>pmap &lt;pid&gt; -p</code></li>
-</ul>
-<h3 id="Notice"><a href="#Notice" class="headerlink" title="Notice"></a>Notice</h3><ol>
-<li><p>生成so时，链接器不会寻找其so依赖；executable会寻找so的依赖关系。换句话说，即使so生成过程不报错，但是executable生成时可能会报错。</p>
-</li>
-<li><p>生成so时，如果引用了其他 so ，只要 include 其他 so 的头文件，引用头文件中的符号时，就能编译通过。但是这样生成的 so 没有加上对应符号的依赖。<br>此时用 readelf -s 查看对应的符号，其 type 为 NOTYPE 。</p>
- <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ readelf -sW libb.so</span><br><span class="line"></span><br><span class="line">Symbol table &#x27;.dynsym&#x27; contains 14 entries:</span><br><span class="line">Num:    Value          Size Type    Bind   Vis      Ndx Name</span><br><span class="line"> 6: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT  UND _Z1fv</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>如果加上对应 -la 选项，就会从 liba.so 中寻找依赖的符号，如果找到，则添加进入 so 的依赖项中。当运行时则会加载 liba.so ，否则运行时不会加载。<br>用 readelf -s 查看对应的符号，其 type 不再时 NOTYPE ，而是 FUNC （如果该符号是一个函数的话）。</p>
- <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">6: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND _Z1fv</span><br></pre></td></tr></table></figure>
-
-<p>如果没有找到符号，或者说 liba.so 中根本没有实现这个函数，那么其 type 依然是 NOTYPE ，此时也不会报错。<br>注意：如果只是 include 头文件，也就说只有某个符号的声明，并没有其定义或引用它，那么 so 中不会生成其信息。</p>
-</li>
-</ol>
-<h2 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h2><h3 id="运行时错误：”-path-to-a-out-usr-lib-x86-64-linux-gnu-libstdc-so-6-version-GLIBCXX-3-4-30’-not-found-required-by-path-to-libxxx-so-”"><a href="#运行时错误：”-path-to-a-out-usr-lib-x86-64-linux-gnu-libstdc-so-6-version-GLIBCXX-3-4-30’-not-found-required-by-path-to-libxxx-so-”" class="headerlink" title="运行时错误：”&#x2F;path&#x2F;to&#x2F;a.out: &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;libstdc++.so.6: version &#96;GLIBCXX_3.4.30’ not found (required by &#x2F;path&#x2F;to&#x2F;libxxx.so)”"></a>运行时错误：”&#x2F;path&#x2F;to&#x2F;a.out: &#x2F;usr&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;libstdc++.so.6: version &#96;GLIBCXX_3.4.30’ not found (required by &#x2F;path&#x2F;to&#x2F;libxxx.so)”</h3><p>解释：<code>libxxx.so</code> 引用了一个 <code>GLIBCXX_3.4.30</code> 的符号（可能是全局变量或函数），但是在系统的 <code>/usr/lib/x86_64-linux-gnu/libstdc++.so.6</code> 中没有这个版本的符号。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ strings /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep <span class="string">&#x27;GLIBCXX_3.4.&#x27;</span></span><br><span class="line">GLIBCXX_3.4.1</span><br><span class="line">...</span><br><span class="line">GLIBCXX_3.4.27</span><br><span class="line">GLIBCXX_3.4.28</span><br><span class="line"><span class="comment"># 没有 GLIBCXX_3.4.30</span></span><br><span class="line"></span><br><span class="line">$ strings /path/to/libxxx.so | grep <span class="string">&#x27;GLIBCXX_3.4.30&#x27;</span> | c++filt</span><br><span class="line">GLIBCXX_3.4.30</span><br><span class="line">std::condition_variable::<span class="built_in">wait</span>(std::unique_lock&lt;std::mutex&gt;&amp;)@@GLIBCXX_3.4.30</span><br></pre></td></tr></table></figure>
-
-<p>这往往是因为原始的版本中，<code>libxxx.so</code> 是在一台机器中编译的，此时将该机器的 <code>GLIBCXX_3.4.30</code> 符号编译到其中了。但是运行时的机器是另一台，该机器上<br>不存在 <code>GLIBCXX_3.4.30</code> 版本，所以运行时报错。</p>
-<p>或者，因为环境变量的配置错误，编译时和运行时引用的 <code>libstdc++.so.6</code> 不是同一个，这也会导致运行时可能找不到编译时的 <code>GLIBCXX_3.4.30</code> 版本。</p>
-<p>可以在源文件中使用指定的版本（使用运行时的版本，比如 <code>GLIBCXX_3.4.11</code> ）：</p>
-<ol>
-<li>查找版本：</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ objdump -T /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep condition_variable | c++filt</span><br><span class="line">00000000000d52d0 g    DF .text  000000000000000c  GLIBCXX_3.4.30 std::condition_variable::<span class="built_in">wait</span>(std::unique_lock&lt;std::mutex&gt;&amp;)</span><br><span class="line">00000000000ac730 g    DF .text  000000000000001c (GLIBCXX_3.4.11) std::condition_variable::<span class="built_in">wait</span>(std::unique_lock&lt;std::mutex&gt;&amp;)</span><br><span class="line"></span><br><span class="line">$ objdump -T /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep condition_variable</span><br><span class="line">00000000000d52d0 g    DF .text  000000000000000c  GLIBCXX_3.4.30 _ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE</span><br><span class="line">00000000000ac730 g    DF .text  000000000000001c (GLIBCXX_3.4.11) _ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE</span><br></pre></td></tr></table></figure>
-
-<p>可以确定符号为 <code>_ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE</code> ，版本为 <code>GLIBCXX_3.4.11</code> 。</p>
-<p>在源文件中指定版本</p>
-<figure class="highlight cpp"><figcaption><span>symver</span><a href="/blog/downloads/code/symver.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** 指定特定版本的符号 START */</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __cplusplus</span></span><br><span class="line"><span class="keyword">extern</span> <span class="string">&quot;C&quot;</span> {</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">/** __cplusplus */</span></span></span><br><span class="line"></span><br><span class="line">__asm__ (<span class="string">&quot;.symver _ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE, _ZNSt18condition_variable4waitERSt11unique_lockISt5mutexE@GLIBCXX_3.4.11&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __cplusplus</span></span><br><span class="line">}</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">/** __cplusplus */</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/** 指定特定版本的符号 END */</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 之后就可以使用 std::condition_variable::wait(std::unique_lock&lt;std::mutex&gt;&amp;) 就是 GLIBCXX_3.4.11 的</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;condition_variable&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;mutex&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"> </span><br><span class="line">std::mutex m;</span><br><span class="line">std::condition_variable cv;</span><br><span class="line">std::string data;</span><br><span class="line"><span class="type">bool</span> ready = <span class="literal">false</span>;</span><br><span class="line"><span class="type">bool</span> processed = <span class="literal">false</span>;</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">worker_thread</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="comment">// wait until main() sends data</span></span><br><span class="line">    <span class="function">std::unique_lock <span class="title">lk</span><span class="params">(m)</span></span>;</span><br><span class="line">    cv.<span class="built_in">wait</span>(lk, []{ <span class="keyword">return</span> ready; });</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// after the wait, we own the lock</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Worker thread is processing data\n&quot;</span>;</span><br><span class="line">    data += <span class="string">&quot; after processing&quot;</span>;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// send data back to main()</span></span><br><span class="line">    processed = <span class="literal">true</span>;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Worker thread signals data processing completed\n&quot;</span>;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// manual unlocking is done before notifying, to avoid waking up</span></span><br><span class="line">    <span class="comment">// the waiting thread only to block again (see notify_one for details)</span></span><br><span class="line">    lk.<span class="built_in">unlock</span>();</span><br><span class="line">    cv.<span class="built_in">notify_one</span>();</span><br><span class="line">}</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="function">std::thread <span class="title">worker</span><span class="params">(worker_thread)</span></span>;</span><br><span class="line"> </span><br><span class="line">    data = <span class="string">&quot;Example data&quot;</span>;</span><br><span class="line">    <span class="comment">// send data to the worker thread</span></span><br><span class="line">    {</span><br><span class="line">        <span class="function">std::lock_guard <span class="title">lk</span><span class="params">(m)</span></span>;</span><br><span class="line">        ready = <span class="literal">true</span>;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;main() signals data ready for processing\n&quot;</span>;</span><br><span class="line">    }</span><br><span class="line">    cv.<span class="built_in">notify_one</span>();</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// wait for the worker</span></span><br><span class="line">    {</span><br><span class="line">        <span class="function">std::unique_lock <span class="title">lk</span><span class="params">(m)</span></span>;</span><br><span class="line">        cv.<span class="built_in">wait</span>(lk, []{ <span class="keyword">return</span> processed; });</span><br><span class="line">    }</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Back in main(), data = &quot;</span> &lt;&lt; data &lt;&lt; <span class="string">&#x27;\n&#x27;</span>;</span><br><span class="line"> </span><br><span class="line">    worker.<span class="built_in">join</span>();</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-<p>编译：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ symver.cpp</span><br></pre></td></tr></table></figure>
-
-<p>验证符号版本：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ strings a.out | grep condition_variable | c++filt</span><br><span class="line">std::condition_variable::<span class="built_in">wait</span>(std::unique_lock&lt;std::mutex&gt;&amp;)</span><br><span class="line">std::condition_variable::<span class="built_in">wait</span>(std::unique_lock&lt;std::mutex&gt;&amp;)@GLIBCXX_3.4.11</span><br></pre></td></tr></table></figure>
-
-<h2 id="手动加载so"><a href="#手动加载so" class="headerlink" title="手动加载so"></a>手动加载so</h2><p>示例代码：</p>
-<figure class="highlight cpp"><figcaption><span>dlopen.cpp</span><a href="/blog/downloads/code/compile/dlopen.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;dlfcn.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*<span class="type">func_t</span>)</span><span class="params">()</span></span>;  <span class="comment">// 定义函数指针类型</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="comment">// 打开 .so 文件</span></span><br><span class="line">    <span class="type">void</span> *handle = <span class="built_in">dlopen</span>(<span class="string">&quot;your_library.so&quot;</span>, RTLD_LAZY);</span><br><span class="line">    <span class="keyword">if</span> (!handle) {</span><br><span class="line">        <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;%s\n&quot;</span>, <span class="built_in">dlerror</span>());</span><br><span class="line">        <span class="built_in">exit</span>(EXIT_FAILURE);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 清除任何现有的错误</span></span><br><span class="line">    <span class="built_in">dlerror</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 读取符号</span></span><br><span class="line">    <span class="comment">// void (*func)(); // 方法一：声明并定义函数指针</span></span><br><span class="line">    <span class="type">func_t</span> func;  <span class="comment">// 方法二：定义函数指针</span></span><br><span class="line">    <span class="comment">// 以下四种方法/写法都可以用于将 dlsym 返回的 void* 赋值给函数指针</span></span><br><span class="line">    <span class="comment">// (1) *(void **) (&amp;func) = dlsym(handle, &quot;your_function&quot;);</span></span><br><span class="line">    <span class="comment">//    解释：取函数指针 func 的地址，将其转为 void**，然后将 dlsym 返回的 void* 赋值给它解引用后的变量（即 func）</span></span><br><span class="line">    <span class="comment">// (2) func = (void (*)())dlsym(handle, &quot;your_function&quot;);</span></span><br><span class="line">    <span class="comment">// (3) func = reinterpret_cast&lt;func_t&gt;(dlsym(handle, &quot;your_function&quot;));</span></span><br><span class="line">    <span class="comment">// (4) 如下</span></span><br><span class="line">    func = (<span class="type">func_t</span>)<span class="built_in">dlsym</span>(handle, <span class="string">&quot;your_function&quot;</span>);</span><br><span class="line">    <span class="type">char</span> *error = <span class="built_in">dlerror</span>();</span><br><span class="line">    <span class="keyword">if</span> (error != <span class="literal">NULL</span>) {</span><br><span class="line">        <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;%s\n&quot;</span>, error);</span><br><span class="line">        <span class="built_in">exit</span>(EXIT_FAILURE);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调用符号</span></span><br><span class="line">    <span class="built_in">func</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 关闭 .so 文件</span></span><br><span class="line">    <span class="built_in">dlclose</span>(handle);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/cpp/C++%E7%BC%BA%E9%99%B7/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/cpp/C++%E7%BC%BA%E9%99%B7/" class="post-title-link" itemprop="url">C++ 缺陷</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 21:33:51" itemprop="dateCreated datePublished" datetime="2024-01-23T21:33:51+00:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="basic-string-M-construct-null-not-valid"><a href="#basic-string-M-construct-null-not-valid" class="headerlink" title="basic_string::_M_construct null not valid"></a>basic_string::_M_construct null not valid</h2><p>C++有一个缺陷，请看以下代码：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//cpp defeat: basic_string::_M_construct null not valid</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(string s)</span> </span>&#123;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;fun&quot;</span> &lt;&lt; endl;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">fun</span>(<span class="number">0</span>); <span class="comment">// Run-time error: basic_string::_M_construct null not valid</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>其中，<code>fun(0)</code>的<code>0</code>会被视为<code>const char*</code>类型，也就是<code>nullptr</code>，所以在编译期可以通过。<br>但是运行期会触发<code>string</code>对象的构造错误“basic_string::_M_construct null not valid”。</p>
-<p>隐蔽一点的代码：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">char</span> * <span class="title">get_a_string</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Attention: Alaways take care that a parameter to a string should not be NULL!</span></span><br><span class="line">    <span class="built_in">fun</span>(<span class="built_in">get_a_string</span>()); <span class="comment">// Run-time error: basic_string::_M_construct null not valid</span></span><br><span class="line">    <span class="comment">// Better code</span></span><br><span class="line">    <span class="type">char</span> * str = <span class="built_in">get_a_string</span>();</span><br><span class="line">    <span class="built_in">fun</span>(str != <span class="literal">NULL</span>? str : <span class="string">&quot;&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/blog/page/7/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/7/">7</a><span class="page-number current">8</span><a class="page-number" href="/blog/page/9/">9</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/11/">11</a><a class="extend next" rel="next" href="/blog/page/9/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+    <a class="extend prev" rel="prev" href="/blog/page/7/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/7/">7</a><span class="page-number current">8</span><a class="page-number" href="/blog/page/9/">9</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/12/">12</a><a class="extend next" rel="next" href="/blog/page/9/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -1778,20 +1889,20 @@ ELF描述了normal executable files、relocatable object files、core files和sh
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">108</span>
+          <span class="site-state-item-count">115</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-count">15</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">47</span>
+        <span class="site-state-item-count">49</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

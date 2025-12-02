@@ -188,6 +188,1345 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/12/02/perf/numa/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/12/02/perf/numa/" class="post-title-link" itemprop="url">NUMA节点详解</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2025-12-02 13:44:25 / Modified: 14:58:39" itemprop="dateCreated datePublished" datetime="2025-12-02T13:44:25+00:00">2025-12-02</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="1-NUMA概念"><a href="#1-NUMA概念" class="headerlink" title="1. NUMA概念"></a>1. NUMA概念</h2><p>NUMA（Non-Uniform Memory Access，非统一内存访问）是一种计算机内存设计架构，主要用于多处理器系统中。</p>
+<p>在NUMA架构中：</p>
+<ul>
+<li>每个CPU处理器都有本地内存（Local Memory），访问速度较快</li>
+<li>每个CPU也可以访问其他CPU的内存（Remote Memory），但访问速度较慢</li>
+<li>多个CPU和其本地内存组成一个NUMA节点（NUMA Node）</li>
+<li>系统通过NUMA拓扑来管理内存和CPU的分配</li>
+</ul>
+<p><strong>NUMA架构的优势：</strong></p>
+<ul>
+<li>减少内存访问延迟（本地内存访问更快）</li>
+<li>提高系统整体性能</li>
+<li>支持更大规模的多处理器系统</li>
+</ul>
+<p><strong>NUMA架构的挑战：</strong></p>
+<ul>
+<li>需要合理分配进程和内存到对应的NUMA节点</li>
+<li>跨节点访问内存会带来性能损失</li>
+<li>需要应用程序或系统管理员进行优化</li>
+</ul>
+<h2 id="2-CPU亲和性概念"><a href="#2-CPU亲和性概念" class="headerlink" title="2. CPU亲和性概念"></a>2. CPU亲和性概念</h2><p><strong>CPU亲和性（CPU Affinity）</strong>是指将进程或线程绑定到特定的CPU核心上运行的机制。通过设置CPU亲和性，可以：</p>
+<ol>
+<li><strong>提高缓存命中率</strong>：进程始终运行在同一个CPU核心上，可以更好地利用CPU的L1&#x2F;L2&#x2F;L3缓存</li>
+<li><strong>减少进程迁移开销</strong>：避免进程在不同CPU核心间频繁迁移带来的性能损失</li>
+<li><strong>资源隔离</strong>：将不同进程绑定到不同CPU核心，实现资源隔离和负载均衡</li>
+</ol>
+<p><strong>CPU亲和性的类型：</strong></p>
+<ul>
+<li><strong>硬亲和性（Hard Affinity）</strong>：强制绑定，进程&#x2F;线程<strong>只能</strong>运行在指定的CPU核心上，调度器会严格遵循这个限制<ul>
+<li>例如：如果绑定到CPU 0，进程&#x2F;线程就<strong>只能</strong>调度到CPU 0上运行，<strong>不能</strong>调度到CPU 1或其他CPU核心上</li>
+<li>通过 <code>sched_setaffinity()</code>、<code>taskset</code>、<code>numactl --cpunodebind</code>、<code>cgroup cpuset.cpus</code> 等方法设置</li>
+</ul>
+</li>
+<li><strong>软亲和性（Soft Affinity）</strong>：偏好设置，系统会尽量将进程调度到指定的CPU核心，但不强制<ul>
+<li>这是调度器的默认行为，在没有显式设置CPU亲和性时，调度器会尽量保持进程在同一个CPU核心上运行</li>
+</ul>
+</li>
+</ul>
+<p><strong>注意事项：</strong></p>
+<ul>
+<li>CPU亲和性设置会影响操作系统的调度器行为</li>
+<li>过度绑定可能导致CPU负载不均衡</li>
+<li>即使通过硬亲和性强制绑定到单个CPU核心，进程仍可能创建多个线程，这些线程会在该CPU核心上通过时间片轮转的方式轮流调度执行</li>
+</ul>
+<p><strong>并行库适配说明：</strong></p>
+<p>CPU绑定（如 <code>taskset</code>、<code>sched_setaffinity</code>、<code>numactl --cpunodebind</code>）是<strong>硬亲和性</strong>（强制性的），能有效限制并行库的线程数。例如，TBB（Threading Building Blocks）在初始化时会根据操作系统报告的硬件资源（通过 <code>sysconf(_SC_NPROCESSORS_ONLN)</code> 等API）来决定线程池大小和调度策略。如果使用 <code>taskset</code> 或 <code>numactl</code> 将进程绑定到部分CPU核心，TBB只会看到这些CPU核心，从而自动调整线程池大小。这意味着通过限制可见的CPU资源，可以间接控制并行库的行为。</p>
+<p><strong>NUMA架构下CPU亲和性的特殊性：</strong></p>
+<p>在NUMA架构系统中，CPU亲和性具有特殊的重要性：</p>
+<ol>
+<li><p><strong>内存访问性能依赖CPU位置</strong>：</p>
+<ul>
+<li>进程运行在节点A的CPU上，如果内存分配在节点B，会产生远程内存访问，性能显著下降</li>
+<li>因此，NUMA架构下的CPU亲和性设置必须配合内存分配策略，才能获得最佳性能</li>
+</ul>
+</li>
+<li><p><strong>节点级别的CPU绑定</strong>：</p>
+<ul>
+<li>在NUMA系统中，通常以NUMA节点为单位进行CPU绑定，而不是单个CPU核心</li>
+<li>绑定到某个NUMA节点的CPU意味着可以使用该节点的所有CPU核心，同时配合该节点的本地内存</li>
+</ul>
+</li>
+<li><p><strong>CPU亲和性与内存策略的协同</strong>：</p>
+<ul>
+<li>仅设置CPU亲和性而不设置内存策略可能导致远程内存访问</li>
+<li>NUMA优化需要同时考虑CPU绑定和内存分配策略</li>
+</ul>
+</li>
+</ol>
+<p><strong>总结</strong>：NUMA架构是CPU亲和性在多处理器系统中的特殊应用场景。在NUMA系统中，CPU亲和性不仅影响CPU调度，还直接影响内存访问性能，因此需要与内存分配策略协同使用。</p>
+<h2 id="3-CPU亲和性的设置"><a href="#3-CPU亲和性的设置" class="headerlink" title="3. CPU亲和性的设置"></a>3. CPU亲和性的设置</h2><h3 id="方法对比总览"><a href="#方法对比总览" class="headerlink" title="方法对比总览"></a>方法对比总览</h3><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>易用性</th>
+<th>NUMA感知</th>
+<th>内存控制</th>
+<th>CPU绑定类型</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>taskset</strong></td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>❌</td>
+<td>❌</td>
+<td>✅ 硬亲和性</td>
+<td>简单CPU绑定</td>
+</tr>
+<tr>
+<td><strong>sched_setaffinity</strong></td>
+<td>⭐⭐⭐</td>
+<td>❌</td>
+<td>❌</td>
+<td>✅ 硬亲和性</td>
+<td>程序内部控制</td>
+</tr>
+<tr>
+<td><strong>cgroup</strong></td>
+<td>⭐⭐</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅ 硬亲和性</td>
+<td>系统级资源管理</td>
+</tr>
+<tr>
+<td><strong>numactl</strong></td>
+<td>⭐⭐⭐⭐</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅ 硬亲和性</td>
+<td>NUMA优化（详见NUMA章节）</td>
+</tr>
+</tbody></table>
+<h3 id="方法一：taskset（通用CPU绑定）"><a href="#方法一：taskset（通用CPU绑定）" class="headerlink" title="方法一：taskset（通用CPU绑定）"></a>方法一：taskset（通用CPU绑定）</h3><p><code>taskset</code> 是一个用于设置或查看进程CPU亲和性的命令行工具，适用于所有系统（包括非NUMA系统）。</p>
+<p><strong>基本用法：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看进程的CPU亲和性</span></span><br><span class="line">taskset -p &lt;pid&gt;</span><br><span class="line">taskset -<span class="built_in">cp</span> &lt;pid&gt;  <span class="comment"># 更易读的格式</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置进程的CPU亲和性（使用CPU掩码）</span></span><br><span class="line">taskset -p 0x3 &lt;pid&gt;  <span class="comment"># 绑定到CPU 0和1（二进制：11）</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用CPU列表格式</span></span><br><span class="line">taskset -<span class="built_in">cp</span> 0,1,2,3 &lt;pid&gt;  <span class="comment"># 绑定到CPU 0,1,2,3</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动新进程并设置CPU亲和性</span></span><br><span class="line">taskset -c 0-3 ./your_program  <span class="comment"># 绑定到CPU 0-3</span></span><br><span class="line">taskset -c 0,2,4,6 ./your_program  <span class="comment"># 绑定到CPU 0,2,4,6</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>taskset的特点：</strong></p>
+<ul>
+<li>✅ 简单易用，命令行工具</li>
+<li>✅ 直接指定CPU编号，精确控制</li>
+<li>✅ CPU绑定是<strong>硬亲和性</strong>（强制绑定）</li>
+<li>❌ 不感知NUMA拓扑结构</li>
+<li>❌ 无法控制内存分配策略</li>
+</ul>
+<p><strong>适用场景：</strong></p>
+<ul>
+<li>非NUMA系统（单节点系统）</li>
+<li>只需要简单的CPU绑定，不关心内存位置</li>
+<li>系统没有NUMA架构</li>
+</ul>
+<h3 id="方法二：sched-setaffinity系统调用"><a href="#方法二：sched-setaffinity系统调用" class="headerlink" title="方法二：sched_setaffinity系统调用"></a>方法二：sched_setaffinity系统调用</h3><p><code>sched_setaffinity()</code> 是Linux系统提供的系统调用，用于设置进程或线程的CPU亲和性。这是 <code>taskset</code> 命令的底层实现。</p>
+<p><strong>C语言示例：</strong></p>
+<figure class="highlight c"><figcaption><span>sched_setaffinity.c</span><a href="/blog/downloads/code/perf/numa/sched_setaffinity.c">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> _GNU_SOURCE</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sched.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> {</span><br><span class="line">    <span class="type">cpu_set_t</span> cpuset;</span><br><span class="line">    CPU_ZERO(&amp;cpuset);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 设置CPU亲和性：绑定到CPU 0和1</span></span><br><span class="line">    CPU_SET(<span class="number">0</span>, &amp;cpuset);</span><br><span class="line">    CPU_SET(<span class="number">1</span>, &amp;cpuset);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 设置当前进程的CPU亲和性</span></span><br><span class="line">    <span class="keyword">if</span> (sched_setaffinity(<span class="number">0</span>, <span class="keyword">sizeof</span>(cpuset), &amp;cpuset) != <span class="number">0</span>) {</span><br><span class="line">        perror(<span class="string">&quot;sched_setaffinity failed&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 验证设置结果</span></span><br><span class="line">    CPU_ZERO(&amp;cpuset);</span><br><span class="line">    <span class="keyword">if</span> (sched_getaffinity(<span class="number">0</span>, <span class="keyword">sizeof</span>(cpuset), &amp;cpuset) != <span class="number">0</span>) {</span><br><span class="line">        perror(<span class="string">&quot;sched_getaffinity failed&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;进程绑定到CPU: &quot;</span>);</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; CPU_SETSIZE; i++) {</span><br><span class="line">        <span class="keyword">if</span> (CPU_ISSET(i, &amp;cpuset)) {</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;%d &quot;</span>, i);</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;\n&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p><strong>多线程示例：</strong></p>
+<figure class="highlight c"><figcaption><span>sched_setaffinity_threads.c</span><a href="/blog/downloads/code/perf/numa/sched_setaffinity_threads.c">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> _GNU_SOURCE</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sched.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> NUM_THREADS 4</span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">worker_thread</span><span class="params">(<span class="type">void</span> *arg)</span> {</span><br><span class="line">    <span class="type">int</span> thread_id = *(<span class="type">int</span> *)arg;</span><br><span class="line">    <span class="type">cpu_set_t</span> cpuset;</span><br><span class="line">    CPU_ZERO(&amp;cpuset);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 每个线程绑定到不同的CPU</span></span><br><span class="line">    CPU_SET(thread_id, &amp;cpuset);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 设置线程的CPU亲和性</span></span><br><span class="line">    <span class="keyword">if</span> (pthread_setaffinity_np(pthread_self(), <span class="keyword">sizeof</span>(cpuset), &amp;cpuset) != <span class="number">0</span>) {</span><br><span class="line">        perror(<span class="string">&quot;pthread_setaffinity_np failed&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 获取当前运行的CPU</span></span><br><span class="line">    <span class="type">int</span> cpu = sched_getcpu();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;线程 %d 运行在CPU %d\n&quot;</span>, thread_id, cpu);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> {</span><br><span class="line">    <span class="type">pthread_t</span> threads[NUM_THREADS];</span><br><span class="line">    <span class="type">int</span> thread_ids[NUM_THREADS];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; NUM_THREADS; i++) {</span><br><span class="line">        thread_ids[i] = i;</span><br><span class="line">        pthread_create(&amp;threads[i], <span class="literal">NULL</span>, worker_thread, &amp;thread_ids[i]);</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; NUM_THREADS; i++) {</span><br><span class="line">        pthread_join(threads[i], <span class="literal">NULL</span>);</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p>编译命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -o sched_affinity sched_affinity.c -lpthread</span><br></pre></td></tr></table></figure>
+
+<p><strong>API说明：</strong></p>
+<ul>
+<li><code>sched_setaffinity(pid_t pid, size_t cpusetsize, const cpu_set_t *mask)</code>：设置进程的CPU亲和性<ul>
+<li><code>pid = 0</code>：设置当前进程</li>
+<li><code>pid &gt; 0</code>：设置指定进程</li>
+</ul>
+</li>
+<li><code>sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask)</code>：获取进程的CPU亲和性</li>
+<li><code>pthread_setaffinity_np(pthread_t thread, size_t cpusetsize, const cpu_set_t *mask)</code>：设置线程的CPU亲和性</li>
+<li><code>pthread_getaffinity_np(pthread_t thread, size_t cpusetsize, cpu_set_t *mask)</code>：获取线程的CPU亲和性</li>
+</ul>
+<p><strong>sched_setaffinity的特点：</strong></p>
+<ul>
+<li>✅ 系统级API，功能强大</li>
+<li>✅ 可以在程序内部精确控制CPU绑定</li>
+<li>✅ 支持进程和线程级别的绑定</li>
+<li>✅ CPU绑定是<strong>硬亲和性</strong>（强制绑定）</li>
+<li>❌ 需要编写代码，不如命令行工具方便</li>
+<li>❌ 不感知NUMA拓扑</li>
+</ul>
+<p><strong>使用场景：</strong></p>
+<ul>
+<li>需要在程序运行时动态调整CPU绑定</li>
+<li>需要为不同线程设置不同的CPU亲和性</li>
+<li>需要精确控制CPU绑定的应用程序</li>
+</ul>
+<h3 id="方法三：cgroup（系统级资源管理）"><a href="#方法三：cgroup（系统级资源管理）" class="headerlink" title="方法三：cgroup（系统级资源管理）"></a>方法三：cgroup（系统级资源管理）</h3><p>cgroup是Linux内核提供的资源管理机制，可以通过cgroup v1或cgroup v2来限制进程组的CPU使用。</p>
+<p><strong>cgroup v1方法：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建cgroup</span></span><br><span class="line">sudo <span class="built_in">mkdir</span> -p /sys/fs/cgroup/cpuset/mygroup</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置可用的CPU核心（例如CPU 0-3）</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;0-3&quot;</span> | sudo <span class="built_in">tee</span> /sys/fs/cgroup/cpuset/mygroup/cpuset.cpus</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置内存节点（NUMA节点，如果系统支持）</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;0&quot;</span> | sudo <span class="built_in">tee</span> /sys/fs/cgroup/cpuset/mygroup/cpuset.mems</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将进程添加到cgroup</span></span><br><span class="line"><span class="built_in">echo</span> &lt;pid&gt; | sudo <span class="built_in">tee</span> /sys/fs/cgroup/cpuset/mygroup/cgroup.procs</span><br><span class="line"></span><br><span class="line"><span class="comment"># 或者启动新进程</span></span><br><span class="line">sudo cgexec -g cpuset:mygroup ./your_program</span><br></pre></td></tr></table></figure>
+
+<p><strong>cgroup v2方法：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 挂载cgroup v2（如果未挂载）</span></span><br><span class="line">sudo mount -t cgroup2 none /sys/fs/cgroup2</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建cgroup</span></span><br><span class="line">sudo <span class="built_in">mkdir</span> -p /sys/fs/cgroup2/mygroup</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置CPU范围（例如CPU 0-3）</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;0-3&quot;</span> | sudo <span class="built_in">tee</span> /sys/fs/cgroup2/mygroup/cpuset.cpus</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置内存节点（如果系统支持）</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;0&quot;</span> | sudo <span class="built_in">tee</span> /sys/fs/cgroup2/mygroup/cpuset.mems</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将进程添加到cgroup</span></span><br><span class="line"><span class="built_in">echo</span> &lt;pid&gt; | sudo <span class="built_in">tee</span> /sys/fs/cgroup2/mygroup/cgroup.procs</span><br></pre></td></tr></table></figure>
+
+<p><strong>systemd使用cgroup：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建systemd服务单元文件</span></span><br><span class="line">sudo systemd-run --unit=myapp --scope \</span><br><span class="line">    --property=CPUSetCPUs=0-3 \</span><br><span class="line">    --property=CPUSetMems=0 \</span><br><span class="line">    ./your_program</span><br></pre></td></tr></table></figure>
+
+<p><strong>cgroup的特点：</strong></p>
+<ul>
+<li>✅ 系统级资源管理，功能强大</li>
+<li>✅ 支持NUMA感知（可以设置内存节点）</li>
+<li>✅ 可以同时管理CPU和内存</li>
+<li>✅ 支持进程组管理</li>
+<li>✅ <strong>硬亲和性</strong>（强制绑定），保证进程组只在指定CPU上运行</li>
+<li>⚠️ 需要root权限</li>
+<li>⚠️ 配置相对复杂</li>
+</ul>
+<p><strong>使用场景：</strong></p>
+<ul>
+<li>容器化环境（Docker、Kubernetes等）</li>
+<li>需要同时管理多个进程的资源分配</li>
+<li>需要持久化的资源限制配置</li>
+<li>系统级资源管理需求</li>
+</ul>
+<h2 id="4-NUMA的设置"><a href="#4-NUMA的设置" class="headerlink" title="4. NUMA的设置"></a>4. NUMA的设置</h2><h3 id="查询和监控NUMA信息"><a href="#查询和监控NUMA信息" class="headerlink" title="查询和监控NUMA信息"></a>查询和监控NUMA信息</h3><h4 id="1-查看NUMA节点拓扑"><a href="#1-查看NUMA节点拓扑" class="headerlink" title="1. 查看NUMA节点拓扑"></a>1. 查看NUMA节点拓扑</h4><p>使用 <code>numactl --hardware</code> 命令查看NUMA硬件信息：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">$ numactl --hardware</span><br><span class="line">available: 2 nodes (0-1)</span><br><span class="line">node 0 cpus: 0 1 2 3 8 9 10 11</span><br><span class="line">node 0 size: 16384 MB</span><br><span class="line">node 0 free: 1024 MB</span><br><span class="line">node 1 cpus: 4 5 6 7 12 13 14 15</span><br><span class="line">node 1 size: 16384 MB</span><br><span class="line">node 1 free: 2048 MB</span><br><span class="line">node distances:</span><br><span class="line">node   0   1</span><br><span class="line">  0:  10  21</span><br><span class="line">  1:  21  10</span><br></pre></td></tr></table></figure>
+
+<p><strong>结果说明：</strong></p>
+<ul>
+<li><code>available: 2 nodes (0-1)</code>: 系统有2个NUMA节点，编号为0和1</li>
+<li><code>node 0 cpus: 0 1 2 3 8 9 10 11</code>: 节点0包含的CPU核心编号</li>
+<li><code>node 0 size: 16384 MB</code>: 节点0的内存大小（16GB）</li>
+<li><code>node 0 free: 1024 MB</code>: 节点0的可用内存</li>
+<li><code>node distances</code>: 节点间访问距离矩阵<ul>
+<li>节点0到节点0的距离是10（本地访问）</li>
+<li>节点0到节点1的距离是21（远程访问，距离越大性能越差）</li>
+</ul>
+</li>
+</ul>
+<h4 id="2-查看CPU和NUMA节点的映射关系"><a href="#2-查看CPU和NUMA节点的映射关系" class="headerlink" title="2. 查看CPU和NUMA节点的映射关系"></a>2. 查看CPU和NUMA节点的映射关系</h4><p>使用 <code>lscpu</code> 命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ lscpu | grep -i numa</span><br><span class="line">NUMA node(s):          2</span><br><span class="line">NUMA node0 CPU(s):     0-3,8-11</span><br><span class="line">NUMA node1 CPU(s):     4-7,12-15</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-查看NUMA统计信息"><a href="#3-查看NUMA统计信息" class="headerlink" title="3. 查看NUMA统计信息"></a>3. 查看NUMA统计信息</h4><p>使用 <code>numastat</code> 查看NUMA统计信息：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ numastat</span><br><span class="line">                           node0           node1</span><br><span class="line">numa_hit             12345678901     23456789012</span><br><span class="line">numa_miss              123456789       234567890</span><br><span class="line">numa_foreign           234567890       123456789</span><br><span class="line">interleave_hit             12345           12345</span><br><span class="line">local_node           12345678901     23456789012</span><br><span class="line">other_node              123456789       234567890</span><br></pre></td></tr></table></figure>
+
+<h4 id="4-查看进程的NUMA策略"><a href="#4-查看进程的NUMA策略" class="headerlink" title="4. 查看进程的NUMA策略"></a>4. 查看进程的NUMA策略</h4><p>使用 <code>numactl --show</code> 查看当前进程的NUMA策略：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ numactl --show</span><br><span class="line">policy: default</span><br><span class="line">preferred node: current</span><br><span class="line">physcpubind: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15</span><br><span class="line">cpubind: 0 1</span><br><span class="line">nodebind: 0 1</span><br><span class="line">membind: 0 1</span><br></pre></td></tr></table></figure>
+
+<h4 id="5-查看系统NUMA节点详细信息"><a href="#5-查看系统NUMA节点详细信息" class="headerlink" title="5. 查看系统NUMA节点详细信息"></a>5. 查看系统NUMA节点详细信息</h4><p>查看 <code>/sys/devices/system/node/</code> 目录：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">ls</span> /sys/devices/system/node/</span><br><span class="line">node0  node1</span><br><span class="line"></span><br><span class="line">$ <span class="built_in">cat</span> /sys/devices/system/node/node0/cpulist</span><br><span class="line">0-3,8-11</span><br><span class="line"></span><br><span class="line">$ <span class="built_in">cat</span> /sys/devices/system/node/node0/meminfo</span><br><span class="line">Node 0 MemTotal:       16777216 kB</span><br><span class="line">Node 0 MemFree:         1048576 kB</span><br><span class="line">Node 0 MemUsed:       15728640 kB</span><br></pre></td></tr></table></figure>
+
+<h3 id="numactl：NUMA架构下的CPU亲和性和内存策略工具"><a href="#numactl：NUMA架构下的CPU亲和性和内存策略工具" class="headerlink" title="numactl：NUMA架构下的CPU亲和性和内存策略工具"></a>numactl：NUMA架构下的CPU亲和性和内存策略工具</h3><p><code>numactl</code> 是NUMA架构优化的首选工具，可以同时控制CPU和内存分配策略。</p>
+<p><strong>基本用法：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 将进程绑定到节点0的CPU和内存（CPU是硬亲和性，内存是强制绑定）</span></span><br><span class="line">numactl --cpunodebind=0 --membind=0 ./your_program</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用节点0的CPU（硬亲和性），但允许使用所有节点的内存</span></span><br><span class="line">numactl --cpunodebind=0 ./your_program</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用节点0和1的CPU（硬亲和性），优先使用节点0的内存（偏好设置）</span></span><br><span class="line">numactl --cpunodebind=0,1 --preferred=0 ./your_program</span><br><span class="line"></span><br><span class="line"><span class="comment"># 只绑定内存到节点0（强制绑定），CPU可以使用所有节点</span></span><br><span class="line">numactl --membind=0 ./your_program</span><br><span class="line"></span><br><span class="line"><span class="comment"># 交错分配内存到多个节点</span></span><br><span class="line">numactl --interleave=all ./your_program</span><br></pre></td></tr></table></figure>
+
+<p><strong>numactl选项说明：</strong></p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>CPU绑定类型</th>
+<th>内存绑定类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--cpunodebind=&lt;nodes&gt;</code></td>
+<td>✅ <strong>硬亲和性（强制绑定）</strong></td>
+<td>-</td>
+<td>进程只能运行在指定节点的CPU上</td>
+</tr>
+<tr>
+<td><code>--membind=&lt;nodes&gt;</code></td>
+<td>-</td>
+<td>✅ <strong>强制绑定</strong></td>
+<td>内存只能从指定节点分配</td>
+</tr>
+<tr>
+<td><code>--preferred=&lt;node&gt;</code></td>
+<td>-</td>
+<td>⚠️ <strong>偏好设置</strong></td>
+<td>优先从指定节点分配内存，但允许从其他节点分配</td>
+</tr>
+<tr>
+<td><code>--interleave=&lt;nodes&gt;</code></td>
+<td>-</td>
+<td>⚠️ <strong>交错分配</strong></td>
+<td>在指定节点间轮询分配内存</td>
+</tr>
+<tr>
+<td><code>--localalloc</code></td>
+<td>-</td>
+<td>⚠️ <strong>本地优先</strong></td>
+<td>优先在本地节点分配内存</td>
+</tr>
+</tbody></table>
+<p><strong>详细说明：</strong></p>
+<ul>
+<li><code>--cpunodebind=&lt;nodes&gt;</code>：将进程绑定到指定NUMA节点的CPU（硬亲和性，强制绑定）<ul>
+<li>示例：<code>--cpunodebind=0</code> 绑定到节点0的所有CPU</li>
+<li>示例：<code>--cpunodebind=0,1</code> 绑定到节点0和1的所有CPU</li>
+</ul>
+</li>
+<li><code>--membind=&lt;nodes&gt;</code>：设置内存分配策略为强制绑定到指定节点（强制）<ul>
+<li>示例：<code>--membind=0</code> 内存只能从节点0分配</li>
+<li>如果节点0内存不足，进程可能无法运行</li>
+</ul>
+</li>
+<li><code>--preferred=&lt;node&gt;</code>：设置内存分配偏好节点（偏好设置）<ul>
+<li>示例：<code>--preferred=0</code> 优先从节点0分配内存</li>
+<li>如果节点0内存不足，允许从其他节点分配</li>
+</ul>
+</li>
+<li><code>--interleave=&lt;nodes&gt;</code>：在多个节点间交错分配内存<ul>
+<li>示例：<code>--interleave=0,1</code> 在节点0和1间轮询分配</li>
+<li>适用于需要均匀使用多个节点内存的场景</li>
+</ul>
+</li>
+</ul>
+<p><strong>taskset与numactl的区别：</strong></p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>taskset</th>
+<th>numactl</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>主要功能</strong></td>
+<td>CPU亲和性设置</td>
+<td>NUMA节点和内存策略管理</td>
+</tr>
+<tr>
+<td><strong>CPU绑定</strong></td>
+<td>✅ 支持（基于CPU编号）</td>
+<td>✅ 支持（基于NUMA节点）</td>
+</tr>
+<tr>
+<td><strong>内存管理</strong></td>
+<td>❌ 不支持</td>
+<td>✅ 支持（内存节点绑定）</td>
+</tr>
+<tr>
+<td><strong>NUMA感知</strong></td>
+<td>❌ 不感知NUMA拓扑</td>
+<td>✅ 完全NUMA感知</td>
+</tr>
+<tr>
+<td><strong>使用场景</strong></td>
+<td>简单的CPU绑定需求</td>
+<td>NUMA架构优化</td>
+</tr>
+</tbody></table>
+<p><strong>关键区别：</strong></p>
+<ol>
+<li><p><strong>CPU绑定方式不同</strong>：</p>
+<ul>
+<li><code>taskset</code>：直接指定CPU编号（如CPU 0, 1, 2, 3）</li>
+<li><code>numactl</code>：基于NUMA节点指定（如节点0，自动包含该节点的所有CPU）</li>
+</ul>
+</li>
+<li><p><strong>内存管理能力</strong>：</p>
+<ul>
+<li><code>taskset</code>：<strong>无法控制内存分配</strong>，进程可能从任意NUMA节点分配内存</li>
+<li><code>numactl</code>：可以控制内存分配策略，确保内存分配在特定NUMA节点</li>
+</ul>
+</li>
+<li><p><strong>NUMA架构优化</strong>：</p>
+<ul>
+<li><code>taskset</code>：在NUMA系统中，即使绑定了CPU，内存仍可能从远程节点分配，导致性能问题</li>
+<li><code>numactl</code>：可以同时绑定CPU和内存，确保本地内存访问，获得最佳性能</li>
+</ul>
+</li>
+</ol>
+<p><strong>实际示例对比：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用taskset：只绑定CPU，不控制内存</span></span><br><span class="line">taskset -c 0-3 ./program</span><br><span class="line"><span class="comment"># 问题：CPU在节点0，但内存可能从节点1分配（远程访问，性能差）</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用numactl：同时绑定CPU和内存</span></span><br><span class="line">numactl --cpunodebind=0 --membind=0 ./program</span><br><span class="line"><span class="comment"># 优势：CPU和内存都在节点0（本地访问，性能好）</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="NUMA函数和命令对比"><a href="#NUMA函数和命令对比" class="headerlink" title="NUMA函数和命令对比"></a>NUMA函数和命令对比</h3><p>下表列出了常用的NUMA相关函数和命令，以及它们的作用和绑定类型：</p>
+<table>
+<thead>
+<tr>
+<th>函数&#x2F;命令</th>
+<th>作用</th>
+<th>绑定类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>numa_alloc_onnode()</code></td>
+<td>在指定NUMA节点分配内存</td>
+<td>✅ <strong>强制保证</strong></td>
+<td>内存一定分配在指定节点上，失败返回NULL</td>
+</tr>
+<tr>
+<td><code>numa_sched_setaffinity()</code></td>
+<td>设置进程&#x2F;线程的CPU亲和性</td>
+<td>✅ <strong>硬亲和性</strong></td>
+<td>进程&#x2F;线程只能运行在指定的CPU核心上</td>
+</tr>
+<tr>
+<td><code>numactl --cpunodebind</code></td>
+<td>绑定进程到指定节点的CPU</td>
+<td>✅ <strong>硬亲和性</strong></td>
+<td>进程只能运行在指定节点的CPU上</td>
+</tr>
+<tr>
+<td><code>numactl --membind</code></td>
+<td>绑定进程的内存分配策略</td>
+<td>✅ <strong>强制绑定</strong></td>
+<td>内存只能从指定节点分配，失败则进程无法运行</td>
+</tr>
+<tr>
+<td><code>numa_run_on_node()</code></td>
+<td>绑定进程到指定节点（CPU+内存）</td>
+<td>⚠️ <strong>混合</strong></td>
+<td>CPU绑定是硬亲和性，内存分配是偏好设置</td>
+</tr>
+<tr>
+<td><code>numactl --preferred</code></td>
+<td>设置内存分配偏好节点</td>
+<td>⚠️ <strong>偏好设置</strong></td>
+<td>优先从指定节点分配，但允许从其他节点分配</td>
+</tr>
+<tr>
+<td><code>malloc()</code> &#x2F; <code>calloc()</code></td>
+<td>普通内存分配</td>
+<td>⚠️ <strong>受策略影响</strong></td>
+<td>在<code>numa_run_on_node()</code>后，会优先在绑定节点分配，但不保证</td>
+</tr>
+<tr>
+<td><code>set_mempolicy()</code></td>
+<td>设置内存分配策略</td>
+<td>取决于策略类型</td>
+<td><code>MPOL_BIND</code>强制，<code>MPOL_PREFERRED</code>偏好，<code>MPOL_INTERLEAVE</code>交错</td>
+</tr>
+<tr>
+<td><code>numa_node_to_cpus()</code></td>
+<td>获取节点的CPU列表</td>
+<td>✅ <strong>查询函数</strong></td>
+<td>仅查询，不设置任何策略</td>
+</tr>
+<tr>
+<td><code>get_mempolicy()</code></td>
+<td>获取内存策略</td>
+<td>✅ <strong>查询函数</strong></td>
+<td>仅查询，不设置任何策略</td>
+</tr>
+</tbody></table>
+<p><strong>关键区别说明：</strong></p>
+<ol>
+<li><p><strong>强制保证 vs 偏好设置</strong>：</p>
+<ul>
+<li><strong>强制保证（硬亲和性）</strong>：系统会严格遵循设置，如果无法满足（如内存不足），操作会失败</li>
+<li><strong>偏好设置（软亲和性）</strong>：系统会尽量满足设置，但在资源不足时允许从其他节点分配，不会失败</li>
+</ul>
+</li>
+<li><p><strong><code>numa_run_on_node()</code>的特殊性</strong>：</p>
+<ul>
+<li>CPU绑定是<strong>强制的（硬亲和性）</strong>：进程只能运行在指定节点的CPU上</li>
+<li>内存分配是<strong>偏好的</strong>：优先在指定节点分配，但允许从其他节点分配</li>
+<li>这是为了平衡性能和可用性：如果绑定节点内存不足，进程仍能正常运行</li>
+</ul>
+</li>
+<li><p><strong>内存分配策略类型</strong>：</p>
+<ul>
+<li><code>MPOL_BIND</code>（对应<code>--membind</code>）：强制绑定，内存必须从指定节点分配</li>
+<li><code>MPOL_PREFERRED</code>（对应<code>--preferred</code>）：偏好设置，优先从指定节点分配</li>
+<li><code>MPOL_INTERLEAVE</code>：交错分配，在多个节点间轮询分配</li>
+<li><code>MPOL_DEFAULT</code>：默认策略，由系统决定</li>
+</ul>
+</li>
+</ol>
+<p><strong>使用建议：</strong></p>
+<ul>
+<li>需要<strong>严格保证</strong>内存位置：使用 <code>numa_alloc_onnode()</code> 或 <code>numactl --membind</code></li>
+<li>需要<strong>高性能但允许灵活性</strong>：使用 <code>numa_run_on_node()</code> 或 <code>numactl --preferred</code></li>
+<li>需要<strong>精确控制CPU（硬亲和性）</strong>：使用 <code>numactl --cpunodebind</code>、<code>numa_sched_setaffinity()</code> 或 <code>taskset</code></li>
+<li>需要<strong>系统级强制CPU绑定（硬亲和性）</strong>：使用 <code>cgroup</code> 的 <code>cpuset.cpus</code></li>
+</ul>
+<h3 id="编程示例"><a href="#编程示例" class="headerlink" title="编程示例"></a>编程示例</h3><h4 id="示例1：C语言中使用libnuma库"><a href="#示例1：C语言中使用libnuma库" class="headerlink" title="示例1：C语言中使用libnuma库"></a>示例1：C语言中使用libnuma库</h4><figure class="highlight c"><figcaption><span>numa_basic.c</span><a href="/blog/downloads/code/perf/numa/numa_basic.c">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;numa.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;numaif.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> {</span><br><span class="line">    <span class="comment">// 检查NUMA是否可用</span></span><br><span class="line">    <span class="keyword">if</span> (numa_available() &lt; <span class="number">0</span>) {</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;NUMA不可用\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取NUMA节点数量</span></span><br><span class="line">    <span class="type">int</span> max_node = numa_max_node();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;系统有 %d 个NUMA节点\n&quot;</span>, max_node + <span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取当前进程运行的节点</span></span><br><span class="line">    <span class="type">int</span> current_node = numa_node_of_cpu(sched_getcpu());</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;当前CPU属于节点: %d\n&quot;</span>, current_node);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 分配内存到指定NUMA节点</span></span><br><span class="line">    <span class="type">size_t</span> size = <span class="number">1024</span> * <span class="number">1024</span> * <span class="number">100</span>; <span class="comment">// 100MB</span></span><br><span class="line">    <span class="type">void</span> *mem = numa_alloc_onnode(size, <span class="number">0</span>); <span class="comment">// 在节点0上分配内存</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (mem == <span class="literal">NULL</span>) {</span><br><span class="line">        perror(<span class="string">&quot;内存分配失败&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取内存所在的节点</span></span><br><span class="line">    <span class="type">int</span> mem_node;</span><br><span class="line">    <span class="keyword">if</span> (get_mempolicy(&amp;mem_node, <span class="literal">NULL</span>, <span class="number">0</span>, mem, MPOL_F_NODE | MPOL_F_ADDR) == <span class="number">0</span>) {</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;分配的内存位于节点: %d\n&quot;</span>, mem_node);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 使用内存...</span></span><br><span class="line">    <span class="built_in">memset</span>(mem, <span class="number">0</span>, size);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 释放内存</span></span><br><span class="line">    numa_free(mem, size);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p>编译命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -o numa_example numa_basic.c -lnuma</span><br></pre></td></tr></table></figure>
+
+<h4 id="示例2：Python中使用numa库"><a href="#示例2：Python中使用numa库" class="headerlink" title="示例2：Python中使用numa库"></a>示例2：Python中使用numa库</h4><figure class="highlight py"><figcaption><span>numa_python.py</span><a href="/blog/downloads/code/perf/numa/numa_python.py">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> subprocess</span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">get_numa_nodes</span>():</span><br><span class="line">    <span class="string">&quot;&quot;&quot;获取NUMA节点信息&quot;&quot;&quot;</span></span><br><span class="line">    result = subprocess.run([<span class="string">&#x27;numactl&#x27;</span>, <span class="string">&#x27;--hardware&#x27;</span>], </span><br><span class="line">                          capture_output=<span class="literal">True</span>, text=<span class="literal">True</span>)</span><br><span class="line">    <span class="keyword">return</span> result.stdout</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">bind_to_numa_node</span>(<span class="params">node_id, command</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;将命令绑定到指定的NUMA节点执行&quot;&quot;&quot;</span></span><br><span class="line">    cmd = [<span class="string">&#x27;numactl&#x27;</span>, <span class="string">&#x27;--cpunodebind={}&#x27;</span>.<span class="built_in">format</span>(node_id),</span><br><span class="line">           <span class="string">&#x27;--membind={}&#x27;</span>.<span class="built_in">format</span>(node_id)] + command</span><br><span class="line">    <span class="keyword">return</span> subprocess.run(cmd)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 示例：获取NUMA信息</span></span><br><span class="line"><span class="built_in">print</span>(get_numa_nodes())</span><br><span class="line"></span><br><span class="line"><span class="comment"># 示例：在节点0上运行Python脚本</span></span><br><span class="line">bind_to_numa_node(<span class="number">0</span>, [<span class="string">&#x27;python&#x27;</span>, <span class="string">&#x27;your_script.py&#x27;</span>])</span><br></pre></td></tr></table></figure>
+
+<h4 id="示例3：多线程程序中的NUMA优化"><a href="#示例3：多线程程序中的NUMA优化" class="headerlink" title="示例3：多线程程序中的NUMA优化"></a>示例3：多线程程序中的NUMA优化</h4><p><strong>方法一：不同线程绑定到不同NUMA节点</strong></p>
+<p>当不同线程需要绑定到不同NUMA节点时，需要在线程内部手动设置CPU亲和性和内存分配：</p>
+<figure class="highlight c"><figcaption><span>numa_threads_different_nodes.c</span><a href="/blog/downloads/code/perf/numa/numa_threads_different_nodes.c">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;numa.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sched.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> NUM_THREADS 4</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ARRAY_SIZE 1000000</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> {</span></span><br><span class="line">    <span class="type">int</span> thread_id;</span><br><span class="line">    <span class="type">int</span> numa_node;</span><br><span class="line">    <span class="type">double</span> *<span class="built_in">array</span>;</span><br><span class="line">    <span class="type">int</span> size;</span><br><span class="line">} <span class="type">thread_data_t</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">worker_thread</span><span class="params">(<span class="type">void</span> *arg)</span> {</span><br><span class="line">    <span class="type">thread_data_t</span> *data = (<span class="type">thread_data_t</span> *)arg;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 方法1：手动设置CPU亲和性</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">bitmask</span> *<span class="title">cpuset</span> =</span> numa_allocate_cpumask();</span><br><span class="line">    numa_node_to_cpus(data-&gt;numa_node, cpuset);</span><br><span class="line">    numa_sched_setaffinity(<span class="number">0</span>, cpuset);</span><br><span class="line">    numa_free_cpumask(cpuset);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 在指定节点上分配内存</span></span><br><span class="line">    data-&gt;<span class="built_in">array</span> = (<span class="type">double</span> *)numa_alloc_onnode(</span><br><span class="line">        data-&gt;size * <span class="keyword">sizeof</span>(<span class="type">double</span>), data-&gt;numa_node);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (data-&gt;<span class="built_in">array</span> == <span class="literal">NULL</span>) {</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;线程 %d: 内存分配失败\n&quot;</span>, data-&gt;thread_id);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 执行计算（使用本地内存）</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; data-&gt;size; i++) {</span><br><span class="line">        data-&gt;<span class="built_in">array</span>[i] = i * <span class="number">1.0</span>;</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> cpu = sched_getcpu();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;线程 %d 在CPU %d (节点 %d) 上完成计算\n&quot;</span>, </span><br><span class="line">           data-&gt;thread_id, cpu, data-&gt;numa_node);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> {</span><br><span class="line">    <span class="keyword">if</span> (numa_available() &lt; <span class="number">0</span>) {</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;NUMA不可用\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> max_node = numa_max_node();</span><br><span class="line">    <span class="type">pthread_t</span> threads[NUM_THREADS];</span><br><span class="line">    <span class="type">thread_data_t</span> thread_data[NUM_THREADS];</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 创建线程，每个线程分配到不同的NUMA节点</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; NUM_THREADS; i++) {</span><br><span class="line">        thread_data[i].thread_id = i;</span><br><span class="line">        thread_data[i].numa_node = i % (max_node + <span class="number">1</span>);</span><br><span class="line">        thread_data[i].size = ARRAY_SIZE;</span><br><span class="line">        </span><br><span class="line">        pthread_create(&amp;threads[i], <span class="literal">NULL</span>, worker_thread, &amp;thread_data[i]);</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 等待所有线程完成</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; NUM_THREADS; i++) {</span><br><span class="line">        pthread_join(threads[i], <span class="literal">NULL</span>);</span><br><span class="line">        <span class="keyword">if</span> (thread_data[i].<span class="built_in">array</span>) {</span><br><span class="line">            numa_free(thread_data[i].<span class="built_in">array</span>, </span><br><span class="line">                     thread_data[i].size * <span class="keyword">sizeof</span>(<span class="type">double</span>));</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p><strong>方法二：所有线程绑定到同一NUMA节点</strong></p>
+<p><code>numa_run_on_node()</code> 是一个便捷函数，它会将当前进程绑定到指定NUMA节点的所有CPU上，并设置内存分配偏好策略为该节点。<strong>注意</strong>：CPU绑定是<strong>硬亲和性</strong>（强制的），但内存分配只是偏好设置（不强制保证）。</p>
+<p><strong>使用场景：</strong></p>
+<ul>
+<li>需要将整个进程（包括所有线程）绑定到特定NUMA节点</li>
+<li>希望简化代码，避免手动管理CPU掩码和内存策略</li>
+<li>在进程启动时进行NUMA绑定</li>
+</ul>
+<p>如果所有线程都需要绑定到同一个NUMA节点，可以在主线程中使用 <code>numa_run_on_node()</code> 统一绑定：</p>
+<figure class="highlight c"><figcaption><span>numa_threads_same_node.c</span><a href="/blog/downloads/code/perf/numa/numa_threads_same_node.c">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;numa.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sched.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> NUM_THREADS 4</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ARRAY_SIZE 1000000</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> {</span></span><br><span class="line">    <span class="type">int</span> thread_id;</span><br><span class="line">    <span class="type">double</span> *<span class="built_in">array</span>;</span><br><span class="line">    <span class="type">int</span> size;</span><br><span class="line">} <span class="type">thread_data_t</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">worker_thread</span><span class="params">(<span class="type">void</span> *arg)</span> {</span><br><span class="line">    <span class="type">thread_data_t</span> *data = (<span class="type">thread_data_t</span> *)arg;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 注意：numa_run_on_node在主线程中调用后，</span></span><br><span class="line">    <span class="comment">// 所有线程都会继承这个绑定，但每个线程仍可能运行在不同CPU上</span></span><br><span class="line">    <span class="comment">// 内存分配会优先在绑定的节点上进行（偏好设置，不强制保证）</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 分配内存（会优先在绑定的节点上分配，但不保证）</span></span><br><span class="line">    data-&gt;<span class="built_in">array</span> = (<span class="type">double</span> *)<span class="built_in">malloc</span>(data-&gt;size * <span class="keyword">sizeof</span>(<span class="type">double</span>));</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (data-&gt;<span class="built_in">array</span> == <span class="literal">NULL</span>) {</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;线程 %d: 内存分配失败\n&quot;</span>, data-&gt;thread_id);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 执行计算</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; data-&gt;size; i++) {</span><br><span class="line">        data-&gt;<span class="built_in">array</span>[i] = i * <span class="number">1.0</span>;</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> cpu = sched_getcpu();</span><br><span class="line">    <span class="type">int</span> node = numa_node_of_cpu(cpu);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;线程 %d 在CPU %d (节点 %d) 上完成计算\n&quot;</span>, </span><br><span class="line">           data-&gt;thread_id, cpu, node);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> {</span><br><span class="line">    <span class="keyword">if</span> (numa_available() &lt; <span class="number">0</span>) {</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;NUMA不可用\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> target_node = <span class="number">0</span>; <span class="comment">// 所有线程绑定到节点0</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 在主线程中绑定到目标节点</span></span><br><span class="line">    <span class="comment">// 这会影响到所有后续创建的线程</span></span><br><span class="line">    <span class="keyword">if</span> (numa_run_on_node(target_node) != <span class="number">0</span>) {</span><br><span class="line">        perror(<span class="string">&quot;绑定到NUMA节点失败&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;主进程绑定到节点 %d，创建 %d 个工作线程\n&quot;</span>, target_node, NUM_THREADS);</span><br><span class="line">    </span><br><span class="line">    <span class="type">pthread_t</span> threads[NUM_THREADS];</span><br><span class="line">    <span class="type">thread_data_t</span> thread_data[NUM_THREADS];</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 创建线程（会自动继承NUMA绑定）</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; NUM_THREADS; i++) {</span><br><span class="line">        thread_data[i].thread_id = i;</span><br><span class="line">        thread_data[i].size = ARRAY_SIZE;</span><br><span class="line">        pthread_create(&amp;threads[i], <span class="literal">NULL</span>, worker_thread, &amp;thread_data[i]);</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 等待所有线程完成</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; NUM_THREADS; i++) {</span><br><span class="line">        pthread_join(threads[i], <span class="literal">NULL</span>);</span><br><span class="line">        <span class="keyword">if</span> (thread_data[i].<span class="built_in">array</span>) {</span><br><span class="line">            <span class="built_in">free</span>(thread_data[i].<span class="built_in">array</span>);</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p><strong>numa_run_on_node的特点：</strong></p>
+<ul>
+<li>✅ <strong>优点</strong>：代码简单，一个函数调用完成绑定</li>
+<li>✅ <strong>优点</strong>：CPU绑定是<strong>硬亲和性</strong>（强制的），进程只能运行在指定节点的CPU上</li>
+<li>⚠️ <strong>注意</strong>：内存分配是<strong>偏好设置</strong>，会优先在绑定的节点上分配，但不强制保证</li>
+<li>⚠️ <strong>限制</strong>：所有线程都绑定到同一个节点，无法为不同线程分配不同节点</li>
+<li>⚠️ <strong>注意</strong>：<code>numa_run_on_node()</code> 会影响整个进程及其所有线程</li>
+</ul>
+<p><strong>选择建议：</strong></p>
+<ul>
+<li>如果所有线程需要绑定到<strong>同一个NUMA节点</strong>：使用 <code>numa_run_on_node()</code>（方法二）</li>
+<li>如果不同线程需要绑定到<strong>不同的NUMA节点</strong>：使用手动设置CPU亲和性（方法一）</li>
+</ul>
+<p>编译命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">gcc -o numa_threads_different_nodes numa_threads_different_nodes.c -lnuma -lpthread</span><br><span class="line">gcc -o numa_threads_same_node numa_threads_same_node.c -lnuma -lpthread</span><br></pre></td></tr></table></figure>
+
+<h3 id="NUMA优化建议"><a href="#NUMA优化建议" class="headerlink" title="NUMA优化建议"></a>NUMA优化建议</h3><ol>
+<li><strong>进程绑定</strong>：将进程绑定到特定的NUMA节点，减少跨节点访问</li>
+<li><strong>内存本地化</strong>：在进程运行的节点上分配内存</li>
+<li><strong>数据局部性</strong>：确保数据访问模式与NUMA拓扑匹配</li>
+<li><strong>监控工具</strong>：使用 <code>numastat</code> 和 <code>numactl</code> 监控和调整NUMA策略</li>
+<li><strong>应用程序设计</strong>：在应用程序设计时考虑NUMA架构，合理分配线程和内存</li>
+<li><strong>并行库适配</strong>：注意并行库（如TBB、OpenMP）在初始化时会根据操作系统报告的硬件资源来决定线程池大小，通过限制可见的CPU资源可以间接控制并行库的线程数</li>
+</ol>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><code>man numactl</code> - numactl命令手册</li>
+<li><code>man numa</code> - NUMA库函数手册</li>
+<li><code>/proc/sys/kernel/numa_balancing</code> - NUMA平衡配置</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/11/26/concurrency/%E5%B9%B6%E5%8F%91%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/11/26/concurrency/%E5%B9%B6%E5%8F%91%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/" class="post-title-link" itemprop="url">并发调试工具</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-11-26 10:32:15" itemprop="dateCreated datePublished" datetime="2025-11-26T10:32:15+00:00">2025-11-26</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="常用-C-并发调试工具-ThreadSanitizer-TSan"><a href="#常用-C-并发调试工具-ThreadSanitizer-TSan" class="headerlink" title="常用 C++ 并发调试工具 ThreadSanitizer (TSan)"></a>常用 C++ 并发调试工具 ThreadSanitizer (TSan)</h2><ul>
+<li>LLVM&#x2F;Clang 提供的运行时检测工具<ul>
+<li>能精准捕获 数据竞争，输出冲突内存地址、访问栈回溯和涉及线程</li>
+</ul>
+</li>
+<li>Helgrind (Valgrind 工具集)<ul>
+<li>专门用于检测 死锁 和 锁误用</li>
+<li>通过监视线程对共享内存的访问来发现潜在冲突</li>
+</ul>
+</li>
+<li>rr (Record and Replay Debugger)<ul>
+<li>可以记录程序执行过程并重放</li>
+<li>适合调试 难以复现的并发 bug，如竞态条件和原子性问题</li>
+</ul>
+</li>
+<li>Clang Static Analyzer<ul>
+<li>静态分析工具，在编译阶段发现潜在的并发问题</li>
+<li>可检测未加锁访问共享变量、内存序错误等</li>
+</ul>
+</li>
+<li>PVS-Studio<ul>
+<li>商业静态分析工具</li>
+<li>能在 CI 流程中提前发现并发安全隐患</li>
+</ul>
+</li>
+</ul>
+<p>适用场景</p>
+<ul>
+<li>数据竞争 (Data Race) → 使用 ThreadSanitizer</li>
+<li>死锁 (Deadlock) → 使用 Helgrind</li>
+<li>难复现的竞态条件 → 使用 rr</li>
+</ul>
+<p>编译阶段预防 → 使用 Clang Static Analyzer &#x2F; PVS-Studio</p>
+<p>这些工具往往需要结合使用：例如 TSan + Helgrind + rr 的组合拳，可以覆盖运行时检测、死锁分析和重放调试<br>，从而大幅提升并发问题定位效率</p>
+<table>
+<thead>
+<tr>
+<th>工具</th>
+<th>语言&#x2F;平台</th>
+<th>主要功能</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ThreadSanitizer</td>
+<td>C&#x2F;C++ (Clang&#x2F;LLVM)</td>
+<td>数据竞争检测</td>
+<td>运行时发现共享变量冲突</td>
+</tr>
+<tr>
+<td>Helgrind</td>
+<td>C&#x2F;C++ (Valgrind)</td>
+<td>死锁检测、锁误用</td>
+<td>多线程同步问题</td>
+</tr>
+<tr>
+<td>rr</td>
+<td>C&#x2F;C++ (Linux)</td>
+<td>执行记录与重放</td>
+<td>难复现的竞态条件</td>
+</tr>
+<tr>
+<td>Clang Static Analyzer</td>
+<td>C&#x2F;C++</td>
+<td>静态分析并发隐患</td>
+<td>编译阶段预防</td>
+</tr>
+<tr>
+<td>PVS-Studio</td>
+<td>C&#x2F;C++</td>
+<td>商业静态分析</td>
+<td>CI 流程集成</td>
+</tr>
+<tr>
+<td><strong>Oracle Thread Analyzer</strong></td>
+<td>Java (Oracle 工具链)</td>
+<td>线程可视化、死锁检测</td>
+<td>Java 并发调试</td>
+</tr>
+</tbody></table>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/11/26/perf/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/11/26/perf/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7/" class="post-title-link" itemprop="url">性能分析工具</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-11-26 10:12:33" itemprop="dateCreated datePublished" datetime="2025-11-26T10:12:33+00:00">2025-11-26</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="性能分析工具"><a href="#性能分析工具" class="headerlink" title="性能分析工具"></a>性能分析工具</h2><table>
+<thead>
+<tr>
+<th>工具</th>
+<th align="center">类型&#x2F;定位</th>
+<th align="center">attach 支持</th>
+<th align="center">分析范围</th>
+<th align="center">特点</th>
+<th align="center">与 perf 的关系</th>
+<th align="center">开源&#x2F;商业授权</th>
+<th align="center">适用人群</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Oracle Performance Analyzer (PA)</td>
+<td align="center">企业级性能分析器，Oracle Developer Studio 套件</td>
+<td align="center">✅</td>
+<td align="center">用户态程序 (C&#x2F;C++&#x2F;Java&#x2F;Fortran&#x2F;Scala)，并行应用</td>
+<td align="center">GUI 丰富，低开销采样，函数&#x2F;源代码&#x2F;指令级分析</td>
+<td align="center">独立工具</td>
+<td align="center">商业软件 (Oracle Developer Studio)</td>
+<td align="center">企业&#x2F;科研环境下的应用开发者</td>
+</tr>
+<tr>
+<td>perf</td>
+<td align="center">Linux 内核自带性能分析框架</td>
+<td align="center">✅</td>
+<td align="center">用户态 + 内核态 + 硬件事件</td>
+<td align="center">功能全面，支持调用链、硬件计数器，生态丰富 (eBPF, flamegraph)</td>
+<td align="center">基础框架</td>
+<td align="center">开源 (GPL，Linux 内核自带)</td>
+<td align="center">系统工程师，底层性能调优</td>
+</tr>
+<tr>
+<td>gprofng</td>
+<td align="center">GNU 新一代应用性能分析器</td>
+<td align="center">✅</td>
+<td align="center">用户态程序 (C&#x2F;C++&#x2F;Java&#x2F;Scala)，跨平台</td>
+<td align="center">基于实验目录，支持 GUI，跨语言，继承 Oracle PA 思路</td>
+<td align="center">独立工具</td>
+<td align="center">开源 (GNU 工具链)</td>
+<td align="center">应用开发者，跨平台性能优化</td>
+</tr>
+<tr>
+<td>gprof</td>
+<td align="center">经典 GNU 性能分析器 (1980s)</td>
+<td align="center">❌</td>
+<td align="center">用户态程序 (C&#x2F;C++)</td>
+<td align="center">需编译时 -pg，生成 gmon.out，功能有限，不支持多线程&#x2F;attach</td>
+<td align="center">独立工具</td>
+<td align="center">开源 (GNU 工具链)</td>
+<td align="center">学术&#x2F;教学场景，简单函数级分析</td>
+</tr>
+<tr>
+<td>Intel PMU Tools</td>
+<td align="center">Intel 提供的硬件性能计数器工具集</td>
+<td align="center">✅</td>
+<td align="center">硬件事件 (CPU pipeline、cache、branch、memory)</td>
+<td align="center">基于 PMU，提供 top-down 分析，解释微架构瓶颈</td>
+<td align="center">依赖 perf 收集数据，属于 perf 的增强解释层</td>
+<td align="center">开源 (MIT&#x2F;Apache 许可，Intel GitHub 提供)</td>
+<td align="center">系统&#x2F;性能工程师，硬件级调优</td>
+</tr>
+<tr>
+<td>Intel Advisor</td>
+<td align="center">高级性能优化工具 (Intel oneAPI 套件)</td>
+<td align="center">✅</td>
+<td align="center">用户态程序，尤其是 HPC 应用</td>
+<td align="center">提供矢量化分析、内存访问优化、并行化建议，GUI 支持</td>
+<td align="center">独立工具</td>
+<td align="center">商业软件 (Intel oneAPI 套件，部分免费版)</td>
+<td align="center">HPC 开发者，科学计算优化</td>
+</tr>
+<tr>
+<td>Intel VTune Profiler</td>
+<td align="center">深度性能分析器</td>
+<td align="center">✅</td>
+<td align="center">CPU&#x2F;GPU&#x2F;FPGA、内存、线程、I&#x2F;O、微架构</td>
+<td align="center">微架构级剖析，支持 cache、pipeline、分支预测，功能全面</td>
+<td align="center">独立工具，但可结合 perf 数据</td>
+<td align="center">商业软件 (Intel oneAPI 套件，提供免费社区版)</td>
+<td align="center">系统&#x2F;性能工程师，硬件与应用优化</td>
+</tr>
+<tr>
+<td>Linaro MAP (Arm Forge MAP)</td>
+<td align="center">HPC 并行应用性能分析器</td>
+<td align="center">✅</td>
+<td align="center">MPI、OpenMP、UPC 等大规模并行应用</td>
+<td align="center">低开销采样，跨节点整体分析，源代码行级耗时展示，GUI 可视化</td>
+<td align="center">独立工具</td>
+<td align="center">商业软件 (Arm Forge 套件，需许可证)</td>
+<td align="center">HPC 开发者，超级计算机环境</td>
+</tr>
+</tbody></table>
+<p><strong>差异总结</strong></p>
+<ul>
+<li>Oracle PA &#x2F; gprofng：应用层性能分析，强调 GUI 和跨语言支持。</li>
+<li>perf：系统级通用工具，是底层框架。</li>
+<li>gprof：老工具，功能有限，不支持 attach。</li>
+<li>Intel PMU Tools：基于 perf，提供 Intel CPU 微架构解释，是 perf 的增强解释层。</li>
+<li>Intel Advisor：智能优化建议工具，适合 HPC 和科学计算。</li>
+<li>Intel VTune Profiler：深度剖析工具，能揭示硬件微架构瓶颈，适合单节点和复杂应用。</li>
+<li>Linaro MAP：专为 HPC 并行应用设计，低开销，跨节点整体性能分析。</li>
+</ul>
+<p><strong>结论</strong></p>
+<ul>
+<li>应用层性能分析：Oracle PA、gprofng</li>
+<li>系统&#x2F;内核级调优：perf</li>
+<li>硬件级微架构分析：Intel PMU Tools、Intel VTune Profiler</li>
+<li>智能优化建议 (HPC)：Intel Advisor</li>
+<li>大规模并行应用分析 (HPC)：Linaro MAP</li>
+</ul>
+<p>👉 可以把它们看作一个层次结构：</p>
+<ul>
+<li>gprof → gprofng&#x2F;Oracle PA → perf → Intel PMU Tools&#x2F;VTune → Advisor&#x2F;MAP</li>
+<li>逐步从函数级分析 → 应用性能 → 系统级 → 硬件级 → HPC 并行整体优化。</li>
+</ul>
+<h3 id="Performance-Analyzer"><a href="#Performance-Analyzer" class="headerlink" title="Performance Analyzer"></a>Performance Analyzer</h3><p>Oracle Developer Studio 提供了多种工具：Performance Analyzer、Thread Analyzer。</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afagg.html#OSSPAgrkam">Performance Analyzer 官方文档</a></p>
+</blockquote>
+<h4 id="收集数据"><a href="#收集数据" class="headerlink" title="收集数据"></a>收集数据</h4><p>使用 <code>collect</code> 命令收集数据<br>（<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afadn.html#scrolltoc">官方文档</a>）。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">collect collect-options program program-arguments</span><br></pre></td></tr></table></figure>
+
+<h4 id="开始性能分析"><a href="#开始性能分析" class="headerlink" title="开始性能分析"></a>开始性能分析</h4><p>使用 <code>analyzer</code> 命令进行性能分析<br>（<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afafs.html#scrolltoc">官方文档</a>）。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">analyzer [control-options] [experiment | experiment-list]</span><br></pre></td></tr></table></figure>
+
+<p>例如：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">analyzer -c test.1.er test.4.er</span><br></pre></td></tr></table></figure>
+
+<h3 id="Thread-Analyzer"><a href="#Thread-Analyzer" class="headerlink" title="Thread Analyzer"></a>Thread Analyzer</h3><blockquote>
+<p><a target="_blank" rel="noopener" href="https://www.oracle.com/application-development/technologies/developerstudio-features.html#thread-analyzer-tab">Thread Analyzer 官方文档</a></p>
+</blockquote>
+<h2 id="计时"><a href="#计时" class="headerlink" title="计时"></a>计时</h2><h3 id="计时工具-time"><a href="#计时工具-time" class="headerlink" title="计时工具 time"></a>计时工具 <code>time</code></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ /usr/bin/time -p <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
+
+<p>Or,</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ time <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
+
+<p>其中（参<br>考<a target="_blank" rel="noopener" href="https://ostechnix.com/how-to-find-the-execution-time-of-a-command-or-process-in-linux/">链接</a>），</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">type</span> -a time</span><br><span class="line">time is a shell keyword</span><br><span class="line">time is /usr/bin/time</span><br></pre></td></tr></table></figure>
+
+<h3 id="软件和硬件定时器"><a href="#软件和硬件定时器" class="headerlink" title="软件和硬件定时器"></a>软件和硬件定时器</h3><p><a target="_blank" rel="noopener" href="https://weedge.github.io/perf-book-cn/zh/chapters/2-Measuring-Performance/2-5_SW_and_HW_Timers_cn.html">https://weedge.github.io/perf-book-cn/zh/chapters/2-Measuring-Performance/2-5_SW_and_HW_Timers_cn.html</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/11/21/perf/Bad-Speculation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/11/21/perf/Bad-Speculation/" class="post-title-link" itemprop="url">Bad Speculation</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-11-21 15:29:24" itemprop="dateCreated datePublished" datetime="2025-11-21T15:29:24+00:00">2025-11-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p>Bad Speculation 指不好的预测，尤其是分支预测。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/11/21/%E5%88%86%E6%94%AF%E9%A2%84%E6%B5%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/11/21/%E5%88%86%E6%94%AF%E9%A2%84%E6%B5%8B/" class="post-title-link" itemprop="url">分支预测</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-11-21 15:29:02" itemprop="dateCreated datePublished" datetime="2025-11-21T15:29:02+00:00">2025-11-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/11/21/perf/core-bound/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/11/21/perf/core-bound/" class="post-title-link" itemprop="url">Core Bound</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-11-21 14:05:58" itemprop="dateCreated datePublished" datetime="2025-11-21T14:05:58+00:00">2025-11-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p>Core Bound 指 CPU 核心计算能力受限。包括两种：</p>
+<ol>
+<li>硬件的计算资源不足（吞吐量受限）</li>
+</ol>
+<ul>
+<li>port 冲突：例如 Intel Skylake 架构上，除法和平方根运算都会被分配到 port 0 上，如果大量的类似耗时操<br>作排队，那么就会体现为硬件算力的限制。</li>
+</ul>
+<p><strong>Port 指的是 CPU 内部的 执行端口（execution ports）。</strong></p>
+<blockquote>
+<p>现代 CPU（尤其是 Intel、AMD 的 x86-64 架构）采用 超标量、乱序执行，有多个功能单元可以并行执行不同<br>类型的指令。</p>
+<p>每个功能单元挂在一个 端口 (port) 上，负责特定类型的操作，比如：</p>
+<ul>
+<li>整数运算端口（加减、逻辑运算）</li>
+<li>浮点运算端口（乘法、除法、加法）</li>
+<li>加载端口（从内存读取数据）</li>
+<li>存储端口（写数据到内存）</li>
+</ul>
+<p>CPU 的调度器会把指令分配到合适的端口执行。</p>
+<p>如果某类端口资源不足，就会出现 port bound（端口受限），性能瓶颈来自于某个端口的拥塞。</p>
+<p>👉 举例： Intel Skylake 架构有 8 个端口：</p>
+<ul>
+<li>Port 0&#x2F;1：整数和浮点运算</li>
+<li>Port 2&#x2F;3：加载（Load）</li>
+<li>Port 4：存储地址计算</li>
+<li>Port 5：存储数据</li>
+<li>Port 6：分支预测</li>
+<li>Port 7：整数运算</li>
+</ul>
+</blockquote>
+<ol start="2">
+<li>指令间的依赖（增加延迟）</li>
+</ol>
+<p>例如链表的遍历，CPU 无法对其并行。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (n) &#123;</span><br><span class="line">    n = n-&gt;next;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="优化方法"><a href="#优化方法" class="headerlink" title="优化方法"></a>优化方法</h2><p>第 1 种计算能力受限的问题，最好的办法是升级 CPU，换成具有更多除数的型号，或者将计算任务卸载到加速器<br>上。</p>
+<p>第 2 种数据依赖链的问题，可能需要重写算法。下面介绍一些有名的优化方法：</p>
+<ol>
+<li>向量化</li>
+<li>函数 inline 化</li>
+<li>循环转换</li>
+<li>编译器内建函数</li>
+<li>其他</li>
+</ol>
+<p>目的是减少执行的指令或用更好的汇编指令替代。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/11/20/perf/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E6%8C%87%E6%A0%87%E5%92%8C%E6%A6%82%E5%BF%B5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/11/20/perf/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E6%8C%87%E6%A0%87%E5%92%8C%E6%A6%82%E5%BF%B5/" class="post-title-link" itemprop="url">性能分析指标和概念</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-11-20 15:54:29" itemprop="dateCreated datePublished" datetime="2025-11-20T15:54:29+00:00">2025-11-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E6%80%A7%E8%83%BD/" itemprop="url" rel="index"><span itemprop="name">性能</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="CPU-硬件层次概念"><a href="#CPU-硬件层次概念" class="headerlink" title="CPU 硬件层次概念"></a>CPU 硬件层次概念</h2><ul>
+<li>Package → 整个处理器封装，包含一个或多个 die。</li>
+<li>Socket (S) → 主板上的物理 CPU 插槽</li>
+<li>Die (D) → 封装里的裸片（可能有多个 chiplet&#x2F;die）</li>
+<li>Core (C) → die 上的计算核心</li>
+<li>Thread (T) → 核心里的硬件线程（SMT&#x2F;超线程），即逻辑处理器</li>
+</ul>
+<p>假设一台双路服务器，每个 socket 上的 CPU 封装里有两个 die，每个 die 有 8 个核心：</p>
+<ul>
+<li><code>S0-D0-C0</code> → Socket 0 上 Die 0 的 Core 0</li>
+<li><code>S0-D1-C3</code> → Socket 0 上 Die 1 的 Core 3</li>
+<li><code>S1-D0-C7</code> → Socket 1 上 Die 0 的 Core 7</li>
+</ul>
+<p>如果开启超线程，还可能进一步细分为：</p>
+<ul>
+<li><code>S0-D0-C0-T0</code> → Socket 0, Die 0, Core 0, Thread 0</li>
+<li><code>S0-D0-C0-T1</code> → Socket 0, Die 0, Core 0, Thread 1</li>
+</ul>
+<p>可以用命令 <code>lscpu</code> 或 <code>cat /proc/cpuinfo</code> 来查看逻辑 CPU ID 与 Socket&#x2F;Core&#x2F;Thread 的对应关系。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ lscpu</span><br><span class="line">...</span><br><span class="line">    Thread(s) per core:  2</span><br><span class="line">    Core(s) per socket:  4</span><br><span class="line">    Socket(s):           1</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">总逻辑 CPU 数量 = 1 × 4 × 2 = 8</span><br></pre></td></tr></table></figure>
+
+<p>nproc 输出的是 逻辑 CPU 数</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">nproc</span></span><br><span class="line">8</span><br></pre></td></tr></table></figure>
+
+<h2 id="CPU-微架构概念"><a href="#CPU-微架构概念" class="headerlink" title="CPU 微架构概念"></a>CPU 微架构概念</h2><ul>
+<li>Pipeline：指令执行的分阶段过程（取指、解码、执行、写回）。</li>
+<li>Width：每周期最多能发射多少条 uops（如 4‑wide）。</li>
+<li>Slot：每周期的发射机会，宽度决定 slot 数。</li>
+<li>ROB (Reorder Buffer)：乱序执行的关键结构，保证指令按程序顺序退休。</li>
+<li>Scheduler：调度器，决定哪些 uops 在某周期进入执行端口。</li>
+<li>Execution Ports：后端的执行单元入口，比如整数 ALU、浮点 FPU、Load&#x2F;Store。</li>
+<li>Branch Predictor：预测分支走向，减少流水线停顿。</li>
+</ul>
+<h2 id="存储与层次结构"><a href="#存储与层次结构" class="headerlink" title="存储与层次结构"></a>存储与层次结构</h2><ul>
+<li>Registers：CPU 内部的寄存器，最快的存储。</li>
+<li>Cache：分层缓存（L1、L2、L3），用于减少访存延迟。</li>
+<li>LLC (Last Level Cache)：最后一级缓存，通常是 L3，多个核心共享。</li>
+<li>Memory Controller：负责和 DRAM 通信。</li>
+<li>NUMA (Non-Uniform Memory Access)：多 socket 系统里，内存访问延迟因位置不同而不同。</li>
+</ul>
+<h2 id="性能分析相关"><a href="#性能分析相关" class="headerlink" title="性能分析相关"></a>性能分析相关</h2><ul>
+<li>IPC (Instructions Per Cycle)：每周期平均执行的指令数。</li>
+<li>ILP (Instruction-Level Parallelism)：指令级并行度，程序能提供多少独立指令。</li>
+<li>Topdown Metrics：Retiring、Bad Speculation、Frontend Bound、Backend Bound。</li>
+<li>BE&#x2F;Core vs BE&#x2F;Mem：后端瓶颈是算力不足还是访存延迟。</li>
+<li>CPI (Cycles Per Instruction)：每条指令平均耗费的周期数。</li>
+</ul>
+<h2 id="Top-Down-Microarchitecture-Analysis-TMA"><a href="#Top-Down-Microarchitecture-Analysis-TMA" class="headerlink" title="Top-Down Microarchitecture Analysis (TMA)"></a>Top-Down Microarchitecture Analysis (TMA)</h2><p>这是 Intel 提出的一个 CPU 性能瓶颈分析框架。它的核心思想是：把 CPU 每个周期的 发射机会（slot） 分门<br>别类，逐层细分，最终定位到性能瓶颈的根源。</p>
+<p>Topdown 是分层树状结构：</p>
+<ul>
+<li>Level 1：Retiring &#x2F; Bad Speculation &#x2F; Frontend Bound &#x2F; Backend Bound</li>
+<li>Level 2：Backend Bound → BE&#x2F;Core、BE&#x2F;Mem</li>
+<li>Level 3：BE&#x2F;Mem → L1 Bound、L2 Bound、DRAM Bound</li>
+</ul>
+<ol>
+<li>Level 1: 顶层四大分类</li>
+</ol>
+<p>在每个周期的 slot 中，CPU 的工作被划分为四类：</p>
+<ul>
+<li><p>Retiring</p>
+<ul>
+<li>指令成功退休（完成执行并写回结果）。</li>
+<li>这是“有用工作”，比例越高说明 CPU 利用率越好。</li>
+</ul>
+</li>
+<li><p>Bad Speculation</p>
+<ul>
+<li>由于错误预测（如分支预测失败、错误路径执行）导致的浪费。</li>
+<li>这些 slot 最终没有产生有效结果。</li>
+</ul>
+</li>
+<li><p>Frontend Bound (FE)</p>
+<ul>
+<li>前端受限：取指、解码、指令缓存不足。</li>
+<li>CPU 等待指令进入流水线。</li>
+</ul>
+</li>
+<li><p>Backend Bound (BE)</p>
+<ul>
+<li>后端受限：执行单元或数据不可用。</li>
+<li>CPU 等待算力资源或内存数据。</li>
+</ul>
+</li>
+</ul>
+<p>这四类加起来 ≈ 100%，覆盖了所有 slot 的去向。</p>
+<ol start="2">
+<li>Level 2: Backend 的进一步细分</li>
+</ol>
+<ul>
+<li>BE&#x2F;Core<ul>
+<li>后端瓶颈主要来自核心执行资源不足（算术逻辑单元、浮点单元、端口冲突）。</li>
+<li>程序算力密集。</li>
+</ul>
+</li>
+<li>BE&#x2F;Mem<ul>
+<li>后端瓶颈主要来自访存延迟（缓存未命中、DRAM 访问慢）。</li>
+<li>程序内存密集。</li>
+</ul>
+</li>
+</ul>
+<ol start="3">
+<li>Level 3: BE&#x2F;Mem 的进一步细分</li>
+</ol>
+<ul>
+<li>L1 Bound</li>
+<li>L2 Bound</li>
+<li>L3 Bound</li>
+<li>DRAM Bound</li>
+</ul>
+<h3 id="Roofline"><a href="#Roofline" class="headerlink" title="Roofline"></a>Roofline</h3><h2 id="性能分析工具"><a href="#性能分析工具" class="headerlink" title="性能分析工具"></a>性能分析工具</h2><ol>
+<li>perf (Linux)</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/andikleen/pmu-tools">Intel® pmu-tools</a> ：对 perf 的封装</li>
+<li><a target="_blank" rel="noopener" href="https://www.intel.com/content/www/us/en/developer/tools/oneapi/advisor-download.html">Intel Advisor</a></li>
+</ol>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
+<li>perf-ninja: <a target="_blank" rel="noopener" href="https://github.com/dendibakh/perf-ninja">代码</a> +<br><a target="_blank" rel="noopener" href="https://www.youtube.com/playlist?list=PLRWO2AL1QAV6bJAU2kgB4xfodGID43Y5d">视频</a></li>
+</ol>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/24/concurrency/memory_order%E5%AE%9E%E9%AA%8C/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -219,7 +1558,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
               </span>
 
           
@@ -291,7 +1630,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -756,7 +2095,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1030,1031 +2369,10 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/18/cpp/%E7%BC%96%E8%AF%91%E6%97%B6%E9%93%BE%E6%8E%A5%E5%92%8C%E8%BF%90%E8%A1%8C%E6%97%B6%E9%93%BE%E6%8E%A5/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/09/18/cpp/%E7%BC%96%E8%AF%91%E6%97%B6%E9%93%BE%E6%8E%A5%E5%92%8C%E8%BF%90%E8%A1%8C%E6%97%B6%E9%93%BE%E6%8E%A5/" class="post-title-link" itemprop="url">编译时链接和运行时链接</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-09-18 18:57:08" itemprop="dateCreated datePublished" datetime="2025-09-18T18:57:08+00:00">2025-09-18</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>令所有 C&#x2F;C++ 程序员头疼的事，莫过于环境的搭建和兼容。这往往发生在链接阶段，分为两种：</p>
-<ul>
-<li>编译时链接</li>
-<li>运行时链接</li>
-</ul>
-<p>读完本文，你将能解决大部分的环境问题。</p>
-<h2 id="运行时-so-的加载顺序"><a href="#运行时-so-的加载顺序" class="headerlink" title="运行时 so 的加载顺序"></a>运行时 so 的加载顺序</h2><table>
-<thead>
-<tr>
-<th align="center">优先级</th>
-<th align="center">来源</th>
-<th align="center">说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">🔺 1</td>
-<td align="center">LD_PRELOAD 环境变量</td>
-<td align="center">强制优先加载指定库，最高优先级，可用于函数替换</td>
-</tr>
-<tr>
-<td align="center">🔺 2</td>
-<td align="center">rpath（编译时指定）</td>
-<td align="center">使用 -Wl,-rpath&#x3D;… 编译时嵌入的路径，仅作用于当前程序（已废弃：因为优先级过高，且影响间接依赖项。推荐使用 runpath，没有这两个缺点。）</td>
-</tr>
-<tr>
-<td align="center">🔺 3</td>
-<td align="center">LD_LIBRARY_PATH 环境变量</td>
-<td align="center">运行时设置的库搜索路径，影响当前 shell 会话</td>
-</tr>
-<tr>
-<td align="center">🔺 4</td>
-<td align="center">runpath（编译时指定）</td>
-<td align="center">使用 -Wl,-rpath 设置的路径，但优先级低于 LD_LIBRARY_PATH</td>
-</tr>
-<tr>
-<td align="center">🔺 5</td>
-<td align="center">&#x2F;etc&#x2F;ld.so.cache</td>
-<td align="center">由 ldconfig 生成的缓存，包含 &#x2F;etc&#x2F;ld.so.conf 中的路径</td>
-</tr>
-<tr>
-<td align="center">🔺 6</td>
-<td align="center">默认系统路径</td>
-<td align="center">&#x2F;lib, &#x2F;usr&#x2F;lib, &#x2F;lib64, &#x2F;usr&#x2F;lib64 等标准目录</td>
-</tr>
-</tbody></table>
-<h3 id="动态链接器（Dynamic-Linker）"><a href="#动态链接器（Dynamic-Linker）" class="headerlink" title="动态链接器（Dynamic Linker）"></a>动态链接器（Dynamic Linker）</h3><p>以上的 so 的加载顺序，是由 <strong>动态链接器（Dynamic Linker）</strong> 完成的。</p>
-<p>每个 ELF 可执行文件在头部指定了它的动态链接器路径：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ readelf -l your_program | grep interpreter</span><br><span class="line">[Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]</span><br></pre></td></tr></table></figure>
-
-<p>这个链接器负责在程序启动时加载所需的动态库，包括 libc.so.6（glibc 的主库）。</p>
-<p>注意：<code>ld.so</code>（这是一个简称）和 <code>ld</code> 完全不是一个东西，<code>ld</code> 是一个可执行程序，在编译期使用，见下<br>文<a href="#%E7%BC%96%E8%AF%91%E6%97%B6%E9%93%BE%E6%8E%A5%E5%99%A8%EF%BC%88ld%EF%BC%89">编译时链接器（ld）</a>。</p>
-<ul>
-<li><code>ld.so</code> 既是 so 也是可执行文件：</li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ file /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2</span><br><span class="line">/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2: ELF 64-bit LSB shared object, x86-64, version 1 (GNU/Linux), dynamically linked, BuildID[sha1]=e4de036b19e4768e7591b596c4be9f9015f2d28a, stripped</span><br></pre></td></tr></table></figure>
-
-<p>普通程序的 ELF 文件中有一个 PT_INTERP 段，指定了这个链接器的路径。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ file /usr/bin/ls</span><br><span class="line">/usr/bin/ls: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=36b86f957a1be53733633d184c3a3354f3fc7b12, <span class="keyword">for</span> GNU/Linux 3.2.0, stripped</span><br><span class="line"></span><br><span class="line">$ file /lib/x86_64-linux-gnu/libc.so.6</span><br><span class="line">/lib/x86_64-linux-gnu/libc.so.6: ELF 64-bit LSB shared object, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=cd410b710f0f094c6832edd95931006d883af48e, <span class="keyword">for</span> GNU/Linux 3.2.0, stripped</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>动态链接器 ld.so 本身也依赖共享库（如 libc.so.6），但它又是负责加载共享库的工具</li>
-</ul>
-<p>动态链接器是一个“自举”程序：</p>
-<ul>
-<li>它是由 Linux 内核直接加载并执行，不依赖其他库来启动。</li>
-<li>它的启动代码是 静态编译的，也就是说，它的最小启动逻辑不依赖 libc.so.6。</li>
-<li>在启动后，它才会去加载 libc.so.6 和其他 .so 文件，完成符号解析和初始化。</li>
-<li>有趣的是，libc.so.6 又依赖 ld.so 来加载。</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">你运行 ./myapp</span><br><span class="line">↓</span><br><span class="line">内核读取 ELF → 找到 PT_INTERP 段 → 加载 ld.so</span><br><span class="line">↓</span><br><span class="line">ld.so 启动（靠自身静态代码）</span><br><span class="line">↓</span><br><span class="line">ld.so 加载 libc.so.6、libstdc++.so.6 等共享库</span><br><span class="line">↓</span><br><span class="line">ld.so 跳转到 myapp 的入口地址（main）</span><br></pre></td></tr></table></figure>
-
-<p>如果 libc.so.6 丢失怎么办？</p>
-<p>有开发者分享过真实案例，当系统误删了 libc.so.6 ，几乎所有命令都无法运行。但你仍然可以：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/lib64/ld-linux-x86-64.so.2 /bin/ln -s /lib64/libc-2.33.so /lib64/libc.so.6</span><br></pre></td></tr></table></figure>
-
-<p>这利用了 ld.so 的自举能力，手动加载 libc 并执行命令，从而恢复系统。</p>
-<h3 id="ldd-检查"><a href="#ldd-检查" class="headerlink" title="ldd 检查"></a>ldd 检查</h3><p><code>ldd</code> (List Dynamic Dependencies) 是一个 shell 脚本，用于查看一个可执行文件或共享库所依赖的动态链接<br>库的命令。</p>
-<p>它的思路是：模拟 运行时链接器 的行为。</p>
-<ol>
-<li><p>设置环境变量来触发动态链接器 (ld-linux.so) 输出依赖信息，但是不真正执行程序。如：</p>
-<ul>
-<li><code>LD_TRACE_LOADED_OBJECTS=1</code></li>
-<li><code>LD_WARN</code>, <code>LD_BIND_NOW</code>, <code>LD_VERBOSE</code> 等</li>
-</ul>
-</li>
-<li><p>调用动态链接器查找 so .</p>
-</li>
-</ol>
-<p>局限性：</p>
-<ul>
-<li>使用 <code>dlopen()</code> 动态加载库，<code>ldd</code> 是无法检测到的</li>
-</ul>
-<h3 id="补充工具"><a href="#补充工具" class="headerlink" title="补充工具"></a>补充工具</h3><ul>
-<li><code>readelf -d binary | grep -i rpath</code>：查看 ELF 文件中的 RPATH 或 RUNPATH</li>
-<li><code>ldconfig -p</code>：查看系统缓存中有哪些库</li>
-<li><code>strace -e openat ./your_program</code>：查看运行时实际打开了哪些库文件</li>
-<li><code>LD_DEBUG=libs ./your_program</code>：调试动态库加载过程</li>
-</ul>
-<h2 id="编译时-so-的查找顺序"><a href="#编译时-so-的查找顺序" class="headerlink" title="编译时 so 的查找顺序"></a>编译时 so 的查找顺序</h2><p>GCC 查找 glibc 的路径顺序：</p>
-<p>🧠 编译阶段（查找头文件）</p>
-<table>
-<thead>
-<tr>
-<th align="center">优先级</th>
-<th align="center">路径来源</th>
-<th align="center">示例路径</th>
-<th align="center">说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">1️⃣</td>
-<td align="center">显式指定 -I 参数</td>
-<td align="center">gcc -I&#x2F;custom&#x2F;include</td>
-<td align="center">用户手动指定，优先级最高</td>
-</tr>
-<tr>
-<td align="center">2️⃣</td>
-<td align="center">-isystem 指定系统头文件路径</td>
-<td align="center">gcc -isystem &#x2F;custom&#x2F;sysinclude</td>
-<td align="center">优先级高于默认路径但低于 -I</td>
-</tr>
-<tr>
-<td align="center">3️⃣</td>
-<td align="center">环境变量 CPATH</td>
-<td align="center">&#x2F;opt&#x2F;common&#x2F;include</td>
-<td align="center">适用于所有语言，优先于默认路径</td>
-</tr>
-<tr>
-<td align="center">4️⃣</td>
-<td align="center">环境变量 C_INCLUDE_PATH</td>
-<td align="center">&#x2F;opt&#x2F;glibc-2.28&#x2F;include</td>
-<td align="center">仅对 C 文件有效，优先于默认路径</td>
-</tr>
-<tr>
-<td align="center">5️⃣</td>
-<td align="center">环境变量 CPLUS_INCLUDE_PATH</td>
-<td align="center">&#x2F;opt&#x2F;cpp&#x2F;include</td>
-<td align="center">仅对 C++ 文件有效，优先于默认路径</td>
-</tr>
-<tr>
-<td align="center">6️⃣</td>
-<td align="center">GCC 默认系统路径</td>
-<td align="center">&#x2F;usr&#x2F;include</td>
-<td align="center">最后兜底路径</td>
-</tr>
-<tr>
-<td align="center">7️⃣</td>
-<td align="center">内核头文件路径（特殊场景）</td>
-<td align="center">&#x2F;usr&#x2F;src&#x2F;linux&#x2F;include</td>
-<td align="center">编译内核模块或驱动时使用</td>
-</tr>
-</tbody></table>
-<ul>
-<li><code>-I</code> 和 <code>-isystem</code> 都是命令行参数，但 <code>-isystem</code> 会将路径标记为“系统路径”，避免某些警告。</li>
-<li>环境变量如 <code>CPATH</code> 和 <code>C_INCLUDE_PATH</code> 是在没有显式参数时的补充手段。</li>
-<li>默认路径 <code>/usr/include</code> 是 GCC 安装时配置的，可以通过 <code>gcc -xc -E -v -</code> 查看完整搜索路径。</li>
-</ul>
-<p>🔗 链接阶段（查找库文件）</p>
-<table>
-<thead>
-<tr>
-<th align="center">优先级</th>
-<th align="center">来源类型</th>
-<th align="center">是否可覆盖</th>
-<th align="center">说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">1️⃣</td>
-<td align="center">显式命令行参数 -L</td>
-<td align="center">✅</td>
-<td align="center">用户指定的库路径，最高优先级</td>
-</tr>
-<tr>
-<td align="center">2️⃣</td>
-<td align="center">链接器参数 -rpath-link</td>
-<td align="center">✅</td>
-<td align="center">链接器查找间接依赖库时使用</td>
-</tr>
-<tr>
-<td align="center">3️⃣</td>
-<td align="center">环境变量 LIBRARY_PATH</td>
-<td align="center">✅</td>
-<td align="center">编译器查找库时使用，优先于默认路径</td>
-</tr>
-<tr>
-<td align="center">4️⃣</td>
-<td align="center">–sysroot 指定根路径</td>
-<td align="center">✅</td>
-<td align="center">用于交叉编译，影响所有路径解析</td>
-</tr>
-<tr>
-<td align="center">5️⃣</td>
-<td align="center">GCC 安装路径默认搜索目录</td>
-<td align="center">✅</td>
-<td align="center">来自 –prefix 和 –libdir 配置</td>
-</tr>
-<tr>
-<td align="center">6️⃣</td>
-<td align="center">specs 文件配置</td>
-<td align="center">✅</td>
-<td align="center">GCC 内部配置，可自定义行为</td>
-</tr>
-<tr>
-<td align="center">7️⃣</td>
-<td align="center">默认系统路径 &#x2F;lib, &#x2F;usr&#x2F;lib, &#x2F;lib64</td>
-<td align="center">❌</td>
-<td align="center">最后兜底路径，系统环境提供的库</td>
-</tr>
-</tbody></table>
-<p>说明：</p>
-<p>在编译安装 GCC 时，通常会使用 configure 脚本来指定安装路径：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./configure --prefix=/custom/gcc --libdir=/custom/gcc/lib64</span><br></pre></td></tr></table></figure>
-
-<table>
-<thead>
-<tr>
-<th align="center">参数</th>
-<th align="center">作用说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">–prefix</td>
-<td align="center">指定 GCC 的安装根目录。GCC 的可执行文件、头文件、库文件等都会安装到这个目录下的子目录中。</td>
-</tr>
-<tr>
-<td align="center">–libdir</td>
-<td align="center">指定库文件的安装目录，通常是 lib 或 lib64，用于放置 .so 或 .a 文件。</td>
-</tr>
-</tbody></table>
-<p>当你使用这个 GCC 编译器时，它会自动使用这些路径来查找头文件和库文件。例如：</p>
-<ul>
-<li>查找头文件时，会优先使用 &#x2F;custom&#x2F;gcc&#x2F;include</li>
-<li>查找库文件时，会优先使用 &#x2F;custom&#x2F;gcc&#x2F;lib64</li>
-<li>链接器（如 ld）也会被 GCC 告知去这些路径找库</li>
-</ul>
-<p>这些路径是 编译器内部写死的默认值，你可以通过以下命令查看：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -print-search-dirs</span><br></pre></td></tr></table></figure>
-
-<p>输出示例：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">install: /custom/gcc/lib/gcc/x86_64-linux-gnu/12.2.0/</span><br><span class="line">programs: /custom/gcc/libexec/gcc/x86_64-linux-gnu/12.2.0/:...</span><br><span class="line">libraries: /custom/gcc/lib/gcc/x86_64-linux-gnu/12.2.0/:/custom/gcc/lib64/:..</span><br></pre></td></tr></table></figure>
-
-<p><code>gcc -v</code> 会显示详细的编译和链接过程，包括实际使用了哪些路径和库文件。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -v hello.c -o hello</span><br></pre></td></tr></table></figure>
-
-<p>使用 –sysroot 指定根路径</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc --sysroot=/path/to/custom/root hello.c -o hello</span><br></pre></td></tr></table></figure>
-
-<h3 id="编译时链接器（ld）"><a href="#编译时链接器（ld）" class="headerlink" title="编译时链接器（ld）"></a>编译时链接器（ld）</h3><p>编译时链接器（ld） 和 运行时动态链接器 不是同一个东西：</p>
-<table>
-<thead>
-<tr>
-<th align="center">特性</th>
-<th align="center">编译时链接器 (<code>ld</code>)</th>
-<th align="center">运行时动态链接器 (<code>ld-linux.so</code>)</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">执行时机</td>
-<td align="center">编译阶段</td>
-<td align="center">程序启动时</td>
-</tr>
-<tr>
-<td align="center">作用</td>
-<td align="center">生成可执行文件</td>
-<td align="center">加载 .so 库并绑定符号</td>
-</tr>
-<tr>
-<td align="center">由谁调用</td>
-<td align="center">编译器（如 gcc）</td>
-<td align="center">操作系统加载器</td>
-</tr>
-<tr>
-<td align="center">是否参与运行过程</td>
-<td align="center">❌ 不参与</td>
-<td align="center">✅ 参与</td>
-</tr>
-</tbody></table>
-<h2 id="glibc"><a href="#glibc" class="headerlink" title="glibc"></a>glibc</h2><p>glibc 是特殊的 so ，它封装了系统调用，所以 Linux 系统本身也依赖它。</p>
-<p>C 语言允许编译时链接和运行时链接分开，所以常常遇到这样奇怪的问题：</p>
-<ul>
-<li>在本机编译、链接，在本机不能运行：</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./myapp: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.33&#x27; not found (required by ./myapp)</span><br></pre></td></tr></table></figure>
-
-<p>这是因为 gcc 在编译时指定的 glibc 和系统运行时的 glibc 不一样：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">$ strings /lib/x86_64-linux-gnu/libc.so.6 | grep GLIBC_</span><br><span class="line">GLIBC_2.2.5</span><br><span class="line">...</span><br><span class="line">GLIBC_2.31</span><br><span class="line"></span><br><span class="line">$ strings ./myapp | grep GLIBCXX_</span><br><span class="line">GLIBC_2.3</span><br><span class="line">...</span><br><span class="line">GLIBCXX_2.33</span><br></pre></td></tr></table></figure>
-
-<p><code>/lib/x86_64-linux-gnu/libc.so.6</code> 中确实没有 <code>GLIBC_2.33</code> 的符号。</p>
-<p>如果你的系统中有多个 glibc ，那么这种问题可以通过上面“运行时 so 的加载顺序”，使用环境变量调整。</p>
-<p>但是，这种对 glibc 的依赖可能是间接的：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">ls</span> /path/to/gcc/v14.2.0/lib64 | grep libstdc++.so</span><br><span class="line">libstdc++.so</span><br><span class="line">libstdc++.so.6</span><br><span class="line"></span><br><span class="line">$ ldd /path/to/gcc/v14.2.0/lib64/libstdc++.so.6</span><br><span class="line">        linux-vdso.so.1 (0x00007ffd965f4000)</span><br><span class="line">        libm.so.6 =&gt; /usr/lib64/libm.so.6 (0x0000147a213a9000)</span><br><span class="line">        libc.so.6 =&gt; /usr/lib64/libc.so.6 (0x0000147a20fe4000)</span><br><span class="line">        /lib64/ld-linux-x86-64.so.2 (0x0000147a219ea000)</span><br><span class="line">        libgcc_s.so.1 =&gt; /path/to/gcc/v14.2.0/lib64/libgcc_s.so.1 (0x0000147a21be4000)</span><br></pre></td></tr></table></figure>
-
-<p>此时，如果你的编译和运行的机器不是同一台（意味着运行时 &#x2F;usr&#x2F;lib64&#x2F;libc.so.6 文件和编译期不一致），这<br>时候就基本没有没有办法了。理论上，你可以下载一个与编译期相同的 libc.so.6 ，但是你无法保证系统的动态<br>链接器 <code>/lib64/ld-linux-x86-64.so.2</code> 与所下载的 libc.so.6 兼容。而 <code>/lib64/ld-linux-x86-64.so.2</code> 路<br>径是无法通过环境变量修改的，因为它是内核在程序启动时直接加载的，它的路径是硬编码在 ELF 可执行文件中<br>的。</p>
-<p>所以最好的方式，是在编译时就确认 GCC 的 glibc 和系统运行时一致。</p>
-<h3 id="检查当前-GCC-使用的-glibc-路径"><a href="#检查当前-GCC-使用的-glibc-路径" class="headerlink" title="检查当前 GCC 使用的 glibc 路径"></a>检查当前 GCC 使用的 glibc 路径</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ gcc --print-file-name=libc.so.6</span><br><span class="line">$ g++ --print-file-name=libstdc++.so.6</span><br><span class="line">$ gcc -print-search-dirs</span><br></pre></td></tr></table></figure>
-
-<p>示例：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ /path/to/gcc/v14.2.0/bin/g++ --print-file-name=libstdc++.so.6</span><br><span class="line">/path/toData/gcc-v14.2.0/x86_64/lib64/libstdc++.so.6</span><br></pre></td></tr></table></figure>
-
-<h3 id="确认当前系统的-glibc-和-libstdc-版本"><a href="#确认当前系统的-glibc-和-libstdc-版本" class="headerlink" title="确认当前系统的 glibc 和 libstdc++ 版本"></a>确认当前系统的 glibc 和 libstdc++ 版本</h3><p>✅ 查看 glibc 版本（即 libc.so）</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ldd --version</span><br><span class="line"><span class="comment"># 或者</span></span><br><span class="line">getconf GNU_LIBC_VERSION</span><br></pre></td></tr></table></figure>
-
-<p>✅ 查看 libstdc++ 版本（C++ 标准库）</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">strings /usr/lib*/libstdc++.so.6 | grep GLIBCXX</span><br></pre></td></tr></table></figure>
-
-<p>你会看到类似：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">GLIBCXX_3.4.21</span><br><span class="line">GLIBCXX_3.4.26</span><br></pre></td></tr></table></figure>
-
-<p>这些是你系统支持的 C++ ABI 版本。</p>
-<h3 id="系统默认路径"><a href="#系统默认路径" class="headerlink" title="系统默认路径"></a>系统默认路径</h3><p>由 &#x2F;etc&#x2F;ld.so.conf 和 ldconfig 决定</p>
-<p>通常包括：</p>
-<ul>
-<li>&#x2F;lib64&#x2F;</li>
-<li>&#x2F;usr&#x2F;lib64&#x2F;</li>
-<li>&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;（Debian&#x2F;Ubuntu）</li>
-</ul>
-<p>你可以运行：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ldconfig -p | grep libc.so.6</span><br></pre></td></tr></table></figure>
-
-<p>来查看系统当前可用的 libc.so.6 版本和路径。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/16/concurrency/%E5%B9%B6%E5%8F%91%E4%B8%AD%E7%9A%84%E5%86%85%E5%AD%98%E5%9B%9E%E6%94%B6/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/09/16/concurrency/%E5%B9%B6%E5%8F%91%E4%B8%AD%E7%9A%84%E5%86%85%E5%AD%98%E5%9B%9E%E6%94%B6/" class="post-title-link" itemprop="url">并发中的内存回收</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-09-16 23:04:01" itemprop="dateCreated datePublished" datetime="2025-09-16T23:04:01+00:00">2025-09-16</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">并发编程</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Hazard-Pointers（危险指针）"><a href="#Hazard-Pointers（危险指针）" class="headerlink" title="Hazard Pointers（危险指针）"></a>Hazard Pointers（危险指针）</h2><p>✅ 作用：保护正在访问的指针，防止它被其他线程释放。</p>
-<p>每个线程维护一组“hazard slots”，用于声明当前正在使用的节点。</p>
-<p>在释放节点前，必须检查是否有线程将其标记为 hazard。如果有，就延迟释放。</p>
-<p>📌 优点：精细控制：每个指针都可以独立保护。</p>
-<p>快速释放：一旦没有线程标记该节点，就可以立即释放。</p>
-<p>⚠️ 缺点：每个线程需要维护额外的指针集合。</p>
-<p>实现复杂度较高，尤其在高并发场景下。</p>
-<h2 id="Epoch-Based-Reclamation（基于世代的回收）"><a href="#Epoch-Based-Reclamation（基于世代的回收）" class="headerlink" title="Epoch-Based Reclamation（基于世代的回收）"></a>Epoch-Based Reclamation（基于世代的回收）</h2><p>✅ 作用：将所有线程的操作划分到一个“epoch”（时间段）中。</p>
-<p>每个线程在进入临界区时记录当前 epoch，退出时清除。</p>
-<p>被删除的节点会挂到当前 epoch 的垃圾列表中，只有当所有线程都离开该 epoch，才安全释放这些节点。</p>
-<p>📌 优点：实现简单，性能好，适合高吞吐量场景。</p>
-<p>不需要每个指针都单独保护。</p>
-<p>⚠️ 缺点：回收延迟：必须等待所有线程退出当前 epoch。</p>
-<p>对长时间运行的线程敏感，可能阻止垃圾回收。</p>
-<p>🧠 为什么需要它们？</p>
-<p>在 lock-free 数据结构中，节点可能被多个线程同时访问或修改。没有互斥锁保护时，直接释放内存可能导致：</p>
-<ul>
-<li>悬挂指针：其他线程还在访问被释放的节点。</li>
-<li>ABA 问题：节点被释放后地址复用，导致逻辑错误。</li>
-</ul>
-<figure class="highlight cpp"><figcaption><span>ebr.cpp</span><a href="/blog/downloads/code/concurrency/ebr.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// EBR: Epoch-Based Reclamation</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;mutex&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unordered_map&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">int</span> MAX_THREADS = <span class="number">4</span>;</span><br><span class="line"></span><br><span class="line">std::atomic&lt;<span class="type">int</span>&gt; global_epoch{<span class="number">0</span>};</span><br><span class="line">std::atomic&lt;<span class="type">bool</span>&gt; active[MAX_THREADS];</span><br><span class="line">std::atomic&lt;<span class="type">int</span>&gt; local_epoch[MAX_THREADS];</span><br><span class="line"></span><br><span class="line">std::mutex retire_mutex;</span><br><span class="line">std::unordered_map&lt;<span class="type">int</span>, std::vector&lt;<span class="type">int</span>*&gt;&gt; retire_list[<span class="number">3</span>];  <span class="comment">// 每个 epoch 的垃圾列表</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">enter_critical</span><span class="params">(<span class="type">int</span> tid)</span> </span>{</span><br><span class="line">    active[tid].<span class="built_in">store</span>(<span class="literal">true</span>, std::memory_order_relaxed);</span><br><span class="line">    local_epoch[tid].<span class="built_in">store</span>(global_epoch.<span class="built_in">load</span>(std::memory_order_relaxed),</span><br><span class="line">                           std::memory_order_relaxed);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">exit_critical</span><span class="params">(<span class="type">int</span> tid)</span> </span>{</span><br><span class="line">    active[tid].<span class="built_in">store</span>(<span class="literal">false</span>, std::memory_order_relaxed);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">retire_node</span><span class="params">(<span class="type">int</span> tid, <span class="type">int</span>* node)</span> </span>{</span><br><span class="line">    <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(retire_mutex)</span></span>;</span><br><span class="line">    <span class="type">int</span> epoch = global_epoch.<span class="built_in">load</span>(std::memory_order_relaxed);</span><br><span class="line">    retire_list[epoch][tid].<span class="built_in">push_back</span>(node);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">try_advance_epoch</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="type">int</span> current = global_epoch.<span class="built_in">load</span>(std::memory_order_relaxed);</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; MAX_THREADS; ++i) {</span><br><span class="line">        <span class="keyword">if</span> (active[i].<span class="built_in">load</span>(std::memory_order_relaxed) &amp;&amp;</span><br><span class="line">            local_epoch[i].<span class="built_in">load</span>(std::memory_order_relaxed) != current) {</span><br><span class="line">            <span class="keyword">return</span>;  <span class="comment">// 有线程还在旧 epoch，不能推进</span></span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> next_epoch = (current + <span class="number">1</span>) % <span class="number">3</span>;</span><br><span class="line">    global_epoch.<span class="built_in">store</span>(next_epoch, std::memory_order_relaxed);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 回收两代前的垃圾</span></span><br><span class="line">    <span class="type">int</span> reclaim_epoch = (next_epoch + <span class="number">1</span>) % <span class="number">3</span>;</span><br><span class="line">    <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(retire_mutex)</span></span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; [tid, nodes] : retire_list[reclaim_epoch]) {</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">auto</span> node : nodes) {</span><br><span class="line">            <span class="keyword">delete</span> node;</span><br><span class="line">        }</span><br><span class="line">        nodes.<span class="built_in">clear</span>();</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/15/concurrency/%E5%9F%BA%E4%BA%8E%E5%BC%95%E7%94%A8%E8%AE%A1%E6%95%B0%E7%9A%84ABA%E6%B6%88%E9%99%A4%E6%9C%BA%E5%88%B6/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/09/15/concurrency/%E5%9F%BA%E4%BA%8E%E5%BC%95%E7%94%A8%E8%AE%A1%E6%95%B0%E7%9A%84ABA%E6%B6%88%E9%99%A4%E6%9C%BA%E5%88%B6/" class="post-title-link" itemprop="url">基于引用计数的 ABA 消除机制</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-09-15 20:23:48" itemprop="dateCreated datePublished" datetime="2025-09-15T20:23:48+00:00">2025-09-15</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">并发编程</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>源码：<a target="_blank" rel="noopener" href="https://github.com/cameron314/concurrentqueue">https://github.com/cameron314/concurrentqueue</a></p>
-<p>原文<br>：<a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2014/solving-the-aba-problem-for-lock-free-free-lists">Solving the ABA Problem for Lock-Free Free Lists</a></p>
-<h2 id="共识"><a href="#共识" class="headerlink" title="共识"></a>共识</h2><ul>
-<li>CAS 足以保证线程安全；</li>
-<li>我们要做的是消除 CAS 的 ABA 问题。</li>
-</ul>
-<h2 id="常见的解决方案"><a href="#常见的解决方案" class="headerlink" title="常见的解决方案"></a>常见的解决方案</h2><h3 id="Tagged-versioned-指针"><a href="#Tagged-versioned-指针" class="headerlink" title="Tagged &#x2F; versioned 指针"></a>Tagged &#x2F; versioned 指针</h3><p>每次修改 head 的同时也变更一个版本号（tag&#x2F;version），把 (pointer, version) 当作 CAS 的对象。即使指针<br>回到同一个 A，只要版本号不同，CAS 就会失败，防止 ABA。</p>
-<p>缺点包括：在某些机器上需要双字宽度（两个 word）CAS，如果 硬件 &#x2F; 编译器 &#x2F; 平台 不支持就只能 模拟 &#x2F; 锁<br>住；或者要压缩 pointer 或 tag 大小，可能限制可管理的节点数量 &#x2F; 地址空间。</p>
-<h3 id="LL-SC（Load-Linked-Store-Conditional）原语"><a href="#LL-SC（Load-Linked-Store-Conditional）原语" class="headerlink" title="LL&#x2F;SC（Load-Linked &#x2F; Store-Conditional）原语"></a>LL&#x2F;SC（Load-Linked &#x2F; Store-Conditional）原语</h3><p>在支持 LL&#x2F;SC 的架构上，它自然就可以阻止 ABA：因为 store-conditional 会检测在 load 和 store 之间地址<br>是否被“写过”，哪怕写了后来改回原来的值也不行。缺点是很多主流架构（尤其 x86）不支持或者支持有限。</p>
-<h2 id="作者的方法：以引用计数＋“should-be-on-freelist”标志（标志-引用计数）"><a href="#作者的方法：以引用计数＋“should-be-on-freelist”标志（标志-引用计数）" class="headerlink" title="作者的方法：以引用计数＋“should be on freelist”标志（标志 + 引用计数）"></a>作者的方法：以引用计数＋“should be on freelist”标志（标志 + 引用计数）</h2><p>作者提出了一个适用于 free list 的通用方法来避免 ABA，且保持 lock‐free 特性。</p>
-<p>提示：该代码应该从 <code>try_get()</code> 开始阅读，然后回到 <code>add()</code> ，这样才能理解设计引用计数的意图，否则很容<br>易迷惑。</p>
-<ul>
-<li>引用计数是状态标志：<ul>
-<li>表示当前有多少线程正在操作节点；</li>
-<li><strong>空闲链表本身也持有一个对节点的引用计数</strong>。</li>
-</ul>
-</li>
-<li>任何线程尝试摘取空闲链表的节点（总是从头部开始）时（<code>try_get()</code>）：<ul>
-<li>必须先增加 head 的引用计数（不同线程可能并发地将节点的引用计数增加到某个值）；→ <code>(3)</code></li>
-<li>next &#x3D; head-&gt;next；</li>
-<li>然后 CAS 竞争，尝试将 freeListHead 调整为 next；<ul>
-<li>如果 CAS 竞争成功，则成功将 freeListHead 调整为 next，该节点被摘下；引用计数减 2（自己增加 的<br>引用计数 + 链表本身持有的引用计数），我们称该线程为<code>线程 1</code>。→ <code>(1)</code></li>
-<li>如果 CAS 竞争失败，则回退：将自己所增加的引用计数减去；用 CAS 返回的新的 head 重试（下一次获取<br>新的 head 节点），这是<code>线程 2</code>；→ <code>(2)</code></li>
-<li>注意：这两步之间以及每一步自身内，对引用计数的操作都有中间状态，但是此时引用计数必然大于 0 （<br><strong>重点！</strong> ）。</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><strong>ABA 问题</strong>：如果成功摘取节点的<code>线程 1</code>完成节点的使用，将节点又添加回空闲链表（<code>add()</code>）：<ul>
-<li>它会发现某个线程正在第 <code>(2)</code> 步的回退过程中（还没有将自身增加的引用计数减回去），所以此时引用计<br>数还是大于 0（也就是说<code>线程 1</code>使用该节点的整个过程，该节点的引用计数都是大于 0 的，但是不影响）<br>。</li>
-<li>此时它可以选择自旋地等待引用计数降为 0 （即所有之前在 <code>try_get()</code> 中 CAS 竞争失败的线程（<br>如<code>线程 2</code>）回退成功）。因为只有引用计数降为 0 了，才能说明自己是唯一一个尝试在链表上操作该节点<br>的线程。但是这从技术上说，就是一个 lock。</li>
-<li>作者设计了一个更聪明的办法：<code>add()</code> 设置一个 <code>SHOULD_BE_ON_FREELIST</code> 标志，然后直接放弃<br>（<code>add()</code>的任务已经完成了）。</li>
-<li>让处于回退中的 <code>线程 2</code>，在回退结束的时候，检查 <code>SHOULD_BE_ON_FREELIST</code> 标志，如果有该标志，并且<br>自己就是最后一个操作该节点的线程的话（即此时的引用计数已经降为 0 了），就帮助 <code>add()</code> 把该节点添<br>加到 free list。</li>
-</ul>
-</li>
-</ul>
-<h3 id="引用计数"><a href="#引用计数" class="headerlink" title="引用计数"></a>引用计数</h3><p>现在我们回过头来看引用计数的作用：</p>
-<ul>
-<li><p>如果 <code>refs &gt; 0</code>：</p>
-<ul>
-<li>(1) 要么该节点在链表上；</li>
-<li>(2) 要么有线程正在操作该节点（准确来讲，是在 <code>try_get()</code>）；</li>
-<li>(3) 要么以上两种情况同时存在。</li>
-<li>注：(1)(2) 可以只存在一种，见上面的 ABA 问题的描述。</li>
-</ul>
-</li>
-<li><p>如果 <code>refs == 0</code>：</p>
-<ul>
-<li>节点已经被从空闲链表上取下；</li>
-<li>并且其他线程都已经从 <code>try_get()</code> 成功回退了。</li>
-</ul>
-</li>
-</ul>
-<p>如果第三个线程，与<code>线程 1</code>、<code>线程 2</code>一起进入上面的 <code>try_get()</code> 竞争，但是当<code>线程 3</code>即将执行步<br>骤<code>(3)</code>时，发现 <code>refs == 0</code>，它就不能够再增加 head 的引用计数了，因为节点已经被成功取下。否则当它成<br>功增加引用计数，再去拿取 head-&gt;next 的时候，是未定义行为。</p>
-<p>正是基于此，在步骤<code>(3)</code>增加引用计数的时候，我们需要判断 <code>refs == 0 ?</code> 和使用 CAS 增加引用计数，如果<br>不符合预期，则放弃增加，进入下一轮重试。</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> ((refs &amp; REFS_MASK) == <span class="number">0</span> || !head-&gt;freeListRefs.<span class="built_in">compare_exchange_strong</span>(refs, refs + <span class="number">1</span>, std::memory_order_acquire)) &#123;</span><br><span class="line">	head = freeListHead.<span class="built_in">load</span>(std::memory_order_acquire);</span><br><span class="line">	<span class="keyword">continue</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/15/concurrency/ABA/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/09/15/concurrency/ABA/" class="post-title-link" itemprop="url">CAS 的 ABA问题</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-09-15 19:48:58" itemprop="dateCreated datePublished" datetime="2025-09-15T19:48:58+00:00">2025-09-15</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">并发编程</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="ABA-问题"><a href="#ABA-问题" class="headerlink" title="ABA 问题"></a>ABA 问题</h2><p>在典型的无锁栈&#x2F;队列里，指针会被反复复用（比如 pop 出再 push 回去）。如果只用 compare_exchange 比较指<br>针，那么：</p>
-<ul>
-<li>T1 读到 A</li>
-<li>T2 把 A → B → A 改一圈</li>
-<li>T1 CAS 时看到还是 A，以为结构没变，但其实已经发生变化</li>
-</ul>
-<p>这就是 ABA 问题。</p>
-<h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><h3 id="版本标记指针方案"><a href="#版本标记指针方案" class="headerlink" title="版本标记指针方案"></a>版本标记指针方案</h3><p>‌ 核心思想 ‌：为每个指针附加一个版本号标记，每次修改时递增版本号。</p>
-<p>‌ 实现要点 ‌：</p>
-<ul>
-<li>需要双字 CAS(DCAS)硬件支持</li>
-<li>每次修改头指针时递增标记值</li>
-<li>即使指针地址相同，标记值不同也会使 CAS 失败</li>
-<li>适用于支持 DCAS 的平台(如某些 ARM 架构)</li>
-<li>在非 DCAS 平台也可用，前提是将 data + version 放入一个机器字中，以维持操作的原子性</li>
-</ul>
-<p>‌ 限制 ‌：</p>
-<ul>
-<li>在某些机器上需要双字宽度（两个 word）CAS；</li>
-<li>如果硬件／编译器／平台不支持就只能模拟／锁住；或者要压缩 pointer 或 tag 大小，可能限制可管理的节点数量／地址空间。</li>
-</ul>
-<h3 id="引用计数方案"><a href="#引用计数方案" class="headerlink" title="引用计数方案"></a>引用计数方案</h3><p>‌ 核心思想 ‌：为每个节点维护引用计数，防止节点在被使用时被重新添加到列表。</p>
-<p>‌ 关键实现细节 ‌：</p>
-<p>每个节点包含 freeListRefs(引用计数)和 freeListNext(下一节点指针) 引用计数高位用作 “应返回自由列表”<br>标志位 try_get()操作前确保引用计数不为零 add()操作使用原子操作管理引用计数和标志位 ‌ 优势 ‌：</p>
-<p>完全通用的解决方案，不依赖特定硬件特性保持真正的锁无关性质正确处理并发场景下的各种竞争条件</p>
-<h3 id="Hazard-Pointer（危险指针）"><a href="#Hazard-Pointer（危险指针）" class="headerlink" title="Hazard Pointer（危险指针）"></a>Hazard Pointer（危险指针）</h3><p>思路：每个线程在访问共享指针之前，把自己正在访问的指针写到一个全局可见的“hazard pointer”里。</p>
-<p>作用：其他线程在想要回收这个节点内存时，必须检查所有线程的 hazard pointers，如果发现有人还在用这个节<br>点，就不能释放。</p>
-<p>优点：简单直接，内存可以安全回收。</p>
-<p>缺点：维护 hazard pointers 有一定开销，每次回收都要检查所有线程。</p>
-<h3 id="Epoch-Based-Reclamation（基于世代的回收，简称-Epoch-GC）"><a href="#Epoch-Based-Reclamation（基于世代的回收，简称-Epoch-GC）" class="headerlink" title="Epoch-Based Reclamation（基于世代的回收，简称 Epoch GC）"></a>Epoch-Based Reclamation（基于世代的回收，简称 Epoch GC）</h3><p>思路：把时间切分成 epoch（世代）。线程进入临界区时声明自己在某个 epoch。当一个节点被删除后，先放到一<br>个“延迟回收队列”，等到所有线程都离开这个 epoch 之后，才能真正释放这些节点。</p>
-<p>作用：保证没有线程会在旧 epoch 中访问到已经释放的节点。</p>
-<p>优点：比 hazard pointer 更高效（不用逐个检查指针）。</p>
-<p>缺点：需要所有线程都周期性地报告自己活跃的 epoch，否则内存可能迟迟回收不了。</p>
-<p>🚩 为什么会和 ABA 有关？</p>
-<p>像 Michael-Scott 队列这种链表结构，节点被 pop 出队后地址可能被重用。如果没有安全的内存回收，另一个线<br>程可能 CAS 成功指向了一个“已经被释放并重用的地址”，这就是 ABA 的根源。所以 hazard pointer 或 epoch<br>GC 是在链表队列里用来避免这种 悬空引用 + ABA 的。</p>
-<p>而 moodycamel:: ConcurrentQueue 因为用的是 环形 buffer + sequence number，节点不会反复 malloc&#x2F;free，<br>所以根本就不需要 hazard pointer 或 epoch GC。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/14/concurrency/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E6%B3%95%E5%88%99/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/09/14/concurrency/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E6%B3%95%E5%88%99/" class="post-title-link" itemprop="url">并发编程法则</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-09-14 16:10:01" itemprop="dateCreated datePublished" datetime="2025-09-14T16:10:01+00:00">2025-09-14</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="TBB-的特殊性"><a href="#TBB-的特殊性" class="headerlink" title="TBB 的特殊性"></a>TBB 的特殊性</h1><p><strong>本文的法则是以线程为调度单位的。</strong></p>
-<p>如果你使用的是 TBB ，那么请将 “线程” 对应为 “任务”，而将本文的“任务” 对应为“载荷”（ payloads）。</p>
-<p>因为 TBB 是以任务为调度单位的：</p>
-<ul>
-<li>每个 “任务” 是并发运行的最小单位，必须保证数据独立或线程安全。</li>
-<li>TBB 采用 “任务窃取” 算法来保证线程的复杂均衡，所以若干任务可能被同一线程或不同线程运行。</li>
-</ul>
-<h1 id="经验法则"><a href="#经验法则" class="headerlink" title="经验法则"></a>经验法则</h1><h2 id="以-tasksPerThread-按需分配线程"><a href="#以-tasksPerThread-按需分配线程" class="headerlink" title="以 tasksPerThread 按需分配线程"></a>以 tasksPerThread 按需分配线程</h2><ul>
-<li>tasksPerThread：均匀性。如果每个线程分配的任务数不均匀，那么任务数最多的线程就会成为瓶颈。</li>
-<li>按需分配线程：如果任务可以很快完成，那么没有必要开启过多的线程，否则调度开销也不可小觑。</li>
-</ul>
-<h2 id="以空间换时间"><a href="#以空间换时间" class="headerlink" title="以空间换时间"></a>以空间换时间</h2><p>为了任务能并发运行，进行任务分隔时，必须尽可能减少数据共享。<br>所以不要吝惜空间，为每个任务单独开辟内存（不论是为输入还是输出目的）都是值得且必要的。</p>
-<h2 id="长临界区使用-lock-条件变量"><a href="#长临界区使用-lock-条件变量" class="headerlink" title="长临界区使用 lock + 条件变量"></a>长临界区使用 lock + 条件变量</h2><p>如果一个任务的临界区比较大，意味着该任务执行时，其他线程在短时间内无法进入临界区。<br>与其让这些线程忙等，不如释放 CPU 进入阻塞 &#x2F; 休眠。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/14/concurrency/MPMC-Lock-free-Queue/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/09/14/concurrency/MPMC-Lock-free-Queue/" class="post-title-link" itemprop="url">多生产者 - 多消费者 无锁队列</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-09-14 15:05:08" itemprop="dateCreated datePublished" datetime="2025-09-14T15:05:08+00:00">2025-09-14</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/concurrency/" itemprop="url" rel="index"><span itemprop="name">concurrency</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>这是阅读 Cameron Desrochers 的<br><a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2014/a-fast-general-purpose-lock-free-queue-for-c++">A Fast General Purpose Lock-Free Queue for C++</a><br>源码的笔记。</p>
-<ul>
-<li><a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2014/detailed-design-of-a-lock-free-queue">Detailed Design of a Lock-Free Queue</a></li>
-<li><a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2014/solving-the-aba-problem-for-lock-free-free-lists">Solving the ABA Problem for Lock-Free Free Lists</a></li>
-</ul>
-<h2 id="系统概览"><a href="#系统概览" class="headerlink" title="系统概览"></a>系统概览</h2><p>MPMC 队列由一系列 SPMC 队列组成。消费者使用启发式 (heuristic) 来决定消费哪个 SPMC 队列。允许批量入列<br>和出列，只需要很小的额外开销。</p>
-<p>producer 需要一些 thread-local 数据； consumer 也可以用一些可选的 thread-local 数据来加速；这些<br>thread-local 数据可以与用户分配的 tokens 关联；如果用户没有为生产者提供 tokens ，则使用无锁哈希表（<br>以当前线程 ID 为键）来查找线程本地生产者队列：每个 SPMC 队列都使用一个预分配的 token （或隐式分配的<br>token，如果没有提供的话）来创建。由于 token 包含相当于线程特定的数据，因此它们不应该同时在多个线程中<br>使用（尽管可以将 token 的所有权转移给另一个线程；特别是，这允许在线程池任务中使用令牌，即使运行任务<br>的线程在中途发生变化）。</p>
-<p>所有生产者队列都以无锁链表的形式连接在一起。当显式生产者不再有元素被添加时（即其令牌被销毁），它会被<br>标记为与任何生产者都无关联，但它会保留在链表中，且其内存不会被释放；下一个新生产者会重用旧生产者的内<br>存（这样，无锁生产者列表就只能添加）。隐式生产者永远不会被销毁（直到高层队列本身被销毁），因为无法知<br>道给定线程是否已完成对数据结构的使用。需要注意的是，最坏情况下的出队速度取决于生产者队列的数量，即使<br>它们都为空。</p>
-<p>显式生产者队列和隐式生产者队列的生命周期存在根本区别：显式生产者队列的生产生命周期有限，与令牌的生命<br>周期绑定；而隐式生产者队列的生产生命周期不受限制，且与高级队列本身的生命周期相同。因此，为了最大化速<br>度和内存利用率，我们使用了两种略有不同的 SPMC 算法。通常，显式生产者队列设计得更快，占用的内存也更多<br>；而隐式生产者队列设计得更慢，但会将更多内存回收到高级队列的全局池中。为了获得最佳速度，请始终使用显<br>式令牌（除非您觉得它太不方便）。</p>
-<p>任何分配的内存只有在高级队列被销毁时才会释放（尽管存在一些重用机制）。内存分配可以预先完成，如果内存<br>不足，操作就会失败（而不是分配更多内存）。如果需要，用户可以覆盖各种默认大小参数（以及队列使用的内存<br>分配函数）。</p>
-<h2 id="Full-API-pseudocode"><a href="#Full-API-pseudocode" class="headerlink" title="Full API (pseudocode)"></a>Full API (pseudocode)</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Allocates more memory if necessary</span></span><br><span class="line">enqueue(item) : bool</span><br><span class="line">enqueue(prod_token, item) : bool</span><br><span class="line">enqueue_bulk(item_first, count) : bool</span><br><span class="line">enqueue_bulk(prod_token, item_first, count) : bool</span><br><span class="line"></span><br><span class="line"><span class="comment"># Fails if not enough memory to enqueue</span></span><br><span class="line">try_enqueue(item) : bool</span><br><span class="line">try_enqueue(prod_token, item) : bool</span><br><span class="line">try_enqueue_bulk(item_first, count) : bool</span><br><span class="line">try_enqueue_bulk(prod_token, item_first, count) : bool</span><br><span class="line"></span><br><span class="line"><span class="comment"># Attempts to dequeue from the queue (never allocates)</span></span><br><span class="line">try_dequeue(item&amp;) : bool</span><br><span class="line">try_dequeue(cons_token, item&amp;) : bool</span><br><span class="line">try_dequeue_bulk(item_first, max) : size_t</span><br><span class="line">try_dequeue_bulk(cons_token, item_first, max) : size_t</span><br><span class="line"></span><br><span class="line"><span class="comment"># If you happen to know which producer you want to dequeue from</span></span><br><span class="line">try_dequeue_from_producer(prod_token, item&amp;) : bool</span><br><span class="line">try_dequeue_bulk_from_producer(prod_token, item_first, max) : size_t</span><br><span class="line"></span><br><span class="line"><span class="comment"># A not-necessarily-accurate count of the total number of elements</span></span><br><span class="line">size_approx() : size_t</span><br></pre></td></tr></table></figure>
-
-<h2 id="Producer-Queue-SPMC-Design"><a href="#Producer-Queue-SPMC-Design" class="headerlink" title="Producer Queue (SPMC) Design"></a>Producer Queue (SPMC) Design</h2><h3 id="隐式和显式版本的共享设计"><a href="#隐式和显式版本的共享设计" class="headerlink" title="隐式和显式版本的共享设计"></a>隐式和显式版本的共享设计</h3><p>生产者队列由块组成（显式和隐式生产者队列使用相同的块对象，以实现更好的内存共享）。初始状态下，它没有<br>块。每个块可以容纳固定数量的元素（所有块的容量相同，均为 2 的幂）。此外，块包含一个标志，指示已填充<br>的槽位是否已被完全消耗（显式版本使用此标志来判断块何时为空），以及一个原子计数器，用于计数已完全出队<br>的元素数量（隐式版本使用此标志来判断块何时为空）。</p>
-<p>为了实现无锁操作，生产者队列可以被认为是一个抽象的无限数组。尾部索引指示生产者下一个可用的槽位；它同<br>时也是已入队元素数量的两倍（ <strong>入队计数 (enqueue count)</strong> ）。尾部索引仅由生产者写入，并且始终递增（除<br>非溢出并回绕，但就我们的目的而言，这种情况仍被视为“递增”）。由于只有一个线程在更新相关变量，因此生产<br>一个元素的过程非常简单。头索引指示下一个可以被消费的元素。头索引由消费者原子地递增，可能并发进行。为<br>了防止头索引达到&#x2F;超过感知到的尾部索引，我们使用了一个额外的原子计数器： <strong>出队计数 (dequeue count)</strong><br>。出队计数是乐观的，即当消费者推测有元素需要出队时，它会递增。如果出队计数在递增后的值小于入队计数（<br>尾部），则保证至少有一个元素要出队（即使考虑到并发性），并且可以安全地递增头部索引，因为知道之后它会<br>小于尾部索引。另一方面，如果出队计数在递增后超过（或等于）尾部，则出队操作失败，并且出队计数在逻辑上<br>会递减（以使其最终与入队计数保持一致）：这可以通过直接递减出队计数来实现，但是（为了增加并行性并使所<br>有相关变量单调递增），改为递增**出队过量提交计数器 (dequeue overcommit counter)**。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">出队计数的逻辑值 = 出队计数变量 - 出队过量提交值</span><br></pre></td></tr></table></figure>
-
-<p>在消费时，一旦如上所述确定了有效索引，仍然需要将其映射到一个块以及该块中的偏移量；为此会使用某种索引<br>数据结构（具体使用哪种结构取决于它是隐式队列还是显式队列）。最后，可以将元素移出，并更新某种状态，以<br>便最终知道该块何时完全消费。下文将分别在隐式和显式队列的各个部分中对这些机制进行完整描述。</p>
-<p>如前所述，尾部和头部的索引&#x2F;计数最终会溢出。这是预料之中的，并且已被考虑在内。因此，索引&#x2F;计数被视为存<br>在于一个与最大整数值大小相同的圆上（类似于 360 度的圆，其中 359 在 1 之前）。为了检查一个索引&#x2F;计数（<br>例如 a）是否位于另一个索引&#x2F;计数（例如 b）之前（即逻辑小于），我们必须确定 a 是否沿着圆上的顺时针圆弧<br>更接近 b。使用以下”环形小于”算法（32 位版本）：<code>a &lt; b</code> 变为 <code>a - b &gt; (1U &lt;&lt; 31U)</code>。<code>a &lt;= b</code> 变为<br><code>a - b - 1ULL &gt; (1ULL &lt;&lt; 31ULL)</code>。请注意，环形减法“仅适用于”普通无符号整数（假设为二进制补码）。需要<br>注意的是，尾部索引的增量不会超过头部索引（这会破坏队列）。请注意，尽管如此，从技术上讲仍然存在竞争条<br>件，即消费者（或生产者）看到的索引值过于陈旧，几乎比当前值落后一整圈（甚至更多！），从而导致队列的内<br>部状态损坏。但在实践中，这不是问题，因为遍历 2^31 个值（对于 32 位索引类型）需要一段时间，而其他核心<br>到那时会看到更新的值。实际上，许多无锁算法都基于相关的标签指针习语（tag-pointer idiom），其中前 16<br>位用于重复递增的标签，后 16 位用于指针值；这依赖于类似的假设，即一个核心不能将标签递增超过 2^15 次，<br>而其他核心却不知道。尽管如此，队列的默认索引类型是 64 位宽（如果 16 位看起来就足够了，那么理论上应该<br>可以避免任何潜在的竞争）。</p>
-<p>内存分配失败也会得到妥善处理，不会损坏队列（只会报告失败）。此外，队列元素本身在操作时也应确保不会抛<br>出异常。</p>
-<h3 id="Block-Pools"><a href="#Block-Pools" class="headerlink" title="Block Pools"></a>Block Pools</h3><p>有两种不同的块池可供使用：首先，有一个初始的预分配块数组。一旦使用完毕，该池将永远保持为空。这简化了<br>其无等待（wait-free）实现，只需一条 fetch-and-add 原子指令（用于获取空闲块的下一个索引）并进行检查（<br>以确保该索引在范围内）。其次，有一个无锁（但非无等待）的全局空闲列表（“全局”是指对高级队列而言是全局<br>的），其中包含已用完且可重复使用的块，该列表实现为一个无锁单链表：头指针最初指向空（null）。要将块添<br>加到空闲列表，需要将块的下一个指针设置为头指针，然后使用比较并交换 (CAS) 更新头指针，使其指向该块，<br>前提是头指针未发生更改；如果发生更改，则重复该过程（这是一个经典的无锁 CAS 循环设计模式）。要从空闲<br>列表中移除一个块，可以使用类似的算法：读取头部块的下一个指针，然后将头部设置为该下一个指针（使用<br>CAS），前提是在此期间头部块没有发生变化。为了避免 ABA 问题，每个块都有一个引用计数，在执行 CAS 移除<br>块之前会递增，之后会递减；如果在块的引用计数大于 0 的情况下尝试将其重新添加到空闲列表中，则会设置一<br>个标志，指示该块应该在空闲列表中，并且下一个线程在完成最后一个引用的持有后会检查此标志，并将该块添加<br>到列表中（这种方法有效，因为我们不关心顺序）。我<br>在<a target="_blank" rel="noopener" href="http://moodycamel.com/blog/2014/solving-the-aba-problem-for-lock-free-free-lists">另一篇博文</a>中更<br>详细地描述了这个无锁空闲列表的具体设计和实现。当生产者队列需要新块时，它首先检查初始块池，然后检查全<br>局空闲列表，只有当它在那里找不到空闲块时，它才会在堆上分配一个新块（如果不允许内存分配，则失败）。</p>
-<h2 id="基准测试"><a href="#基准测试" class="headerlink" title="基准测试"></a>基准测试</h2><h3 id="Ticket-System"><a href="#Ticket-System" class="headerlink" title="Ticket System"></a>Ticket System</h3><p>BlockQueue（只用分块）：使用分块内存布局，但不使用 ticket 分发机制。</p>
-<figure class="highlight cpp"><figcaption><span>TicketQueue_benchmark.cpp</span><a href="/blog/downloads/code/camel_mpmc/TicketQueue/TicketQueue_benchmark.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">constexpr</span> <span class="type">size_t</span> BLOCK_SIZE = <span class="number">64</span>;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">int</span> N = <span class="number">1&#x27;000&#x27;000</span>;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">int</span> NUM_PRODUCERS = <span class="number">8</span>;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">int</span> NUM_CONSUMERS = <span class="number">8</span>;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">int</span> ITEMS_PER_PRODUCER = N / NUM_PRODUCERS;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">Slot</span> {</span><br><span class="line">    std::atomic&lt;<span class="type">bool</span>&gt; ready;</span><br><span class="line">    <span class="type">int</span> data;</span><br><span class="line">};</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">Block</span> {</span><br><span class="line">    Slot slots[BLOCK_SIZE];</span><br><span class="line">};</span><br><span class="line"></span><br><span class="line"><span class="comment">// BlockQueue: 分块但无 ticket</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">BlockQueue</span> {</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">BlockQueue</span>() : <span class="built_in">head</span>(<span class="number">0</span>), <span class="built_in">tail</span>(<span class="number">0</span>) {</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">enqueue</span><span class="params">(<span class="type">int</span> value)</span> </span>{</span><br><span class="line">        <span class="type">size_t</span> index = head.<span class="built_in">fetch_add</span>(<span class="number">1</span>) % BLOCK_SIZE;</span><br><span class="line">        block.slots[index].data = value;</span><br><span class="line">        block.slots[index].ready.<span class="built_in">store</span>(<span class="literal">true</span>, std::memory_order_release);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">try_dequeue</span><span class="params">(<span class="type">int</span>&amp; value)</span> </span>{</span><br><span class="line">        <span class="type">size_t</span> index = tail.<span class="built_in">fetch_add</span>(<span class="number">1</span>) % BLOCK_SIZE;</span><br><span class="line">        <span class="keyword">if</span> (!block.slots[index].ready.<span class="built_in">load</span>(std::memory_order_acquire))</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        value = block.slots[index].data;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::atomic&lt;<span class="type">size_t</span>&gt; head;</span><br><span class="line">    std::atomic&lt;<span class="type">size_t</span>&gt; tail;</span><br><span class="line">    Block block;</span><br><span class="line">};</span><br></pre></td></tr></table></figure>
-
-<p>TicketQueue（分块 + ticket）：模拟 moodycamel 的 ticket 分发方式。</p>
-<figure class="highlight cpp"><figcaption><span>TicketQueue_benchmark.cpp</span><a href="/blog/downloads/code/camel_mpmc/TicketQueue/TicketQueue_benchmark.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// TicketQueue: 分块 + ticket</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TicketQueue</span> {</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">TicketQueue</span>() : <span class="built_in">head</span>(<span class="number">0</span>), <span class="built_in">tail</span>(<span class="number">0</span>) {</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">enqueue</span><span class="params">(<span class="type">int</span> value)</span> </span>{</span><br><span class="line">        <span class="type">size_t</span> ticket = head.<span class="built_in">fetch_add</span>(<span class="number">1</span>);</span><br><span class="line">        <span class="type">size_t</span> index = ticket % BLOCK_SIZE;</span><br><span class="line">        block.slots[index].data = value;</span><br><span class="line">        block.slots[index].ready.<span class="built_in">store</span>(<span class="literal">true</span>, std::memory_order_release);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">try_dequeue</span><span class="params">(<span class="type">int</span>&amp; value)</span> </span>{</span><br><span class="line">        <span class="type">size_t</span> ticket = tail.<span class="built_in">fetch_add</span>(<span class="number">1</span>);</span><br><span class="line">        <span class="type">size_t</span> index = ticket % BLOCK_SIZE;</span><br><span class="line">        <span class="keyword">while</span> (!block.slots[index].ready.<span class="built_in">load</span>(std::memory_order_acquire)) {</span><br><span class="line">            <span class="comment">// 自旋等待</span></span><br><span class="line">        }</span><br><span class="line">        value = block.slots[index].data;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::atomic&lt;<span class="type">size_t</span>&gt; head;</span><br><span class="line">    std::atomic&lt;<span class="type">size_t</span>&gt; tail;</span><br><span class="line">    Block block;</span><br><span class="line">};</span><br></pre></td></tr></table></figure>
-
-<p>Benchmark 代码：</p>
-<figure class="highlight cpp"><figcaption><span>TicketQueue_benchmark.cpp</span><a href="/blog/downloads/code/camel_mpmc/TicketQueue/TicketQueue_benchmark.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 基准测试函数</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> QueueType&gt;</span><br><span class="line"><span class="function"><span class="type">double</span> <span class="title">benchmark</span><span class="params">(<span class="type">const</span> std::string&amp; name, <span class="type">double</span>&amp; opsPerSec)</span> </span>{</span><br><span class="line">    QueueType queue;</span><br><span class="line">    std::atomic&lt;<span class="type">int</span>&gt; totalConsumed{<span class="number">0</span>};</span><br><span class="line">    std::map&lt;<span class="type">int</span>, <span class="type">double</span>&gt; threadWaitTimes;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> start = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 启动生产者线程</span></span><br><span class="line">    std::vector&lt;std::thread&gt; producers;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> p = <span class="number">0</span>; p &lt; NUM_PRODUCERS; ++p) {</span><br><span class="line">        producers.<span class="built_in">emplace_back</span>([&amp;queue, p]() {</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; ITEMS_PER_PRODUCER; ++i) {</span><br><span class="line">                queue.<span class="built_in">enqueue</span>(i + p * ITEMS_PER_PRODUCER);</span><br><span class="line">            }</span><br><span class="line">        });</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 启动消费者线程</span></span><br><span class="line">    std::vector&lt;std::thread&gt; consumers;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> c = <span class="number">0</span>; c &lt; NUM_CONSUMERS; ++c) {</span><br><span class="line">        consumers.<span class="built_in">emplace_back</span>([&amp;queue, &amp;totalConsumed, c, &amp;threadWaitTimes]() {</span><br><span class="line">            <span class="type">int</span> item;</span><br><span class="line">            <span class="keyword">auto</span> localStart = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">            <span class="keyword">while</span> (<span class="literal">true</span>) {</span><br><span class="line">                <span class="keyword">auto</span> t0 = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">                <span class="keyword">while</span> (!queue.<span class="built_in">try_dequeue</span>(item)) {</span><br><span class="line">                    <span class="comment">// busy wait</span></span><br><span class="line">                }</span><br><span class="line">                <span class="keyword">auto</span> t1 = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">                threadWaitTimes[c] +=</span><br><span class="line">                    std::chrono::<span class="built_in">duration</span>&lt;<span class="type">double</span>&gt;(t1 - t0).<span class="built_in">count</span>();</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> (++totalConsumed &gt;= N)</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">            }</span><br><span class="line">            <span class="keyword">auto</span> localEnd = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">            <span class="type">double</span> threadTime =</span><br><span class="line">                std::chrono::<span class="built_in">duration</span>&lt;<span class="type">double</span>&gt;(localEnd - localStart).<span class="built_in">count</span>();</span><br><span class="line">            std::cout &lt;&lt; <span class="string">&quot;Consumer &quot;</span> &lt;&lt; c &lt;&lt; <span class="string">&quot; finished in &quot;</span> &lt;&lt; threadTime</span><br><span class="line">                      &lt;&lt; <span class="string">&quot;s, wait time: &quot;</span> &lt;&lt; threadWaitTimes[c] &lt;&lt; <span class="string">&quot;s\n&quot;</span>;</span><br><span class="line">        });</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; t : producers)</span><br><span class="line">        t.<span class="built_in">join</span>();</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; t : consumers)</span><br><span class="line">        t.<span class="built_in">join</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> end = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">    std::chrono::duration&lt;<span class="type">double</span>&gt; elapsed = end - start;</span><br><span class="line">    opsPerSec = N / elapsed.<span class="built_in">count</span>();</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;\n&quot;</span></span><br><span class="line">              &lt;&lt; name &lt;&lt; <span class="string">&quot; completed in &quot;</span> &lt;&lt; elapsed.<span class="built_in">count</span>()</span><br><span class="line">              &lt;&lt; <span class="string">&quot;s, throughput: &quot;</span> &lt;&lt; opsPerSec &lt;&lt; <span class="string">&quot; ops/sec\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> elapsed.<span class="built_in">count</span>();</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="type">double</span> opsBlock = <span class="number">0.0</span>, opsTicket = <span class="number">0.0</span>;</span><br><span class="line">    <span class="type">double</span> timeBlock = <span class="built_in">benchmark</span>&lt;BlockQueue&gt;(<span class="string">&quot;BlockQueue&quot;</span>, opsBlock);</span><br><span class="line">    <span class="type">double</span> timeTicket = <span class="built_in">benchmark</span>&lt;TicketQueue&gt;(<span class="string">&quot;TicketQueue&quot;</span>, opsTicket);</span><br><span class="line">    <span class="type">double</span> speedup = opsTicket / opsBlock;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; std::left &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">14</span>) &lt;&lt; <span class="string">&quot;Queue Type&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">12</span>) &lt;&lt; <span class="string">&quot;Time (s)&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">20</span>) &lt;&lt; <span class="string">&quot;Throughput (ops/s)&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">10</span>) &lt;&lt; <span class="string">&quot;Speedup&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;|\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; std::<span class="built_in">string</span>(<span class="number">70</span>, <span class="string">&#x27;-&#x27;</span>) &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// BlockQueue row</span></span><br><span class="line">    std::cout &lt;&lt; std::left &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">14</span>) &lt;&lt; <span class="string">&quot;BlockQueue&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">12</span>) &lt;&lt; std::fixed &lt;&lt; std::<span class="built_in">setprecision</span>(<span class="number">6</span>)</span><br><span class="line">              &lt;&lt; timeBlock &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">20</span>) &lt;&lt; std::fixed</span><br><span class="line">              &lt;&lt; std::<span class="built_in">setprecision</span>(<span class="number">0</span>) &lt;&lt; opsBlock &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">10</span>)</span><br><span class="line">              &lt;&lt; <span class="string">&quot;1.00×&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;|\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// TicketQueue row</span></span><br><span class="line">    std::ostringstream speedupStream;</span><br><span class="line">    speedupStream &lt;&lt; std::fixed &lt;&lt; std::<span class="built_in">setprecision</span>(<span class="number">2</span>) &lt;&lt; speedup &lt;&lt; <span class="string">&quot;×&quot;</span>;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; std::left &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">14</span>) &lt;&lt; <span class="string">&quot;TicketQueue&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">12</span>) &lt;&lt; std::fixed &lt;&lt; std::<span class="built_in">setprecision</span>(<span class="number">6</span>)</span><br><span class="line">              &lt;&lt; timeTicket &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">20</span>) &lt;&lt; std::fixed</span><br><span class="line">              &lt;&lt; std::<span class="built_in">setprecision</span>(<span class="number">0</span>) &lt;&lt; opsTicket &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">10</span>)</span><br><span class="line">              &lt;&lt; speedupStream.<span class="built_in">str</span>() &lt;&lt; <span class="string">&quot;|\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/13/concurrency/SPSC-lock-free-queue/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/09/13/concurrency/SPSC-lock-free-queue/" class="post-title-link" itemprop="url">单生产者 - 单消费者 无锁队列</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-09-13 17:09:37" itemprop="dateCreated datePublished" datetime="2025-09-13T17:09:37+00:00">2025-09-13</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/concurrency/" itemprop="url" rel="index"><span itemprop="name">concurrency</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>这是阅读 Cameron Desrochers 的 <a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2013/a-fast-lock-free-queue-for-c++">A Fast Lock-Free Queue for C++</a> 源码的笔记。</p>
-<p>仓库地址：<a target="_blank" rel="noopener" href="https://github.com/cameron314/readerwriterqueue">https://github.com/cameron314/readerwriterqueue</a></p>
-<p>其他参考文献：</p>
-<p><a target="_blank" rel="noopener" href="https://preshing.com/20120612/an-introduction-to-lock-free-programming/">An Introduction to Lock-Free Programming</a><br><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=A8eCGOqgvH4&list=PLjwoip0ltHwHCe0Nw7PDPtzlJP7rUouRL">C++ and Beyond 2012: Herb Sutter - atomic Weapons 1 of 2</a><br><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=KeLBd2EJLOU">C++ and Beyond 2012: Herb Sutter - atomic Weapons 2 of 2</a></p>
-<h2 id="内存屏障"><a href="#内存屏障" class="headerlink" title="内存屏障"></a>内存屏障</h2><p>约束 memory loads&#x2F;stores 的顺序。</p>
-<ul>
-<li>releaase 内存屏障：告诉 CPU，如果屏障之后的任何写入变得可见，那么屏障之前的任何写入都应该在其他核心中可见，前提是其他核心在读取 写屏障之后写入的数据 后执行读屏障。<br>换句话说，如果线程 B 可以看到在另一个线程 A 上的写屏障之后写入的新值，那么在执行读屏障（在线程 B 上）之后，可以保证在线程 A 上的写屏障之前发生的所有写入在线程 B 上可见。</li>
-</ul>
-<h2 id="实现细节"><a href="#实现细节" class="headerlink" title="实现细节"></a>实现细节</h2><ol>
-<li>block: 一个连续的环形缓冲区，用来存储元素。这样可以预分配内存。</li>
-<li>块过小（这不利于无锁）时，无需将所有现有元素复制到新的块中；多个块（大小独立）以循环链表的形式链接在一起。</li>
-<li>当前插入的块称为 “尾块”，当前消费的块称为 “头块”。</li>
-<li>头索引指向下一个要读取的满槽；尾索引指向下一个要插入的空槽。如果两个索引相等，则块为空（确切地说，当队列已满时，恰好有一个插槽为空，以避免在具有相同头和尾索引的满块和空块之间产生歧义）。</li>
-<li>为了允许队列对任意线程创建 &#x2F; 析构（独立于生产 &#x2F; 消费线程），全内存屏障（memory_order_acq_cst）被用在析构函数地最后、析构函数的开头（这会强制所有的 CPU cores 同步 outstanding changes）。显然，在析构函数可以被安全地调用之前，生产者和消费者必须已经停止使用该队列。</li>
-</ol>
-<h2 id="Give-me-the-codes"><a href="#Give-me-the-codes" class="headerlink" title="Give me the codes"></a>Give me the codes</h2><ol>
-<li>用户不需要管理内存。</li>
-<li>预分配内存，在连续的块中。</li>
-<li><code>try_enqueue</code>: 保证不会分配内存（队列有初始容量）；</li>
-<li><code>enqueue</code>: 会根据需要动态扩容。</li>
-<li>没有使用 CAS loop；这意味者 enqueue 和 dequeue 是 O(1) 的（没有计入内存分配的时间）。</li>
-<li>因为在 x86 平台，内存屏障是空操作，所以 enqueue 和 dequeue 是一系列简单的 loads 和 stores (and branches) 。</li>
-</ol>
-<p>此代码仅仅适用于以原子方式处理 自然对齐的整型（aligned integer） 和 原生指针大小（native-pointer-size） 的 loads&#x2F;stores 的 CPU 上；<br>幸运的是，这包括了所有的现代处理器（包括 ARM, x86&#x2F;x86_64 和 PowerPC）。<br>它不是为在 DEC Alpha 上运行而设计的（DEC Alpha 似乎具有有史以来最弱的内存排序保证）。</p>
-<p>注：在 x86 上，memory_order_acquire&#x2F;release 通常不需要额外指令就能实现语义，但仍然能限制编译器的重排。<br>fetch_add 不是一个原子操作，而是三个：load, add, store. 所以不适用上述说的 “自然对齐的整型” 或“原生指针大小”的 load&#x2F;store.</p>
-<h2 id="性能优化点"><a href="#性能优化点" class="headerlink" title="性能优化点"></a>性能优化点</h2><ol>
-<li>平凡析构：跳过析构，直接释放内存。</li>
-<li><a target="_blank" rel="noopener" href="http://www.cse.cuhk.edu.hk/~pclee/www/pubs/ancs09poster.pdf">MCRingBuffer paper</a><ol>
-<li>cache line padding</li>
-<li>local control variables<ol>
-<li>减少对全局 read&#x2F;write 指针的读取</li>
-</ol>
-</li>
-<li>local block</li>
-</ol>
-</li>
-</ol>
-<h2 id="正确性测试"><a href="#正确性测试" class="headerlink" title="正确性测试"></a>正确性测试</h2><ol>
-<li>定义不可预测性延时函数，用于模拟线程调度。</li>
-<li>写线程塞入 32 M 个数据；读线程读取 32 M 次。读写线程中使用 unpredDelay() 模拟调度延迟。</li>
-<li>测试能否顺序读取，失败则打印日志，不退出。</li>
-<li>测试程序无限运行，每次使用一个写线程和读线程。直至手动 Ctrl C 关闭。</li>
-</ol>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/blog/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/11/">11</a><a class="extend next" rel="next" href="/blog/page/2/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/blog/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/12/">12</a><a class="extend next" rel="next" href="/blog/page/2/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -2122,20 +2440,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">108</span>
+          <span class="site-state-item-count">115</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-count">15</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">47</span>
+        <span class="site-state-item-count">49</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

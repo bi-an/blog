@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="1. NUMA概念NUMA（Non-Uniform Memory Access，非统一内存访问）是一种计算机内存设计架构，主要用于多处理器系统中。 在NUMA架构中：  每个CPU处理器都有本地内存（Local Memory），访问速度较快 每个CPU也可以访问其他CPU的内存（Remote Memory），但访问速度较慢 多个CPU和其本地内存组成一个NUMA节点（NUMA Node） 系统通过">
+<meta property="og:type" content="article">
+<meta property="og:title" content="NUMA节点详解">
+<meta property="og:url" content="https://bi-an.github.io/blog/2025/12/02/perf/numa/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="1. NUMA概念NUMA（Non-Uniform Memory Access，非统一内存访问）是一种计算机内存设计架构，主要用于多处理器系统中。 在NUMA架构中：  每个CPU处理器都有本地内存（Local Memory），访问速度较快 每个CPU也可以访问其他CPU的内存（Remote Memory），但访问速度较慢 多个CPU和其本地内存组成一个NUMA节点（NUMA Node） 系统通过">
+<meta property="og:locale">
+<meta property="article:published_time" content="2025-12-02T13:44:25.000Z">
+<meta property="article:modified_time" content="2025-12-02T14:58:39.919Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="performance">
+<meta property="article:tag" content="numa">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2025/12/02/perf/numa/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>NUMA节点详解 | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/12/02/perf/numa/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          NUMA节点详解
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2025-12-02 13:44:25 / Modified: 14:58:39" itemprop="dateCreated datePublished" datetime="2025-12-02T13:44:25+00:00">2025-12-02</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="1-NUMA概念"><a href="#1-NUMA概念" class="headerlink" title="1. NUMA概念"></a>1. NUMA概念</h2><p>NUMA（Non-Uniform Memory Access，非统一内存访问）是一种计算机内存设计架构，主要用于多处理器系统中。</p>
+<p>在NUMA架构中：</p>
+<ul>
+<li>每个CPU处理器都有本地内存（Local Memory），访问速度较快</li>
+<li>每个CPU也可以访问其他CPU的内存（Remote Memory），但访问速度较慢</li>
+<li>多个CPU和其本地内存组成一个NUMA节点（NUMA Node）</li>
+<li>系统通过NUMA拓扑来管理内存和CPU的分配</li>
+</ul>
+<p><strong>NUMA架构的优势：</strong></p>
+<ul>
+<li>减少内存访问延迟（本地内存访问更快）</li>
+<li>提高系统整体性能</li>
+<li>支持更大规模的多处理器系统</li>
+</ul>
+<p><strong>NUMA架构的挑战：</strong></p>
+<ul>
+<li>需要合理分配进程和内存到对应的NUMA节点</li>
+<li>跨节点访问内存会带来性能损失</li>
+<li>需要应用程序或系统管理员进行优化</li>
+</ul>
+<h2 id="2-CPU亲和性概念"><a href="#2-CPU亲和性概念" class="headerlink" title="2. CPU亲和性概念"></a>2. CPU亲和性概念</h2><p><strong>CPU亲和性（CPU Affinity）</strong>是指将进程或线程绑定到特定的CPU核心上运行的机制。通过设置CPU亲和性，可以：</p>
+<ol>
+<li><strong>提高缓存命中率</strong>：进程始终运行在同一个CPU核心上，可以更好地利用CPU的L1&#x2F;L2&#x2F;L3缓存</li>
+<li><strong>减少进程迁移开销</strong>：避免进程在不同CPU核心间频繁迁移带来的性能损失</li>
+<li><strong>资源隔离</strong>：将不同进程绑定到不同CPU核心，实现资源隔离和负载均衡</li>
+</ol>
+<p><strong>CPU亲和性的类型：</strong></p>
+<ul>
+<li><strong>硬亲和性（Hard Affinity）</strong>：强制绑定，进程&#x2F;线程<strong>只能</strong>运行在指定的CPU核心上，调度器会严格遵循这个限制<ul>
+<li>例如：如果绑定到CPU 0，进程&#x2F;线程就<strong>只能</strong>调度到CPU 0上运行，<strong>不能</strong>调度到CPU 1或其他CPU核心上</li>
+<li>通过 <code>sched_setaffinity()</code>、<code>taskset</code>、<code>numactl --cpunodebind</code>、<code>cgroup cpuset.cpus</code> 等方法设置</li>
+</ul>
+</li>
+<li><strong>软亲和性（Soft Affinity）</strong>：偏好设置，系统会尽量将进程调度到指定的CPU核心，但不强制<ul>
+<li>这是调度器的默认行为，在没有显式设置CPU亲和性时，调度器会尽量保持进程在同一个CPU核心上运行</li>
+</ul>
+</li>
+</ul>
+<p><strong>注意事项：</strong></p>
+<ul>
+<li>CPU亲和性设置会影响操作系统的调度器行为</li>
+<li>过度绑定可能导致CPU负载不均衡</li>
+<li>即使通过硬亲和性强制绑定到单个CPU核心，进程仍可能创建多个线程，这些线程会在该CPU核心上通过时间片轮转的方式轮流调度执行</li>
+</ul>
+<p><strong>并行库适配说明：</strong></p>
+<p>CPU绑定（如 <code>taskset</code>、<code>sched_setaffinity</code>、<code>numactl --cpunodebind</code>）是<strong>硬亲和性</strong>（强制性的），能有效限制并行库的线程数。例如，TBB（Threading Building Blocks）在初始化时会根据操作系统报告的硬件资源（通过 <code>sysconf(_SC_NPROCESSORS_ONLN)</code> 等API）来决定线程池大小和调度策略。如果使用 <code>taskset</code> 或 <code>numactl</code> 将进程绑定到部分CPU核心，TBB只会看到这些CPU核心，从而自动调整线程池大小。这意味着通过限制可见的CPU资源，可以间接控制并行库的行为。</p>
+<p><strong>NUMA架构下CPU亲和性的特殊性：</strong></p>
+<p>在NUMA架构系统中，CPU亲和性具有特殊的重要性：</p>
+<ol>
+<li><p><strong>内存访问性能依赖CPU位置</strong>：</p>
+<ul>
+<li>进程运行在节点A的CPU上，如果内存分配在节点B，会产生远程内存访问，性能显著下降</li>
+<li>因此，NUMA架构下的CPU亲和性设置必须配合内存分配策略，才能获得最佳性能</li>
+</ul>
+</li>
+<li><p><strong>节点级别的CPU绑定</strong>：</p>
+<ul>
+<li>在NUMA系统中，通常以NUMA节点为单位进行CPU绑定，而不是单个CPU核心</li>
+<li>绑定到某个NUMA节点的CPU意味着可以使用该节点的所有CPU核心，同时配合该节点的本地内存</li>
+</ul>
+</li>
+<li><p><strong>CPU亲和性与内存策略的协同</strong>：</p>
+<ul>
+<li>仅设置CPU亲和性而不设置内存策略可能导致远程内存访问</li>
+<li>NUMA优化需要同时考虑CPU绑定和内存分配策略</li>
+</ul>
+</li>
+</ol>
+<p><strong>总结</strong>：NUMA架构是CPU亲和性在多处理器系统中的特殊应用场景。在NUMA系统中，CPU亲和性不仅影响CPU调度，还直接影响内存访问性能，因此需要与内存分配策略协同使用。</p>
+<h2 id="3-CPU亲和性的设置"><a href="#3-CPU亲和性的设置" class="headerlink" title="3. CPU亲和性的设置"></a>3. CPU亲和性的设置</h2><h3 id="方法对比总览"><a href="#方法对比总览" class="headerlink" title="方法对比总览"></a>方法对比总览</h3><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>易用性</th>
+<th>NUMA感知</th>
+<th>内存控制</th>
+<th>CPU绑定类型</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>taskset</strong></td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>❌</td>
+<td>❌</td>
+<td>✅ 硬亲和性</td>
+<td>简单CPU绑定</td>
+</tr>
+<tr>
+<td><strong>sched_setaffinity</strong></td>
+<td>⭐⭐⭐</td>
+<td>❌</td>
+<td>❌</td>
+<td>✅ 硬亲和性</td>
+<td>程序内部控制</td>
+</tr>
+<tr>
+<td><strong>cgroup</strong></td>
+<td>⭐⭐</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅ 硬亲和性</td>
+<td>系统级资源管理</td>
+</tr>
+<tr>
+<td><strong>numactl</strong></td>
+<td>⭐⭐⭐⭐</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅ 硬亲和性</td>
+<td>NUMA优化（详见NUMA章节）</td>
+</tr>
+</tbody></table>
+<h3 id="方法一：taskset（通用CPU绑定）"><a href="#方法一：taskset（通用CPU绑定）" class="headerlink" title="方法一：taskset（通用CPU绑定）"></a>方法一：taskset（通用CPU绑定）</h3><p><code>taskset</code> 是一个用于设置或查看进程CPU亲和性的命令行工具，适用于所有系统（包括非NUMA系统）。</p>
+<p><strong>基本用法：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看进程的CPU亲和性</span></span><br><span class="line">taskset -p &lt;pid&gt;</span><br><span class="line">taskset -<span class="built_in">cp</span> &lt;pid&gt;  <span class="comment"># 更易读的格式</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置进程的CPU亲和性（使用CPU掩码）</span></span><br><span class="line">taskset -p 0x3 &lt;pid&gt;  <span class="comment"># 绑定到CPU 0和1（二进制：11）</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用CPU列表格式</span></span><br><span class="line">taskset -<span class="built_in">cp</span> 0,1,2,3 &lt;pid&gt;  <span class="comment"># 绑定到CPU 0,1,2,3</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动新进程并设置CPU亲和性</span></span><br><span class="line">taskset -c 0-3 ./your_program  <span class="comment"># 绑定到CPU 0-3</span></span><br><span class="line">taskset -c 0,2,4,6 ./your_program  <span class="comment"># 绑定到CPU 0,2,4,6</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>taskset的特点：</strong></p>
+<ul>
+<li>✅ 简单易用，命令行工具</li>
+<li>✅ 直接指定CPU编号，精确控制</li>
+<li>✅ CPU绑定是<strong>硬亲和性</strong>（强制绑定）</li>
+<li>❌ 不感知NUMA拓扑结构</li>
+<li>❌ 无法控制内存分配策略</li>
+</ul>
+<p><strong>适用场景：</strong></p>
+<ul>
+<li>非NUMA系统（单节点系统）</li>
+<li>只需要简单的CPU绑定，不关心内存位置</li>
+<li>系统没有NUMA架构</li>
+</ul>
+<h3 id="方法二：sched-setaffinity系统调用"><a href="#方法二：sched-setaffinity系统调用" class="headerlink" title="方法二：sched_setaffinity系统调用"></a>方法二：sched_setaffinity系统调用</h3><p><code>sched_setaffinity()</code> 是Linux系统提供的系统调用，用于设置进程或线程的CPU亲和性。这是 <code>taskset</code> 命令的底层实现。</p>
+<p><strong>C语言示例：</strong></p>
+<figure class="highlight c"><figcaption><span>sched_setaffinity.c</span><a href="/blog/downloads/code/perf/numa/sched_setaffinity.c">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> _GNU_SOURCE</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sched.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> {</span><br><span class="line">    <span class="type">cpu_set_t</span> cpuset;</span><br><span class="line">    CPU_ZERO(&amp;cpuset);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 设置CPU亲和性：绑定到CPU 0和1</span></span><br><span class="line">    CPU_SET(<span class="number">0</span>, &amp;cpuset);</span><br><span class="line">    CPU_SET(<span class="number">1</span>, &amp;cpuset);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 设置当前进程的CPU亲和性</span></span><br><span class="line">    <span class="keyword">if</span> (sched_setaffinity(<span class="number">0</span>, <span class="keyword">sizeof</span>(cpuset), &amp;cpuset) != <span class="number">0</span>) {</span><br><span class="line">        perror(<span class="string">&quot;sched_setaffinity failed&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 验证设置结果</span></span><br><span class="line">    CPU_ZERO(&amp;cpuset);</span><br><span class="line">    <span class="keyword">if</span> (sched_getaffinity(<span class="number">0</span>, <span class="keyword">sizeof</span>(cpuset), &amp;cpuset) != <span class="number">0</span>) {</span><br><span class="line">        perror(<span class="string">&quot;sched_getaffinity failed&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;进程绑定到CPU: &quot;</span>);</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; CPU_SETSIZE; i++) {</span><br><span class="line">        <span class="keyword">if</span> (CPU_ISSET(i, &amp;cpuset)) {</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;%d &quot;</span>, i);</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;\n&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p><strong>多线程示例：</strong></p>
+<figure class="highlight c"><figcaption><span>sched_setaffinity_threads.c</span><a href="/blog/downloads/code/perf/numa/sched_setaffinity_threads.c">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> _GNU_SOURCE</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sched.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> NUM_THREADS 4</span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">worker_thread</span><span class="params">(<span class="type">void</span> *arg)</span> {</span><br><span class="line">    <span class="type">int</span> thread_id = *(<span class="type">int</span> *)arg;</span><br><span class="line">    <span class="type">cpu_set_t</span> cpuset;</span><br><span class="line">    CPU_ZERO(&amp;cpuset);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 每个线程绑定到不同的CPU</span></span><br><span class="line">    CPU_SET(thread_id, &amp;cpuset);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 设置线程的CPU亲和性</span></span><br><span class="line">    <span class="keyword">if</span> (pthread_setaffinity_np(pthread_self(), <span class="keyword">sizeof</span>(cpuset), &amp;cpuset) != <span class="number">0</span>) {</span><br><span class="line">        perror(<span class="string">&quot;pthread_setaffinity_np failed&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 获取当前运行的CPU</span></span><br><span class="line">    <span class="type">int</span> cpu = sched_getcpu();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;线程 %d 运行在CPU %d\n&quot;</span>, thread_id, cpu);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> {</span><br><span class="line">    <span class="type">pthread_t</span> threads[NUM_THREADS];</span><br><span class="line">    <span class="type">int</span> thread_ids[NUM_THREADS];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; NUM_THREADS; i++) {</span><br><span class="line">        thread_ids[i] = i;</span><br><span class="line">        pthread_create(&amp;threads[i], <span class="literal">NULL</span>, worker_thread, &amp;thread_ids[i]);</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; NUM_THREADS; i++) {</span><br><span class="line">        pthread_join(threads[i], <span class="literal">NULL</span>);</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p>编译命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -o sched_affinity sched_affinity.c -lpthread</span><br></pre></td></tr></table></figure>
+
+<p><strong>API说明：</strong></p>
+<ul>
+<li><code>sched_setaffinity(pid_t pid, size_t cpusetsize, const cpu_set_t *mask)</code>：设置进程的CPU亲和性<ul>
+<li><code>pid = 0</code>：设置当前进程</li>
+<li><code>pid &gt; 0</code>：设置指定进程</li>
+</ul>
+</li>
+<li><code>sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask)</code>：获取进程的CPU亲和性</li>
+<li><code>pthread_setaffinity_np(pthread_t thread, size_t cpusetsize, const cpu_set_t *mask)</code>：设置线程的CPU亲和性</li>
+<li><code>pthread_getaffinity_np(pthread_t thread, size_t cpusetsize, cpu_set_t *mask)</code>：获取线程的CPU亲和性</li>
+</ul>
+<p><strong>sched_setaffinity的特点：</strong></p>
+<ul>
+<li>✅ 系统级API，功能强大</li>
+<li>✅ 可以在程序内部精确控制CPU绑定</li>
+<li>✅ 支持进程和线程级别的绑定</li>
+<li>✅ CPU绑定是<strong>硬亲和性</strong>（强制绑定）</li>
+<li>❌ 需要编写代码，不如命令行工具方便</li>
+<li>❌ 不感知NUMA拓扑</li>
+</ul>
+<p><strong>使用场景：</strong></p>
+<ul>
+<li>需要在程序运行时动态调整CPU绑定</li>
+<li>需要为不同线程设置不同的CPU亲和性</li>
+<li>需要精确控制CPU绑定的应用程序</li>
+</ul>
+<h3 id="方法三：cgroup（系统级资源管理）"><a href="#方法三：cgroup（系统级资源管理）" class="headerlink" title="方法三：cgroup（系统级资源管理）"></a>方法三：cgroup（系统级资源管理）</h3><p>cgroup是Linux内核提供的资源管理机制，可以通过cgroup v1或cgroup v2来限制进程组的CPU使用。</p>
+<p><strong>cgroup v1方法：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建cgroup</span></span><br><span class="line">sudo <span class="built_in">mkdir</span> -p /sys/fs/cgroup/cpuset/mygroup</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置可用的CPU核心（例如CPU 0-3）</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;0-3&quot;</span> | sudo <span class="built_in">tee</span> /sys/fs/cgroup/cpuset/mygroup/cpuset.cpus</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置内存节点（NUMA节点，如果系统支持）</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;0&quot;</span> | sudo <span class="built_in">tee</span> /sys/fs/cgroup/cpuset/mygroup/cpuset.mems</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将进程添加到cgroup</span></span><br><span class="line"><span class="built_in">echo</span> &lt;pid&gt; | sudo <span class="built_in">tee</span> /sys/fs/cgroup/cpuset/mygroup/cgroup.procs</span><br><span class="line"></span><br><span class="line"><span class="comment"># 或者启动新进程</span></span><br><span class="line">sudo cgexec -g cpuset:mygroup ./your_program</span><br></pre></td></tr></table></figure>
+
+<p><strong>cgroup v2方法：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 挂载cgroup v2（如果未挂载）</span></span><br><span class="line">sudo mount -t cgroup2 none /sys/fs/cgroup2</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建cgroup</span></span><br><span class="line">sudo <span class="built_in">mkdir</span> -p /sys/fs/cgroup2/mygroup</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置CPU范围（例如CPU 0-3）</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;0-3&quot;</span> | sudo <span class="built_in">tee</span> /sys/fs/cgroup2/mygroup/cpuset.cpus</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置内存节点（如果系统支持）</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;0&quot;</span> | sudo <span class="built_in">tee</span> /sys/fs/cgroup2/mygroup/cpuset.mems</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将进程添加到cgroup</span></span><br><span class="line"><span class="built_in">echo</span> &lt;pid&gt; | sudo <span class="built_in">tee</span> /sys/fs/cgroup2/mygroup/cgroup.procs</span><br></pre></td></tr></table></figure>
+
+<p><strong>systemd使用cgroup：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建systemd服务单元文件</span></span><br><span class="line">sudo systemd-run --unit=myapp --scope \</span><br><span class="line">    --property=CPUSetCPUs=0-3 \</span><br><span class="line">    --property=CPUSetMems=0 \</span><br><span class="line">    ./your_program</span><br></pre></td></tr></table></figure>
+
+<p><strong>cgroup的特点：</strong></p>
+<ul>
+<li>✅ 系统级资源管理，功能强大</li>
+<li>✅ 支持NUMA感知（可以设置内存节点）</li>
+<li>✅ 可以同时管理CPU和内存</li>
+<li>✅ 支持进程组管理</li>
+<li>✅ <strong>硬亲和性</strong>（强制绑定），保证进程组只在指定CPU上运行</li>
+<li>⚠️ 需要root权限</li>
+<li>⚠️ 配置相对复杂</li>
+</ul>
+<p><strong>使用场景：</strong></p>
+<ul>
+<li>容器化环境（Docker、Kubernetes等）</li>
+<li>需要同时管理多个进程的资源分配</li>
+<li>需要持久化的资源限制配置</li>
+<li>系统级资源管理需求</li>
+</ul>
+<h2 id="4-NUMA的设置"><a href="#4-NUMA的设置" class="headerlink" title="4. NUMA的设置"></a>4. NUMA的设置</h2><h3 id="查询和监控NUMA信息"><a href="#查询和监控NUMA信息" class="headerlink" title="查询和监控NUMA信息"></a>查询和监控NUMA信息</h3><h4 id="1-查看NUMA节点拓扑"><a href="#1-查看NUMA节点拓扑" class="headerlink" title="1. 查看NUMA节点拓扑"></a>1. 查看NUMA节点拓扑</h4><p>使用 <code>numactl --hardware</code> 命令查看NUMA硬件信息：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">$ numactl --hardware</span><br><span class="line">available: 2 nodes (0-1)</span><br><span class="line">node 0 cpus: 0 1 2 3 8 9 10 11</span><br><span class="line">node 0 size: 16384 MB</span><br><span class="line">node 0 free: 1024 MB</span><br><span class="line">node 1 cpus: 4 5 6 7 12 13 14 15</span><br><span class="line">node 1 size: 16384 MB</span><br><span class="line">node 1 free: 2048 MB</span><br><span class="line">node distances:</span><br><span class="line">node   0   1</span><br><span class="line">  0:  10  21</span><br><span class="line">  1:  21  10</span><br></pre></td></tr></table></figure>
+
+<p><strong>结果说明：</strong></p>
+<ul>
+<li><code>available: 2 nodes (0-1)</code>: 系统有2个NUMA节点，编号为0和1</li>
+<li><code>node 0 cpus: 0 1 2 3 8 9 10 11</code>: 节点0包含的CPU核心编号</li>
+<li><code>node 0 size: 16384 MB</code>: 节点0的内存大小（16GB）</li>
+<li><code>node 0 free: 1024 MB</code>: 节点0的可用内存</li>
+<li><code>node distances</code>: 节点间访问距离矩阵<ul>
+<li>节点0到节点0的距离是10（本地访问）</li>
+<li>节点0到节点1的距离是21（远程访问，距离越大性能越差）</li>
+</ul>
+</li>
+</ul>
+<h4 id="2-查看CPU和NUMA节点的映射关系"><a href="#2-查看CPU和NUMA节点的映射关系" class="headerlink" title="2. 查看CPU和NUMA节点的映射关系"></a>2. 查看CPU和NUMA节点的映射关系</h4><p>使用 <code>lscpu</code> 命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ lscpu | grep -i numa</span><br><span class="line">NUMA node(s):          2</span><br><span class="line">NUMA node0 CPU(s):     0-3,8-11</span><br><span class="line">NUMA node1 CPU(s):     4-7,12-15</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-查看NUMA统计信息"><a href="#3-查看NUMA统计信息" class="headerlink" title="3. 查看NUMA统计信息"></a>3. 查看NUMA统计信息</h4><p>使用 <code>numastat</code> 查看NUMA统计信息：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ numastat</span><br><span class="line">                           node0           node1</span><br><span class="line">numa_hit             12345678901     23456789012</span><br><span class="line">numa_miss              123456789       234567890</span><br><span class="line">numa_foreign           234567890       123456789</span><br><span class="line">interleave_hit             12345           12345</span><br><span class="line">local_node           12345678901     23456789012</span><br><span class="line">other_node              123456789       234567890</span><br></pre></td></tr></table></figure>
+
+<h4 id="4-查看进程的NUMA策略"><a href="#4-查看进程的NUMA策略" class="headerlink" title="4. 查看进程的NUMA策略"></a>4. 查看进程的NUMA策略</h4><p>使用 <code>numactl --show</code> 查看当前进程的NUMA策略：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ numactl --show</span><br><span class="line">policy: default</span><br><span class="line">preferred node: current</span><br><span class="line">physcpubind: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15</span><br><span class="line">cpubind: 0 1</span><br><span class="line">nodebind: 0 1</span><br><span class="line">membind: 0 1</span><br></pre></td></tr></table></figure>
+
+<h4 id="5-查看系统NUMA节点详细信息"><a href="#5-查看系统NUMA节点详细信息" class="headerlink" title="5. 查看系统NUMA节点详细信息"></a>5. 查看系统NUMA节点详细信息</h4><p>查看 <code>/sys/devices/system/node/</code> 目录：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">ls</span> /sys/devices/system/node/</span><br><span class="line">node0  node1</span><br><span class="line"></span><br><span class="line">$ <span class="built_in">cat</span> /sys/devices/system/node/node0/cpulist</span><br><span class="line">0-3,8-11</span><br><span class="line"></span><br><span class="line">$ <span class="built_in">cat</span> /sys/devices/system/node/node0/meminfo</span><br><span class="line">Node 0 MemTotal:       16777216 kB</span><br><span class="line">Node 0 MemFree:         1048576 kB</span><br><span class="line">Node 0 MemUsed:       15728640 kB</span><br></pre></td></tr></table></figure>
+
+<h3 id="numactl：NUMA架构下的CPU亲和性和内存策略工具"><a href="#numactl：NUMA架构下的CPU亲和性和内存策略工具" class="headerlink" title="numactl：NUMA架构下的CPU亲和性和内存策略工具"></a>numactl：NUMA架构下的CPU亲和性和内存策略工具</h3><p><code>numactl</code> 是NUMA架构优化的首选工具，可以同时控制CPU和内存分配策略。</p>
+<p><strong>基本用法：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 将进程绑定到节点0的CPU和内存（CPU是硬亲和性，内存是强制绑定）</span></span><br><span class="line">numactl --cpunodebind=0 --membind=0 ./your_program</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用节点0的CPU（硬亲和性），但允许使用所有节点的内存</span></span><br><span class="line">numactl --cpunodebind=0 ./your_program</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用节点0和1的CPU（硬亲和性），优先使用节点0的内存（偏好设置）</span></span><br><span class="line">numactl --cpunodebind=0,1 --preferred=0 ./your_program</span><br><span class="line"></span><br><span class="line"><span class="comment"># 只绑定内存到节点0（强制绑定），CPU可以使用所有节点</span></span><br><span class="line">numactl --membind=0 ./your_program</span><br><span class="line"></span><br><span class="line"><span class="comment"># 交错分配内存到多个节点</span></span><br><span class="line">numactl --interleave=all ./your_program</span><br></pre></td></tr></table></figure>
+
+<p><strong>numactl选项说明：</strong></p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>CPU绑定类型</th>
+<th>内存绑定类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--cpunodebind=&lt;nodes&gt;</code></td>
+<td>✅ <strong>硬亲和性（强制绑定）</strong></td>
+<td>-</td>
+<td>进程只能运行在指定节点的CPU上</td>
+</tr>
+<tr>
+<td><code>--membind=&lt;nodes&gt;</code></td>
+<td>-</td>
+<td>✅ <strong>强制绑定</strong></td>
+<td>内存只能从指定节点分配</td>
+</tr>
+<tr>
+<td><code>--preferred=&lt;node&gt;</code></td>
+<td>-</td>
+<td>⚠️ <strong>偏好设置</strong></td>
+<td>优先从指定节点分配内存，但允许从其他节点分配</td>
+</tr>
+<tr>
+<td><code>--interleave=&lt;nodes&gt;</code></td>
+<td>-</td>
+<td>⚠️ <strong>交错分配</strong></td>
+<td>在指定节点间轮询分配内存</td>
+</tr>
+<tr>
+<td><code>--localalloc</code></td>
+<td>-</td>
+<td>⚠️ <strong>本地优先</strong></td>
+<td>优先在本地节点分配内存</td>
+</tr>
+</tbody></table>
+<p><strong>详细说明：</strong></p>
+<ul>
+<li><code>--cpunodebind=&lt;nodes&gt;</code>：将进程绑定到指定NUMA节点的CPU（硬亲和性，强制绑定）<ul>
+<li>示例：<code>--cpunodebind=0</code> 绑定到节点0的所有CPU</li>
+<li>示例：<code>--cpunodebind=0,1</code> 绑定到节点0和1的所有CPU</li>
+</ul>
+</li>
+<li><code>--membind=&lt;nodes&gt;</code>：设置内存分配策略为强制绑定到指定节点（强制）<ul>
+<li>示例：<code>--membind=0</code> 内存只能从节点0分配</li>
+<li>如果节点0内存不足，进程可能无法运行</li>
+</ul>
+</li>
+<li><code>--preferred=&lt;node&gt;</code>：设置内存分配偏好节点（偏好设置）<ul>
+<li>示例：<code>--preferred=0</code> 优先从节点0分配内存</li>
+<li>如果节点0内存不足，允许从其他节点分配</li>
+</ul>
+</li>
+<li><code>--interleave=&lt;nodes&gt;</code>：在多个节点间交错分配内存<ul>
+<li>示例：<code>--interleave=0,1</code> 在节点0和1间轮询分配</li>
+<li>适用于需要均匀使用多个节点内存的场景</li>
+</ul>
+</li>
+</ul>
+<p><strong>taskset与numactl的区别：</strong></p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>taskset</th>
+<th>numactl</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>主要功能</strong></td>
+<td>CPU亲和性设置</td>
+<td>NUMA节点和内存策略管理</td>
+</tr>
+<tr>
+<td><strong>CPU绑定</strong></td>
+<td>✅ 支持（基于CPU编号）</td>
+<td>✅ 支持（基于NUMA节点）</td>
+</tr>
+<tr>
+<td><strong>内存管理</strong></td>
+<td>❌ 不支持</td>
+<td>✅ 支持（内存节点绑定）</td>
+</tr>
+<tr>
+<td><strong>NUMA感知</strong></td>
+<td>❌ 不感知NUMA拓扑</td>
+<td>✅ 完全NUMA感知</td>
+</tr>
+<tr>
+<td><strong>使用场景</strong></td>
+<td>简单的CPU绑定需求</td>
+<td>NUMA架构优化</td>
+</tr>
+</tbody></table>
+<p><strong>关键区别：</strong></p>
+<ol>
+<li><p><strong>CPU绑定方式不同</strong>：</p>
+<ul>
+<li><code>taskset</code>：直接指定CPU编号（如CPU 0, 1, 2, 3）</li>
+<li><code>numactl</code>：基于NUMA节点指定（如节点0，自动包含该节点的所有CPU）</li>
+</ul>
+</li>
+<li><p><strong>内存管理能力</strong>：</p>
+<ul>
+<li><code>taskset</code>：<strong>无法控制内存分配</strong>，进程可能从任意NUMA节点分配内存</li>
+<li><code>numactl</code>：可以控制内存分配策略，确保内存分配在特定NUMA节点</li>
+</ul>
+</li>
+<li><p><strong>NUMA架构优化</strong>：</p>
+<ul>
+<li><code>taskset</code>：在NUMA系统中，即使绑定了CPU，内存仍可能从远程节点分配，导致性能问题</li>
+<li><code>numactl</code>：可以同时绑定CPU和内存，确保本地内存访问，获得最佳性能</li>
+</ul>
+</li>
+</ol>
+<p><strong>实际示例对比：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用taskset：只绑定CPU，不控制内存</span></span><br><span class="line">taskset -c 0-3 ./program</span><br><span class="line"><span class="comment"># 问题：CPU在节点0，但内存可能从节点1分配（远程访问，性能差）</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用numactl：同时绑定CPU和内存</span></span><br><span class="line">numactl --cpunodebind=0 --membind=0 ./program</span><br><span class="line"><span class="comment"># 优势：CPU和内存都在节点0（本地访问，性能好）</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="NUMA函数和命令对比"><a href="#NUMA函数和命令对比" class="headerlink" title="NUMA函数和命令对比"></a>NUMA函数和命令对比</h3><p>下表列出了常用的NUMA相关函数和命令，以及它们的作用和绑定类型：</p>
+<table>
+<thead>
+<tr>
+<th>函数&#x2F;命令</th>
+<th>作用</th>
+<th>绑定类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>numa_alloc_onnode()</code></td>
+<td>在指定NUMA节点分配内存</td>
+<td>✅ <strong>强制保证</strong></td>
+<td>内存一定分配在指定节点上，失败返回NULL</td>
+</tr>
+<tr>
+<td><code>numa_sched_setaffinity()</code></td>
+<td>设置进程&#x2F;线程的CPU亲和性</td>
+<td>✅ <strong>硬亲和性</strong></td>
+<td>进程&#x2F;线程只能运行在指定的CPU核心上</td>
+</tr>
+<tr>
+<td><code>numactl --cpunodebind</code></td>
+<td>绑定进程到指定节点的CPU</td>
+<td>✅ <strong>硬亲和性</strong></td>
+<td>进程只能运行在指定节点的CPU上</td>
+</tr>
+<tr>
+<td><code>numactl --membind</code></td>
+<td>绑定进程的内存分配策略</td>
+<td>✅ <strong>强制绑定</strong></td>
+<td>内存只能从指定节点分配，失败则进程无法运行</td>
+</tr>
+<tr>
+<td><code>numa_run_on_node()</code></td>
+<td>绑定进程到指定节点（CPU+内存）</td>
+<td>⚠️ <strong>混合</strong></td>
+<td>CPU绑定是硬亲和性，内存分配是偏好设置</td>
+</tr>
+<tr>
+<td><code>numactl --preferred</code></td>
+<td>设置内存分配偏好节点</td>
+<td>⚠️ <strong>偏好设置</strong></td>
+<td>优先从指定节点分配，但允许从其他节点分配</td>
+</tr>
+<tr>
+<td><code>malloc()</code> &#x2F; <code>calloc()</code></td>
+<td>普通内存分配</td>
+<td>⚠️ <strong>受策略影响</strong></td>
+<td>在<code>numa_run_on_node()</code>后，会优先在绑定节点分配，但不保证</td>
+</tr>
+<tr>
+<td><code>set_mempolicy()</code></td>
+<td>设置内存分配策略</td>
+<td>取决于策略类型</td>
+<td><code>MPOL_BIND</code>强制，<code>MPOL_PREFERRED</code>偏好，<code>MPOL_INTERLEAVE</code>交错</td>
+</tr>
+<tr>
+<td><code>numa_node_to_cpus()</code></td>
+<td>获取节点的CPU列表</td>
+<td>✅ <strong>查询函数</strong></td>
+<td>仅查询，不设置任何策略</td>
+</tr>
+<tr>
+<td><code>get_mempolicy()</code></td>
+<td>获取内存策略</td>
+<td>✅ <strong>查询函数</strong></td>
+<td>仅查询，不设置任何策略</td>
+</tr>
+</tbody></table>
+<p><strong>关键区别说明：</strong></p>
+<ol>
+<li><p><strong>强制保证 vs 偏好设置</strong>：</p>
+<ul>
+<li><strong>强制保证（硬亲和性）</strong>：系统会严格遵循设置，如果无法满足（如内存不足），操作会失败</li>
+<li><strong>偏好设置（软亲和性）</strong>：系统会尽量满足设置，但在资源不足时允许从其他节点分配，不会失败</li>
+</ul>
+</li>
+<li><p><strong><code>numa_run_on_node()</code>的特殊性</strong>：</p>
+<ul>
+<li>CPU绑定是<strong>强制的（硬亲和性）</strong>：进程只能运行在指定节点的CPU上</li>
+<li>内存分配是<strong>偏好的</strong>：优先在指定节点分配，但允许从其他节点分配</li>
+<li>这是为了平衡性能和可用性：如果绑定节点内存不足，进程仍能正常运行</li>
+</ul>
+</li>
+<li><p><strong>内存分配策略类型</strong>：</p>
+<ul>
+<li><code>MPOL_BIND</code>（对应<code>--membind</code>）：强制绑定，内存必须从指定节点分配</li>
+<li><code>MPOL_PREFERRED</code>（对应<code>--preferred</code>）：偏好设置，优先从指定节点分配</li>
+<li><code>MPOL_INTERLEAVE</code>：交错分配，在多个节点间轮询分配</li>
+<li><code>MPOL_DEFAULT</code>：默认策略，由系统决定</li>
+</ul>
+</li>
+</ol>
+<p><strong>使用建议：</strong></p>
+<ul>
+<li>需要<strong>严格保证</strong>内存位置：使用 <code>numa_alloc_onnode()</code> 或 <code>numactl --membind</code></li>
+<li>需要<strong>高性能但允许灵活性</strong>：使用 <code>numa_run_on_node()</code> 或 <code>numactl --preferred</code></li>
+<li>需要<strong>精确控制CPU（硬亲和性）</strong>：使用 <code>numactl --cpunodebind</code>、<code>numa_sched_setaffinity()</code> 或 <code>taskset</code></li>
+<li>需要<strong>系统级强制CPU绑定（硬亲和性）</strong>：使用 <code>cgroup</code> 的 <code>cpuset.cpus</code></li>
+</ul>
+<h3 id="编程示例"><a href="#编程示例" class="headerlink" title="编程示例"></a>编程示例</h3><h4 id="示例1：C语言中使用libnuma库"><a href="#示例1：C语言中使用libnuma库" class="headerlink" title="示例1：C语言中使用libnuma库"></a>示例1：C语言中使用libnuma库</h4><figure class="highlight c"><figcaption><span>numa_basic.c</span><a href="/blog/downloads/code/perf/numa/numa_basic.c">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;numa.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;numaif.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> {</span><br><span class="line">    <span class="comment">// 检查NUMA是否可用</span></span><br><span class="line">    <span class="keyword">if</span> (numa_available() &lt; <span class="number">0</span>) {</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;NUMA不可用\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取NUMA节点数量</span></span><br><span class="line">    <span class="type">int</span> max_node = numa_max_node();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;系统有 %d 个NUMA节点\n&quot;</span>, max_node + <span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取当前进程运行的节点</span></span><br><span class="line">    <span class="type">int</span> current_node = numa_node_of_cpu(sched_getcpu());</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;当前CPU属于节点: %d\n&quot;</span>, current_node);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 分配内存到指定NUMA节点</span></span><br><span class="line">    <span class="type">size_t</span> size = <span class="number">1024</span> * <span class="number">1024</span> * <span class="number">100</span>; <span class="comment">// 100MB</span></span><br><span class="line">    <span class="type">void</span> *mem = numa_alloc_onnode(size, <span class="number">0</span>); <span class="comment">// 在节点0上分配内存</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (mem == <span class="literal">NULL</span>) {</span><br><span class="line">        perror(<span class="string">&quot;内存分配失败&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取内存所在的节点</span></span><br><span class="line">    <span class="type">int</span> mem_node;</span><br><span class="line">    <span class="keyword">if</span> (get_mempolicy(&amp;mem_node, <span class="literal">NULL</span>, <span class="number">0</span>, mem, MPOL_F_NODE | MPOL_F_ADDR) == <span class="number">0</span>) {</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;分配的内存位于节点: %d\n&quot;</span>, mem_node);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 使用内存...</span></span><br><span class="line">    <span class="built_in">memset</span>(mem, <span class="number">0</span>, size);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 释放内存</span></span><br><span class="line">    numa_free(mem, size);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p>编译命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -o numa_example numa_basic.c -lnuma</span><br></pre></td></tr></table></figure>
+
+<h4 id="示例2：Python中使用numa库"><a href="#示例2：Python中使用numa库" class="headerlink" title="示例2：Python中使用numa库"></a>示例2：Python中使用numa库</h4><figure class="highlight py"><figcaption><span>numa_python.py</span><a href="/blog/downloads/code/perf/numa/numa_python.py">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> subprocess</span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">get_numa_nodes</span>():</span><br><span class="line">    <span class="string">&quot;&quot;&quot;获取NUMA节点信息&quot;&quot;&quot;</span></span><br><span class="line">    result = subprocess.run([<span class="string">&#x27;numactl&#x27;</span>, <span class="string">&#x27;--hardware&#x27;</span>], </span><br><span class="line">                          capture_output=<span class="literal">True</span>, text=<span class="literal">True</span>)</span><br><span class="line">    <span class="keyword">return</span> result.stdout</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">bind_to_numa_node</span>(<span class="params">node_id, command</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;将命令绑定到指定的NUMA节点执行&quot;&quot;&quot;</span></span><br><span class="line">    cmd = [<span class="string">&#x27;numactl&#x27;</span>, <span class="string">&#x27;--cpunodebind={}&#x27;</span>.<span class="built_in">format</span>(node_id),</span><br><span class="line">           <span class="string">&#x27;--membind={}&#x27;</span>.<span class="built_in">format</span>(node_id)] + command</span><br><span class="line">    <span class="keyword">return</span> subprocess.run(cmd)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 示例：获取NUMA信息</span></span><br><span class="line"><span class="built_in">print</span>(get_numa_nodes())</span><br><span class="line"></span><br><span class="line"><span class="comment"># 示例：在节点0上运行Python脚本</span></span><br><span class="line">bind_to_numa_node(<span class="number">0</span>, [<span class="string">&#x27;python&#x27;</span>, <span class="string">&#x27;your_script.py&#x27;</span>])</span><br></pre></td></tr></table></figure>
+
+<h4 id="示例3：多线程程序中的NUMA优化"><a href="#示例3：多线程程序中的NUMA优化" class="headerlink" title="示例3：多线程程序中的NUMA优化"></a>示例3：多线程程序中的NUMA优化</h4><p><strong>方法一：不同线程绑定到不同NUMA节点</strong></p>
+<p>当不同线程需要绑定到不同NUMA节点时，需要在线程内部手动设置CPU亲和性和内存分配：</p>
+<figure class="highlight c"><figcaption><span>numa_threads_different_nodes.c</span><a href="/blog/downloads/code/perf/numa/numa_threads_different_nodes.c">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;numa.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sched.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> NUM_THREADS 4</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ARRAY_SIZE 1000000</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> {</span></span><br><span class="line">    <span class="type">int</span> thread_id;</span><br><span class="line">    <span class="type">int</span> numa_node;</span><br><span class="line">    <span class="type">double</span> *<span class="built_in">array</span>;</span><br><span class="line">    <span class="type">int</span> size;</span><br><span class="line">} <span class="type">thread_data_t</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">worker_thread</span><span class="params">(<span class="type">void</span> *arg)</span> {</span><br><span class="line">    <span class="type">thread_data_t</span> *data = (<span class="type">thread_data_t</span> *)arg;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 方法1：手动设置CPU亲和性</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">bitmask</span> *<span class="title">cpuset</span> =</span> numa_allocate_cpumask();</span><br><span class="line">    numa_node_to_cpus(data-&gt;numa_node, cpuset);</span><br><span class="line">    numa_sched_setaffinity(<span class="number">0</span>, cpuset);</span><br><span class="line">    numa_free_cpumask(cpuset);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 在指定节点上分配内存</span></span><br><span class="line">    data-&gt;<span class="built_in">array</span> = (<span class="type">double</span> *)numa_alloc_onnode(</span><br><span class="line">        data-&gt;size * <span class="keyword">sizeof</span>(<span class="type">double</span>), data-&gt;numa_node);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (data-&gt;<span class="built_in">array</span> == <span class="literal">NULL</span>) {</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;线程 %d: 内存分配失败\n&quot;</span>, data-&gt;thread_id);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 执行计算（使用本地内存）</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; data-&gt;size; i++) {</span><br><span class="line">        data-&gt;<span class="built_in">array</span>[i] = i * <span class="number">1.0</span>;</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> cpu = sched_getcpu();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;线程 %d 在CPU %d (节点 %d) 上完成计算\n&quot;</span>, </span><br><span class="line">           data-&gt;thread_id, cpu, data-&gt;numa_node);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> {</span><br><span class="line">    <span class="keyword">if</span> (numa_available() &lt; <span class="number">0</span>) {</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;NUMA不可用\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> max_node = numa_max_node();</span><br><span class="line">    <span class="type">pthread_t</span> threads[NUM_THREADS];</span><br><span class="line">    <span class="type">thread_data_t</span> thread_data[NUM_THREADS];</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 创建线程，每个线程分配到不同的NUMA节点</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; NUM_THREADS; i++) {</span><br><span class="line">        thread_data[i].thread_id = i;</span><br><span class="line">        thread_data[i].numa_node = i % (max_node + <span class="number">1</span>);</span><br><span class="line">        thread_data[i].size = ARRAY_SIZE;</span><br><span class="line">        </span><br><span class="line">        pthread_create(&amp;threads[i], <span class="literal">NULL</span>, worker_thread, &amp;thread_data[i]);</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 等待所有线程完成</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; NUM_THREADS; i++) {</span><br><span class="line">        pthread_join(threads[i], <span class="literal">NULL</span>);</span><br><span class="line">        <span class="keyword">if</span> (thread_data[i].<span class="built_in">array</span>) {</span><br><span class="line">            numa_free(thread_data[i].<span class="built_in">array</span>, </span><br><span class="line">                     thread_data[i].size * <span class="keyword">sizeof</span>(<span class="type">double</span>));</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p><strong>方法二：所有线程绑定到同一NUMA节点</strong></p>
+<p><code>numa_run_on_node()</code> 是一个便捷函数，它会将当前进程绑定到指定NUMA节点的所有CPU上，并设置内存分配偏好策略为该节点。<strong>注意</strong>：CPU绑定是<strong>硬亲和性</strong>（强制的），但内存分配只是偏好设置（不强制保证）。</p>
+<p><strong>使用场景：</strong></p>
+<ul>
+<li>需要将整个进程（包括所有线程）绑定到特定NUMA节点</li>
+<li>希望简化代码，避免手动管理CPU掩码和内存策略</li>
+<li>在进程启动时进行NUMA绑定</li>
+</ul>
+<p>如果所有线程都需要绑定到同一个NUMA节点，可以在主线程中使用 <code>numa_run_on_node()</code> 统一绑定：</p>
+<figure class="highlight c"><figcaption><span>numa_threads_same_node.c</span><a href="/blog/downloads/code/perf/numa/numa_threads_same_node.c">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;numa.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sched.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> NUM_THREADS 4</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ARRAY_SIZE 1000000</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> {</span></span><br><span class="line">    <span class="type">int</span> thread_id;</span><br><span class="line">    <span class="type">double</span> *<span class="built_in">array</span>;</span><br><span class="line">    <span class="type">int</span> size;</span><br><span class="line">} <span class="type">thread_data_t</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">worker_thread</span><span class="params">(<span class="type">void</span> *arg)</span> {</span><br><span class="line">    <span class="type">thread_data_t</span> *data = (<span class="type">thread_data_t</span> *)arg;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 注意：numa_run_on_node在主线程中调用后，</span></span><br><span class="line">    <span class="comment">// 所有线程都会继承这个绑定，但每个线程仍可能运行在不同CPU上</span></span><br><span class="line">    <span class="comment">// 内存分配会优先在绑定的节点上进行（偏好设置，不强制保证）</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 分配内存（会优先在绑定的节点上分配，但不保证）</span></span><br><span class="line">    data-&gt;<span class="built_in">array</span> = (<span class="type">double</span> *)<span class="built_in">malloc</span>(data-&gt;size * <span class="keyword">sizeof</span>(<span class="type">double</span>));</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (data-&gt;<span class="built_in">array</span> == <span class="literal">NULL</span>) {</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;线程 %d: 内存分配失败\n&quot;</span>, data-&gt;thread_id);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 执行计算</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; data-&gt;size; i++) {</span><br><span class="line">        data-&gt;<span class="built_in">array</span>[i] = i * <span class="number">1.0</span>;</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> cpu = sched_getcpu();</span><br><span class="line">    <span class="type">int</span> node = numa_node_of_cpu(cpu);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;线程 %d 在CPU %d (节点 %d) 上完成计算\n&quot;</span>, </span><br><span class="line">           data-&gt;thread_id, cpu, node);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> {</span><br><span class="line">    <span class="keyword">if</span> (numa_available() &lt; <span class="number">0</span>) {</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;NUMA不可用\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> target_node = <span class="number">0</span>; <span class="comment">// 所有线程绑定到节点0</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 在主线程中绑定到目标节点</span></span><br><span class="line">    <span class="comment">// 这会影响到所有后续创建的线程</span></span><br><span class="line">    <span class="keyword">if</span> (numa_run_on_node(target_node) != <span class="number">0</span>) {</span><br><span class="line">        perror(<span class="string">&quot;绑定到NUMA节点失败&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;主进程绑定到节点 %d，创建 %d 个工作线程\n&quot;</span>, target_node, NUM_THREADS);</span><br><span class="line">    </span><br><span class="line">    <span class="type">pthread_t</span> threads[NUM_THREADS];</span><br><span class="line">    <span class="type">thread_data_t</span> thread_data[NUM_THREADS];</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 创建线程（会自动继承NUMA绑定）</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; NUM_THREADS; i++) {</span><br><span class="line">        thread_data[i].thread_id = i;</span><br><span class="line">        thread_data[i].size = ARRAY_SIZE;</span><br><span class="line">        pthread_create(&amp;threads[i], <span class="literal">NULL</span>, worker_thread, &amp;thread_data[i]);</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 等待所有线程完成</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; NUM_THREADS; i++) {</span><br><span class="line">        pthread_join(threads[i], <span class="literal">NULL</span>);</span><br><span class="line">        <span class="keyword">if</span> (thread_data[i].<span class="built_in">array</span>) {</span><br><span class="line">            <span class="built_in">free</span>(thread_data[i].<span class="built_in">array</span>);</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<p><strong>numa_run_on_node的特点：</strong></p>
+<ul>
+<li>✅ <strong>优点</strong>：代码简单，一个函数调用完成绑定</li>
+<li>✅ <strong>优点</strong>：CPU绑定是<strong>硬亲和性</strong>（强制的），进程只能运行在指定节点的CPU上</li>
+<li>⚠️ <strong>注意</strong>：内存分配是<strong>偏好设置</strong>，会优先在绑定的节点上分配，但不强制保证</li>
+<li>⚠️ <strong>限制</strong>：所有线程都绑定到同一个节点，无法为不同线程分配不同节点</li>
+<li>⚠️ <strong>注意</strong>：<code>numa_run_on_node()</code> 会影响整个进程及其所有线程</li>
+</ul>
+<p><strong>选择建议：</strong></p>
+<ul>
+<li>如果所有线程需要绑定到<strong>同一个NUMA节点</strong>：使用 <code>numa_run_on_node()</code>（方法二）</li>
+<li>如果不同线程需要绑定到<strong>不同的NUMA节点</strong>：使用手动设置CPU亲和性（方法一）</li>
+</ul>
+<p>编译命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">gcc -o numa_threads_different_nodes numa_threads_different_nodes.c -lnuma -lpthread</span><br><span class="line">gcc -o numa_threads_same_node numa_threads_same_node.c -lnuma -lpthread</span><br></pre></td></tr></table></figure>
+
+<h3 id="NUMA优化建议"><a href="#NUMA优化建议" class="headerlink" title="NUMA优化建议"></a>NUMA优化建议</h3><ol>
+<li><strong>进程绑定</strong>：将进程绑定到特定的NUMA节点，减少跨节点访问</li>
+<li><strong>内存本地化</strong>：在进程运行的节点上分配内存</li>
+<li><strong>数据局部性</strong>：确保数据访问模式与NUMA拓扑匹配</li>
+<li><strong>监控工具</strong>：使用 <code>numastat</code> 和 <code>numactl</code> 监控和调整NUMA策略</li>
+<li><strong>应用程序设计</strong>：在应用程序设计时考虑NUMA架构，合理分配线程和内存</li>
+<li><strong>并行库适配</strong>：注意并行库（如TBB、OpenMP）在初始化时会根据操作系统报告的硬件资源来决定线程池大小，通过限制可见的CPU资源可以间接控制并行库的线程数</li>
+</ol>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><code>man numactl</code> - numactl命令手册</li>
+<li><code>man numa</code> - NUMA库函数手册</li>
+<li><code>/proc/sys/kernel/numa_balancing</code> - NUMA平衡配置</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/performance/" rel="tag"># performance</a>
+              <a href="/blog/tags/numa/" rel="tag"># numa</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2025/11/26/concurrency/%E5%B9%B6%E5%8F%91%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/" rel="prev" title="并发调试工具">
+      <i class="fa fa-chevron-left"></i> 并发调试工具
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-NUMA%E6%A6%82%E5%BF%B5"><span class="nav-text">1. NUMA概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-CPU%E4%BA%B2%E5%92%8C%E6%80%A7%E6%A6%82%E5%BF%B5"><span class="nav-text">2. CPU亲和性概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-CPU%E4%BA%B2%E5%92%8C%E6%80%A7%E7%9A%84%E8%AE%BE%E7%BD%AE"><span class="nav-text">3. CPU亲和性的设置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%B9%E6%B3%95%E5%AF%B9%E6%AF%94%E6%80%BB%E8%A7%88"><span class="nav-text">方法对比总览</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%B9%E6%B3%95%E4%B8%80%EF%BC%9Ataskset%EF%BC%88%E9%80%9A%E7%94%A8CPU%E7%BB%91%E5%AE%9A%EF%BC%89"><span class="nav-text">方法一：taskset（通用CPU绑定）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%B9%E6%B3%95%E4%BA%8C%EF%BC%9Asched-setaffinity%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8"><span class="nav-text">方法二：sched_setaffinity系统调用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%B9%E6%B3%95%E4%B8%89%EF%BC%9Acgroup%EF%BC%88%E7%B3%BB%E7%BB%9F%E7%BA%A7%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86%EF%BC%89"><span class="nav-text">方法三：cgroup（系统级资源管理）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-NUMA%E7%9A%84%E8%AE%BE%E7%BD%AE"><span class="nav-text">4. NUMA的设置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E8%AF%A2%E5%92%8C%E7%9B%91%E6%8E%A7NUMA%E4%BF%A1%E6%81%AF"><span class="nav-text">查询和监控NUMA信息</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E6%9F%A5%E7%9C%8BNUMA%E8%8A%82%E7%82%B9%E6%8B%93%E6%89%91"><span class="nav-text">1. 查看NUMA节点拓扑</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E6%9F%A5%E7%9C%8BCPU%E5%92%8CNUMA%E8%8A%82%E7%82%B9%E7%9A%84%E6%98%A0%E5%B0%84%E5%85%B3%E7%B3%BB"><span class="nav-text">2. 查看CPU和NUMA节点的映射关系</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E6%9F%A5%E7%9C%8BNUMA%E7%BB%9F%E8%AE%A1%E4%BF%A1%E6%81%AF"><span class="nav-text">3. 查看NUMA统计信息</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-%E6%9F%A5%E7%9C%8B%E8%BF%9B%E7%A8%8B%E7%9A%84NUMA%E7%AD%96%E7%95%A5"><span class="nav-text">4. 查看进程的NUMA策略</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-%E6%9F%A5%E7%9C%8B%E7%B3%BB%E7%BB%9FNUMA%E8%8A%82%E7%82%B9%E8%AF%A6%E7%BB%86%E4%BF%A1%E6%81%AF"><span class="nav-text">5. 查看系统NUMA节点详细信息</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#numactl%EF%BC%9ANUMA%E6%9E%B6%E6%9E%84%E4%B8%8B%E7%9A%84CPU%E4%BA%B2%E5%92%8C%E6%80%A7%E5%92%8C%E5%86%85%E5%AD%98%E7%AD%96%E7%95%A5%E5%B7%A5%E5%85%B7"><span class="nav-text">numactl：NUMA架构下的CPU亲和性和内存策略工具</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NUMA%E5%87%BD%E6%95%B0%E5%92%8C%E5%91%BD%E4%BB%A4%E5%AF%B9%E6%AF%94"><span class="nav-text">NUMA函数和命令对比</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%96%E7%A8%8B%E7%A4%BA%E4%BE%8B"><span class="nav-text">编程示例</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B1%EF%BC%9AC%E8%AF%AD%E8%A8%80%E4%B8%AD%E4%BD%BF%E7%94%A8libnuma%E5%BA%93"><span class="nav-text">示例1：C语言中使用libnuma库</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B2%EF%BC%9APython%E4%B8%AD%E4%BD%BF%E7%94%A8numa%E5%BA%93"><span class="nav-text">示例2：Python中使用numa库</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B3%EF%BC%9A%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%A8%8B%E5%BA%8F%E4%B8%AD%E7%9A%84NUMA%E4%BC%98%E5%8C%96"><span class="nav-text">示例3：多线程程序中的NUMA优化</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NUMA%E4%BC%98%E5%8C%96%E5%BB%BA%E8%AE%AE"><span class="nav-text">NUMA优化建议</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-text">参考资料</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">115</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">49</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://cuda-doc.readthedocs.io/" title="https:&#x2F;&#x2F;cuda-doc.readthedocs.io" rel="noopener" target="_blank">CUDA中文手册</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://infiniband-doc.readthedocs.io/" title="https:&#x2F;&#x2F;infiniband-doc.readthedocs.io&#x2F;" rel="noopener" target="_blank">InfiniBand中文手册</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

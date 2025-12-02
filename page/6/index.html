@@ -188,6 +188,1285 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/02/24/TCL%E5%85%A5%E9%97%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/02/24/TCL%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">TCL入门</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-02-24 16:03:38" itemprop="dateCreated datePublished" datetime="2025-02-24T16:03:38+00:00">2025-02-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="TCL-Main"><a href="#TCL-Main" class="headerlink" title="TCL_Main"></a>TCL_Main</h2><p><code>Tcl_Main</code>的简化流程：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">Tcl_Main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[], Tcl_AppInitProc *appInitProc)</span> </span>&#123;</span><br><span class="line">    Tcl_Interp *interp;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 创建一个新的 Tcl 解释器</span></span><br><span class="line">    interp = <span class="built_in">Tcl_CreateInterp</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调用应用程序初始化函数</span></span><br><span class="line">    <span class="keyword">if</span> ((*appInitProc)(interp) != TCL_OK) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;Application initialization failed: %s\n&quot;</span>, <span class="built_in">Tcl_GetStringResult</span>(interp));</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 进入 Tcl 事件循环</span></span><br><span class="line">    <span class="built_in">Tcl_MainLoop</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="花括号的用法"><a href="#花括号的用法" class="headerlink" title="花括号的用法"></a>花括号的用法</h2><p>在Tcl中，花括号 <code>&#123;&#125;</code> 有多种用法，主要用于分组、延迟解析、创建列表和字典等。以下是花括号的主要用法及示例：</p>
+<ol>
+<li><p>分组代码块<br>花括号用于将一段代码分组，使其作为一个整体传递或执行。</p>
+ <figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> &#123;[<span class="keyword">catch</span> &#123;myProc&#125; msg]&#125; &#123;</span><br><span class="line">    <span class="keyword">puts</span> <span class="string">&quot;An error occurred: $msg&quot;</span></span><br><span class="line">&#125; else &#123;</span><br><span class="line">    <span class="keyword">puts</span> <span class="string">&quot;myProc executed successfully&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>延迟解析<br>花括号内的内容不会立即解析，直到需要时才会被解析。这在处理包含特殊字符的字符串时非常有用。</p>
+ <figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> script &#123;<span class="keyword">puts</span> <span class="string">&quot;Hello, World!&quot;</span>&#125;</span><br><span class="line"><span class="keyword">eval</span> <span class="variable">$script</span>  <span class="comment">;# 输出 &quot;Hello, World!&quot;</span></span><br></pre></td></tr></table></figure>
+
+ <figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> &#123;[<span class="keyword">catch</span> &#123;myProc&#125; msg]&#125; &#123;</span><br><span class="line">    <span class="keyword">puts</span> <span class="string">&quot;An error occurred: $msg&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>创建列表<br>花括号用于创建列表，列表中的元素可以包含空格或特殊字符。</p>
+ <figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> myList &#123;one two three&#125;</span><br><span class="line"><span class="keyword">puts</span> [<span class="keyword">lindex</span> <span class="variable">$myList</span> <span class="number">1</span>]  <span class="comment">;# 输出 &quot;two&quot;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>创建字典<br>花括号用于创建字典，字典中的键值对可以包含空格或特殊字符。</p>
+ <figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> myDict &#123;key1 value1 key2 value2&#125;</span><br><span class="line"><span class="keyword">puts</span> [<span class="keyword">dict</span> get <span class="variable">$myDict</span> key1]  <span class="comment">;# 输出 &quot;value1&quot;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>多行字符串<br>花括号用于创建多行字符串，字符串中的换行符和空格会被保留。</p>
+ <figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> multiLineString &#123;</span><br><span class="line">    This is a multi-line</span><br><span class="line">    <span class="keyword">string</span> in Tcl.</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">puts</span> <span class="variable">$multiLineString</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>保护特殊字符<br>花括号用于保护特殊字符，使其不被解释为命令或变量。</p>
+ <figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> specialChars &#123;This is a &#123;special&#125; <span class="keyword">string</span> with [brackets] and <span class="variable">$dollar</span> signs.&#125;</span><br><span class="line"><span class="keyword">puts</span> <span class="variable">$specialChars</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在控制结构中使用<br>花括号用于控制结构（如 if、while、for 等）中的条件和代码块。</p>
+ <figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> x <span class="number">10</span></span><br><span class="line"><span class="keyword">if</span> &#123;<span class="variable">$x</span> &gt; <span class="number">5</span>&#125; &#123;</span><br><span class="line">    <span class="keyword">puts</span> <span class="string">&quot;x is greater than 5&quot;</span></span><br><span class="line">&#125; else &#123;</span><br><span class="line">    <span class="keyword">puts</span> <span class="string">&quot;x is 5 or less&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>定义过程<br>花括号用于定义过程的参数和主体。</p>
+ <figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">proc</span><span class="title"> greet</span> &#123;name&#125; &#123;</span><br><span class="line">    <span class="keyword">puts</span> <span class="string">&quot;Hello, $name!&quot;</span></span><br><span class="line">&#125;</span><br><span class="line">greet <span class="string">&quot;Tcl User&quot;</span>  <span class="comment">;# 输出 &quot;Hello, Tcl User!&quot;</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="global-和-varaible"><a href="#global-和-varaible" class="headerlink" title="global 和 varaible"></a>global 和 varaible</h2><p><code>global</code> 和 <code>variable</code> 用于声明该变量来自全局还是当前命名空间。</p>
+<p>注意：两者都是声明，不是定义。</p>
+<figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> i <span class="number">20</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> <span class="keyword">eval</span> test &#123;</span><br><span class="line">    <span class="comment">;# variable i</span></span><br><span class="line">    <span class="comment">;# i没有被事先声明为名字空间的变量，则会引用全局变量i</span></span><br><span class="line">    <span class="keyword">for</span> &#123; <span class="keyword">set</span> i <span class="number">1</span>&#125; &#123; <span class="variable">$i</span> &lt;=<span class="number">5</span>&#125; &#123; <span class="keyword">incr</span> i&#125; &#123;</span><br><span class="line">        <span class="keyword">puts</span> -nonewline <span class="string">&quot;i=$i; &quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">puts</span> <span class="string">&quot;\n&quot;</span></span><br><span class="line">    <span class="comment">;# 由于没有全局的j，所以j被默认视作命名空间内部变量，引用时必须加上命名空间为前缀</span></span><br><span class="line">    <span class="keyword">for</span> &#123;<span class="keyword">set</span> j <span class="number">1</span>&#125; &#123; <span class="variable">$j</span>&lt;=<span class="number">5</span>&#125; &#123;<span class="keyword">incr</span> j&#125; &#123;</span><br><span class="line">        <span class="keyword">puts</span> -nonewline <span class="string">&quot;j=$j; &quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">puts</span> <span class="string">&quot;\n&quot;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">puts</span> <span class="variable">$i</span></span><br><span class="line"><span class="keyword">puts</span> <span class="variable">$test::j</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight tcl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">;#注意i的定义处被注释了</span></span><br><span class="line"><span class="comment">#set i 20</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> <span class="keyword">eval</span> test &#123;</span><br><span class="line">    <span class="comment">;# 这里的 global 声明无效，因为没有在全局定义i</span></span><br><span class="line">    <span class="keyword">global</span> i</span><br><span class="line">    <span class="comment">;# 此处的i仍然是命令空间内部的</span></span><br><span class="line">    <span class="keyword">for</span> &#123; <span class="keyword">set</span> i <span class="number">1</span>&#125; &#123; <span class="variable">$i</span> &lt;=<span class="number">5</span>&#125; &#123; <span class="keyword">incr</span> i&#125; &#123;</span><br><span class="line">        <span class="keyword">puts</span> -nonewline <span class="string">&quot;i=$i; &quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">;# 错误！</span></span><br><span class="line"><span class="keyword">puts</span> <span class="variable">$i</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;# 正确</span></span><br><span class="line"><span class="keyword">puts</span> <span class="variable">$test::i</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="TCL-C-打印堆栈"><a href="#TCL-C-打印堆栈" class="headerlink" title="TCL C++ 打印堆栈"></a>TCL C++ 打印堆栈</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">MyCommand</span><span class="params">(ClientData clientData, Tcl_Interp *interp, <span class="type">int</span> objc, Tcl_Obj *<span class="type">const</span> objv[])</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 打印调用命令</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; objc; ++i) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Arg[%d]: %s\n&quot;</span>, <span class="built_in">Tcl_GetString</span>(objv[i]));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 打印堆栈信息（可选）</span></span><br><span class="line">    <span class="built_in">Tcl_Eval</span>(interp, <span class="string">&quot;puts \&quot;Call stack:\&quot;; for &#123;set i 0&#125; &#123;$i &lt;= [info level]&#125; &#123;incr i&#125; &#123;puts \&quot;  [info level $i]\&quot;&#125;&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> TCL_OK;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/01/17/IC/2.%E5%9F%BA%E4%BA%8EVerilog%E7%9A%84%E6%95%B0%E5%AD%97IC%E8%AE%BE%E8%AE%A1%E6%96%B9%E6%B3%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/01/17/IC/2.%E5%9F%BA%E4%BA%8EVerilog%E7%9A%84%E6%95%B0%E5%AD%97IC%E8%AE%BE%E8%AE%A1%E6%96%B9%E6%B3%95/" class="post-title-link" itemprop="url">第2章 基于Verilog的数字IC设计方法</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-01-17 15:37:49" itemprop="dateCreated datePublished" datetime="2025-01-17T15:37:49+00:00">2025-01-17</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="1-参考"><a href="#1-参考" class="headerlink" title="1. 参考"></a>1. 参考</h2><p>白栎旸. 数字IC设计入门（微课视频版）[M]. 北京: 清华大学出版社，2023-09-01:第2章.</p>
+<h2 id="2-数字器件与Verilog语法"><a href="#2-数字器件与Verilog语法" class="headerlink" title="2. 数字器件与Verilog语法"></a>2. 数字器件与Verilog语法</h2><p>虽然 Foundry 提供的可用元器件种类较多，但数字设计师并不特别在意这些元器件，在其头脑中，只存在 10 种简单元器件：</p>
+<ul>
+<li>与门、或门、非门、异或门、</li>
+<li>加法器、乘法器、移位器、</li>
+<li>选择器、比较器、</li>
+<li>触发器</li>
+</ul>
+<p>注意，虽然加法器、乘法器、比较器等元器件可以由逻辑门生成，但是从Verilog常用的表达式来看，一般直接用“+”这个符号表示加法，而很少用门电路去直接搭建。因为现代芯片规模庞大，功能复杂，工程师应该将主要精力投入到重点难题的实现中，而对于如何实现加法器等最底层的问题，应该交给综合步骤自动完成。</p>
+<p>基本元器件中不包括除法，因为除法的实现不同于乘法，它受到被除数、除数、商的数值范围限制，有时需要用到迭代等复杂方法实现，还有分母为 0 等异常情况需要报告，所以不属于Verilog中常用的直接运算方式。</p>
+<p>务必注意，数字前端写的Verilog仅仅是代码，而非程序，其代码是代替电路图的一种文本语言描述。与或非加乘等指的是元器件。写Verilog时要有电路概貌和时序。</p>
+<p>10种数字器件的符号表示及Verilog表示方法见表格：</p>
+<figure style="text-align:center;">
+<figcaption>10种数字逻辑器件和Verilog表示</figcaption>
+<img src='https://i.postimg.cc/B65vgDMk/20250117214703.jpg' border='0' alt='20250117214703' width="90%"/>
+</figure>
+
+<p>真正的元器件库中有很多复杂的元器件，如图所示：</p>
+<figure style="text-align:center;">
+<img src="https://i.postimg.cc/6QSLdsyT/20250117214659.jpg" alt="20250117214659" width="50%"/>
+<figcaption>复杂元器件示例</figcaption>
+</figure>
+
+<p>但是这些元器件都可以看作以上10种基础元器件的组合，不会超出原有的功能范围。所以设计时，头脑中只需要有以上10种元器件。</p>
+<p>数字IC设计又称为数字逻辑设计，因为其本身就是逻辑的，只有<code>0</code>和<code>1</code>两种逻辑。</p>
+<ul>
+<li>组合逻辑：电平输入和电平输出。元器件结构简单，但问题是如果输入含有毛刺，输出就有毛刺。</li>
+</ul>
+<img src='https://i.postimg.cc/C1s5wkTY/20250117215056.jpg' border='0' alt='20250117215056' width="50%"/>
+
+<figure style="text-align:center;">
+<img src='https://i.postimg.cc/NMH8DNHD/20250117214654.jpg' border='0' alt='20250117214654' width="50%"/>
+<figcaption>组合逻辑电路的毛刺</figcaption>
+</figure>
+
+<ul>
+<li>时序逻辑：以时钟为驱动源。一个触发器，在时钟的驱动（边沿触发）下，将 D 输入端的信号送到 Q 端输出。</li>
+</ul>
+<img src='https://i.postimg.cc/BbfTVx50/20250117214649.jpg' border='0' alt='20250117214649' width="100%"/>
+
+<p>触发器也可以叫寄存器(register, reg)，因为如果没有时钟驱动，那么Q端会保持原有状态不变，也就寄存了上一次触发时的D端信息。而组合逻辑，输出端是无法寄存信息的。</p>
+<p>时序逻辑是数字电路的基础。10 种元器件中，只有触发器属于时序逻辑器件，所以触发器是整个数字电路的基础。从 RTL 的名称可以知晓，RTL 意为寄存器传输层，直译过来就是：从一个触发器的输出到另一个触发器的输入，通过触发器的层层传递，最终实现了一个功能完整的数字电路。</p>
+<p>数字电路的时序分析，主要是分析两个触发器之间的路径延迟。</p>
+<p>进行前仿时，看到的仿真波形会和本图一样，是理想的，而使用版图网表进行后仿时，仿真波形是带延迟的。</p>
+<p>上图中触发器的符号表示，它共有4个引脚，除输入的D端和输出的<code>Q</code>端外，三角形位置表示时钟，下方的<code>rst_n</code>表示复位，其上的圆圈表示<code>0</code>电平有效，即<code>rst_n</code>等于<code>0</code>时，寄存器处于复位状态。此时，<code>Q</code>端保持<code>0</code>，即使时钟和<code>D</code>端有动作，<code>Q</code>端也不会变化，只有当<code>rst_n</code>等于<code>1</code>时，才解除复位状态，寄存器方能正常工作。</p>
+<h2 id="3-可综合的Verilog设计语法"><a href="#3-可综合的Verilog设计语法" class="headerlink" title="3. 可综合的Verilog设计语法"></a>3. 可综合的Verilog设计语法</h2><p>能变成电路的Verilog表达叫做可综合，在设计电路时，只能使用可综合的语法表述。而在仿真时，由于只在计算机上运行，不留片，可使用不能综合的高级语法，以增加语言表达的灵活度和复杂度。</p>
+<p>可综合的电路表述只有两种：</p>
+<ul>
+<li><code>assign</code></li>
+<li><code>always</code></li>
+</ul>
+<p>与门：</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">assign</span> z = a &amp; b;</span><br></pre></td></tr></table></figure>
+
+<p>触发器：</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(<span class="keyword">posedge</span> clk <span class="keyword">or</span> <span class="keyword">negedge</span> rst_n)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (!rst_n)</span><br><span class="line">        Q &lt;= <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        Q &lt;= D;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>符号说明：</p>
+<ul>
+<li><code>&lt;=</code>: 非阻塞赋值，凡是时序逻辑，都用非阻塞赋值；</li>
+<li><code>=</code>: 阻塞赋值，凡是组合逻辑，都用阻塞赋值；</li>
+<li><code>@(...)</code>: 括号中的列表叫敏感列表，意思是，<code>always</code>块输出的<code>Q</code>对列表中信号保持敏感，如果敏感信号动，则Q也会动。</li>
+<li><code>posedge clk</code>: 意思是时钟的上升沿；</li>
+<li><code>negedge rst_n</code>: 意思是时钟的下降沿。</li>
+<li><code>begin</code> &#x2F; <code>end</code>: 相当于 C 语言中的 <code>&#123;&#125;</code> ，如果语句只有一条，可以不写 <code>begin</code> &#x2F; <code>end</code> 。</li>
+</ul>
+<p><code>always</code>不仅可以表示时序逻辑，也可以表示组合逻辑。如下是与门的另一种表示：</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    z = a &amp; b;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>其中，<code>@(*)</code>中的<code>*</code>是省略表述的敏感列表，综合器会自动在<code>always</code>块中寻找与输出<code>z</code>相关的输入信号，自动填入敏感列表中。本例中，会自动将<code>a</code>和<code>b</code>作为输入填入。这种让工具自动填入的方式是可靠且推荐的。</p>
+<p>Verilog的语法规律：</p>
+<ol>
+<li>时序逻辑，必须使用<code>always</code>块，并同时使用<code>&lt;=</code>非阻塞赋值。在其敏感列表中，必须出现时钟信号的边沿和复位信号的边沿。</li>
+<li>组合逻辑，可以使用<code>assign</code>，也可以使用<code>always</code>块，但是它们的赋值是<code>=</code>阻塞赋值。若使用<code>always</code>块，则敏感列表中使用<code>*</code>。若遇到敏感列表中带有<code>*</code>，则可以直接判定为组合逻辑。</li>
+</ol>
+<p>再次强调，Verilog的语法表达，描述的都是电路，因此例子中的 <code>z</code>、<code>a</code>、<code>b</code>、<code>clk</code>、<code>rst_n</code>、<code>Q</code>、<code>D</code> 都称为信号，在电路中都是实实在在的金属连线，切勿称为变量。</p>
+<h2 id="4-对寄存器的深度解读"><a href="#4-对寄存器的深度解读" class="headerlink" title="4. 对寄存器的深度解读"></a>4. 对寄存器的深度解读</h2><p>一般会使用时钟上升沿来驱动寄存器。对于同样的功能需求，双沿触发需要的时钟慢，但要求时钟是<code>50%</code>占空比，而单沿触发，对时钟的要求快一倍，但对时钟形状的要求降低很多。</p>
+<p>复位信号<code>rst_n</code>，以<code>0</code>电平作为复位电平，1电平解复位，是通用标准，很少有反过来使用的。原因是，数字电路的复位信号是模拟电路给的，通常，模拟电路将其命名为<code>POR(Power On Reset)</code>，即上电复位信号。芯片刚通电时，电压小，逐渐上升到要求的电压，例如<code>1.8V</code>，<code>POR</code>本质上是一个电压上升的标志，模拟电路放一个比较器，将输入电压与<code>0.9V</code>比较，电压小于<code>0.9V</code>，<code>POR</code>为<code>0</code>，电压大于<code>0.9V</code>，<code>POR</code>为<code>1</code>。因而复位信号上电时总是先<code>0</code>后<code>1</code>，数字寄存器需要在复位信号为<code>0</code>的阶段保持复位态，不能运行，因为此时芯片电压不足，不能保证正常运行，而复位信号变成<code>1</code>，说明上电完毕，电压充足，寄存器解除复位进行正常运行是安全的。</p>
+<p>需要特别澄清的是语句<code>negedge rst_n</code>，但是经过仿真和与模拟工程师确认，复位信号对寄存器的作用不是通过信号沿来驱动的，而是通过电平来驱动，也就是 <code>0</code> 信号具有绝对控制权，只要 <code>rst_n</code> 为 <code>0</code> ，那么立即复位。</p>
+<h2 id="5-非阻塞赋值和阻塞赋值的区别"><a href="#5-非阻塞赋值和阻塞赋值的区别" class="headerlink" title="5. 非阻塞赋值和阻塞赋值的区别"></a>5. 非阻塞赋值和阻塞赋值的区别</h2><p>非阻塞赋值的意思是该句表达不会阻塞后续表达的执行。如下例中，<code>X &lt;＝ 0</code>的执行，不会阻碍到<code>Y &lt;＝ 0</code>的执行，它们是同时发生的：</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(<span class="keyword">posedge</span> clk <span class="keyword">or</span> <span class="keyword">negedge</span> rst_n)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (!rst_n)</span><br><span class="line">    <span class="keyword">begin</span></span><br><span class="line">        X &lt;= <span class="number">0</span>;</span><br><span class="line">        Y &lt;= <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    <span class="keyword">begin</span></span><br><span class="line">        X &lt;= A;</span><br><span class="line">        Y &lt;= B;</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>而阻塞赋值，意思是如果前一句不执行，后一句就无法执行，前一句会阻塞后一句。对于可综合的Verilog来讲，其实并不会阻塞。在下例中， <code>always</code> 块的目的是创造 <code>z</code> 和 <code>k</code> 两个信号。 <code>k ＝ 3 * z</code> 和 <code>z ＝ a &amp; b</code> 是两个不同的电路， <code>k ＝ 3 * z</code> 电路不会被 <code>z ＝ a &amp; b</code> 阻塞。</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    z = a &amp; b;  <span class="comment">// 与门</span></span><br><span class="line">    k = <span class="number">3</span> * z;  <span class="comment">// 乘法器</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>本例对应的原理图如图所示：</p>
+<img src='https://i.postimg.cc/MTs1Dhsh/20250117224729.jpg' border='0' alt='20250117224729' width="50%"/>
+
+<p>可见，对于电路描述来讲，语法只是表示一种连接关系，并没有执行先后顺序的说法，但如果本例使用非阻塞赋值，语法检查会报错，因此，这是一种惯用方法。阻塞赋值在Verilog中真正体现阻塞，是在仿真使用的不可综合语法中，到第3章再做解释。</p>
+<h2 id="6-组合逻辑的表达式"><a href="#6-组合逻辑的表达式" class="headerlink" title="6. 组合逻辑的表达式"></a>6. 组合逻辑的表达式</h2><p>对于一个组合逻辑电路，应该在什么情况下用assign，在什么情况下用always呢？</p>
+<p>比较简单的逻辑适合使用assign方式，较为复杂的逻辑应使用always块。下例给出了一个适合用always块的较复杂例子：</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (s1)</span><br><span class="line">        a = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s2)</span><br><span class="line">        a = <span class="number">2</span>;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s3)</span><br><span class="line">        a = <span class="number">3</span>;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        a = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>同样的功能若改用assign，则为下例所示。很明显，用always块表达意思更加清晰。</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">assign</span> a = s1 ? <span class="number">1</span> : (s2 ? <span class="number">2</span> : (s3 ? <span class="number">3</span> : <span class="number">0</span>));</span><br></pre></td></tr></table></figure>
+
+<p>前面解释了敏感列表中的 <code>*</code> 在组合逻辑 <code>always</code> 块中的作用。如果读者使用过一些老IP，则可能还会看到下例所示的表达，这种表达已随着综合器的进步渐渐被淘汰了，不建议初学者使用。</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(s1 <span class="keyword">or</span> s2 <span class="keyword">or</span> s3)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (s1)</span><br><span class="line">        a = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s2)</span><br><span class="line">        a = <span class="number">2</span>;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s3)</span><br><span class="line">        a = <span class="number">3</span>;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        a = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="7-组合逻辑中的选择器"><a href="#7-组合逻辑中的选择器" class="headerlink" title="7. 组合逻辑中的选择器"></a>7. 组合逻辑中的选择器</h2><h3 id="7-1-二选一-MUX-如何表达？"><a href="#7-1-二选一-MUX-如何表达？" class="headerlink" title="7.1. 二选一 MUX 如何表达？"></a>7.1. 二选一 MUX 如何表达？</h3><img src='https://i.postimg.cc/L6vnwrjX/20250117225844.jpg' border='0' alt='20250117225844' width="50%"/>
+
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 第 1 种表达， assign 完整表达</span></span><br><span class="line"><span class="keyword">assign</span> z = (s == <span class="number">1</span>) ? b : a;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 第 2 种表达， assign 简化表达</span></span><br><span class="line"><span class="keyword">assign</span> z = s ? b : a;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 第 3 种表达， always 块表达</span></span><br><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (s)</span><br><span class="line">        z = b;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        z = a;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="7-2-多选一MUX，又该如何表示呢？"><a href="#7-2-多选一MUX，又该如何表示呢？" class="headerlink" title="7.2. 多选一MUX，又该如何表示呢？"></a>7.2. 多选一MUX，又该如何表示呢？</h3><p>因为使用 <code>assign</code> 表示显然会过于复杂，所以需要用 <code>always</code> 块表示。表示方法有两种，注意两种表达综合出来的电路是不同的。</p>
+<p>其一如下例所示。</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (s == <span class="number">0</span>)</span><br><span class="line">        z = a;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s == <span class="number">1</span>)</span><br><span class="line">        z = b;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s == <span class="number">2</span>)</span><br><span class="line">        z = c;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s == <span class="number">3</span>)</span><br><span class="line">        z = d;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s == <span class="number">4</span>)</span><br><span class="line">        z = e;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s == <span class="number">5</span>)</span><br><span class="line">        z = f;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        z = a; <span class="comment">// 默认值</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>综合出来的电路如图所示：</p>
+<img src='https://i.postimg.cc/x84BbfW8/20250117230859.jpg' border='0' alt='20250117230859' width="100%"/>
+
+<p>可见，使用 <code>if</code> 表述的选择关系，综合的电路是一层一层逐渐展开的，写在 <code>if</code> 最前面的语句，掌握着最终的选择权，因而优先级最高，再往后优先级逐层下降，而使用 <code>case</code> 表述的MUX，每个选择都是并列的，优先级相同，见下文。</p>
+<p>其二如下例所示。</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">case</span> (s)</span><br><span class="line">        <span class="number">0</span>: z = a;</span><br><span class="line">        <span class="number">1</span>: z = b;</span><br><span class="line">        <span class="number">2</span>: z = c;</span><br><span class="line">        <span class="number">3</span>: z = d;</span><br><span class="line">        <span class="number">4</span>: z = e;</span><br><span class="line">        <span class="number">5</span>: z = f;</span><br><span class="line">        <span class="keyword">default</span>: z = a; <span class="comment">// 默认值</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>所综合的电路如图所示：</p>
+<img src='https://i.postimg.cc/PrfqW20k/20250117230221.jpg' border='0' alt='20250117230221' width="30%"/>
+
+<p>使用 <code>if</code> 表述，有可能出现隐藏逻辑，即设计者没有考虑到，但实际会被综合出来的逻辑门。隐藏逻辑是设计的隐患，设计者在写代码时应该清楚其逻辑含义，尽量避免出现隐藏逻辑。为了避免设计中出现隐藏逻辑，在实际项目中往往会提倡使用 <code>case</code> 语句来表达。</p>
+<p>下例中反映出 <code>if</code> 的优先级特征，条件 <code>s &lt; 5</code> 包含 <code>s ＝＝ 4</code> 的情况，因为 <code>s &lt; 5</code> 优先，因而当 <code>s＝＝4</code> 时， <code>z</code> 的赋值是 <code>a</code> 而不是 <code>b</code> 。如果设计意图是要在 <code>s ＝＝ 4</code> 时使 <code>z ＝ b</code> ，则应当将其写在 <code>s &lt; 5</code> 之前。</p>
+<!--  -->
+
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">if</span> (s &lt; <span class="number">5</span>)</span><br><span class="line">        z = a;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (s == <span class="number">4</span>)</span><br><span class="line">        z = b;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        z = c;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>case有一种变体是 <code>casez</code> ，它可以拓展case的使用范围：</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(*)</span><br><span class="line"><span class="keyword">begin</span></span><br><span class="line">    <span class="keyword">casez</span>(s)</span><br><span class="line">        <span class="number">16&#x27;b00011</span>???????????: z = a;</span><br><span class="line">        <span class="number">16&#x27;b10111111</span>????<span class="number">0000</span>: z = b;</span><br><span class="line">        <span class="number">16&#x27;b1111</span>?<span class="number">001000</span>?????: z = c;</span><br><span class="line">        <span class="keyword">default</span>: z = d;</span><br><span class="line">    <span class="keyword">endcase</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>其中，问号的意思是0或1都能匹配，类似计算机语言中的通配符。</p>
+<p>虽然很多项目提倡使用 <code>case</code> 或 <code>casez</code> 来表述选择器，但究竟是使用 <code>if</code> 还是 <code>case</code> ，仍然取决于表达的需要。总体而言， <code>case</code> 便于判断是否相等的情况，而 <code>if</code> 适合判断大于或小于关系，不同情况用不同的表达，可以使Verilog逻辑更加清晰，也更便于维护。</p>
+<p>注意组合逻辑中的 <code>if</code> 和 <code>else if</code> ，最后必须跟一句 <code>else</code> ，使整体逻辑完整。若没有else，则该电路会综合出一个锁存器(<code>Latch</code>)。锁存器不属于10种基本元器件之一。在设计中，凡有寄存需求，应尽量使用触发器，避免使用锁存器，特别要避免不写 <code>else</code> 引起的隐藏逻辑。</p>
+<h2 id="8-Verilog中的for循环"><a href="#8-Verilog中的for循环" class="headerlink" title="8. Verilog中的for循环"></a>8. Verilog中的for循环</h2><p>关键字：</p>
+<ul>
+<li><code>for</code></li>
+<li><code>generate</code> &#x2F; <code>endgenerate</code> &#x2F; <code>genvar</code></li>
+<li><code>integer</code>: 是编译时的变量，不是信号，不会被综合成电路或金属连线。如果变量 <code>ii</code> 声明为 <code>wire</code> 或 <code>reg</code> ，然后用 <code>a[ii]</code> 表示一个信号，则语法不能综合为电路。但是 <code>ii</code> 声明为 <code>integer</code> ，那么 <code>a[ii]</code> 将被综合成信号。</li>
+</ul>
+<h2 id="9-Verilog中的数值表示方法"><a href="#9-Verilog中的数值表示方法" class="headerlink" title="9. Verilog中的数值表示方法"></a>9. Verilog中的数值表示方法</h2><p> 数值一般不直接写，如果直接写，则工具会理解为十进制32比特数，但实际中的信号位宽多种多样，选用哪种进制表示数值也有多种选择，因此需要将这两方面予以规定。</p>
+<table>
+<thead>
+<tr>
+<th>进制制</th>
+<th>符号号</th>
+<th>举例</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>二进制</td>
+<td>b</td>
+<td>4’b0110</td>
+<td>4 比特数，用二进制表示为 0110</td>
+</tr>
+<tr>
+<td>十进制</td>
+<td>d</td>
+<td>8’d3</td>
+<td>8 比特数，用十进制表示为 3</td>
+</tr>
+<tr>
+<td>十六进制</td>
+<td>h</td>
+<td>15’h1abc</td>
+<td>15 比特数，用十六进制表示为 1abc</td>
+</tr>
+</tbody></table>
+<p> 特殊的数值表示方法： </p>
+<p> <code>&#123;5&#123;1&#39;b0&#125;&#125;</code> 表示5个比特0，再如 <code>&#123;4&#123;1&#39;b1&#125;&#125;</code> 表示4个比特1。这种表示一般不用，但是它有优点，上例中的比特数量5和4可以用参数替代，若Verilog中有一个参数 <code>kkk</code> ，则可以写为 <code>&#123;(kkk)&#123;1&#39;b0&#125;&#125;</code> ，甚至可以写成用计算式表示的位宽，如 <code>&#123;(kkk＋2)&#123;1&#39;b0&#125;&#125;</code> 。注意，kkk是参数，不是信号，它不是电路，而是一种编译时使用的变量。</p>
+<p> 这种表示方法还可以写为 <code>&#123;常数&#123;逻辑表达式&#125;&#125;</code> 的形式，如</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">assign</span> int_clr = &#123;<span class="number">2</span>&#123;(apb_addr = = <span class="number">4&#x27;d7</span>) &amp; wr_en&#125;&#125; &amp; apb_wdat[<span class="number">1</span> : <span class="number">0</span>];</span><br></pre></td></tr></table></figure>
+
+<p>此例的目的是使用APB总线配置两个只写信号（write-only信号）​，这两个信号合称为 <code>int_clr</code> ，等式的右边，仅当地址 <code>apb_addr</code> 等于7，并且在APB总线上发生写操作时，APB写入的两比特数据 <code>apb_wdat[1:0]</code> 才会被配置到int_clr中，否则int_clr就是0。问题在于， <code>(apb_addr＝＝4&#39;d7)&amp;wr_en</code> 是一比特，不能跟 <code>apb_wdat[1:0]</code> 按位求与，因而需要将一比特复制为两比特，即 <code>&#123;2&#123;(apb_addr＝＝4&#39;d7)&amp;wr_en&#125;&#125;</code> 。</p>
+<p>对于其他辅助变量，可以直接写数字，例如在for循环中讲述的 <code>genvar ii</code> ，ii只是个变量，没有对应的电路，那么for循环赋值就不需要带位宽 和进制了，可以像下面这样写</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(ii = <span class="number">0</span>;ii&lt;<span class="number">100</span>;ii = ii + <span class="number">1</span>)</span><br></pre></td></tr></table></figure>
+
+<p>注意Verilog中，如果单写a、b、c、d、e、f、x、z，表示的是信号名，不能作为数值，如果想表示十六进制的数值，则可写为4’ha等，1’bx表示未知态，1’bz表示高阻态。</p>
+<h2 id="10-信号的状态类型"><a href="#10-信号的状态类型" class="headerlink" title="10. 信号的状态类型"></a>10. 信号的状态类型</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0 1 x z</span><br></pre></td></tr></table></figure>
+
+<p>其中，</p>
+<ul>
+<li><p>0和1是数字电路本身的状态，它的本源是零电平和VDD电平。</p>
+<p>  VDD， Voltage Drain, 其中 Drain 表示漏极，是一个电源引脚，用来提供正电压给电路中的元件。由于晶体管的设计通常包含两个漏极（源极和漏极），所以在一些命名规则中，为了区分正电源和负电源，使用了两个 D，并且VDD 代表正电源电压，VSS（Voltage Source）代表地线或负电源。 整个芯片的电源常称为VCC，芯片的地常标注为VSS。</p>
+<p>  不同工艺和元器件库需要的VDD不同，例如0.9V、1.8V、3.3V等，而同一个元器件库中的所有元器件，其需要的供电电压VDD一般相同的，只有I&#x2F;O器件等少数元器件，其输入端和控制端是比较低的电压，而输出端口却是较高的电压。</p>
+<p>  数字0和1对应的电平不会特别严格，而是有一个浮动范围，通常信号电平低于VDD的30%，就被认为是0，高于VDD的70%，就被认为是1。</p>
+</li>
+<li><p>z态是高阻态。</p>
+<p>  如果一颗芯片不通电，则它所有的引脚就都是高阻态。可见，高阻态的实际意义就是不会干扰到其他信号传输的状态，例如某信号A是高阻态，某信号B不是高阻态，那么信号A叠加到信号B上（可以想象为两根信号线被拧在一起）​，结果仍然是B，而A没有任何效果。</p>
+<p>  一般来讲，一个有着双向传输功能的引脚，如果设置为输入模式，就可以认为这个引脚处于高阻态，意思是它对电路板上与它相连的元器件没有任何影响，这些相连元器件如果要对本芯片输出0或1，就可以直接顺着该高阻态引脚输入，而不会被干扰或阻挡。</p>
+<p>  在FPGA的Verilog表述中，可以很形象地将FPGA的引脚描述为如下语句，其中b是FPGA的引脚，所以声明为inout类型，oe是该引脚的方向选择，若oe为1，则b为输出模式，将信号a输出到FPGA外面，而当oe为0时，是高阻态，即输入模式，外面的信号从b引脚可以进来后与信号c形成了组合逻辑，代码如下：</p>
+  <figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">inout</span> b;</span><br><span class="line"></span><br><span class="line"><span class="keyword">assign</span> b = oe ? a : <span class="number">1&#x27;bz</span></span><br><span class="line"><span class="keyword">assign</span> d = b ^ c;</span><br></pre></td></tr></table></figure>
+
+<p>  注意上例中引用FPGA的语法只是为了说明z态的含义。IC设计中对引脚的设计不像FPGA这么简单，需要例化一个引脚模块，在代码中不会出现1’bz数值。</p>
+<p>  <strong>博主注1：</strong></p>
+<p>  在集成电路（IC）中，高阻态（High Impedance State，简称 Hi-Z）是指一个电路输出引脚处于没有输出驱动信号的状态，即该引脚既不提供高电平（VDD）也不提供低电平（GND），而是处于一种“悬空”状态，几乎不消耗电流，像是断开了。高阻态通常用于多路复用（bus）或三态总线（tri-state bus）等应用中，允许多个设备共享同一条总线而不会相互干扰。</p>
+<p>  高阻态的实现<br>  高阻态通常通过 <strong>三态门（Tri-state Gate）</strong> 来实现。三态门是一种特殊类型的逻辑门，它具有三个输出状态：</p>
+<p>  高电平（逻辑 1）<br>  低电平（逻辑 0）<br>  高阻态（Hi-Z）<br>  具体来说，高阻态是通过在输出端增加一个高阻抗的电路来实现的，这个高阻抗值通常非常大，以至于该引脚对外部电路几乎没有影响。三态门的工作原理可以分为以下几种方式：</p>
+<p>  开关型设计：</p>
+<p>  P-Channel MOSFET（PMOS） 和 N-Channel MOSFET（NMOS） 组成的电路可以根据控制信号决定是否接通输出。如果三态门处于“高阻态”时，MOSFET 们并不会导通，从而使输出引脚处于高阻抗状态。<br>  控制信号：</p>
+<p>  三态门的输出通常由一个控制信号来控制。当控制信号为“使能”状态时，输出引脚会驱动高或低电平；而当控制信号为“禁用”状态时，输出引脚进入高阻态，基本与外部电路断开连接。<br>  双向总线：</p>
+<p>  在多路复用的场景中，多个设备可能需要共享同一条数据总线。为了避免多个设备同时驱动总线产生冲突，设备在不输出数据时会进入高阻态，不影响其他设备的信号传输。<br>  高阻态的作用<br>  多路复用：高阻态允许多个电路共享同一总线。只有一个电路在某个时间点输出数据，其他电路进入高阻态，防止冲突。</p>
+<p>  总线冲突保护：通过将不参与通信的设备置于高阻态，避免了多个设备在同一时间尝试驱动总线的冲突。</p>
+<p>  节省电力：通过在不需要输出信号时将输出置于高阻态，可以降低功耗，因为在高阻态下输出引脚几乎不消耗电流。</p>
+<p>  举例说明<br>  一个常见的例子是在 Tri-state Bus（三态总线）中，多个设备通过控制信号来决定是否驱动总线。如果设备不需要发送数据，它会将输出置于高阻态，允许其他设备使用总线。</p>
+<p>  总结来说，高阻态的实现依赖于三态门（Tri-state Gate），它通过控制MOSFET开关来使输出处于非驱动状态，从而让其他电路可以共享同一个引脚或总线。</p>
+<p>  <strong>博主注2：</strong></p>
+<p>  在数字电路中，inout 引脚是指一个既可以作为输入端口，也可以作为输出端口的引脚。它通常用于多路复用（bus）或双向数据传输的场合，允许一个引脚在不同时间根据需要在输入和输出之间切换。为了在同一引脚上同时支持输入和输出，通常使用 三态逻辑（Tri-state logic）来控制数据的流向。</p>
+<p>  inout 引脚的实现方式<br>  inout 引脚的实现依赖于几个关键的设计原则和组件</p>
+<p>  三态缓冲器（Tri-state Buffer）：</p>
+<p>  在 inout 引脚上，通常使用 三态缓冲器（Tri-state buffer）来控制该引脚是处于输入、输出还是高阻态。三态缓冲器的作用是通过控制信号来决定该引脚的状态。<br>  当引脚作为 输出 时，缓冲器将数据传递到引脚。<br>  当引脚作为 输入 时，缓冲器将引脚上的电压信号传送到内部电路。<br>  当引脚处于 高阻态（Hi-Z）时，缓冲器断开与引脚的连接，使得该引脚对外部电路“透明”，即不影响电路。<br>  控制信号：</p>
+<p>  inout 引脚的切换通常由控制信号（例如，方向控制信号）来决定，指示该引脚是作为输入使用还是作为输出使用。<br>  控制信号一般是由逻辑电路生成，当电路需要输出数据时，控制信号会使引脚成为输出；而当电路需要接收数据时，控制信号会使引脚成为输入。<br>  双向总线设计：</p>
+<p>  inout 引脚常用于总线设计，其中多个设备共享同一条总线。每个设备可以在需要时向总线发送数据，而在不需要时通过将输出设为高阻态来避免与其他设备的冲突。<br>  例如，数据总线（Data Bus）可能由多个设备共享。当一个设备不在发送数据时，它会将其 inout 引脚设为高阻态，确保只有发送设备影响总线信号。</p>
+<p>  工作原理</p>
+<p>  输出模式：</p>
+<p>  当inout 引脚作为输出时，相关的三态缓冲器连接到该引脚，并驱动电平（高或低）。此时，控制信号将引脚设置为输出模式，并且其他连接到该引脚的电路会处于断开状态。</p>
+<p>  输入模式：</p>
+<p>  当 inout 引脚作为输入时，缓冲器进入高阻态（Hi-Z），即引脚的状态不再由输出逻辑驱动，转而接收外部信号。此时，只有连接到引脚的其他设备会驱动该引脚的电平。<br>  高阻态：</p>
+<p>  当引脚不需要输出数据时，三态缓冲器将进入 高阻态，使该引脚对其他电路没有影响。这样，多个设备就可以共享同一个引脚或总线而不会发生电平冲突。<br>  应用示例<br>  双向数据总线：</p>
+<p>  假设有多个设备共享一条数据总线。每个设备的 inout 引脚可以作为数据的输入端或输出端。在某个时刻，只有一个设备向总线发送数据，其他设备则将其引脚设为高阻态，避免干扰。<br>  双向信号传输：</p>
+<p>  在通信协议中，inout 引脚可用于双向信号传输。例如，I²C总线就使用 inout 引脚，其中一个设备在某个时刻发送信号，而另一个设备则接收信号。<br>  芯片间通信：</p>
+<p>  在多芯片系统中，inout 引脚可用于芯片之间的数据交换，允许不同芯片在不同时刻控制同一引脚的输入和输出行为。<br>  总结<br>  inout 引脚通过三态缓冲器和控制信号的组合，实现了同一引脚可以在输入和输出之间切换的功能。通过将输出置于高阻态，可以使得该引脚不会干扰其他电路或设备，使其适用于总线系统或双向通信的设计中。</p>
+</li>
+<li><p>x态的含义是未知态。</p>
+<p>  有4种情况会产生未知态：</p>
+<ul>
+<li>其一是芯片已上电但复位信号未进行复位的情况；</li>
+<li>其二是双向引脚信号冲突，因为没控制好，导致有一路信号通过引脚输入，另一路信号通过相同的引脚输出；</li>
+<li>其三是芯片中一个元器件的某个输入端为x态，于是输出就跟着变成了x态，这就是所谓x态的传播；</li>
+<li>第四是触发器的时序不满足，产生了亚稳态，从而表示为x态。</li>
+</ul>
+<p>  上述4种情况在仿真中都能看到，但实际中，第1种情况基本不会出现，除非模拟电路设计有误，其他3种在数字设计有缺陷时会出现，实际在测量其电压时会出现不稳定或非预期的问题。在可综合的Verilog中，不会出现1’bx数值，因为没有一个设计会故意将一个错误引入RTL中，所有的错误都是意外发生的。该符号在仿真脚本和仿真波形中可能出现。</p>
+</li>
+</ul>
+<h2 id="电平信号与脉冲信号"><a href="#电平信号与脉冲信号" class="headerlink" title="电平信号与脉冲信号"></a>电平信号与脉冲信号</h2><p>电平信号也叫Latch信号，即一个信号持续多个时钟周期都一直保持为1的信号。</p>
+<p>脉冲信号就是只持续一个时钟周期的信号。</p>
+<p>工程师在交流时，对于电平信号a常用的说法是“将a给Latch住”​，对于脉冲信号b常用的说法是“打一个脉冲b”​。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/01/15/IC/1.%E6%95%B0%E5%AD%97IC%E8%AE%BE%E8%AE%A1%E6%B5%81%E7%A8%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/01/15/IC/1.%E6%95%B0%E5%AD%97IC%E8%AE%BE%E8%AE%A1%E6%B5%81%E7%A8%8B/" class="post-title-link" itemprop="url">第1章 数字IC设计流程</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-01-15 16:59:30" itemprop="dateCreated datePublished" datetime="2025-01-15T16:59:30+00:00">2025-01-15</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="1-参考"><a href="#1-参考" class="headerlink" title="1. 参考"></a>1. 参考</h2><p>白栎旸. 数字IC设计入门（微课视频版）[M]. 北京: 清华大学出版社，2023-09-01:第1章.</p>
+<h2 id="2-数字IC设计流程"><a href="#2-数字IC设计流程" class="headerlink" title="2. 数字IC设计流程"></a>2. 数字IC设计流程</h2><h3 id="2-1-三个主要流程："><a href="#2-1-三个主要流程：" class="headerlink" title="2.1. 三个主要流程："></a>2.1. 三个主要流程：</h3><ol>
+<li><p>前端设计: 用 Verilog 编写 RTL 设计文件（Register Transfer Level，RTL，寄存器传输层）。</p>
+</li>
+<li><p>综合（Synthesis）：将 RTL 转换位实际电子元器件的连接。输出文件称为网表（netlist），也是纯文本文件。</p>
+</li>
+<li><p>后端布局布线（PR）：将网表变为实际电路图，类似 PCB 图，称为版图（Layout）。版图是晶圆厂（Foundry）能识别的通用格式。</p>
+<p> 版图的绘制：</p>
+<ul>
+<li>布局（Place）：元器件如何摆放；</li>
+<li>布线（Route）：元器件如何连接。</li>
+</ul>
+<p> 数字版图的绘制大部分由计算机自动完成，称为自动布局布线（Automatic Place and Route，APR），很多时候也称为 PR 。</p>
+<p> 流片（TapeOut）：Foundry 根据版图制造芯片。</p>
+</li>
+</ol>
+<h3 id="2-2-验收和验证（SignOff）："><a href="#2-2-验收和验证（SignOff）：" class="headerlink" title="2.2. 验收和验证（SignOff）："></a>2.2. 验收和验证（SignOff）：</h3><p>对质量进行把控和最终验收。</p>
+<p>前仿真：检查 RTL 设计文件；用测试平台（Testbench）文件对实际应用环境仿真。这是在版图成型之前，称为前仿。一旦发现错误，验证人员会反馈给设计者修改，如此反复迭代，直至交付到综合阶段的 RTL 文件都是合格的。</p>
+<p>SignOff 检查：检查版图设计；对时序和功耗检查。如果检查不过，首先是数字后端工程师自己努力，重新绘制版图或微调元器件位置，若无法达到目的，再修改综合策略，重新综合。若仍无法达到目的，则反馈到前端 IC 设计，在 RTL 上调整。</p>
+<p>后仿真：在 SignOff 合格后，需要将网表和延迟信息提交给验证人员，进行后仿。对成型版图的时序进行最后验证和验收。后仿就是版图成型之后的仿真。</p>
+<h3 id="2-3-可测性设计（Design-For-Test，DFT）"><a href="#2-3-可测性设计（Design-For-Test，DFT）" class="headerlink" title="2.3. 可测性设计（Design For Test，DFT）"></a>2.3. 可测性设计（Design For Test，DFT）</h3><p>一个附属工序，原理是在芯片中加入与主要功能无关的附属电路，用于在芯片的生产过程中使用 TestBench 快速判断芯片功能的完好行、内部结构的正常性。</p>
+<p>如果芯片中包含 DFT 电路，则 TestBench 可以向芯片的某些引脚发送事先准备好的测试向量，在芯片的另一些引脚上采样芯片对测试向量的反应。将事先准备好的预期效果与实际采样到的结果进行对比，从而判断内部功能是否正常。</p>
+<p>DFT 功能也常常被称为扫描（Scan），即用 TestBench 扫描芯片内部之意。DFT 的检查对象是生产差错造成的芯片损坏，它不能检查设计问题。设计问题应该交给验证工序。</p>
+<p>DFT 对芯片来说不是必需的，一些低成本的芯片没有插入 DFT 电路，在设计流程中，直接从电路综合过渡到后端设计。</p>
+<h3 id="2-4-前端设计-VS-后端设计"><a href="#2-4-前端设计-VS-后端设计" class="headerlink" title="2.4. 前端设计 VS 后端设计"></a>2.4. 前端设计 VS 后端设计</h3><ul>
+<li>前端设计：抽象电路，只描述功能，不是具体电路。</li>
+<li>后端设计：具体电路，不仅要知道哪些元器件，还要确认这些元器件的摆放位置。</li>
+</ul>
+<p>综合是前端和后端的分界线，综合之前没有元器件而只有功能；综合之后，设计才有了具体化的元器件。</p>
+<p>当然，前端工程师往往强调心中有电路，并非实际电路，而是心中有功能相似的概念性电路。这样可以认清设计架构，并避免潜在的设计隐患。</p>
+<h2 id="3-模拟IC设计流程"><a href="#3-模拟IC设计流程" class="headerlink" title="3. 模拟IC设计流程"></a>3. 模拟IC设计流程</h2><ol>
+<li><p>绘制原理图（Schematic）</p>
+<p> 手动绘制。</p>
+</li>
+<li><p>原理图仿真</p>
+<p> 一般由原理图设计者亲自完成。原因是模拟电路的设计参数选择范围宽泛，需要验证的场景也复杂，仿真验收标准不十分明确。这就需要设计者搭建关键的应用环境和场景，对电路上产生的反应做出判断，随时调整电路结构和参数。</p>
+</li>
+<li><p>绘制版图（根据原理图）</p>
+<p> 手动绘制。</p>
+<p> 模拟版图工程师和模拟IC设计师一般是分开的两个职业。</p>
+<p> 模拟IC设计师一般也都掌握一些绘制版图的方法，单熟练程度以及对一些物理问题的处理方面，需要求助专业的版图工程师。</p>
+<p> 模拟版图工程师可以根据原理图及通用的绘图规则直接绘制。但是对诸如社评电路及高功率管之类有着特殊要求的设计，版图工程师需要与模拟IC设计师进行充分沟通，在模拟IC设计师的协助下进行绘制。</p>
+</li>
+<li><p>抽取寄生参数</p>
+</li>
+<li><p>版图后仿</p>
+</li>
+<li><p>设计规则检查（Design Rule Check，DRC）</p>
+</li>
+<li><p>版图和原理图的一致性检查（Layout Versus Schematics，LVS）</p>
+</li>
+<li><p>流片</p>
+</li>
+</ol>
+<p>模拟IC设计没有那么多自动化成分，需要手动绘制原理图、版图，电阻、电容等元器件需要人工确定。</p>
+<p>模拟IC仿真，无法像数字IC那样通过仿真验证和FPGA验证两种方法来相互印证设计效果。模拟仿真速度慢、情况多，很难覆盖真是使用中可能遇到的全部情况，因此，模拟设计具有很高的不确定，芯片的实际效果与仿真结果存在明显差距是经常发生的。</p>
+<p>但是模拟电路也有一些无法被数字电路取代的特性。</p>
+<p>可以想象，数字电路只需要处理 0 和 1 两种信号，但是模拟电路的数值域是实数域，包括所有连续的整数、浮点数、正负数，数据有无穷个。因此，即使是很小的电路，元器件数量不多，也需要设计者和仿真者从数值域中挑选一部份值作为设计和仿真中用到的值，绝对不可能覆盖所有情况。</p>
+<h2 id="4-芯片整体规划"><a href="#4-芯片整体规划" class="headerlink" title="4. 芯片整体规划"></a>4. 芯片整体规划</h2><p>版图布局规划（FloorPlan）：将芯片整体规划，以及内部数字、模拟电路的位置、面积、形状等特征的规划。</p>
+<figure style="text-align:center;">
+<img TODO width="50%"/>
+<figcaption>FloorPlan示例</figcaption>
+</figure>
+
+<ul>
+<li>Pad: FloorPlan的周围是芯片引脚(Pad)。Pad实际指的是芯片引脚之外的一块金属。</li>
+<li>IO: 包括Pad和内部逻辑在内的整个引脚设计。</li>
+</ul>
+<p>一个完整的引脚设计如图：</p>
+<img src="https://i.postimg.cc/MKfPd9z4/20250116222905.jpg" alt="20250116222905" width="50%"/>
+
+<ul>
+<li>封装: 芯片外面的塑料壳子称为芯片的封装，大体分为两种：插针式（引脚如针）、表贴式（引脚扁平）。</li>
+</ul>
+<h2 id="5-IC设计工具"><a href="#5-IC设计工具" class="headerlink" title="5. IC设计工具"></a>5. IC设计工具</h2><p>EDA 公司：电子设计自动化（Electronic Design Automation）公司，粗略来说，数字设计常用 Synopsys ，模拟设计常用 Cadence ， Mentor 在一些细分领域有优势。</p>
+<table>
+<thead>
+<tr>
+<th>数字&#x2F;模块</th>
+<th>数字流程</th>
+<th>常用软件</th>
+<th>其他软件</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>数字</td>
+<td>RTL 编写</td>
+<td>Vim&#x2F;Gvim</td>
+<td>普通文本编辑器</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>仿真</td>
+<td>VCS (Synopsys)</td>
+<td>Incisive (Cadence)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>看波形</td>
+<td>Verdi (Synopsys)</td>
+<td>DVE (Synopsys)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>设计检查</td>
+<td>Spyglass (Synopsys)</td>
+<td>Simvision (Cadence)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>综合</td>
+<td>DC (Synopsys)</td>
+<td>ModelSim (Mentor)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>时序仿真</td>
+<td>PT (Synopsys)</td>
+<td>nLint (Cadence)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>自动布局布线</td>
+<td>ICC2 (Synopsys)</td>
+<td>Genus (Cadence)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>设计版图形式验证</td>
+<td>Formality (Synopsys)</td>
+<td>Tempus (Cadence)</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>提取寄生参数</td>
+<td>StarRC (Synopsys)</td>
+<td></td>
+</tr>
+<tr>
+<td>模拟</td>
+<td>原理图&#x2F;版图&#x2F;仿真等</td>
+<td>Virtuoso (Cadence)</td>
+<td>Calibre (Mentor)</td>
+</tr>
+<tr>
+<td>模拟</td>
+<td>寄生提取&#x2F;DRC&#x2F;LVS</td>
+<td>Calibre (Mentor)</td>
+<td></td>
+</tr>
+</tbody></table>
+<p>仿真加速器： <strong>Palladium</strong> (Cadence) 、 <strong>ZeBu</strong> (Synopsys) 。</p>
+<h3 id="5-1-数字IC设计工具"><a href="#5-1-数字IC设计工具" class="headerlink" title="5.1. 数字IC设计工具"></a>5.1. 数字IC设计工具</h3><p>RTL 仿真工具：有 Synopsys 的 VCS ，Cadence 的 Incisive （也叫 irun ）。这些工具可以胜任前仿、后仿、UVM 架构（Universal Verification Methodology，通用验证方法学）的仿真。Cadence 的 irun 与模拟设计工具 Virtuoso 工具中集成的 AMS 仿真工具相结合，支持数字模拟电路混合仿真。</p>
+<p>波形查看工具：一般集成在仿真工具中。VCS 的波形软件叫 DVE ， Incisive 的波形软件叫 SimVision 。但在这个领域，一家名为 Novas 的公司的软件，以其明快的界面、方便的功能、快捷的操作，异军突起，得到了广泛的认可，它就是 Verdi （以音乐家威尔第的名字命名，前身叫 Debussy ，以音乐家德彪西的名字命名）。 Verdi 现已被 Synopsys 收购。 Mentor 的仿真和看波形软件叫 ModelSim ，主要用于 FPGA 功能的仿真。</p>
+<p>RTL 语法检查工具： Atrenta 公司的 Sypyglass ，可以检查语法、跨时钟域处理方案的可靠性，甚至可以在内部执行综合、功耗评估和简单的布局布线，使它能全方位地给出设计建议。现已被 Synopsys 收购。 Cadence 的对应检查工具是 nLint 。</p>
+<p>综合工具：即将 RTL 转化为实际电路的工具，常用的的有 Synopsys 的 Design Compiler (DC) ，该工具内部还有一些 Synopsys 开发的库，能够帮助设计者减小面积，提高性能，例如加法器、乘法器等，这些设计好的子模块在 DC 中被称为 DesignWare (DW) 。可以是让工具自动从 RTL 中识别出可用 DW 替换的代码，也可以是设计者手动例化 DW 模块。 Cadence 相应的工具叫 Genus （原名叫 RTL Compiler ）。</p>
+<p>版图自动布局布线软件： Synopsys 有 ICC2 （旧版为 ICC ）， Cadence 有 Innovus （原名 Encounter ），两个软件都被广泛使用。由于两个软件的操作命令不同，后端工程师往往只掌握其中一种。 Synopsys 为了增强客户的黏性，开发了一个银河（ MilkyWay ）流程，从前端到后端，通过专用的二进制文件 (db) 传输，占用空间小，处理效率高，但也有许多公司使用 DC 综合，再将网表导入 Innovus 进行布局布线。</p>
+<p>SignOff 工具：即对整个设计的时序、功耗评估。 Synopsys 的 Prime Time (PT) ， Cadence 的 Tempus 。目前， PT 已经称为业内 SignOff 的标准。实际上，时序分析在 DC 中也能做，但两者在分析方法、细节考虑全面度、分析速度等方面存在差异。在综合时使用 DC 检查，而在 SignOff 时，使用 PT 检查。</p>
+<p>形式验证工具：也称为逻辑等效行检查（ Logic Equivalece Check, LEC ），将 RTL 和网表进行一一对照。因为从 RTL 到综合网表，以及从综合网表到后端网表的过程，可能意外地改变原有功能和设计意图，所以需要进行检查。 Synopsys 的工具时 Formality ， Candence 的工具是 Conformal 。</p>
+<p>寄生参数的提取工具：进入设计版图阶段，可以确定走线的延迟。该值受信号负载、线路长短、粗细、周围线路等多重影响，需要用模型和查表进行计算，才能得到确切的值。该过程称为寄生参数的提取。一般使用 Synopsys 的 StarRC 。提取出来的信息可用于 PT 进行 SignOff 。</p>
+<p>上述工具，最主要的控制语法是 TCL 语言， EDA 工具大多以该语言为基础，扩展出各种专用命令。</p>
+<p>除了以上数字设计工具，还有一些更加细分的工具类型，比如仿真加速器，有 Cadence 的 Palladium 、 Synopsys 的 ZeBu 。</p>
+<h3 id="5-2-模拟IC设计工具"><a href="#5-2-模拟IC设计工具" class="headerlink" title="5.2. 模拟IC设计工具"></a>5.2. 模拟IC设计工具</h3><p>主要是 Cadence 的 Virtuoso 。与数字设计中繁多的工具不同， Virtuoso 能满足大部分设计需求，例如绘制并仿真原理图、绘制并仿真版图、数模混合仿真等。实际上， Virtuoso 更像集成开发环境（ Integrated Development Environment, IDE ），它包含很多独立的设计工具，如仿真工具 Spectre 等。</p>
+<p>SignOff 工具：Mentor 的 Calibre 可以用来提取寄生参数、进行 DRC 和 LVS 检查。</p>
+<h3 id="5-3-职位、分工与工具"><a href="#5-3-职位、分工与工具" class="headerlink" title="5.3. 职位、分工与工具"></a>5.3. 职位、分工与工具</h3><table>
+<thead>
+<tr>
+<th>大职位</th>
+<th>细分职位</th>
+<th>功能</th>
+<th>常用工具</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>数字</td>
+<td>数字 IC 设计</td>
+<td>设计芯片中的数字电路</td>
+<td>Vim, VCS, Verdi, Spyglass, DC 等</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>数字 IC 验证</td>
+<td>验证芯片中的数字电路功能</td>
+<td>VCS, Verdi 等</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>数字 IC 后端</td>
+<td>将抽象电路转换为版图</td>
+<td>ICC2, Innovus, Calibre, PT 等</td>
+</tr>
+<tr>
+<td>数字</td>
+<td>其他职位, 如 SignOff, DFT 等</td>
+<td>负责在数字电路中插入 DFT、对最终的版图进行时序、面积、功耗的检查等</td>
+<td>DC, PT, Formality 等</td>
+</tr>
+<tr>
+<td>模拟</td>
+<td>模拟 IC 设计</td>
+<td>设计芯片中的模拟电路</td>
+<td>Virtuoso 等</td>
+</tr>
+<tr>
+<td>模拟</td>
+<td>模拟版图</td>
+<td>将电路原理图做成版图</td>
+<td>Virtuoso, Calibre 等</td>
+</tr>
+<tr>
+<td>软件</td>
+<td>嵌入式软件工程师</td>
+<td>(1) 参与芯片开发&#x2F;验证 (2) 参与 SDK (3) 参与芯片应用方案</td>
+<td>Keil, SourceInsight, Visual Studio 等</td>
+</tr>
+<tr>
+<td>软件方案</td>
+<td>测试工程师</td>
+<td>(1) 对芯片设计性能的测试 (2) 芯片量产测试</td>
+<td>兼用软件和硬件工具</td>
+</tr>
+<tr>
+<td>硬方案</td>
+<td>应用工程师</td>
+<td>做电路板，为芯片找到合适的应用场景</td>
+<td>Pads, Altium Designer, Cadence 等</td>
+</tr>
+</tbody></table>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">管理</span><br><span class="line">├── 研发</span><br><span class="line">│   ├── 数字IC设计</span><br><span class="line">│   ├── 数字IC验证</span><br><span class="line">│   └── 数字后端</span><br><span class="line">│   └── 模拟IC设计</span><br><span class="line">│       └── 模拟版图</span><br><span class="line">├── 测试</span><br><span class="line">│   ├── 研发类测试</span><br><span class="line">│   │   ├── 方案测试</span><br><span class="line">│   │   └── 量产测试</span><br><span class="line">│   └── 客户测试</span><br><span class="line">├── 销售</span><br><span class="line">└── 方案</span><br><span class="line">    ├── 硬件方案</span><br><span class="line">    └── 软件方案</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="5-4-EDA-与-Foundry-的关系"><a href="#5-4-EDA-与-Foundry-的关系" class="headerlink" title="5.4. EDA 与 Foundry 的关系"></a>5.4. EDA 与 Foundry 的关系</h3><p>普通软件公司无力开发 EDA 软件。因为 EDA 厂商需要和 Foundry 厂商紧密合作，才能获得有关的生产细节数据，从而帮助用户进行更加准确的仿真、寄生参数的提取、规则的检查。不同的 EDA 工具抽取的寄生参数可能不同，原因可能是不同的工具获得的工艺数据不同。</p>
+<p>国内 EDA 厂商要想打破垄断，不仅要靠软件技术，还要与各大 Foundry 厂达成战略合作，共享工艺数据，才能做出有实用价值的 EDA 工具。</p>
+<h2 id="6-概念"><a href="#6-概念" class="headerlink" title="6. 概念"></a>6. 概念</h2><h3 id="6-1-寄存器："><a href="#6-1-寄存器：" class="headerlink" title="6.1. 寄存器："></a>6.1. 寄存器：</h3><p>register，这是对功能强调的名称，其物理实体很多，比如触发器 (Flip-Flop, FF)和锁存器(Latch)等等。在数字设计中，主要提倡触发器。</p>
+<p>寄存器是受控于时钟沿的元器件， Foundry 会在标准单元库中提供多种寄存器。</p>
+<p>触发器是由边沿信号而非电平信号导致数据存储的。触发源一般是时钟信号。</p>
+<p>锁存器较少使用，它一般以非时钟信号为存储控制，靠电平触发。一般不连接时钟，只是连接一根普通的信号线。这种锁存器一般很少被纳入时钟计算中，因为它既不属于组合逻辑，又无法像触发器一样作为时序路径的起终点，所以时序上无法通过工具保证，只能通过工程师来保证。</p>
+<p>本书说的寄存器，基本可以替换为触发器。在数字芯片 EDA 工具链中，两个概念也是混用的，一个 reg 既可以指寄存器，也可以指触发器。另外，所谓时序逻辑门电路，也基本等同于触发器。</p>
+<h3 id="6-2-设计-Design-的边界"><a href="#6-2-设计-Design-的边界" class="headerlink" title="6.2. 设计(Design)的边界"></a>6.2. 设计(Design)的边界</h3><img src="https://i.postimg.cc/gjQMGZHN/20250116211433.jpg" alt="20250116211433" width="50%"/>
+
+<ul>
+<li><p>Pad：芯片（封装）之外的引脚。</p>
+</li>
+<li><p>元器件：指芯片内的组合逻辑门电路及时序逻辑门电路。这些标准的元器件也被称为标准单元(Standard Cell)。元器件也称为逻辑门。</p>
+</li>
+<li><p>标准单元库&#x2F;工艺库：元器件的集合。</p>
+</li>
+<li><p>I&#x2F;O: 如前“FloorPlan”对IO的解释，I&#x2F;O是包括Pad和内部逻辑在内的整个引脚设计。在标准单元库中是一种标准单元，但是它比较特殊，可能与其他标准单元不放在同一个标准单元库中。驱动电平也可能不同。</p>
+</li>
+<li><p>通用单元库: 在综合时，有一个中间步骤是将 RTL 抽象逻辑先映射为<strong>通用单元(Generic Boolean)<strong>，然后映射到</strong>标准单元</strong>。通用单元与工艺无关，也不包含物理特性，只有功能属性，与 RTL 描述类似。而标准单元既有功能属性，又有延迟、电压等工艺属性，与工艺和 Foundry 相关。</p>
+</li>
+<li><p>lef文件: Library Exchange Format. 描述特定流片工艺下元器件的物理属性。</p>
+</li>
+<li><p>lib文件: Library. 描述特定流片工艺下元器件的功能属性。lib文件常常要被编译为二进制的db文件才能在某些EDA工具上使用。 lef 和 lib 文件都是技术库。</p>
+<p>  数字设计只能在 Foundry 提供的已有的选项中挑选元器件。</p>
+</li>
+<li><p>def文件: Design Exchange Format. 设计除了 RTL 外，也可以带有物理信息，保存为 def 文件，基础内容是设计的形状和尺寸，扩展内容包括端口的分布位置、RAM和ROM等硬核的放置位置、内部元器件的放置和布线位置等。 RTL 和 def 统称为设计。</p>
+</li>
+</ul>
+<p>自己写的模块可以称为设备(Device)或模块(Module)。</p>
+<p>用设备一词主要强调它具备相对独立的功能，在介绍SoC架构等上层逻辑时较为常用，设备也经常被替换为单元(Unit)一词，它指人为设计的单元，而非标准单元。一个设计可以包含很多个设备。</p>
+<p>用模块一词，主要强调它在设计文件结构上的独立性，在介绍通用设计和底层逻辑时较为常用。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/01/14/VPN%E8%AE%BE%E7%BD%AE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/01/14/VPN%E8%AE%BE%E7%BD%AE/" class="post-title-link" itemprop="url">VPN设置</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-01-14 20:44:40" itemprop="dateCreated datePublished" datetime="2025-01-14T20:44:40+00:00">2025-01-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Linux-配置-clash-代理"><a href="#Linux-配置-clash-代理" class="headerlink" title="Linux 配置 clash 代理"></a>Linux 配置 clash 代理</h2><h3 id="创建并配置服务文件‌"><a href="#创建并配置服务文件‌" class="headerlink" title="创建并配置服务文件‌"></a>创建并配置服务文件‌</h3><p>编辑 &#x2F;etc&#x2F;systemd&#x2F;system&#x2F;clash_meta.service，内容示例如下（需根据实际路径调整）：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[Unit]</span></span><br><span class="line"><span class="attr">Description</span>=Clash Meta Service</span><br><span class="line"><span class="attr">After</span>=network.target</span><br><span class="line"></span><br><span class="line"><span class="section">[Service]</span></span><br><span class="line"><span class="attr">Type</span>=simple</span><br><span class="line"><span class="attr">ExecStart</span>=/usr/local/bin/clash_meta -f /path/to/config</span><br><span class="line"><span class="attr">Restart</span>=always</span><br><span class="line"><span class="attr">User</span>=root</span><br><span class="line"></span><br><span class="line"><span class="section">[Install]</span></span><br><span class="line"><span class="attr">WantedBy</span>=multi-user.target</span><br></pre></td></tr></table></figure>
+
+<p>关键参数说明：</p>
+<ul>
+<li>ExecStart：指定 clash_meta 的启动命令和配置目录。</li>
+<li>Restart&#x3D;always：确保服务崩溃后自动重启‌</li>
+</ul>
+<h3 id="启用开机自启‌"><a href="#启用开机自启‌" class="headerlink" title="启用开机自启‌"></a>启用开机自启‌</h3><p>执行以下命令使配置生效：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl daemon-reload  <span class="comment"># 重新加载配置</span></span><br><span class="line">sudo systemctl <span class="built_in">enable</span> clash_meta  <span class="comment"># 设置开机自启</span></span><br><span class="line">sudo systemctl start clash_meta   <span class="comment"># 立即启动服务</span></span><br></pre></td></tr></table></figure>
+
+<p>命令的作用分析‌</p>
+<ul>
+<li>sudo systemctl daemon-reload‌</li>
+</ul>
+<p>重新加载 systemd 的配置文件（如 .service 文件），仅对本次修改生效，‌不影响开机自启‌。<br>（例如：修改了 &#x2F;etc&#x2F;systemd&#x2F;system&#x2F;clash_meta.service 后需执行此命令使配置生效）</p>
+<ul>
+<li>‌sudo systemctl enable clash_meta‌</li>
+</ul>
+<p>‌关键命令‌：将 clash_meta 服务添加到开机自启列表，‌下次开机会自动启动‌。<br>（实际效果：在 &#x2F;etc&#x2F;systemd&#x2F;system&#x2F;multi-user.target.wants&#x2F; 下创建服务符号链接）</p>
+<ul>
+<li>‌sudo systemctl start clash_meta‌<br>立即启动服务，但仅对当前会话有效，‌不直接影响开机行为‌。</li>
+</ul>
+<p>验证是否成功：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">systemctl is-enabled clash_meta  <span class="comment"># 输出应为 &quot;enabled&quot;</span></span><br><span class="line">systemctl status clash_meta      <span class="comment"># 检查服务状态</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="验证自启动机制‌"><a href="#验证自启动机制‌" class="headerlink" title="验证自启动机制‌"></a>验证自启动机制‌</h3><p>‌检查服务状态‌：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">systemctl list-unit-files | grep clash_meta  <span class="comment"># 确认状态为 &quot;enabled&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>‌查看日志‌：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">journalctl -u clash_meta -f  <span class="comment"># 实时跟踪日志</span></span><br></pre></td></tr></table></figure>
+
+<p>‌常见问题‌</p>
+<ul>
+<li>‌路径错误‌：确保 ExecStart 中的路径正确（如 &#x2F;usr&#x2F;local&#x2F;bin&#x2F;clash_meta 是否存在）‌</li>
+<li>‌权限不足‌：服务文件需以 root 权限创建，或通过 User&#x3D; 指定运行用户‌</li>
+<li>‌依赖未满足‌：若依赖网络，需在 [Unit] 中添加 After&#x3D;network.target</li>
+</ul>
+<h3 id="bash-的配置"><a href="#bash-的配置" class="headerlink" title="bash 的配置"></a>bash 的配置</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Clash 代理端口</span></span><br><span class="line">PROXY_PORT=7890</span><br><span class="line">SOCKS5_PORT=7891</span><br><span class="line"></span><br><span class="line"><span class="comment"># 判断 clash-meta 是否正在运行</span></span><br><span class="line"><span class="keyword">if</span> pgrep -x <span class="string">&quot;clash_meta&quot;</span> &gt; /dev/null; <span class="keyword">then</span></span><br><span class="line">    <span class="built_in">export</span> http_proxy=<span class="string">&quot;http://127.0.0.1:<span class="variable">$PROXY_PORT</span>&quot;</span></span><br><span class="line">    <span class="built_in">export</span> https_proxy=<span class="string">&quot;http://127.0.0.1:<span class="variable">$PROXY_PORT</span>&quot;</span></span><br><span class="line">    <span class="built_in">export</span> all_proxy=<span class="string">&quot;socks5://127.0.0.1:<span class="variable">$SOCKS5_PORT</span>&quot;</span></span><br><span class="line">    <span class="built_in">export</span> GIT_SSH_COMMAND=<span class="string">&quot;ssh -o ProxyCommand=&#x27;nc -x 127.0.0.1:<span class="variable">$SOCKS5_PORT</span> %h %p&#x27;&quot;</span></span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    <span class="built_in">unset</span> http_proxy</span><br><span class="line">    <span class="built_in">unset</span> https_proxy</span><br><span class="line">    <span class="built_in">unset</span> all_proxy</span><br><span class="line">    <span class="built_in">unset</span> GIT_SSH_COMMAND</span><br><span class="line"><span class="keyword">fi</span></span><br></pre></td></tr></table></figure>
+
+
+<h2 id="VMWare-的-Linux-虚拟机共享-Windows-主机的-VPN"><a href="#VMWare-的-Linux-虚拟机共享-Windows-主机的-VPN" class="headerlink" title="VMWare 的 Linux 虚拟机共享 Windows 主机的 VPN"></a>VMWare 的 Linux 虚拟机共享 Windows 主机的 VPN</h2><p>方案 2：NAT 模式 + Windows 网络共享<br>另一种方式是保持 VMware 使用 NAT 模式，并通过 Windows 主机的网络共享功能，将 VPN 流量共享给虚拟机。</p>
+<p>步骤：<br>在 Windows 上启用网络共享：</p>
+<p>确保 Clash 在 Windows 主机上运行，并已连接到 VPN。<br>打开 控制面板 &gt; 网络和共享中心 &gt; 更改适配器设置。<br>右键点击你的 VPN 连接（通常是一个以 Ethernet 开头的适配器），选择 属性。<br>在 共享 标签页，勾选 允许其他网络用户通过此计算机的 Internet 连接连接。<br>选择虚拟机使用的网络适配器（例如 VMware 的 VMnet8 适配器），然后点击确定。<br>配置虚拟机网络为 NAT：</p>
+<p>在 VMware 中，确保虚拟机的网络适配器设置为 NAT（这通常是默认设置）。<br>在 NAT 模式下，虚拟机会通过 Windows 主机访问网络，但流量会被路由到共享的网络适配器。<br>验证虚拟机是否可以通过 VPN 访问网络：</p>
+<p>启动虚拟机，测试网络连接。<br>如果虚拟机连接成功并通过 VPN 访问互联网，那么配置就完成了。</p>
+<h2 id="WSL1-通过主机的-clash-客户端访问网络"><a href="#WSL1-通过主机的-clash-客户端访问网络" class="headerlink" title="WSL1 通过主机的 clash 客户端访问网络"></a>WSL1 通过主机的 clash 客户端访问网络</h2><h3 id="方法一：配置环境变量（适用于普通网络请求）"><a href="#方法一：配置环境变量（适用于普通网络请求）" class="headerlink" title="方法一：配置环境变量（适用于普通网络请求）"></a>方法一：配置环境变量（适用于普通网络请求）</h3><p>适合 curl、wget、apt、pip、git 等命令行工具走代理。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;export http_proxy=http://127.0.0.1:7890&#x27;</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;export https_proxy=http://127.0.0.1:7890&#x27;</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;export all_proxy=socks5://127.0.0.1:7890&#x27;</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">source</span> ~/.bashrc</span><br></pre></td></tr></table></figure>
+
+<p>验证代理是否有效：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl cip.cc</span><br></pre></td></tr></table></figure>
+
+<p>这个网站会返回你的公网 IP。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl https://www.google.com</span><br></pre></td></tr></table></figure>
+
+<p>应该会返回网页。</p>
+<p><strong>临时开启：</strong></p>
+<p>如果你只想暂时走代理一次，不想改 .bashrc，你可以直接这样运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 方法1</span></span><br><span class="line">http_proxy=http://127.0.0.1:7890 https_proxy=http://127.0.0.1:7890 curl https://www.google.com</span><br><span class="line"><span class="comment"># 方法2</span></span><br><span class="line">curl -I https://www.google.com -x http://127.0.0.1:7890</span><br><span class="line"><span class="comment"># 方法3：走socks5代理</span></span><br><span class="line">curl -I --socks5 127.0.0.1:7890 https://www.google.com</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="方法二：使用-proxychains-全局转发（适用于所有程序，包括二进制）"><a href="#方法二：使用-proxychains-全局转发（适用于所有程序，包括二进制）" class="headerlink" title="方法二：使用 proxychains 全局转发（适用于所有程序，包括二进制）"></a>方法二：使用 proxychains 全局转发（适用于所有程序，包括二进制）</h3><p>安装 proxychains，让任意程序走 Clash 的代理。</p>
+<ol>
+<li>安装 proxychains</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install proxychains -y</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>编辑配置 &#x2F;etc&#x2F;proxychains.conf</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /etc/proxychains.conf</span><br></pre></td></tr></table></figure>
+
+<p>在文件末尾加一行或修改为：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">socks5</span>  <span class="number">127.0.0.1</span> <span class="number">7890</span></span><br></pre></td></tr></table></figure>
+
+<p>注意：不要改成 http，要用 socks5。</p>
+<p>使用 proxychains（只代理你想代理的程序）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains curl https://www.google.com</span><br></pre></td></tr></table></figure>
+
+<p>优点：</p>
+<ul>
+<li>精准控制哪些程序走代理。</li>
+<li>不影响系统其他设置。</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>每次都要手动加 proxychains。</li>
+</ul>
+<h3 id="方法三：为单独的程序配置代理"><a href="#方法三：为单独的程序配置代理" class="headerlink" title="方法三：为单独的程序配置代理"></a>方法三：为单独的程序配置代理</h3><ol>
+<li>配置 git 使用代理</li>
+</ol>
+<p>执行以下命令设置全局代理（只设置一次即可）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git config --global http.proxy http://127.0.0.1:7890</span><br><span class="line">git config --global https.proxy http://127.0.0.1:7890</span><br></pre></td></tr></table></figure>
+
+<p>若你之后想关闭 git 代理，可运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git config --global --<span class="built_in">unset</span> http.proxy</span><br><span class="line">git config --global --<span class="built_in">unset</span> https.proxy</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>配置 pip 使用代理</li>
+</ol>
+<p>在主目录创建 pip 配置文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> -p ~/.config/pip</span><br><span class="line">vim ~/.config/pip/pip.conf</span><br></pre></td></tr></table></figure>
+
+<p>添加内容：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[global]</span></span><br><span class="line"><span class="attr">proxy</span> = http://<span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">7890</span></span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>配置 apt 使用代理</li>
+</ol>
+<p>编辑 apt 的配置文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo <span class="built_in">mkdir</span> -p /etc/apt/apt.conf.d</span><br><span class="line">sudo nano /etc/apt/apt.conf.d/99proxy</span><br></pre></td></tr></table></figure>
+
+<p>粘贴以下内容（假设 HTTP 代理端口是 7890）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Acquire::http::Proxy <span class="string">&quot;http://127.0.0.1:7890&quot;</span>;</span><br><span class="line">Acquire::https::Proxy <span class="string">&quot;http://127.0.0.1:7890&quot;</span>;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="方法四：配置-iptables-redsocks（实现真正的全局转发）"><a href="#方法四：配置-iptables-redsocks（实现真正的全局转发）" class="headerlink" title="方法四：配置 iptables + redsocks（实现真正的全局转发）"></a>方法四：配置 iptables + redsocks（实现真正的全局转发）</h3><p>适合高级用户，WSL2 使用 TUN 模式实现系统级全局代理。这比较复杂，建议在需要所有流量强制走代理时使用。TODO</p>
+<h2 id="mihomo（clash-meta内核）"><a href="#mihomo（clash-meta内核）" class="headerlink" title="mihomo（clash meta内核）"></a>mihomo（clash meta内核）</h2><p>下载地址： <a target="_blank" rel="noopener" href="https://github.com/MetaCubeX/mihomo/releases">https://github.com/MetaCubeX/mihomo/releases</a> （clash meta内核）</p>
+<p>架构示意图：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">你的浏览器（客户端） → localhost:7890 (Clash监听) → 外网代理服务器 → 目标网站</span><br><span class="line">    ↑                      ↑                          ↑           ↑</span><br><span class="line"> (终极客户端)          (代理客户端)                (中间服务器)   (目标服务器)</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li>启动：</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">INFO[2025-11-28T11:21:31.004426816+08:00] RESTful API listening at: [::]:9090          </span><br><span class="line">INFO[2025-11-28T11:21:31.013225892+08:00] Sniffer is closed                            </span><br><span class="line">INFO[2025-11-28T11:21:31.013530808+08:00] HTTP proxy listening at: [::]:7890           </span><br><span class="line">INFO[2025-11-28T11:21:31.013646756+08:00] SOCKS proxy listening at: [::]:7891</span><br></pre></td></tr></table></figure>
+
+<p>可以看到clash创建了前置代理，http代理端口为：7890 ，socks5代理端口为：7891 ，RESTful API的端口是9090 (这些端口不同版本可能不一样，实际以终端输入的为准)</p>
+<p>说明：</p>
+<ul>
+<li>通过访问 http 代理和 socks5 代理都可以让流量经过代理。</li>
+<li>RESTful API 可以用于控制 VPN 的配置方式。</li>
+<li><strong>命令行版 mihomo 默认不会自动设置系统代理。</strong></li>
+</ul>
+<ol start="2">
+<li>设置系统代理或浏览器代理。</li>
+</ol>
+<p>方法一：手动设置系统代理（推荐）</p>
+<p>在 Windows 系统中：</p>
+<pre><code>打开 设置 → 网络和 Internet → 代理
+
+在 手动设置代理 部分，打开开关
+
+填写以下信息：
+
+    地址: 127.0.0.1
+
+    端口: 7890 (这是 mihomo 的默认 HTTP 代理端口)
+
+点击 保存
+</code></pre>
+<p>在 macOS 系统中：</p>
+<pre><code>打开 系统设置 → 网络 → 选择当前网络连接 → 详细信息 → 代理
+
+勾选 网页代理（HTTP） 和 安全网页代理（HTTPS）
+
+服务器填写 127.0.0.1，端口填写 7890
+
+点击 好 应用设置
+</code></pre>
+<p>在 Linux 系统中（GNOME）：</p>
+<pre><code>打开 设置 → 网络 → 网络代理
+
+选择 手动
+
+在 HTTP 和 HTTPS 代理中填写：
+
+    服务器: 127.0.0.1
+
+    端口: 7890
+
+点击 应用
+</code></pre>
+<p>完成设置后，Chrome 应该立即就能通过代理访问外网了。</p>
+<p>方法二：使用命令行工具设置代理（临时方案）</p>
+<p>如果您不想修改系统设置，可以临时设置环境变量：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在启动 Chrome 前设置环境变量（Linux/macOS）</span></span><br><span class="line"><span class="built_in">export</span> http_proxy=http://127.0.0.1:7890</span><br><span class="line"><span class="built_in">export</span> https_proxy=http://127.0.0.1:7890</span><br><span class="line"></span><br><span class="line"><span class="comment"># 然后启动 Chrome</span></span><br><span class="line">google-chrome &amp;</span><br></pre></td></tr></table></figure>
+
+<p>或者在启动命令中直接指定代理：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">google-chrome --proxy-server=<span class="string">&quot;http://127.0.0.1:7890&quot;</span> &amp;</span><br><span class="line"><span class="comment"># 或</span></span><br><span class="line">google-chrome --proxy-server=<span class="string">&quot;socks5://127.0.0.1:7891&quot;</span> &amp;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 或以下方式</span></span><br><span class="line">curl -x http://127.0.0.1:7890 https://www.google.com</span><br><span class="line">curl -x socks5://127.0.0.1:7891 https://www.google.com</span><br><span class="line">curl --socks5 127.0.0.1:7891 https://www.google.com</span><br></pre></td></tr></table></figure>
+
+<p>方法三：在chrome浏览器或者firefox浏览器的SwitchyOmega或者Zero Omega插件里配置代理</p>
+<p>注：浏览器代理只针对当前浏览器，其他应用的流量不会通过代理。</p>
+<ol>
+<li>RESTful 控制台</li>
+</ol>
+<p>可以通过web控制面板RESTful API切换节点和模式，可用下面两个来控制。</p>
+<p><a target="_blank" rel="noopener" href="https://d.metacubex.one/">https://d.metacubex.one/</a> 或者 <a target="_blank" rel="noopener" href="https://yacd.metacubex.one/">https://yacd.metacubex.one/</a></p>
+<p>注：原理说明</p>
+<p>步骤 1：用户访问 Yacd 网站</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">用户浏览器 → https://yacd.metacubex.one</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>浏览器加载 Yacd 的静态资源（HTML、JS、CSS）</li>
+<li>所有代码在浏览器沙箱环境中运行</li>
+</ul>
+<p>步骤 2：Yacd 尝试连接本地 API</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Yacd 代码中的连接逻辑</span></span><br><span class="line"><span class="keyword">const</span> apiUrl = <span class="string">&#x27;http://127.0.0.1:9090&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 发送预检请求 (Preflight Request)</span></span><br><span class="line"><span class="title function_">fetch</span>(apiUrl + <span class="string">&#x27;/configs&#x27;</span>, &#123;</span><br><span class="line">  <span class="attr">method</span>: <span class="string">&#x27;GET&#x27;</span>,</span><br><span class="line">  <span class="attr">headers</span>: &#123;</span><br><span class="line">    <span class="string">&#x27;Content-Type&#x27;</span>: <span class="string">&#x27;application/json&#x27;</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>步骤 3：浏览器执行 CORS 检查</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">浏览器发送 OPTIONS 预检请求到 127.0.0.1:9090</span><br><span class="line">    ↓</span><br><span class="line">mihomo 返回允许的 CORS 头部</span><br><span class="line">    ↓</span><br><span class="line">浏览器确认安全，发送实际请求</span><br></pre></td></tr></table></figure>
+
+<p>步骤 4：建立双向通信</p>
+<ul>
+<li>配置操作：通过 HTTP PATCH&#x2F;PUT 请求</li>
+<li>实时数据：通过 WebSocket 或 Server-Sent Events (SSE)</li>
+<li>流量监控：持续的 HTTP 流或 WebSocket 连接</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/28/Segment-Tree/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/09/28/Segment-Tree/" class="post-title-link" itemprop="url">线段树</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-09-28 20:57:33" itemprop="dateCreated datePublished" datetime="2024-09-28T20:57:33+00:00">2024-09-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>线段树（Segment Tree）是一种将数组区间存储为树的数据结构 <a target="_blank" rel="noopener" href="https://cp-algorithms.com/data_structures/segment_tree.html">^1</a>。</p>
+<h2 id="时间复杂度"><a href="#时间复杂度" class="headerlink" title="时间复杂度"></a>时间复杂度</h2><p>查询连续子数组 或 查询范围内的最小元素：O(logn)</p>
+<h2 id="最简单形式的线段树"><a href="#最简单形式的线段树" class="headerlink" title="最简单形式的线段树"></a>最简单形式的线段树</h2><h2 id="高阶版本的线段树"><a href="#高阶版本的线段树" class="headerlink" title="高阶版本的线段树"></a>高阶版本的线段树</h2><p>TODO</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://oi-wiki.org/ds/seg/#%E5%AE%9E%E7%8E%B0">OI wiki</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/17/cpp/C++%E7%9A%84bool%E5%92%8Cint/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/09/17/cpp/C++%E7%9A%84bool%E5%92%8Cint/" class="post-title-link" itemprop="url">C++ 的 bool 和 int</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-09-17 21:19:50" itemprop="dateCreated datePublished" datetime="2024-09-17T21:19:50+00:00">2024-09-17</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>在测试leetcode的 <a target="_blank" rel="noopener" href="https://leetcode.cn/problems/bus-routes/description/">815.公交路线</a> 一题时，发现一个现象，当我使用<code>vector&lt;vector&lt;bool&gt;&gt;</code>作为图的邻接矩阵的类型时，运行速度比使用<code>vector&lt;vector&lt;int&gt;&gt;</code>慢了近1倍。使用<code>bool</code>运行速度为600ms左右，使用<code>int</code>时运行速度为300ms左右。</p>
+<p>以下是ChatGPT的回答：</p>
+<p>在C++中，bool类型并不一定比int类型慢，但在某些情况下，它们的性能表现可能有所不同。以下是一些与性能差异相关的考虑：</p>
+<ol>
+<li>内存大小<br>bool类型在标准中只需要表示 true（非0）和 false（0），通常占用1个字节（8位），而 int 通常占用4个字节（32位）。因此，bool类型可以节省内存，在某些情况下会带来缓存效率的提升，尤其是在处理大量布尔值时（例如布尔数组）。</li>
+<li>对齐和内存访问<br>在某些架构上，处理单字节的bool类型时，可能会有额外的开销，因为处理器通常优化对齐访问。如果内存没有正确对齐，处理器可能需要额外的操作来处理非对齐的字节，导致性能下降。相比之下，int的对齐通常与系统的内存总线对齐更好（如32位或64位系统上），因此读取和写入可能更高效。</li>
+<li>指令集和操作<br>现代处理器在处理布尔值时通常会将其扩展为完整的寄存器大小（例如32位或64位）。因此，虽然bool类型的存储可能更小，但在实际操作中，处理器可能将它提升为int或更大的类型来执行逻辑操作。处理布尔值可能涉及隐式类型转换，这在某些极端情况下可能带来开销。</li>
+<li>寄存器使用<br>int 类型可以直接映射到处理器寄存器中进行操作，而 bool 类型的操作有时可能会涉及额外的逻辑运算（如掩码操作）以确保布尔值的正确性。</li>
+<li>编译器优化<br>现代编译器在优化时会考虑到bool与int的差异，并尽量优化代码，因此在大多数应用场景下，你不会感受到显著的性能差异。但在一些特定的场合（如大规模数组、频繁内存访问等），bool类型的使用确实可能带来性能影响，尤其是在处理器需要对齐或执行额外的操作时。<br>总结<br>bool类型通常并不会比int慢，实际的性能差异取决于平台、内存对齐、编译器优化以及应用场景。在大多数情况下，差异是微不足道的，但在对性能非常敏感的程序中，这种差异可能会显现。</li>
+</ol>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/06/linux/bash%E8%B0%83%E8%AF%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/09/06/linux/bash%E8%B0%83%E8%AF%95/" class="post-title-link" itemprop="url">Bash Debugging</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-09-06 18:10:12" itemprop="dateCreated datePublished" datetime="2024-09-06T18:10:12+00:00">2024-09-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="启用调试模式"><a href="#启用调试模式" class="headerlink" title="启用调试模式"></a>启用调试模式</h2><ol>
+<li>命令行启用调试：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#使用 -x 和 -v 选项运行 main.sh 脚本。</span></span><br><span class="line">bash -xv main.sh</span><br></pre></td></tr></table></figure>
+
+<p>注意：调试输出是通过 <code>stderr</code> ，在试图重定向时要注意。</p>
+<ol start="2">
+<li>在脚本中启用调试：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">set</span> -xv</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>Short notation</th>
+<th>Long notation</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>set -f</td>
+<td>set -o noglob</td>
+<td>Disable file name generation using metacharacters (globbing).</td>
+</tr>
+<tr>
+<td>set -v</td>
+<td>set -o verbose</td>
+<td>Prints shell input lines as they are read.</td>
+</tr>
+<tr>
+<td>set -x</td>
+<td>set -o xtrace</td>
+<td>Print command traces before executing command.</td>
+</tr>
+</tbody></table>
+<p>参考<a target="_blank" rel="noopener" href="https://tldp.org/LDP/Bash-Beginners-Guide/html/sect_02_03.html">链接</a></p>
+<p>其他选项：</p>
+<ul>
+<li><code>set +e</code>：忽略错误继续运行（bash）。</li>
+<li><code>set -e</code>：遇错停止执行（bash）。</li>
+</ul>
+<ol start="3">
+<li>环境变量 <code>PS4</code></li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PS4=<span class="string">&#x27;+ $&#123;LINENO&#125;: &#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>可以搭配使用 <code>PS4</code> 环境变量，以在调试输出中打印命令所在的文件行号。</p>
+<p><code>PS4</code> 是一个 Bash 环境变量，用于定义调试模式下的提示符格式。<br>当你启用调试模式（通过 <code>set -x</code>）时，Bash 会在每一行执行之前打印调试信息，而 PS4 决定了这些调试信息的格式。<br><code>$LINENO</code>表示打印行号。</p>
+<h2 id="trap-DEBUG"><a href="#trap-DEBUG" class="headerlink" title="trap DEBUG"></a><code>trap DEBUG</code></h2><p>设置DEBUG陷阱，该陷阱在每一条“简单语句”执行完毕之后会被调用一次。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">set</span> -o functrace</span><br><span class="line">track_var=<span class="string">&quot;my_var&quot;</span></span><br><span class="line">old_value=<span class="string">&quot;&quot;</span></span><br><span class="line"><span class="function"><span class="title">check_var_change</span></span>() &#123;</span><br><span class="line">    new_value=<span class="string">&quot;<span class="variable">$&#123;!track_var&#125;</span>&quot;</span></span><br><span class="line">    <span class="keyword">if</span> [[ <span class="string">&quot;<span class="variable">$new_value</span>&quot;</span> != <span class="string">&quot;<span class="variable">$old_value</span>&quot;</span> ]]; <span class="keyword">then</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$track_var</span> changed to \&quot;<span class="variable">$new_value</span>\&quot; at <span class="variable">$BASH_LINENO</span>&quot;</span></span><br><span class="line">        old_value=<span class="string">&quot;<span class="variable">$new_value</span>&quot;</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">trap</span> check_var_change DEBUG</span><br></pre></td></tr></table></figure>
+
+<p>说明：监控<code>my_var</code>变量的变化，如果变化，则打印新值。</p>
+<p>注意：实际测试中，我们发现<code>trap</code>监控变量变化似乎会延迟，而<code>set -x</code>打印的信息是可靠的。</p>
+<h2 id="特殊变量"><a href="#特殊变量" class="headerlink" title="特殊变量"></a>特殊变量</h2><p>参考：<a target="_blank" rel="noopener" href="https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html">https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html</a></p>
+<ul>
+<li><code>BASH_LINENO</code>: 这是一个数组变量，‌用于表示当前执行的脚本或函数中每一行的行号。‌它特别适用于调试，‌因为它可以追踪到函数调用栈中每一层的行号。‌通过访问BASH_LINENO数组的不同索引，‌可以获取到不同函数调用层级对应的行号信息‌。</li>
+<li><code>LINENO</code>: 获取当前脚本行号‌，‌而不涉及函数调用栈的追踪‌。</li>
+<li><code>FUNCNAME</code>: 函数名</li>
+<li><code>BASH_SOURCE</code></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/06/linux/File-Exists/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -219,7 +1498,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -303,7 +1582,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -400,7 +1679,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
+                <time title="Modified: 2025-12-02 14:58:39" itemprop="dateModified" datetime="2025-12-02T14:58:39+00:00">2025-12-02</time>
               </span>
 
           
@@ -447,1050 +1726,10 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/05/08/english/Hair/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/05/08/english/Hair/" class="post-title-link" itemprop="url">Hair</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-05-08 22:10:46" itemprop="dateCreated datePublished" datetime="2024-05-08T22:10:46+00:00">2024-05-08</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/English/" itemprop="url" rel="index"><span itemprop="name">English</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Link"><a href="#Link" class="headerlink" title="Link"></a>Link</h2><p><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=EzFtsYC4pPg&t=344s">Free English Class! Topic: Hair! 🧔🏽💇✂️ (Lesson Only)</a></p>
-<h2 id="Words-Phrases"><a href="#Words-Phrases" class="headerlink" title="Words&#x2F;Phrases"></a>Words&#x2F;Phrases</h2><p>eyelashes<br>makeup<br>hairstyle&#x2F;hairdo<br>get my hair done<br>hair gel<br>buzz cut<br>helmet<br>When you have a lot of hair, the helmet makes your hair flat.<br>hair colouring</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/03/22/concurrency/Multi-Thread-and-Signals/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/03/22/concurrency/Multi-Thread-and-Signals/" class="post-title-link" itemprop="url">Multi Thread and Signals</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-03-22 15:20:14" itemprop="dateCreated datePublished" datetime="2024-03-22T15:20:14+00:00">2024-03-22</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>From ChatGPT:</p>
-<p>In general, when a program enters a signal handler in a multi-threaded environment, the behavior regarding other threads depends on how the signal handler is set up and the specific signal that is being handled.</p>
-<ol>
-<li>Default Behavior: By default, when a signal is delivered to a process, it interrupt the thread that is currently running and executes the signal handler in the context of that thread. Other threads in the process continue running unless they are also interrupted by signals.</li>
-<li>Thread-Specific Signal Handling: Some signals, such as SIGINT (interrupt signal), SIGTERM (termination signal), or SIGABRT (abort signal), are typically delivered to the entire process, which means they can interrupt any thread. However, other signals, like SIGSEGV (segmentation fault) or SIGILL (illegal signal), are usually delivered to the specific thread that caused the signal.</li>
-<li>Signal Masking: In a multi-threaded program, you can use signal masking (sigprocmask in POSIX systems) to block certain signals in specific threads. This can affect whether a signal handler interrupts a particular thread or not.</li>
-<li>Asynchronous-Signal-Safe Functions: Signal handlers should only execute functions are considered “asynchronous-signal-safe” according to POSIX standards. These functions are designed to be safe to call from within a signal handler. Using non-safe functions in a signal handler can lead to undefined behavior.</li>
-</ol>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/02/24/concurrency/TBB%E5%85%A5%E9%97%A8/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/02/24/concurrency/TBB%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">TBB 入门</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-02-24 14:59:52" itemprop="dateCreated datePublished" datetime="2024-02-24T14:59:52+00:00">2024-02-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><p>使用脚本一键监查系统是否安装了 TBB</p>
-<figure class="highlight bash"><figcaption><span>check_tbb.sh</span><a href="/blog/downloads/code/tbb/check_tbb.sh">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;==== 检查 Intel TBB (oneTBB) 安装情况 ====&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 1. 包管理器检查</span></span><br><span class="line"><span class="keyword">if</span> <span class="built_in">command</span> -v dpkg &gt;/dev/null 2&gt;&amp;1; <span class="keyword">then</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;[dpkg] 检查:&quot;</span></span><br><span class="line">    dpkg -l | grep tbb || <span class="built_in">echo</span> <span class="string">&quot;  未找到 tbb 包 (Debian/Ubuntu)&quot;</span></span><br><span class="line"><span class="keyword">elif</span> <span class="built_in">command</span> -v rpm &gt;/dev/null 2&gt;&amp;1; <span class="keyword">then</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;[rpm] 检查:&quot;</span></span><br><span class="line">    rpm -qa | grep tbb || <span class="built_in">echo</span> <span class="string">&quot;  未找到 tbb 包 (CentOS/RHEL)&quot;</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. pkg-config 检查</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;[pkg-config] 检查:&quot;</span></span><br><span class="line"><span class="keyword">if</span> <span class="built_in">command</span> -v pkg-config &gt;/dev/null 2&gt;&amp;1; <span class="keyword">then</span></span><br><span class="line">    <span class="keyword">if</span> pkg-config --exists tbb; <span class="keyword">then</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="string">&quot;  版本: <span class="subst">$(pkg-config --modversion tbb)</span>&quot;</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="string">&quot;  CFLAGS: <span class="subst">$(pkg-config --cflags tbb)</span>&quot;</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="string">&quot;  LIBS: <span class="subst">$(pkg-config --libs tbb)</span>&quot;</span></span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="string">&quot;  未检测到 pkg-config 中的 tbb&quot;</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;  系统未安装 pkg-config&quot;</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 文件检查</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;[文件] 检查:&quot;</span></span><br><span class="line">HEADER_PATH=$(find /usr/include /usr/local/include -<span class="built_in">type</span> d -name tbb 2&gt;/dev/null | <span class="built_in">head</span> -n 1)</span><br><span class="line">LIB_PATH=$(find /usr/lib /usr/local/lib /usr/lib64 -name <span class="string">&quot;libtbb.*&quot;</span> 2&gt;/dev/null | <span class="built_in">head</span> -n 1)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ -n <span class="string">&quot;<span class="variable">$HEADER_PATH</span>&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;  头文件目录: <span class="variable">$HEADER_PATH</span>&quot;</span></span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;  未找到 tbb 头文件&quot;</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ -n <span class="string">&quot;<span class="variable">$LIB_PATH</span>&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;  库文件: <span class="variable">$LIB_PATH</span>&quot;</span></span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;  未找到 tbb 库文件&quot;</span></span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 测试编译</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;[编译测试] 尝试编译一个 TBB 示例...&quot;</span></span><br><span class="line">TMP_CODE=$(<span class="built_in">mktemp</span> /tmp/test_tbb.XXXXXX.cpp)</span><br><span class="line"><span class="built_in">cat</span> &gt; <span class="variable">$TMP_CODE</span> &lt;&lt;<span class="string">&#x27;EOF&#x27;</span></span><br><span class="line"><span class="comment">#include &lt;tbb/tbb.h&gt;</span></span><br><span class="line"><span class="comment">#include &lt;iostream&gt;</span></span><br><span class="line">int <span class="function"><span class="title">main</span></span>() {</span><br><span class="line">    tbb::parallel_for(0, 5, [](int i){ std::cout &lt;&lt; <span class="string">i &lt;&lt; &quot; &quot;; });</span></span><br><span class="line"><span class="string">    std::cout &lt;&lt; std::endl;</span></span><br><span class="line"><span class="string">    return 0;</span></span><br><span class="line"><span class="string">}</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">g++ $TMP_CODE -o /tmp/test_tbb -ltbb -std=c++17 2&gt;/tmp/tbb_err.log</span></span><br><span class="line"><span class="string">if [ $? -eq 0 ]; then</span></span><br><span class="line"><span class="string">    echo &quot;  ✅ 编译成功，可以使用 TBB&quot;</span></span><br><span class="line"><span class="string">    /tmp/test_tbb</span></span><br><span class="line"><span class="string">else</span></span><br><span class="line"><span class="string">    echo &quot;  ❌ 编译失败，错误信息如下：&quot;</span></span><br><span class="line"><span class="string">    cat /tmp/tbb_err.log</span></span><br><span class="line"><span class="string">fi</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">rm -f $TMP_CODE /tmp/test_tbb /tmp/tbb_err.log</span></span><br></pre></td></tr></table></figure>
-
-<p>从包管理器安装：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install libtbb-dev</span><br></pre></td></tr></table></figure>
-
-<p>用源码安装</p>
-<p>如果需要最新版本，可以从 GitHub 获取 oneTBB</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/oneapi-src/oneTBB.git</span><br><span class="line"><span class="built_in">cd</span> oneTBB</span><br><span class="line"><span class="built_in">mkdir</span> build &amp;&amp; <span class="built_in">cd</span> build</span><br><span class="line">cmake ..</span><br><span class="line">make -j$(<span class="built_in">nproc</span>)</span><br><span class="line">sudo make install</span><br></pre></td></tr></table></figure>
-
-<p>默认会安装到 &#x2F;usr&#x2F;local&#x2F;include&#x2F; 和 &#x2F;usr&#x2F;local&#x2F;lib&#x2F;。</p>
-<h2 id="文档"><a href="#文档" class="headerlink" title="文档"></a>文档</h2><p>官方文档：<a target="_blank" rel="noopener" href="https://uxlfoundation.github.io/oneTBB/">https://uxlfoundation.github.io/oneTBB/</a></p>
-<h2 id="1-TBB-调度原理"><a href="#1-TBB-调度原理" class="headerlink" title="1. TBB 调度原理"></a>1. TBB 调度原理</h2><h3 id="1-1-TBB-的任务调度模型"><a href="#1-1-TBB-的任务调度模型" class="headerlink" title="1.1. TBB 的任务调度模型"></a>1.1. TBB 的任务调度模型</h3><p>a. 线程池 + 任务队列</p>
-<ul>
-<li>TBB 不让你直接创建线程去执行任务，而是维护一个 固定大小的线程池（数量通常 &#x3D; CPU 核心数）。</li>
-<li>所有并行任务都被封装成 task，放入 任务队列。</li>
-<li>每个工作线程从队列里取任务执行，执行完就取下一个任务。</li>
-<li>这种模式叫 工作窃取（work-stealing）调度。</li>
-</ul>
-<p>b. 工作窃取机制</p>
-<ul>
-<li>每个线程有自己的双端队列（deque），优先从自己队列尾部取任务执行。</li>
-<li>当线程自己的队列空了，会从别的线程队列头部 “窃取” 任务。</li>
-</ul>
-<p>优点：</p>
-<ul>
-<li>动态负载均衡：核心利用率高</li>
-<li>减少锁竞争：线程多操作自己队列，窃取少量访问其他队列</li>
-</ul>
-<h3 id="1-2-与直接使用-std-thread-的区别"><a href="#1-2-与直接使用-std-thread-的区别" class="headerlink" title="1.2. 与直接使用 std::thread 的区别"></a>1.2. 与直接使用 std::thread 的区别</h3><table>
-<thead>
-<tr>
-<th>特性</th>
-<th>std::thread</th>
-<th>TBB</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>** 线程数量 **</td>
-<td>每个任务可能创建新线程</td>
-<td>线程池固定线程数</td>
-</tr>
-<tr>
-<td>** 调度开销 **</td>
-<td>每次创建 &#x2F; 销毁线程成本高</td>
-<td>任务分配成本低，线程重用</td>
-</tr>
-<tr>
-<td>** 负载均衡 **</td>
-<td>需要手动管理任务分配</td>
-<td>自动工作窃取，动态均衡</td>
-</tr>
-<tr>
-<td>** 粒度控制 **</td>
-<td>线程粒度粗，任务小不能充分利用 CPU</td>
-<td>任务粒度可以小，TBB 自动调度</td>
-</tr>
-<tr>
-<td>** 锁竞争 **</td>
-<td>共享队列 &#x2F; 资源容易产生大量锁竞争</td>
-<td>工作窃取减少锁竞争，性能更高</td>
-</tr>
-</tbody></table>
-<h3 id="1-3-总结"><a href="#1-3-总结" class="headerlink" title="1.3. 总结"></a>1.3. 总结</h3><p>TBB 高效的核心原因：</p>
-<ul>
-<li>固定线程池：避免频繁创建销毁线程带来的开销</li>
-<li>任务化设计：粒度灵活，任务比线程轻量</li>
-<li>工作窃取：自动负载均衡，提高 CPU 利用率</li>
-<li>减少锁竞争：每个线程大部分时间只操作自己的队列</li>
-</ul>
-<p>所以，用 TBB 写 parallel_for 或 flow::graph 时，即使任务非常小，CPU 核心也能被充分利用，而直接 std::thread 很可能线程创建成本比任务本身还高，性能反而下降。</p>
-<h2 id="2-task-group"><a href="#2-task-group" class="headerlink" title="2. task_group"></a>2. task_group</h2><p>task_group 的本质</p>
-<ul>
-<li>tbb::task_group 是一种 轻量级任务管理器，用来组织一组并行任务。</li>
-<li>它本身 不创建线程池，也不维护独立线程。</li>
-<li>当你调用 task_group.run() 或 task_group.wait() 时：</li>
-<li>任务会被 提交到当前上下文的线程池，通常是 全局线程池</li>
-<li>由线程池中的工作线程去调度和执行</li>
-</ul>
-<figure class="highlight cpp"><figcaption><span>tbb_thread_pool.cpp</span><a href="/blog/downloads/code/tbb/examples/tbb_thread_pool.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tbb/tbb.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;mutex&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line">std::mutex mtx;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">task_group_function</span><span class="params">()</span> </span>{</span><br><span class="line">    tbb::task_group tg;</span><br><span class="line">    <span class="type">int</span> max_concurrency = tbb::this_task_arena::<span class="built_in">max_concurrency</span>();</span><br><span class="line">    {</span><br><span class="line">        <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(mtx)</span></span>;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Task group max concurrency: &quot;</span> &lt;&lt; max_concurrency &lt;&lt; endl;</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">16</span>; ++i) {</span><br><span class="line">        tg.<span class="built_in">run</span>([i] {</span><br><span class="line">            {</span><br><span class="line">                std::lock_guard&lt;std::mutex&gt; <span class="built_in">lock</span>(mtx);</span><br><span class="line">                std::cout &lt;&lt; <span class="string">&quot;Task group thread &quot;</span> &lt;&lt; std::this_thread::<span class="built_in">get_id</span>() &lt;&lt; <span class="string">&quot; is running.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">            }</span><br><span class="line">            <span class="built_in">sleep</span>(<span class="number">1</span>);</span><br><span class="line">        });</span><br><span class="line">    }</span><br><span class="line">    tg.<span class="built_in">wait</span>();</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">task_arena_function</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="function">tbb::task_arena <span class="title">arena</span><span class="params">(<span class="number">4</span>)</span></span>;</span><br><span class="line">    <span class="type">int</span> max_concurrency = arena.<span class="built_in">max_concurrency</span>();</span><br><span class="line">    {</span><br><span class="line">        <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(mtx)</span></span>;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Task arena max concurrency: &quot;</span> &lt;&lt; max_concurrency &lt;&lt; endl;</span><br><span class="line">    }</span><br><span class="line">    arena.<span class="built_in">execute</span>([max_concurrency] {</span><br><span class="line">        tbb::<span class="built_in">parallel_for</span>(<span class="number">0</span>, <span class="number">16</span>, [](<span class="type">int</span> i) {</span><br><span class="line">            {</span><br><span class="line">                std::lock_guard&lt;std::mutex&gt; <span class="built_in">lock</span>(mtx);</span><br><span class="line">                std::cout &lt;&lt; <span class="string">&quot;Task arena thread &quot;</span> &lt;&lt; std::this_thread::<span class="built_in">get_id</span>() &lt;&lt; <span class="string">&quot; is running.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">            }</span><br><span class="line">            <span class="built_in">sleep</span>(<span class="number">2</span>);</span><br><span class="line">        });</span><br><span class="line">    });</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="comment">// 获取默认task_arena的最大并发线程数</span></span><br><span class="line">    <span class="type">int</span> arena_max_concurrency = tbb::this_task_arena::<span class="built_in">max_concurrency</span>();</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Default task_arena max concurrency: &quot;</span> &lt;&lt; arena_max_concurrency &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 创建两个线程</span></span><br><span class="line">    <span class="function">std::thread <span class="title">tg_thread</span><span class="params">(task_group_function)</span></span>;</span><br><span class="line">    <span class="function">std::thread <span class="title">ta_thread</span><span class="params">(task_arena_function)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 等待两个线程完成</span></span><br><span class="line">    tg_thread.<span class="built_in">join</span>();</span><br><span class="line">    ta_thread.<span class="built_in">join</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-
-<p>测试：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">mkdir</span> build &amp;&amp; <span class="built_in">cd</span> build &amp;&amp; cmake .. &amp;&amp; make</span><br><span class="line">$ ./tbb_thread_pool &gt; result.txt</span><br><span class="line">$ <span class="built_in">cat</span> result.txt | grep running | <span class="built_in">sort</span> | <span class="built_in">uniq</span></span><br><span class="line">Task arena thread 140667163379264 is running.</span><br><span class="line">Task arena thread 140667167639104 is running.</span><br><span class="line">Task arena thread 140667184678464 is running.</span><br><span class="line">Task arena thread 140667201848896 is running.</span><br><span class="line">Task group thread 140667167639104 is running.</span><br><span class="line">Task group thread 140667171898944 is running.</span><br><span class="line">Task group thread 140667176158784 is running.</span><br><span class="line">Task group thread 140667180418624 is running.</span><br><span class="line">Task group thread 140667188938304 is running.</span><br><span class="line">Task group thread 140667210303040 is running.</span><br></pre></td></tr></table></figure>
-
-<p>从这两行日志可以看出，arena 和 group 重用了同一个线程 ID ，说明它们同属于同一个全局线程池。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Task arena thread 140667167639104 is running.</span><br><span class="line">Task group thread 140667167639104 is running.</span><br></pre></td></tr></table></figure>
-
-<p>进一步，我们发现全局线程池中的线程总数是自适应的，比如本例就是 <code>10</code> 个，既不是 <code>task_group</code> 的 <code>8</code> 个，<br>也不是 <code>task_arena</code> 的 <code>4</code> 个：</p>
-<p>TODO</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cat</span> result.txt | grep running | <span class="built_in">sort</span> | <span class="built_in">uniq</span> | <span class="built_in">wc</span> -l</span><br><span class="line">10</span><br></pre></td></tr></table></figure>
-
-<h2 id="3-task-arena"><a href="#3-task-arena" class="headerlink" title="3. task_arena"></a>3. task_arena</h2><p>TBB 是基于任务，不是基于线程。但是如果你想修改 TBB 的线程数，有两种方法：</p>
-<ul>
-<li>方法一：使用环境变量 <code>TBB_NUM_THREADS</code> 进行全局设置：</li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> TBB_NUM_THREADS=4</span><br></pre></td></tr></table></figure>
-
-<p>TODO: It doesn’t seem to work!</p>
-<ul>
-<li>方法二：使用 <code>tbb::task_arena</code> or <code>tbb::task_scheduler_init</code> (Deprecated) 进行线程隔离。</li>
-</ul>
-<p>TBB will use this setting locally within the scope of the <code>tbb::task_arena</code>.</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tbb/pipeline.h&gt;</span></span></span><br><span class="line"><span class="comment">// Deprecated:</span></span><br><span class="line"><span class="comment">// #include &lt;tbb/task_scheduler_init.h&gt;</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tbb/task_arena.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Define your pipeline body</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MyPipeline</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">operator</span><span class="params">()</span> <span class="params">(tbb::flow_control&amp; fc)</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="comment">// Your pipeline logic here</span></span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line">        <span class="comment">// Inform the pipeline that there is no more data</span></span><br><span class="line">        fc.<span class="built_in">stop</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Deprecated: tbb::task_scheduler_init init(1);</span></span><br><span class="line">    <span class="function">tbb::task_arena <span class="title">arena</span><span class="params">(<span class="number">4</span>)</span></span>; <span class="comment">// 4 threads</span></span><br><span class="line">    <span class="comment">// Do some tasks:</span></span><br><span class="line">    tbb::<span class="built_in">parallel_pipeline</span>(<span class="comment">/* max_number_of_live_tokens */</span> <span class="number">4</span>, MyPipeline); <span class="comment">// <span class="doctag">FIXME:</span> 似乎需要放入 arena 的 execute 函数中</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>task_arena 默认 不会去窃取全局线程池的线程</p>
-<ol>
-<li>task_arena 的线程隔离</li>
-</ol>
-<p>tbb::task_arena 是 局部线程池的抽象，可以指定线程数量和优先级。</p>
-<p>在 arena.execute(…) 里执行的任务：</p>
-<p>优先使用 task_arena 自己的线程（如果 arena 里有空闲线程）</p>
-<p>不会去窃取全局线程池的线程</p>
-<p>也就是说，task_arena 内的任务和全局线程池是相对隔离的。</p>
-<ol start="2">
-<li>嵌套并行和空闲线程利用</li>
-</ol>
-<p>如果 task_arena 内的线程空闲不足，默认不会去全局线程池窃取线程。</p>
-<p>但是 TBB 内部可能会将一些未使用的线程调度给 arena，但这属于内部优化，不等同于直接窃取整个全局线程池。</p>
-<p>总体原则：arena 控制自己的线程数，不影响全局线程池。</p>
-<ol start="3">
-<li>全局线程池 vs task_arena 总结</li>
-</ol>
-<table>
-<thead>
-<tr>
-<th>特性</th>
-<th>全局线程池</th>
-<th>task_arena</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>线程池数量</td>
-<td>默认一个</td>
-<td>每个 arena 独立，可自定义线程数</td>
-</tr>
-<tr>
-<td>窃取行为</td>
-<td>工作窃取机制（线程之间互窃）</td>
-<td>默认只在 arena 内窃取，不窃取全局</td>
-</tr>
-<tr>
-<td>嵌套并行</td>
-<td>嵌套任务复用全局线程</td>
-<td>嵌套任务复用 arena 线程</td>
-</tr>
-<tr>
-<td>适用场景</td>
-<td>大多数并行调用</td>
-<td>局部控制线程数、避免与全局任务竞争</td>
-</tr>
-</tbody></table>
-<ol start="4">
-<li>小结</li>
-</ol>
-<ul>
-<li>默认情况下，全局线程池是唯一的，TBB 所有普通并行调用都会复用它。</li>
-<li>task_arena 提供局部线程池，在其作用域内执行的任务主要使用 arena 的线程，不去抢全局线程池。</li>
-<li>用 task_arena 可以做局部限制（比如 GUI 线程或限制 CPU 核心占用），对全局线程池影响很小。</li>
-</ul>
-<h2 id="4-parallel-for"><a href="#4-parallel-for" class="headerlink" title="4. parallel_for"></a>4. <code>parallel_for</code></h2><p>API: <a target="_blank" rel="noopener" href="https://oneapi-spec.uxlfoundation.org/specifications/oneapi/latest/elements/onetbb/source/algorithms/functions/parallel_for_func">parallel_for</a></p>
-<ol>
-<li>用 <code>my_parallel_for</code> 模拟 <code>parallel_for</code> 的实现：</li>
-</ol>
-
-
-<ol start="2">
-<li>发出任务的线程也会成为工作线程之一，并参与任务的执行，测试代码如下：</li>
-</ol>
-
-
-<p>测试结果：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ ./test_parallel_for</span><br><span class="line">Main thread ID: 140220582070080</span><br><span class="line">Processing data: 2 on thread 140220582070080</span><br><span class="line">Processing data: 6 on thread 140220557755968</span><br><span class="line">Processing data: 4 on thread 140220574795328</span><br><span class="line">Processing data: 8 on thread 140220566275648</span><br><span class="line">Processing data: 10 on thread 140220562015808</span><br></pre></td></tr></table></figure>
-
-<p>可见，<code>data 2</code> 是由主线程处理的。也就是说，<code>parallel_for</code> 虽然被称为 a blocking parallel construt，但线程等待所有任务完成期间是非阻塞的，它还可以充当工作线程执行任务池中的任务。</p>
-<p>代码模拟 <code>parallel_for</code> 的 <code>wait</code> ：</p>
-
-
-
-
-<h2 id="5-任务调度器（Task-Scheduler）"><a href="#5-任务调度器（Task-Scheduler）" class="headerlink" title="5. 任务调度器（Task Scheduler）"></a>5. 任务调度器（Task Scheduler）</h2><p><a target="_blank" rel="noopener" href="https://uxlfoundation.github.io/oneTBB/main/tbb_userguide/The_Task_Scheduler.html">The Task Scheduler</a></p>
-<h3 id="5-1-基于任务编程（Task-Based-Programming）"><a href="#5-1-基于任务编程（Task-Based-Programming）" class="headerlink" title="5.1. 基于任务编程（Task-Based Programming）"></a>5.1. 基于任务编程（Task-Based Programming）</h3><p>当追求性能时，推荐以逻辑任务（logical tasks）而不是线程（threads）来编程，有以下原因：</p>
-<ul>
-<li>将并行性与可用资源匹配</li>
-<li>更快的任务启动和关闭</li>
-<li>更有效的评估顺序</li>
-<li>改进负载均衡</li>
-<li>更高层的思考</li>
-</ul>
-<p>TODO</p>
-<h3 id="5-2-任务调度器（Task-Scheduler）如何工作"><a href="#5-2-任务调度器（Task-Scheduler）如何工作" class="headerlink" title="5.2. 任务调度器（Task Scheduler）如何工作"></a>5.2. 任务调度器（Task Scheduler）如何工作</h3><p><a target="_blank" rel="noopener" href="https://uxlfoundation.github.io/oneTBB/main/tbb_userguide/How_Task_Scheduler_Works.html">How Task Scheduler Works</a></p>
-<h4 id="5-2-1-深度优先（depth-first）"><a href="#5-2-1-深度优先（depth-first）" class="headerlink" title="5.2.1. 深度优先（depth-first）"></a>5.2.1. 深度优先（depth-first）</h4><p>每个线程都有自己的双端队列，头部称为 top （也称顶部），尾部称为 bottom （也称底部）。<br>队列的底部是队列的最深处（最末处），底部任务是最新的，顶部任务是最旧的。</p>
-<p>深度优先有以下好处：</p>
-<ul>
-<li><code>热点缓存命中</code>：最新的任务的缓存是最热的，所以优先执行新任务。</li>
-<li><code>最小化空间</code>：广度优先会同时创建指数级数量的共存节点，而深度优先虽然也会创建相同数量的节点，但是只有线性数目的节点会同时共存，因为它创建了其他就绪任务的栈。</li>
-</ul>
-<p>生产：当线程产生一个任务时，将其放置到线程自身所有的 deque 的尾部。</p>
-<p>消费：当线程执行任务时，根据以下规则顺序选取一个任务：</p>
-<ul>
-<li>规则 1：获取上一个任务返回的任务，如果有；</li>
-<li>规则 2：从线程自己所有的 deque 尾部选取一个任务（即深度优先），如果有；</li>
-<li>规则 3：随机选择一个其他线程的 deque ，从其头部窃取一个任务（即广度优先）。如果被选 deque 为空，则重复本条规则直至成功。</li>
-</ul>
-<p>规则 1 被称为 “任务调度绕行（Task Scheduler Bypass）”。</p>
-<p>规则 2 是深度优先，这使得当前线程得以不断执行最新的任务直至其完成所有工作。</p>
-<p>规则 3 是临时的广度优先，它将潜在的并行转化为实际的并行。</p>
-<h4 id="5-2-2-任务调度绕行（Task-Scheduler-Bypass）技术"><a href="#5-2-2-任务调度绕行（Task-Scheduler-Bypass）技术" class="headerlink" title="5.2.2. 任务调度绕行（Task Scheduler Bypass）技术"></a>5.2.2. 任务调度绕行（Task Scheduler Bypass）技术</h4><p>一个任务从产生到被执行涉及以下步骤：</p>
-<blockquote>
-<ul>
-<li>将新任务加入线程的 deque 。</li>
-<li>执行当前任务直至完成。</li>
-<li>从线程 deque 获取一个任务执行，除非该任务被其他线程窃取走了。</li>
-</ul>
-</blockquote>
-<p>其中，步骤 1 和 步骤 3 会引入不必要的 deque 操作，甚至更糟的是，允许窃取会损害局部性而不会增加显著的并行性。<br>任务调度器绕行技术可以直接指向下一个要被执行的任务，而不是生产该任务，从而避免了上述问题。<br>因为根据 “规则 1”，上一个任务产生的新任务会称为第一个备选任务。<br>此外，该技术几乎保证了该新任务被当前线程执行，而不是其他线程。</p>
-<p>注意：当前唯一能使用该优化技术的是使用 <code>tbb::task_group</code> 。</p>
-<h3 id="5-3-指导任务调度器的执行（Guiding-Task-Scheduler-Execution）"><a href="#5-3-指导任务调度器的执行（Guiding-Task-Scheduler-Execution）" class="headerlink" title="5.3. 指导任务调度器的执行（Guiding Task Scheduler Execution）"></a>5.3. 指导任务调度器的执行（Guiding Task Scheduler Execution）</h3><p><a target="_blank" rel="noopener" href="https://uxlfoundation.github.io/oneTBB/main/tbb_userguide/Guiding_Task_Scheduler_Execution.html">Guiding Task Scheduler Execution</a></p>
-<p>默认情况下，任务计划程序会尝试使用所有可用的计算资源。在某些情况下，您可能希望将任务计划程序配置为仅使用其中的一些资源。</p>
-<p>注意：指导任务调度程序的执行可能会导致可组合性问题。</p>
-<p>TBB 提供 <code>task_arena</code> 接口，通过以下方式指导任务在 arena （竞技场）内被执行:</p>
-<ul>
-<li>设置首选计算单元；</li>
-<li>限制部分计算单元。</li>
-</ul>
-<h3 id="5-4-工作隔离（Work-Isolation）"><a href="#5-4-工作隔离（Work-Isolation）" class="headerlink" title="5.4. 工作隔离（Work Isolation）"></a>5.4. 工作隔离（Work Isolation）</h3><p><a target="_blank" rel="noopener" href="https://www.intel.com/content/www/us/en/docs/onetbb/developer-guide-api-reference/2021-12/work-isolation.html">Work Isolation</a></p>
-
-
-<p>如果当前线程被 <code>parallel_for</code> “阻塞”（不是真正的阻塞，只能称为 a blocking parallel construct），那么该线程被允许拿取第一个循环的任务来执行。这会导致即使是同一个线程内，也可出现乱序执行的情况。在大多数情况下，这没有什么危害。</p>
-<p>但是少数情况可能出现错误，例如一个 thread-local 变量可能会在嵌套并行构造之外意外被更改：</p>
-
-
-<p>在其它场景下，这种行为可能会导致死锁或其他问题。在这些情况下，需要更有力地保证线程内的执行次序。为此，TBB 提供了一些隔离并行构造的执行的方法，以使其任务不会干扰其他同时运行的任务。</p>
-<p>其中一种方法是在单独的 <code>task_arena</code> 中执行内层循环：</p>
-
-
-<p>然而，使用单独的 arena 进行工作隔离并不总是方便的，并且可能会产生明显的开销。为了解决这些缺点，TBB 提供 <code>this_task_arena::isolate</code> 函数，通过限制调用线程仅处理在函数对象范围内（也称为隔离区域）安排的任务，来隔离地运行一个用户提供的函数对象。</p>
-<p>当一个线程进入一个任务等待调用或（等待）在一个隔离区域内的阻塞并行结构时，该线程只能执行在该隔离区域内生成的任务及其由其他线程生成的子任务（换句话说，即使子任务是由其他线程生成的，只要属于当前隔离区域，当前线程也可以执行这些任务）。线程被禁止执行任何外层任务或属于其他隔离区域的任务。</p>
-<p>下面的示例展示了 <code>this_task_arena::isolate</code> 的使用，以保证在嵌套的并行结构调用时， thread-local 变量不会被意外修改：</p>
-
-
-<p>** 补充：** 让我们通过一个简单的例子来说明隔离区域内其他线程如何生成子任务，并且这些子任务可以由当前线程执行。</p>
-<p>假设我们有一个隔离区域，其中有两个线程：线程 A 和线程 B。我们在这个隔离区域内生成了一些任务，并且这些任务可能会生成子任务。</p>
-
-
-<p>在这个例子中：</p>
-<p>taskA 和 taskB 是在隔离区域内生成的任务。<br>taskA 生成了两个子任务 Subtask A1 和 Subtask A2。<br>taskB 生成了两个子任务 Subtask B1 和 Subtask B2。<br>假设线程 A 执行了 taskA，线程 B 执行了 taskB。在隔离区域内，线程 A 和线程 B 可以执行彼此生成的子任务。例如，线程 A 可以执行 Subtask B1 或 Subtask B2，而线程 B 可以执行 Subtask A1 或 Subtask A2，只要这些子任务属于同一个隔离区域。</p>
-<h2 id="6-TBB-的无锁设计"><a href="#6-TBB-的无锁设计" class="headerlink" title="6. TBB 的无锁设计"></a>6. TBB 的无锁设计</h2><p>严格来说，TBB 并不是完全无锁，但它尽量采用 无锁（lock-free）设计 来提高性能。下面详细说明：</p>
-<p>a. 无锁设计的部分</p>
-<ul>
-<li><p>工作窃取双端队列（deque）</p>
-<ul>
-<li>线程自己的尾部操作（push&#x2F;pop）通常是 无锁</li>
-<li>窃取线程从头部 steal 任务使用 原子 CAS（Compare-And-Swap），也是无锁操作</li>
-</ul>
-</li>
-<li><p>并行算法（parallel_for, parallel_reduce）</p>
-<ul>
-<li>内部任务调度和分割通常用无锁队列 + 原子操作</li>
-</ul>
-</li>
-<li><p>轻量级任务对象（task）引用计数</p>
-<ul>
-<li>使用原子操作维护任务生命周期，不依赖互斥锁</li>
-</ul>
-</li>
-</ul>
-<p>总结：TBB 在任务调度和工作窃取上，尽量用无锁和原子操作，保证高性能并发执行。</p>
-<p>b. 仍然存在锁的场景</p>
-<ul>
-<li><p>队列扩容（grow）</p>
-<ul>
-<li>当线程队列满，需要扩容底层数组时会使用轻量锁保护</li>
-</ul>
-</li>
-<li><p>某些并行容器</p>
-<ul>
-<li>concurrent_hash_map, concurrent_vector 等在处理极端并发情况时会使用锁（有时是读写锁）</li>
-</ul>
-</li>
-<li><p>全局管理或 arena 初始化</p>
-<ul>
-<li>初始化线程池、任务调度器时可能使用锁，通常只在启动阶段发生</li>
-</ul>
-</li>
-</ul>
-<h3 id="6-1-总结"><a href="#6-1-总结" class="headerlink" title="6.1. 总结"></a>6.1. 总结</h3><table>
-<thead>
-<tr>
-<th>特性</th>
-<th>是否无锁</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>工作窃取 deque（尾部 push&#x2F;pop + 头部 steal）</td>
-<td>✅ 无锁（原子操作）</td>
-<td>性能关键部分</td>
-</tr>
-<tr>
-<td>任务引用计数</td>
-<td>✅ 原子操作</td>
-<td>保证任务生命周期安全</td>
-</tr>
-<tr>
-<td>并行算法内部调度</td>
-<td>✅ 大部分无锁</td>
-<td>依赖原子和无锁队列</td>
-</tr>
-<tr>
-<td>队列扩容</td>
-<td>⚠️ 使用轻量锁</td>
-<td>极少发生，性能影响有限</td>
-</tr>
-<tr>
-<td>并行容器</td>
-<td>⚠️ 部分锁</td>
-<td>保障线程安全，复杂容器需要</td>
-</tr>
-</tbody></table>
-<h2 id="7-TBB-的线程生命期"><a href="#7-TBB-的线程生命期" class="headerlink" title="7. TBB 的线程生命期"></a>7. TBB 的线程生命期</h2><p>是的，即使你只调用一次 TBB 并行函数，线程池创建后在整个程序运行期间也不会自动销毁或减少线程数。具体说明如下：</p>
-<ol>
-<li>全局线程池生命周期</li>
-</ol>
-<p>TBB 默认全局线程池是在 第一次使用 TBB 并行接口时创建的。<br>线程数固定（通常等于 CPU 核心数），整个程序运行期间一直存在。<br>不会因为你长时间没有提交任务而销毁线程，也不会自动减少线程数。</p>
-<ol start="2">
-<li>线程状态</li>
-</ol>
-<p>长时间不使用 TBB 时，线程 处于空闲等待状态，不会占用 CPU。<br>内存占用仍然存在，因为线程堆栈和线程管理结构仍在。<br>一旦再次调用 TBB 并行函数，线程立即复用，无需重新创建。</p>
-<ol start="3">
-<li>可控策略</li>
-</ol>
-<p>如果希望线程在长时间不使用时释放资源，可以：<br>手动控制线程池生命周期（较复杂，需深入 TBB 内部 API，不推荐）<br>程序设计上在长时间空闲时退出进程，释放所有线程和内存<br>一般服务器程序会让线程池持续存在，利用 TBB 的工作窃取和线程复用优势，提高后续任务性能。</p>
-<p>✅ 总结</p>
-<p>TBB 线程池线程数固定，不会因长时间不使用而减少。<br>线程空闲时不占用 CPU，但占用内存和线程管理资源。<br>这种设计是为了 提高任务再次执行的响应速度，适合服务器或长期运行的高性能程序。</p>
-<h2 id="8-TBB-是-CPU-密集型的"><a href="#8-TBB-是-CPU-密集型的" class="headerlink" title="8. TBB 是 CPU 密集型的"></a>8. TBB 是 CPU 密集型的</h2><p>如果你的程序有大量 I&#x2F;O 操作，使用 TBB 的一些特点和注意事项需要特别留意，因为 TBB 是为 CPU 密集型任务 和 任务并行化 设计的。具体分析如下：</p>
-<ol>
-<li>TBB 对 I&#x2F;O 的特点</li>
-</ol>
-<ul>
-<li>线程池固定，线程数通常 &#x3D; CPU 核心数</li>
-<li>每个线程会被用来执行任务，如果任务中 发生阻塞 I&#x2F;O（如文件读写、网络请求）：</li>
-<li>阻塞线程会占用线程池的一个线程</li>
-<li>其他任务可能因为线程不足而等待</li>
-</ul>
-<p>结论：TBB 默认不适合大量阻塞 I&#x2F;O 的场景</p>
-<ol start="2">
-<li>常见问题</li>
-</ol>
-<table>
-<thead>
-<tr>
-<th>问题</th>
-<th>原因</th>
-<th>后果</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>CPU 利用率低</td>
-<td>阻塞 I&#x2F;O 占用线程</td>
-<td>任务等待，性能下降</td>
-</tr>
-<tr>
-<td>线程不足</td>
-<td>阻塞线程占用全局线程池</td>
-<td>并行度降低，任务调度受阻</td>
-</tr>
-<tr>
-<td>死锁风险</td>
-<td>TBB 线程池线程被长时间阻塞</td>
-<td>如果任务依赖其他并行任务，可能互相等待</td>
-</tr>
-</tbody></table>
-<ol start="3">
-<li>解决方法</li>
-</ol>
-<p>a. 分离 I&#x2F;O 线程</p>
-<p>不要在 TBB 线程池中直接做阻塞 I&#x2F;O<br>可以开独立线程或线程池专门处理 I&#x2F;O<br>TBB 线程只处理 CPU 密集型任务</p>
-<p>b. 使用异步 I&#x2F;O</p>
-<p>对网络 &#x2F; 文件 I&#x2F;O 使用非阻塞或异步 API（如 asio、io_uring）<br>任务提交给 TBB 时 立即返回，I&#x2F;O 完成通过回调或 future 处理</p>
-<p>c. task_arena + 限制线程</p>
-<p>如果必须在 TBB 线程里做少量阻塞 I&#x2F;O，可以创建一个 局部 task_arena，限制线程数，避免阻塞全局线程池</p>
-<p>d. 混合模型</p>
-<p>CPU 密集任务用 TBB<br>阻塞 I&#x2F;O 用专门线程池 &#x2F; 异步框架<br>最后用 future&#x2F;promise 或 task_group 协调结果</p>
-<ol start="4">
-<li>总结</li>
-</ol>
-<p>TBB 是 CPU 密集型并行框架，不适合大量阻塞 I&#x2F;O<br>阻塞 I&#x2F;O 会占用线程池线程，降低并行度</p>
-<p>建议：</p>
-<p>分离 I&#x2F;O 线程或线程池<br>使用异步 I&#x2F;O<br>TBB 只处理计算任务</p>
-<h2 id="9-推荐阅读"><a href="#9-推荐阅读" class="headerlink" title="9. 推荐阅读"></a>9. 推荐阅读</h2><ol>
-<li>Intel Building Blocks 编程指南. James Reinders.</li>
-<li>Patterns for Parallel Pragramming. Timothy Mattson 等.</li>
-<li>设计模式：Design Patterns of Reusable Object-Oriented Software (Addison Wesley). Gamma, Helm, Johnson 和 Vlissides.</li>
-</ol>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/02/02/cpp/gcc%E4%B8%8Eglibc/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/02/02/cpp/gcc%E4%B8%8Eglibc/" class="post-title-link" itemprop="url">gcc 与 glibc</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-02-02 13:24:45" itemprop="dateCreated datePublished" datetime="2024-02-02T13:24:45+00:00">2024-02-02</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="gcc"><a href="#gcc" class="headerlink" title="gcc"></a>gcc</h2><p>gcc是一个编译套件，包含c、c++、Fortran语言的编译器。</p>
-<h2 id="glibc"><a href="#glibc" class="headerlink" title="glibc"></a>glibc</h2><p>glibc是一个library，为C程序提供基础公共功能，包括系统调用、数学函数和其他核心组件。<br>Linux平台和vscode似乎都依赖glibc，如果擅自将<code>LD_LIBRARY_PATH</code>更改为其他版本的glibc路径，则bash会直接crash。</p>
-<h3 id="glibc包含以下bin和lib："><a href="#glibc包含以下bin和lib：" class="headerlink" title="glibc包含以下bin和lib："></a>glibc包含以下bin和lib：</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cd</span> glibc-v2.34/Linux/RHEL7.0-2017-x86_64/bin &amp;&amp; <span class="built_in">ls</span></span><br><span class="line">catchsegv  getconf  iconv  locale     makedb  pcprofiledump  sotruss  tzselect  zdump</span><br><span class="line">gencat     getent   ldd    localedef  mtrace  pldd           sprof    xtrace</span><br><span class="line"></span><br><span class="line"><span class="comment"># 进入其他版本的glibc/lib目录执行ls命令会报错，大概原因可能是因为当前路径的glibc的lib和系统的lib冲突。</span></span><br><span class="line">$ <span class="built_in">cd</span> ../lib &amp;&amp; <span class="built_in">ls</span></span><br><span class="line"><span class="built_in">ls</span>: relocation error: ./libc.so.6: symbol __tunable_get_val, version GLIBC_PRIVATE not defined <span class="keyword">in</span> file ld-linux-x86-64.so.2 with <span class="built_in">link</span> time reference</span><br><span class="line"></span><br><span class="line">$ <span class="built_in">cd</span> .. &amp;&amp; <span class="built_in">ls</span> lib</span><br><span class="line">Mcrt1.o               libanl.so.1             libm.so             libnss_hesiod.so.2</span><br><span class="line">Scrt1.o               libc.a                  libm.so.6           libpcprofile.so</span><br><span class="line">audit                 libc.so                 libmcheck.a         libpthread.a</span><br><span class="line">crt1.o                libc.so.6               libmemusage.so      libpthread.so.0</span><br><span class="line">crti.o                libc_malloc_debug.so    libmvec.a           libresolv.a</span><br><span class="line">crtn.o                libc_malloc_debug.so.0  libmvec.so          libresolv.so</span><br><span class="line">gconv                 libc_nonshared.a        libmvec.so.1        libresolv.so.2</span><br><span class="line">gcrt1.o               libcrypt.a              libnsl.so.1         librt.a</span><br><span class="line">ld-linux-x86-64.so.2  libcrypt.so             libnss_compat.so    librt.so.1</span><br><span class="line">libBrokenLocale.a     libcrypt.so.1           libnss_compat.so.2  libthread_db.so</span><br><span class="line">libBrokenLocale.so    libdl.a                 libnss_db.so        libthread_db.so.1</span><br><span class="line">libBrokenLocale.so.1  libdl.so.2              libnss_db.so.2      libutil.a</span><br><span class="line">libSegFault.so        libg.a                  libnss_dns.so.2     libutil.so.1</span><br><span class="line">libanl.a              libm-2.34.a             libnss_files.so.2</span><br><span class="line">libanl.so             libm.a                  libnss_hesiod.so</span><br></pre></td></tr></table></figure>
-
-<h3 id="查看glibc的版本："><a href="#查看glibc的版本：" class="headerlink" title="查看glibc的版本："></a>查看glibc的版本：</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 从上可知，ldd是glibc的核心组件之一</span></span><br><span class="line">$ ldd --version</span><br></pre></td></tr></table></figure>
-
-<h3 id="寻找libc-so的路径："><a href="#寻找libc-so的路径：" class="headerlink" title="寻找libc.so的路径："></a>寻找libc.so的路径：</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ locate libc.so</span><br><span class="line">/usr/lib/x86_64-linux-gnu/libc.so</span><br><span class="line">/usr/lib/x86_64-linux-gnu/libc.so.6</span><br><span class="line">$ locate libstdc++.so</span><br><span class="line">/usr/lib/gcc/x86_64-linux-gnu/11/libstdc++.so</span><br><span class="line">/usr/lib/x86_64-linux-gnu/libstdc++.so.6</span><br><span class="line">/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30</span><br><span class="line">/usr/share/gdb/auto-load/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30-gdb.py</span><br></pre></td></tr></table></figure>
-
-<h3 id="安装glibc："><a href="#安装glibc：" class="headerlink" title="安装glibc："></a>安装glibc：</h3><p>Ubuntu平台</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install lib6</span><br></pre></td></tr></table></figure>
-
-<p>RedHat平台</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo yum install glibc</span><br></pre></td></tr></table></figure>
-
-<h3 id="检查GNC-C-Library-libstdc-的版本："><a href="#检查GNC-C-Library-libstdc-的版本：" class="headerlink" title="检查GNC C++ Library (libstdc++)的版本："></a>检查GNC C++ Library (libstdc++)的版本：</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">$ strings /usr/lib/libstdc++.so.* | grep LIBCXX</span><br><span class="line">[sjcvl-zhigaoz ] /lan/cva_rel/vxe_main/24.02.650.d000/tools.lnx86/lib/64bit % strings /usr/lib/libstdc++.so.* | grep LIBCXX</span><br><span class="line">GLIBCXX_3.4</span><br><span class="line">GLIBCXX_3.4.1</span><br><span class="line">GLIBCXX_3.4.2</span><br><span class="line">...</span><br><span class="line">GLIBCXX_3.4.19</span><br><span class="line">GLIBCXX_DEBUG_MESSAGE_LENGTH</span><br><span class="line"></span><br><span class="line">$ strings /usr/lib/libc.so.* | grep GLIBC</span><br><span class="line">GLIBC_2.0</span><br><span class="line">GLIBC_2.1</span><br><span class="line">GLIBC_2.1.1</span><br><span class="line">...</span><br><span class="line">GLIBC_2.17</span><br><span class="line">GLIBC_PRIVATE</span><br></pre></td></tr></table></figure>
-
-<p>如果你有一个使用了libstdc++的特定的binary或application，可以用下面的命令来检查其版本：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ldd &lt;your_binary_or_application&gt; | grep libstdc++</span><br></pre></td></tr></table></figure>
-
-<p>使用vscode的“Remote SSH”工具试图连接到Linux时，可能会报错如下：</p>
-<blockquote>
-<p>Warning: Missing GLIBCXX &gt;&#x3D; 3.4.25! from &#x2F;usr&#x2F;lib64&#x2F;libstdc++.so.6.0.19<br>Warning: Missing GLIBC &gt;&#x3D; 2.28! from &#x2F;usr&#x2F;lib64&#x2F;libc-2.17.so<br>Error: Missing required dependencies. Please refer to our FAQ <a target="_blank" rel="noopener" href="https://aka.ms/vscode-remote/faq/old-linux">https://aka.ms/vscode-remote/faq/old-linux</a> for additional information.</p>
-</blockquote>
-<p>这是因为Linux系统上的glibc版本中不包含GLIBCXX_3.4.25及以上的版本。此时需要降级vscode（建议做法）或升级glibc（似乎很难）。</p>
-<h3 id="让某些程序默认使用你本地安装的-glibc"><a href="#让某些程序默认使用你本地安装的-glibc" class="headerlink" title="让某些程序默认使用你本地安装的 glibc"></a>让某些程序默认使用你本地安装的 glibc</h3><p>你可以让某些程序默认使用你本地安装的 glibc（比如 ~&#x2F;local&#x2F;glibc-2.42），但不能全局替换系统默认 glibc，否则会导致系统崩溃。下面是几种安全又实用的方法，让你的程序“默认”使用本地 glibc：</p>
-<p>✅ 方法一：使用 LD_LIBRARY_PATH 环境变量（推荐）<br>这是最简单的方式，让你运行的程序优先使用你指定的 glibc：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> LD_LIBRARY_PATH=<span class="variable">$HOME</span>/local/glibc-2.42/lib:<span class="variable">$LD_LIBRARY_PATH</span></span><br></pre></td></tr></table></figure>
-
-<p>你可以把这行加到 ~&#x2F;.bashrc 或 ~&#x2F;.profile 中，这样每次登录都会自动生效。</p>
-<p>📌 注意：这只影响你当前用户的 shell 环境，不会影响系统服务或其他用户。</p>
-<p>✅ 方法二：使用 ld.so.preload（⚠️危险，不推荐）<br>你可以将本地 glibc 的路径写入 &#x2F;etc&#x2F;ld.so.preload，让系统优先加载它。但这会影响所有程序，包括 ls、bash、sudo 等，一旦路径错误，系统可能无法启动。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$HOME</span>/local/glibc-2.42/lib/libc.so.6&quot;</span> | sudo <span class="built_in">tee</span> /etc/ld.so.preload</span><br></pre></td></tr></table></figure>
-<p>⚠️ 强烈不建议使用此方法，除非你在容器或 chroot 环境中测试。</p>
-<p>✅ 方法三：使用 patchelf 修改程序的动态链接器<br>你可以用 patchelf 工具修改 ELF 程序的运行时 glibc 路径：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">patchelf --set-interpreter <span class="variable">$HOME</span>/local/glibc-2.42/lib/ld-2.42.so \</span><br><span class="line">         --set-rpath <span class="variable">$HOME</span>/local/glibc-2.42/lib \</span><br><span class="line">         ./your_program</span><br></pre></td></tr></table></figure>
-
-<p>这样修改后的程序会自动使用你指定的 glibc，无需额外设置。</p>
-<p>✅ 方法四：编译时指定 glibc 路径（适用于 CMake&#x2F;GCC）<br>如果你自己编译程序，可以在编译时指定 glibc 的头文件和库路径：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">gcc -I<span class="variable">$HOME</span>/local/glibc-2.42/include \</span><br><span class="line">    -L<span class="variable">$HOME</span>/local/glibc-2.42/lib \</span><br><span class="line">    -Wl,--rpath=<span class="variable">$HOME</span>/local/glibc-2.42/lib \</span><br><span class="line">    your_code.c -o your_program</span><br></pre></td></tr></table></figure>
-
-<p>或者在 CMake 中设置：</p>
-<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span>(CMAKE_C_FLAGS <span class="string">&quot;$&#123;CMAKE_C_FLAGS&#125; -Wl,-rpath=$HOME/local/glibc-2.42/lib&quot;</span>)</span><br></pre></td></tr></table></figure>
-
-<p>🧠 总结：推荐做法</p>
-<table>
-<thead>
-<tr>
-<th align="center">方法</th>
-<th>是否推荐</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">LD_LIBRARY_PATH</td>
-<td>✅ 推荐</td>
-<td>简单、安全、可控</td>
-</tr>
-<tr>
-<td align="center">patchelf</td>
-<td>✅ 推荐</td>
-<td>精确控制某个程序</td>
-</tr>
-<tr>
-<td align="center">编译时指定路径</td>
-<td>✅ 推荐</td>
-<td>适合开发者</td>
-</tr>
-<tr>
-<td align="center">修改 &#x2F;etc&#x2F;ld.so.preload</td>
-<td>❌ 危险</td>
-<td>可能导致系统崩溃</td>
-</tr>
-</tbody></table>
-<h3 id="🔍-编译器如何找到-glibc"><a href="#🔍-编译器如何找到-glibc" class="headerlink" title="🔍 编译器如何找到 glibc"></a>🔍 编译器如何找到 glibc</h3><ol>
-<li>默认系统路径<br>GCC 默认会在系统的标准库路径中查找 glibc，例如：</li>
-</ol>
-<p>&#x2F;lib<br>&#x2F;lib64<br>&#x2F;usr&#x2F;lib<br>&#x2F;usr&#x2F;lib64<br>&#x2F;usr&#x2F;include（头文件）</p>
-<p>这些路径通常由系统预设，glibc 安装时会自动放置在这些位置。</p>
-<ol start="2">
-<li>头文件与动态库<br>编译阶段：GCC 会使用 &#x2F;usr&#x2F;include 下的 glibc 头文件（如 stdio.h, stdlib.h）来进行语法检查和类型推导。</li>
-</ol>
-<p>链接阶段：GCC 会调用链接器（ld），查找 libc.so.6 或 libc.a 来完成符号解析。</p>
-<ol start="3">
-<li>环境变量控制<br>你可以通过环境变量来影响 GCC 查找 glibc 的位置：</li>
-</ol>
-<p>C_INCLUDE_PATH：指定头文件搜索路径</p>
-<p>LIBRARY_PATH：指定库文件搜索路径</p>
-<p>LD_LIBRARY_PATH：运行时动态库搜索路径</p>
-<p>例如：</p>
-<p>bash<br>export C_INCLUDE_PATH&#x3D;&#x2F;opt&#x2F;glibc&#x2F;include<br>export LIBRARY_PATH&#x3D;&#x2F;opt&#x2F;glibc&#x2F;lib<br>4. 链接器参数<br>你也可以通过 GCC 的 -Wl 参数直接告诉链接器使用哪个 glibc：</p>
-<p>bash<br>gcc hello.c -o hello <br>  -Wl,–dynamic-linker&#x3D;&#x2F;opt&#x2F;glibc&#x2F;lib&#x2F;ld-2.34.so <br>  -L&#x2F;opt&#x2F;glibc&#x2F;lib<br>这会指定使用 &#x2F;opt&#x2F;glibc&#x2F;lib&#x2F;libc.so.6 和对应的动态链接器。</p>
-<ol start="5">
-<li>使用 patchelf 工具修改依赖<br>如果你已经编译好了程序，但想修改它使用的 glibc，可以用 patchelf：</li>
-</ol>
-<p>bash<br>patchelf –set-interpreter &#x2F;opt&#x2F;glibc&#x2F;lib&#x2F;ld-2.34.so hello<br>patchelf –replace-needed libc.so.6 &#x2F;opt&#x2F;glibc&#x2F;lib&#x2F;libc.so.6 hello<br>这在部署多版本 glibc 时非常有用。</p>
-<p>🧪 如何验证 glibc 的使用情况<br>查看程序依赖的 glibc：</p>
-<p>bash<br>ldd .&#x2F;hello<br>查看系统 glibc 版本：</p>
-<p>bash<br>ldd</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/30/misc/%E8%AE%A1%E6%97%B6%E5%B7%A5%E5%85%B7/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/30/misc/%E8%AE%A1%E6%97%B6%E5%B7%A5%E5%85%B7/" class="post-title-link" itemprop="url">计时工具</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-30 11:07:39" itemprop="dateCreated datePublished" datetime="2024-01-30T11:07:39+00:00">2024-01-30</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="times"><a href="#times" class="headerlink" title="times"></a>times</h2><ol>
-<li>bash built-in</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">times</span></span><br></pre></td></tr></table></figure>
-
-<ol start="2">
-<li>function</li>
-</ol>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/times.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">clock_t</span> <span class="title">times</span><span class="params">(<span class="keyword">struct</span> tms *buf)</span></span>;</span><br></pre></td></tr></table></figure>
-
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/29/linux/Introduction-to-memory/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/29/linux/Introduction-to-memory/" class="post-title-link" itemprop="url">Introduction to memory</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-29 14:25:24" itemprop="dateCreated datePublished" datetime="2024-01-29T14:25:24+00:00">2024-01-29</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="malloc-free"><a href="#malloc-free" class="headerlink" title="malloc&#x2F;free"></a>malloc&#x2F;free</h2><p>See <a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Backtraces.html">this example</a></p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">char</span> ** <span class="title">backtrace_symbols</span> <span class="params">(<span class="type">void</span> *<span class="type">const</span> *buffer, <span class="type">int</span> size)</span> </span></span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>The return value of backtrace_symbols is a pointer obtained via the malloc function, and it is the responsibility of the caller to free that pointer. Note that only the return value need be freed, not the individual strings.</p>
-</blockquote>
-<p>Question: Why does it say “only the return value need be freed, not the individual strings”?</p>
-<p>Let us observe the defintion of the <code>malloc</code>&#x2F;<code>free</code> functions first:</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> *<span class="title">malloc</span><span class="params">( <span class="type">size_t</span> size )</span></span>;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">free</span><span class="params">( <span class="type">void</span> *ptr )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<p><code>free</code> takes a <code>void*</code> pointer to deallocate the memory, it doesn’t care what type it is, even if it is a multi-level pointer. It means that <code>malloc</code> has stored the memory size in some place and <code>free</code> will find it beforing deallocate the memory.</p>
-<p>Let us return the question. The memory pointer returned by <code>backtrace_symbols</code> is the <code>char**</code> type, it must be a whole block contigunous memory using <code>malloc</code> and might be enforced to be transformed as <code>char**</code> pointer when returing. So when we <code>free</code> the memory block, the Linux kernel find its actual memory size and deallocate it.</p>
-<p>Example:</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">char</span>** strings = (<span class="type">char</span>**)<span class="built_in">malloc</span>(<span class="number">3</span> * <span class="built_in">sizeof</span>(<span class="type">char</span>*) + <span class="number">3</span> * <span class="number">50</span>); <span class="comment">// assuming a maximum 50 characters per sentence</span></span><br><span class="line">    <span class="type">char</span>* block = (<span class="type">char</span>*)(strings + <span class="number">3</span>);</span><br><span class="line">    <span class="type">char</span>* s1 = <span class="built_in">strcpy</span>(block, <span class="string">&quot;The first sentence&quot;</span>); block += <span class="built_in">strlen</span>(s1) + <span class="number">1</span>;</span><br><span class="line">    <span class="type">char</span>* s2 = <span class="built_in">strcpy</span>(block, <span class="string">&quot;The second sentence&quot;</span>); block += <span class="built_in">strlen</span>(s2) + <span class="number">1</span>;</span><br><span class="line">    <span class="type">char</span>* s3 = <span class="built_in">strcpy</span>(block, <span class="string">&quot;The third sentence&quot;</span>);</span><br><span class="line">    strings[<span class="number">0</span>] = s1;</span><br><span class="line">    strings[<span class="number">1</span>] = s2;</span><br><span class="line">    strings[<span class="number">2</span>] = s3;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">3</span>; ++i) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>, strings[i]);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">free</span>(strings); <span class="comment">// deallocate all memory at once</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>More elegant but less economical code:</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">char</span>** strings = (<span class="type">char</span>**)<span class="built_in">malloc</span>(<span class="number">3</span> * <span class="built_in">sizeof</span>(<span class="type">char</span>*) + <span class="number">3</span> * <span class="number">50</span>);</span><br><span class="line">    <span class="type">char</span>* block = (<span class="type">char</span>*)(strings + <span class="number">3</span>);</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">3</span>; ++i) &#123;</span><br><span class="line">        strings[i] = block + i * <span class="number">50</span>; <span class="comment">// Assuming a maximum of 50 characters per sentence</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">strcpy</span>(strings[<span class="number">0</span>], <span class="string">&quot;The first sentence&quot;</span>);</span><br><span class="line">    <span class="built_in">strcpy</span>(strings[<span class="number">1</span>], <span class="string">&quot;The second sentence&quot;</span>);</span><br><span class="line">    <span class="built_in">strcpy</span>(strings[<span class="number">2</span>], <span class="string">&quot;The third sentence&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">3</span>; ++i) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>, strings[i]);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">free</span>(strings); <span class="comment">// deallocate all memory at once</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Memory_002dmapped-I_002fO.html">The GNU C Library (glibc) manual: 13.8 Memory-mapped I&#x2F;O</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Memory-Protection.html">The GNU C Library (glibc) manual: 3.4 Memory Protection</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/29/UML/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/29/UML/" class="post-title-link" itemprop="url">UML</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-29 11:10:46" itemprop="dateCreated datePublished" datetime="2024-01-29T11:10:46+00:00">2024-01-29</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-11-28 08:17:29" itemprop="dateModified" datetime="2025-11-28T08:17:29+00:00">2025-11-28</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ol>
-<li><a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1176331">认识UML类关系——依赖、关联、聚合、组合、泛化</a></li>
-</ol>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/blog/page/5/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/5/">5</a><span class="page-number current">6</span><a class="page-number" href="/blog/page/7/">7</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/11/">11</a><a class="extend next" rel="next" href="/blog/page/7/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+    <a class="extend prev" rel="prev" href="/blog/page/5/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/5/">5</a><span class="page-number current">6</span><a class="page-number" href="/blog/page/7/">7</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/12/">12</a><a class="extend next" rel="next" href="/blog/page/7/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -1558,20 +1797,20 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">108</span>
+          <span class="site-state-item-count">115</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-count">15</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">47</span>
+        <span class="site-state-item-count">49</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
