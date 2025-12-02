@@ -213,7 +213,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2025-12-02 13:44:25 / Modified: 15:45:35" itemprop="dateCreated datePublished" datetime="2025-12-02T13:44:25+00:00">2025-12-02</time>
+              <time title="Created: 2025-12-02 13:44:25 / Modified: 15:50:10" itemprop="dateCreated datePublished" datetime="2025-12-02T13:44:25+00:00">2025-12-02</time>
             </span>
 
           
@@ -297,7 +297,7 @@
 <p><strong>CPU View示例输出：</strong></p>
 <figure class="highlight txt"><figcaption><span>affinity_test_cpu_view_cpu0.txt</span><a href="/blog/downloads/code/perf/numa/affinity_test_cpu_view_cpu0.txt">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">CPUs sorted by metric: Exclusive Total CPU Time</span><br><span class="line"></span><br><span class="line">Exclusive</span><br><span class="line"></span><br><span class="line">| Total CPU Time (sec.) | Name     |</span><br><span class="line">|-----------------------|----------|</span><br><span class="line">| 2.001                 | &lt;Total&gt;  |</span><br><span class="line">| 2.001                 | CPU 0    |</span><br></pre></td></tr></table></figure>
 
-<p><strong>观察结果：</strong> 所有8个线程都运行在CPU 0上，CPU 0的利用率为100%，其他CPU未被使用。这证明了硬亲和性：即使创建了多个线程，它们也只能在绑定的CPU核心上运行。</p>
+<p><strong>观察结果：</strong> 所有200个线程都运行在CPU 0上，CPU 0的利用率为100%，其他CPU未被使用。这证明了硬亲和性：即使创建了多个线程，它们也只能在绑定的CPU核心上运行。</p>
 <p><strong>测试2：绑定到两个CPU核心</strong></p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">taskset -c 0-1 ./affinity_test</span><br></pre></td></tr></table></figure>
 
@@ -307,7 +307,7 @@
 <p><strong>CPU View示例输出：</strong></p>
 <figure class="highlight txt"><figcaption><span>affinity_test_cpu_view_cpu01.txt</span><a href="/blog/downloads/code/perf/numa/affinity_test_cpu_view_cpu01.txt">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">CPUs sorted by metric: Exclusive Total CPU Time</span><br><span class="line"></span><br><span class="line">Exclusive        </span><br><span class="line"></span><br><span class="line">| Total CPU Time (sec.) | Name     |</span><br><span class="line">|-----------------------|----------|</span><br><span class="line">| 2.152                 | &lt;Total&gt;  |</span><br><span class="line">| 1.591                 | CPU 0    |</span><br><span class="line">| 0.560                 | CPU 1    |</span><br></pre></td></tr></table></figure>
 
-<p><strong>观察结果：</strong> 8个线程被分配到CPU 0和CPU 1上（每个CPU 4个线程），两个CPU的利用率都是100%，其他CPU未被使用。这证明了硬亲和性限制了线程只能在指定的CPU核心范围内运行。</p>
+<p><strong>观察结果：</strong> 200个线程被分配到CPU 0和CPU 1上，两个CPU的利用率都是100%，其他CPU未被使用。这证明了硬亲和性限制了线程只能在指定的CPU核心范围内运行。</p>
 <p><strong>结论：</strong> 硬亲和性确实强制限制了线程只能在绑定的CPU核心上运行，即使创建了多个线程，它们也无法使用绑定范围之外的CPU核心。</p>
 <p><strong>并行库适配说明：</strong></p>
 <p>CPU绑定（如 <code>taskset</code>、<code>sched_setaffinity</code>、<code>numactl --cpunodebind</code>）是<strong>硬亲和性</strong>（强制性的），能有效限制并行库的线程数。例如，TBB（Threading Building Blocks）在初始化时会根据操作系统报告的硬件资源（通过 <code>sysconf(_SC_NPROCESSORS_ONLN)</code> 等API）来决定线程池大小和调度策略。如果使用 <code>taskset</code> 或 <code>numactl</code> 将进程绑定到部分CPU核心，TBB只会看到这些CPU核心，从而自动调整线程池大小。这意味着通过限制可见的CPU资源，可以间接控制并行库的行为。</p>
@@ -816,7 +816,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-02 15:45:35" itemprop="dateModified" datetime="2025-12-02T15:45:35+00:00">2025-12-02</time>
+                <time title="Modified: 2025-12-02 15:50:10" itemprop="dateModified" datetime="2025-12-02T15:50:10+00:00">2025-12-02</time>
               </span>
 
           
@@ -960,7 +960,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-02 15:45:35" itemprop="dateModified" datetime="2025-12-02T15:45:35+00:00">2025-12-02</time>
+                <time title="Modified: 2025-12-02 15:50:10" itemprop="dateModified" datetime="2025-12-02T15:50:10+00:00">2025-12-02</time>
               </span>
 
           
@@ -1166,7 +1166,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-02 15:45:35" itemprop="dateModified" datetime="2025-12-02T15:45:35+00:00">2025-12-02</time>
+                <time title="Modified: 2025-12-02 15:50:10" itemprop="dateModified" datetime="2025-12-02T15:50:10+00:00">2025-12-02</time>
               </span>
 
           
@@ -1231,7 +1231,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-02 15:45:35" itemprop="dateModified" datetime="2025-12-02T15:45:35+00:00">2025-12-02</time>
+                <time title="Modified: 2025-12-02 15:50:10" itemprop="dateModified" datetime="2025-12-02T15:50:10+00:00">2025-12-02</time>
               </span>
 
           
@@ -1295,7 +1295,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-02 15:45:35" itemprop="dateModified" datetime="2025-12-02T15:45:35+00:00">2025-12-02</time>
+                <time title="Modified: 2025-12-02 15:50:10" itemprop="dateModified" datetime="2025-12-02T15:50:10+00:00">2025-12-02</time>
               </span>
 
           
@@ -1404,7 +1404,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-02 15:45:35" itemprop="dateModified" datetime="2025-12-02T15:45:35+00:00">2025-12-02</time>
+                <time title="Modified: 2025-12-02 15:50:10" itemprop="dateModified" datetime="2025-12-02T15:50:10+00:00">2025-12-02</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1596,7 +1596,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-02 15:45:35" itemprop="dateModified" datetime="2025-12-02T15:45:35+00:00">2025-12-02</time>
+                <time title="Modified: 2025-12-02 15:50:10" itemprop="dateModified" datetime="2025-12-02T15:50:10+00:00">2025-12-02</time>
               </span>
 
           
@@ -1668,7 +1668,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-02 15:45:35" itemprop="dateModified" datetime="2025-12-02T15:45:35+00:00">2025-12-02</time>
+                <time title="Modified: 2025-12-02 15:50:10" itemprop="dateModified" datetime="2025-12-02T15:50:10+00:00">2025-12-02</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2133,7 +2133,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-02 15:45:35" itemprop="dateModified" datetime="2025-12-02T15:45:35+00:00">2025-12-02</time>
+                <time title="Modified: 2025-12-02 15:50:10" itemprop="dateModified" datetime="2025-12-02T15:50:10+00:00">2025-12-02</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
