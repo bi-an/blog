@@ -41,11 +41,65 @@ NUMA（Non-Uniform Memory Access，非统一内存访问）是一种计算机内
   - 通过 `sched_setaffinity()`、`taskset`、`numactl --cpunodebind`、`cgroup cpuset.cpus` 等方法设置
 - **软亲和性（Soft Affinity）**：偏好设置，系统会尽量将进程调度到指定的CPU核心，但不强制
   - 这是调度器的默认行为，在没有显式设置CPU亲和性时，调度器会尽量保持进程在同一个CPU核心上运行
+  - **设置方法**：
+    1. **默认方法**：不设置任何CPU亲和性，直接运行程序，调度器自动实现软亲和性
+    2. **numactl**：使用 `numactl --preferred=<node>` 只设置内存偏好，不设置CPU绑定（CPU使用默认软亲和性）
+    3. **nice值**：通过 `nice -n <value>` 或 `renice <value> <pid>` 调整进程优先级，间接影响调度器行为
+    4. **cgroup**：使用 `cpu.shares`（v1）或 `cpu.weight`（v2）设置CPU时间权重，影响调度器分配
+    5. **set_mempolicy()**：使用 `MPOL_PREFERRED` 策略设置内存分配偏好，CPU使用默认软亲和性
+    6. **SCHED_NORMAL策略**：使用默认的CFS调度器（`SCHED_NORMAL`），自动实现软亲和性
 
 **注意事项：**
 - CPU亲和性设置会影响操作系统的调度器行为
 - 过度绑定可能导致CPU负载不均衡
 - 即使通过硬亲和性强制绑定到单个CPU核心，进程仍可能创建多个线程，这些线程会在该CPU核心上通过时间片轮转的方式轮流调度执行
+
+**验证硬亲和性：**
+
+以下示例演示如何验证硬亲和性的效果。创建一个多线程程序：
+
+{% include_code perf/numa/affinity_test.c %}
+
+编译程序：
+```bash
+gcc -o affinity_test affinity_test.c -lpthread
+```
+
+**测试1：绑定到单个CPU核心**
+
+```bash
+taskset -c 0 ./affinity_test
+```
+
+使用Oracle Developer Studio Performance Analyzer观察：
+
+**Threads View示例输出：**
+
+{% include_code perf/numa/affinity_test_threads_view_cpu0.txt %}
+
+**CPU View示例输出：**
+
+{% include_code perf/numa/affinity_test_cpu_view_cpu0.txt %}
+
+**观察结果：** 所有8个线程都运行在CPU 0上，CPU 0的利用率为100%，其他CPU未被使用。这证明了硬亲和性：即使创建了多个线程，它们也只能在绑定的CPU核心上运行。
+
+**测试2：绑定到两个CPU核心**
+
+```bash
+taskset -c 0-1 ./affinity_test
+```
+
+**Threads View示例输出：**
+
+{% include_code perf/numa/affinity_test_threads_view_cpu01.txt %}
+
+**CPU View示例输出：**
+
+{% include_code perf/numa/affinity_test_cpu_view_cpu01.txt %}
+
+**观察结果：** 8个线程被分配到CPU 0和CPU 1上（每个CPU 4个线程），两个CPU的利用率都是100%，其他CPU未被使用。这证明了硬亲和性限制了线程只能在指定的CPU核心范围内运行。
+
+**结论：** 硬亲和性确实强制限制了线程只能在绑定的CPU核心上运行，即使创建了多个线程，它们也无法使用绑定范围之外的CPU核心。
 
 **并行库适配说明：**
 
