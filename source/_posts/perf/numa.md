@@ -81,7 +81,7 @@ taskset -c 0 ./affinity_test
 
 {% include_code perf/numa/affinity_test_cpu_view_cpu0.txt %}
 
-**观察结果：** 所有8个线程都运行在CPU 0上，CPU 0的利用率为100%，其他CPU未被使用。这证明了硬亲和性：即使创建了多个线程，它们也只能在绑定的CPU核心上运行。
+**观察结果：** 所有200个线程都运行在CPU 0上，CPU 0的利用率为100%，其他CPU未被使用。这证明了硬亲和性：即使创建了多个线程，它们也只能在绑定的CPU核心上运行。
 
 **测试2：绑定到两个CPU核心**
 
@@ -97,7 +97,7 @@ taskset -c 0-1 ./affinity_test
 
 {% include_code perf/numa/affinity_test_cpu_view_cpu01.txt %}
 
-**观察结果：** 8个线程被分配到CPU 0和CPU 1上（每个CPU 4个线程），两个CPU的利用率都是100%，其他CPU未被使用。这证明了硬亲和性限制了线程只能在指定的CPU核心范围内运行。
+**观察结果：** 200个线程被分配到CPU 0和CPU 1上，两个CPU的利用率都是100%，其他CPU未被使用。这证明了硬亲和性限制了线程只能在指定的CPU核心范围内运行。
 
 **结论：** 硬亲和性确实强制限制了线程只能在绑定的CPU核心上运行，即使创建了多个线程，它们也无法使用绑定范围之外的CPU核心。
 
