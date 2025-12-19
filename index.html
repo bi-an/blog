@@ -188,6 +188,830 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/12/19/perf/%E5%8A%A8%E6%80%81%E6%8F%92%E6%A1%A9%E5%B7%A5%E5%85%B7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/12/19/perf/%E5%8A%A8%E6%80%81%E6%8F%92%E6%A1%A9%E5%B7%A5%E5%85%B7/" class="post-title-link" itemprop="url">动态插桩工具</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2025-12-19 17:13:49 / Modified: 12:21:46" itemprop="dateCreated datePublished" datetime="2025-12-19T17:13:49+00:00">2025-12-19</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>动态插桩（Dynamic Instrumentation）是在程序运行时插入监控代码的技术，无需重新编译程序即可进行性能分析和调试。本文介绍 C&#x2F;C++ 程序中常用的动态插桩工具，重点关注函数调用次数和耗时统计（平均、最小、最大、总计），以及是否支持 attach 到正在运行的进程。</p>
+<p><strong>重要说明：耗时统计的范围</strong></p>
+<p>不同工具在统计函数耗时时的行为存在重要差异：</p>
+<ul>
+<li><strong>墙上时钟时间（Wall-clock Time）</strong>：包括函数执行期间的所有时间，包括 CPU 执行时间、IO 等待时间、sleep 时间等。这是函数从开始到结束的”真实”耗时。</li>
+<li><strong>CPU 时间（CPU Time）</strong>：只包括函数在 CPU 上实际执行的时间，不包括 IO 等待和 sleep 时间。</li>
+<li><strong>用户态 CPU 时间（User CPU Time）</strong>：只包括在用户态执行的时间，不包括内核态时间。</li>
+</ul>
+<p>大多数动态插桩工具默认统计的是<strong>墙上时钟时间</strong>，这意味着如果函数中包含 IO 操作（如文件读写、网络通信）或 sleep，这些时间也会被计入总耗时。这对于理解函数的”真实”执行时间很有帮助，但需要注意区分 CPU 密集型操作和 IO 密集型操作。</p>
+<h2 id="动态插桩工具对比"><a href="#动态插桩工具对比" class="headerlink" title="动态插桩工具对比"></a>动态插桩工具对比</h2><table>
+<thead>
+<tr>
+<th>工具</th>
+<th>插桩方式</th>
+<th>调用次数统计</th>
+<th>耗时统计（avg&#x2F;min&#x2F;max&#x2F;total）</th>
+<th>耗时范围</th>
+<th>Attach 支持</th>
+<th>权限要求</th>
+<th>开销</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>eBPF&#x2F;BCC</strong></td>
+<td>内核级动态插桩</td>
+<td>✅</td>
+<td>✅</td>
+<td>墙上时钟时间</td>
+<td>✅</td>
+<td>root 或 CAP_BPF</td>
+<td>极低</td>
+<td>Linux 现代系统分析</td>
+</tr>
+<tr>
+<td><strong>bptrace</strong></td>
+<td>内核级动态插桩（eBPF）</td>
+<td>✅</td>
+<td>✅</td>
+<td>墙上时钟时间</td>
+<td>✅</td>
+<td>root 或 CAP_BPF</td>
+<td>极低</td>
+<td>Linux 函数级性能分析</td>
+</tr>
+<tr>
+<td><strong>SystemTap</strong></td>
+<td>内核级动态插桩</td>
+<td>✅</td>
+<td>✅</td>
+<td>墙上时钟时间</td>
+<td>✅</td>
+<td>root 或 stapdev&#x2F;stapusr 组</td>
+<td>低-中</td>
+<td>Linux 系统级分析</td>
+</tr>
+<tr>
+<td><strong>perf + uprobes</strong></td>
+<td>内核级动态插桩</td>
+<td>✅</td>
+<td>✅</td>
+<td>墙上时钟时间（可配置）</td>
+<td>✅</td>
+<td>root 或 <code>perf_event_paranoid</code></td>
+<td>低</td>
+<td>Linux 系统级分析</td>
+</tr>
+<tr>
+<td><strong>DTrace</strong></td>
+<td>内核级动态插桩</td>
+<td>✅</td>
+<td>✅</td>
+<td>墙上时钟时间</td>
+<td>✅</td>
+<td>root 或特殊权限</td>
+<td>低</td>
+<td>Solaris&#x2F;FreeBSD&#x2F;macOS</td>
+</tr>
+<tr>
+<td><strong>Intel Pin</strong></td>
+<td>二进制插桩</td>
+<td>✅</td>
+<td>✅</td>
+<td>墙上时钟时间</td>
+<td>❌</td>
+<td>普通用户权限</td>
+<td>高</td>
+<td>详细分析，需要启动时插桩</td>
+</tr>
+<tr>
+<td><strong>DynamoRIO</strong></td>
+<td>二进制插桩</td>
+<td>✅</td>
+<td>✅</td>
+<td>墙上时钟时间</td>
+<td>❌</td>
+<td>普通用户权限</td>
+<td>高</td>
+<td>跨平台分析，需要启动时插桩</td>
+</tr>
+<tr>
+<td><strong>Valgrind Callgrind</strong></td>
+<td>二进制插桩</td>
+<td>✅</td>
+<td>✅</td>
+<td>CPU 时间（不包括IO&#x2F;sleep）</td>
+<td>❌</td>
+<td>普通用户权限</td>
+<td>极高</td>
+<td>详细调用图分析</td>
+</tr>
+<tr>
+<td><strong>LD_PRELOAD</strong></td>
+<td>库函数拦截</td>
+<td>✅</td>
+<td>✅</td>
+<td>墙上时钟时间</td>
+<td>❌</td>
+<td>普通用户权限</td>
+<td>低</td>
+<td>简单场景，库函数级别</td>
+</tr>
+<tr>
+<td><strong>ltrace</strong></td>
+<td>库函数跟踪</td>
+<td>✅</td>
+<td>部分</td>
+<td>墙上时钟时间</td>
+<td>✅</td>
+<td>普通用户权限（attach 需 ptrace）</td>
+<td>低</td>
+<td>库函数调用跟踪</td>
+</tr>
+</tbody></table>
+<h2 id="详细工具介绍"><a href="#详细工具介绍" class="headerlink" title="详细工具介绍"></a>详细工具介绍</h2><h3 id="1-eBPF-BCC"><a href="#1-eBPF-BCC" class="headerlink" title="1. eBPF&#x2F;BCC"></a>1. eBPF&#x2F;BCC</h3><p><strong>简介</strong>：基于 eBPF（Extended Berkeley Packet Filter）的现代动态跟踪工具集，BCC 提供了高级封装。</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>✅ 支持 attach 到正在运行的进程</li>
+<li>✅ 极低开销，内核验证保证安全</li>
+<li>✅ 可以统计函数调用次数和耗时（min&#x2F;max&#x2F;avg&#x2F;total）</li>
+<li>✅ 丰富的工具集（funccount, funclatency, trace 等）</li>
+<li>⏱️ <strong>耗时统计范围</strong>：统计墙上时钟时间（包括 IO、sleep 等所有时间）</li>
+</ul>
+<p><strong>权限要求</strong>：</p>
+<ul>
+<li><strong>root 权限</strong>：拥有所有 eBPF&#x2F;BCC 功能</li>
+<li><strong>非 root 用户</strong>：需要 <code>CAP_BPF</code> 能力（Linux 5.8+）：<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 授予用户 CAP_BPF 能力</span></span><br><span class="line">sudo <span class="built_in">setcap</span> cap_bpf+ep /usr/bin/python3</span><br><span class="line"><span class="comment"># 或授予特定 BCC 工具</span></span><br><span class="line">sudo <span class="built_in">setcap</span> cap_bpf+ep /usr/share/bcc/tools/funccount</span><br></pre></td></tr></table></figure></li>
+<li><strong>attach 到其他用户的进程</strong>：需要 root 权限或 <code>CAP_SYS_PTRACE</code> 能力</li>
+<li><strong>加载 eBPF 程序</strong>：需要 root 权限或 <code>CAP_BPF</code> 能力（Linux 5.8+）</li>
+<li><strong>读取内核符号</strong>：需要 root 权限或 <code>CAP_SYS_ADMIN</code> 能力</li>
+</ul>
+<p><strong>限制</strong>：</p>
+<ul>
+<li>需要 Linux 4.1+ 内核（eBPF 支持）</li>
+</ul>
+<p><strong>使用示例</strong>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># funclatency - 统计函数耗时分布</span></span><br><span class="line">funclatency -p &lt;pid&gt; <span class="string">&#x27;target_function&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># funccount - 统计函数调用次数</span></span><br><span class="line">funccount -p &lt;pid&gt; <span class="string">&#x27;target_function&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 自定义 BCC 脚本统计详细指标</span></span><br><span class="line"><span class="keyword">from</span> bcc <span class="keyword">import</span> BPF</span><br><span class="line"></span><br><span class="line">bpf_text = <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">#include &lt;uapi/linux/ptrace.h&gt;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">BPF_HASH(start, u32);</span></span><br><span class="line"><span class="string">BPF_HASH(count, u32);</span></span><br><span class="line"><span class="string">BPF_HASH(total_time, u64);</span></span><br><span class="line"><span class="string">BPF_HASH(min_time, u64);</span></span><br><span class="line"><span class="string">BPF_HASH(max_time, u64);</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">int trace_entry(struct pt_regs *ctx) &#123;</span></span><br><span class="line"><span class="string">    u32 pid = bpf_get_current_pid_tgid();</span></span><br><span class="line"><span class="string">    u64 ts = bpf_ktime_get_ns();</span></span><br><span class="line"><span class="string">    start.update(&amp;pid, &amp;ts);</span></span><br><span class="line"><span class="string">    u64 zero = 0;</span></span><br><span class="line"><span class="string">    count.update(&amp;pid, &amp;zero);</span></span><br><span class="line"><span class="string">    u64 *val = count.lookup(&amp;pid);</span></span><br><span class="line"><span class="string">    if (val) &#123;</span></span><br><span class="line"><span class="string">        (*val)++;</span></span><br><span class="line"><span class="string">        count.update(&amp;pid, val);</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">    return 0;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">int trace_return(struct pt_regs *ctx) &#123;</span></span><br><span class="line"><span class="string">    u32 pid = bpf_get_current_pid_tgid();</span></span><br><span class="line"><span class="string">    u64 *tsp = start.lookup(&amp;pid);</span></span><br><span class="line"><span class="string">    if (tsp == 0) &#123;</span></span><br><span class="line"><span class="string">        return 0;</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">    u64 delta = bpf_ktime_get_ns() - *tsp;</span></span><br><span class="line"><span class="string">    </span></span><br><span class="line"><span class="string">    // 更新统计信息</span></span><br><span class="line"><span class="string">    u64 *total = total_time.lookup(&amp;pid);</span></span><br><span class="line"><span class="string">    u64 *min = min_time.lookup(&amp;pid);</span></span><br><span class="line"><span class="string">    u64 *max = max_time.lookup(&amp;pid);</span></span><br><span class="line"><span class="string">    </span></span><br><span class="line"><span class="string">    if (total) &#123;</span></span><br><span class="line"><span class="string">        *total += delta;</span></span><br><span class="line"><span class="string">    &#125; else &#123;</span></span><br><span class="line"><span class="string">        total_time.update(&amp;pid, &amp;delta);</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">    </span></span><br><span class="line"><span class="string">    if (!min || delta &lt; *min) &#123;</span></span><br><span class="line"><span class="string">        min_time.update(&amp;pid, &amp;delta);</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">    </span></span><br><span class="line"><span class="string">    if (!max || delta &gt; *max) &#123;</span></span><br><span class="line"><span class="string">        max_time.update(&amp;pid, &amp;delta);</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">    </span></span><br><span class="line"><span class="string">    start.delete(&amp;pid);</span></span><br><span class="line"><span class="string">    return 0;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># attach 到进程</span></span><br><span class="line">b = BPF(text=bpf_text)</span><br><span class="line">b.attach_uprobe(name=<span class="string">&quot;target_program&quot;</span>, sym=<span class="string">&quot;target_function&quot;</span>, fn_name=<span class="string">&quot;trace_entry&quot;</span>)</span><br><span class="line">b.attach_uretprobe(name=<span class="string">&quot;target_program&quot;</span>, sym=<span class="string">&quot;target_function&quot;</span>, fn_name=<span class="string">&quot;trace_return&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-bptrace"><a href="#2-bptrace" class="headerlink" title="2. bptrace"></a>2. bptrace</h3><p><strong>简介</strong>：基于 eBPF 的轻量级动态追踪工具，专门用于监控和分析正在运行的 C&#x2F;C++ 程序。bptrace 提供了简洁的命令行接口，可以方便地统计函数调用次数和执行时间。</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>✅ 支持 attach 到正在运行的进程</li>
+<li>✅ 可以统计函数调用次数和耗时（min&#x2F;max&#x2F;avg&#x2F;total）</li>
+<li>✅ 极低开销，基于 eBPF 技术</li>
+<li>✅ 简洁的命令行接口，易于使用</li>
+<li>✅ 无需修改程序源码或重新编译</li>
+<li>⏱️ <strong>耗时统计范围</strong>：统计墙上时钟时间（包括 IO、sleep 等所有时间）</li>
+</ul>
+<p><strong>权限要求</strong>：</p>
+<ul>
+<li><strong>root 权限</strong>：拥有所有 bptrace 功能</li>
+<li><strong>非 root 用户</strong>：需要 <code>CAP_BPF</code> 能力（Linux 5.8+）：<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 授予用户 CAP_BPF 能力</span></span><br><span class="line">sudo <span class="built_in">setcap</span> cap_bpf+ep /usr/bin/bptrace</span><br></pre></td></tr></table></figure></li>
+<li><strong>attach 到其他用户的进程</strong>：需要 root 权限或 <code>CAP_SYS_PTRACE</code> 能力</li>
+<li><strong>加载 eBPF 程序</strong>：需要 root 权限或 <code>CAP_BPF</code> 能力（Linux 5.8+）</li>
+</ul>
+<p><strong>限制</strong>：</p>
+<ul>
+<li>需要 Linux 内核支持 eBPF（通常 4.1+）</li>
+<li>Linux 5.8+ 才支持非 root 用户使用 CAP_BPF</li>
+<li>主要适用于用户态函数追踪</li>
+<li>需要目标程序包含调试符号信息（或使用地址）</li>
+</ul>
+<p><strong>使用示例</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 统计函数调用次数</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;target_function&#x27;</span> -c</span><br><span class="line"></span><br><span class="line"><span class="comment"># 统计函数耗时（包括平均、最小、最大、总耗时）</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;target_function&#x27;</span> -t</span><br><span class="line"></span><br><span class="line"><span class="comment"># 同时统计调用次数和耗时</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;target_function&#x27;</span> -c -t</span><br><span class="line"></span><br><span class="line"><span class="comment"># 统计多个函数</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;function1,function2&#x27;</span> -c -t</span><br><span class="line"></span><br><span class="line"><span class="comment"># 指定输出格式</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;target_function&#x27;</span> -t --format json</span><br><span class="line"></span><br><span class="line"><span class="comment"># 持续监控并定期输出统计信息</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;target_function&#x27;</span> -t --interval 5</span><br></pre></td></tr></table></figure>
+
+<p><strong>输出示例</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Function: target_function</span><br><span class="line">  Call Count: 1000</span><br><span class="line">  Total Time: 50000 us</span><br><span class="line">  Average Time: 50 us</span><br><span class="line">  Min Time: 10 us</span><br><span class="line">  Max Time: 200 us</span><br></pre></td></tr></table></figure>
+
+<p><strong>与 eBPF&#x2F;BCC 的关系</strong>：</p>
+<ul>
+<li>bptrace 可以看作是 BCC 工具集的简化版本，专门针对函数级性能分析</li>
+<li>相比 BCC，bptrace 提供了更简洁的命令行接口，适合快速分析</li>
+<li>如果需要更复杂的自定义逻辑，仍需要使用 BCC 编写 Python&#x2F;C 脚本</li>
+</ul>
+<h3 id="3-SystemTap"><a href="#3-SystemTap" class="headerlink" title="3. SystemTap"></a>3. SystemTap</h3><p><strong>简介</strong>：Linux 系统级动态跟踪工具，功能强大，支持用户态和内核态插桩。</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>✅ 支持 attach 到正在运行的进程</li>
+<li>✅ 可以精确统计函数调用次数和耗时（包括 min&#x2F;max&#x2F;avg&#x2F;total）</li>
+<li>✅ 灵活的脚本语言，可以自定义统计逻辑</li>
+<li>✅ 低开销（取决于脚本复杂度）</li>
+<li>⏱️ <strong>耗时统计范围</strong>：统计墙上时钟时间（包括 IO、sleep 等所有时间）</li>
+</ul>
+<p><strong>权限要求</strong>：</p>
+<ul>
+<li><strong>root 权限</strong>：拥有所有 SystemTap 功能</li>
+<li><strong>非 root 用户</strong>：需要加入特定组：<ul>
+<li><code>stapdev</code> 组：可以加载任意 SystemTap 模块（需要 root 权限添加）</li>
+<li><code>stapusr</code> 组：只能使用预编译的 SystemTap 模块（更安全）</li>
+</ul>
+</li>
+<li><strong>attach 到其他用户的进程</strong>：需要 root 权限或 <code>CAP_SYS_PTRACE</code> 能力</li>
+<li><strong>内核模块加载</strong>：需要 root 权限或 <code>CAP_SYS_MODULE</code> 能力</li>
+</ul>
+<p><strong>限制</strong>：</p>
+<ul>
+<li>需要安装 kernel-devel 包（用于编译 SystemTap 模块）</li>
+</ul>
+<p><strong>使用示例</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"># 统计函数调用次数和耗时</span><br><span class="line">probe process(&quot;/path/to/program&quot;).function(&quot;target_function&quot;) &#123;</span><br><span class="line">    start_time = gettimeofday_us()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">probe process(&quot;/path/to/program&quot;).function(&quot;target_function&quot;).return &#123;</span><br><span class="line">    call_count++</span><br><span class="line">    elapsed = gettimeofday_us() - start_time</span><br><span class="line">    total_time += elapsed</span><br><span class="line">    if (elapsed &lt; min_time || min_time == 0) min_time = elapsed</span><br><span class="line">    if (elapsed &gt; max_time) max_time = elapsed</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">probe end &#123;</span><br><span class="line">    printf(&quot;调用次数: %d\n&quot;, call_count)</span><br><span class="line">    printf(&quot;总耗时: %d us\n&quot;, total_time)</span><br><span class="line">    printf(&quot;平均耗时: %d us\n&quot;, total_time / call_count)</span><br><span class="line">    printf(&quot;最小耗时: %d us\n&quot;, min_time)</span><br><span class="line">    printf(&quot;最大耗时: %d us\n&quot;, max_time)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># attach 到运行中的进程</span><br><span class="line">stap -x &lt;pid&gt; script.stp</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-perf-uprobes"><a href="#4-perf-uprobes" class="headerlink" title="4. perf + uprobes"></a>4. perf + uprobes</h3><p><strong>简介</strong>：Linux 内核自带的性能分析工具，通过 uprobes 机制实现用户态动态插桩。</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>✅ 支持 attach 到正在运行的进程</li>
+<li>✅ 低开销，基于采样和事件计数</li>
+<li>✅ 可以统计函数调用次数和耗时</li>
+<li>✅ 无需修改程序源码或重新编译</li>
+<li>⏱️ <strong>耗时统计范围</strong>：默认统计墙上时钟时间（包括 IO、sleep 等），也可配置为统计 CPU 时间</li>
+</ul>
+<p><strong>权限要求</strong>：</p>
+<ul>
+<li><strong>root 权限</strong>：最直接的方式，拥有所有 perf 功能</li>
+<li><strong>非 root 用户</strong>：需要设置 <code>/proc/sys/kernel/perf_event_paranoid</code>：<ul>
+<li><code>-1</code>：允许所有用户使用 perf（不推荐，安全风险）</li>
+<li><code>0</code>：允许用户分析自己的进程</li>
+<li><code>1</code>：允许用户分析自己的进程和内核（默认值）</li>
+<li><code>2</code>：只允许 root 使用 perf</li>
+</ul>
+</li>
+<li><strong>attach 到其他用户的进程</strong>：需要 root 权限或 <code>CAP_SYS_PTRACE</code> 能力</li>
+<li><strong>查看内核符号</strong>：需要 root 权限或设置 <code>perf_event_paranoid &lt;= 1</code></li>
+</ul>
+<p><strong>限制</strong>：</p>
+<ul>
+<li>统计详细耗时需要额外脚本处理</li>
+</ul>
+<p><strong>使用示例</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 统计函数调用次数</span></span><br><span class="line">perf probe -x ./program function_name</span><br><span class="line">perf record -e probe_program:function_name ./program</span><br><span class="line"></span><br><span class="line"><span class="comment"># 统计函数耗时（需要自定义脚本或结合其他工具）</span></span><br><span class="line">perf record -g -p &lt;pid&gt;  <span class="comment"># attach 到运行中的进程</span></span><br><span class="line">perf report</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-DTrace"><a href="#5-DTrace" class="headerlink" title="5. DTrace"></a>5. DTrace</h3><p><strong>简介</strong>：Sun Microsystems 开发的动态跟踪框架，现支持 Solaris、FreeBSD、macOS。</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>✅ 支持 attach 到正在运行的进程</li>
+<li>✅ 可以统计函数调用次数和耗时（min&#x2F;max&#x2F;avg&#x2F;total）</li>
+<li>✅ 低开销，功能强大</li>
+<li>✅ 支持聚合统计（aggregations）</li>
+<li>⏱️ <strong>耗时统计范围</strong>：统计墙上时钟时间（包括 IO、sleep 等所有时间）</li>
+</ul>
+<p><strong>权限要求</strong>：</p>
+<ul>
+<li><strong>macOS</strong>：<ul>
+<li>需要关闭 SIP（System Integrity Protection）或使用特殊权限</li>
+<li>或者使用 <code>sudo</code> 运行（需要管理员权限）</li>
+</ul>
+</li>
+<li><strong>Solaris&#x2F;FreeBSD</strong>：<ul>
+<li>需要 root 权限或 <code>dtrace_kernel</code> 权限</li>
+</ul>
+</li>
+<li><strong>Linux</strong>：<ul>
+<li>支持有限（需要 Oracle Linux 或通过 SystemTap）</li>
+<li>通常需要 root 权限</li>
+</ul>
+</li>
+</ul>
+<p><strong>限制</strong>：</p>
+<ul>
+<li>Linux 上支持有限（需要 Oracle Linux 或通过 SystemTap）</li>
+</ul>
+<p><strong>使用示例</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">#!/usr/sbin/dtrace -s</span><br><span class="line"></span><br><span class="line">pid$target:target:function_name:entry</span><br><span class="line">&#123;</span><br><span class="line">    self-&gt;start = timestamp;</span><br><span class="line">    @count[probefunc] = count();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">pid$target:target:function_name:return</span><br><span class="line">/self-&gt;start/</span><br><span class="line">&#123;</span><br><span class="line">    this-&gt;elapsed = timestamp - self-&gt;start;</span><br><span class="line">    @time[&quot;total&quot;] = sum(this-&gt;elapsed);</span><br><span class="line">    @time[&quot;avg&quot;] = avg(this-&gt;elapsed);</span><br><span class="line">    @time[&quot;min&quot;] = min(this-&gt;elapsed);</span><br><span class="line">    @time[&quot;max&quot;] = max(this-&gt;elapsed);</span><br><span class="line">    self-&gt;start = 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">END</span><br><span class="line">&#123;</span><br><span class="line">    printa(&quot;调用次数: %@d\n&quot;, @count);</span><br><span class="line">    printa(&quot;总耗时: %@d ns\n&quot;, @time[&quot;total&quot;]);</span><br><span class="line">    printa(&quot;平均耗时: %@d ns\n&quot;, @time[&quot;avg&quot;]);</span><br><span class="line">    printa(&quot;最小耗时: %@d ns\n&quot;, @time[&quot;min&quot;]);</span><br><span class="line">    printa(&quot;最大耗时: %@d ns\n&quot;, @time[&quot;max&quot;]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># 使用方式</span><br><span class="line">dtrace -s script.d -p &lt;pid&gt;</span><br></pre></td></tr></table></figure>
+
+
+<p><strong>简介</strong>：基于 eBPF 的轻量级动态追踪工具，专门用于监控和分析正在运行的 C&#x2F;C++ 程序。bptrace 提供了简洁的命令行接口，可以方便地统计函数调用次数和执行时间。</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>✅ 支持 attach 到正在运行的进程</li>
+<li>✅ 可以统计函数调用次数和耗时（min&#x2F;max&#x2F;avg&#x2F;total）</li>
+<li>✅ 极低开销，基于 eBPF 技术</li>
+<li>✅ 简洁的命令行接口，易于使用</li>
+<li>✅ 无需修改程序源码或重新编译</li>
+<li>⏱️ <strong>耗时统计范围</strong>：统计墙上时钟时间（包括 IO、sleep 等所有时间）</li>
+</ul>
+<p><strong>权限要求</strong>：</p>
+<ul>
+<li><strong>root 权限</strong>：拥有所有 bptrace 功能</li>
+<li><strong>非 root 用户</strong>：需要 <code>CAP_BPF</code> 能力（Linux 5.8+）：<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 授予用户 CAP_BPF 能力</span></span><br><span class="line">sudo <span class="built_in">setcap</span> cap_bpf+ep /usr/bin/bptrace</span><br></pre></td></tr></table></figure></li>
+<li><strong>attach 到其他用户的进程</strong>：需要 root 权限或 <code>CAP_SYS_PTRACE</code> 能力</li>
+<li><strong>加载 eBPF 程序</strong>：需要 root 权限或 <code>CAP_BPF</code> 能力（Linux 5.8+）</li>
+</ul>
+<p><strong>限制</strong>：</p>
+<ul>
+<li>需要 Linux 内核支持 eBPF（通常 4.1+）</li>
+<li>Linux 5.8+ 才支持非 root 用户使用 CAP_BPF</li>
+<li>主要适用于用户态函数追踪</li>
+<li>需要目标程序包含调试符号信息（或使用地址）</li>
+</ul>
+<p><strong>使用示例</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 统计函数调用次数</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;target_function&#x27;</span> -c</span><br><span class="line"></span><br><span class="line"><span class="comment"># 统计函数耗时（包括平均、最小、最大、总耗时）</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;target_function&#x27;</span> -t</span><br><span class="line"></span><br><span class="line"><span class="comment"># 同时统计调用次数和耗时</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;target_function&#x27;</span> -c -t</span><br><span class="line"></span><br><span class="line"><span class="comment"># 统计多个函数</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;function1,function2&#x27;</span> -c -t</span><br><span class="line"></span><br><span class="line"><span class="comment"># 指定输出格式</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;target_function&#x27;</span> -t --format json</span><br><span class="line"></span><br><span class="line"><span class="comment"># 持续监控并定期输出统计信息</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;target_function&#x27;</span> -t --interval 5</span><br></pre></td></tr></table></figure>
+
+<p><strong>输出示例</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Function: target_function</span><br><span class="line">  Call Count: 1000</span><br><span class="line">  Total Time: 50000 us</span><br><span class="line">  Average Time: 50 us</span><br><span class="line">  Min Time: 10 us</span><br><span class="line">  Max Time: 200 us</span><br></pre></td></tr></table></figure>
+
+<p><strong>与 eBPF&#x2F;BCC 的关系</strong>：</p>
+<ul>
+<li>bptrace 可以看作是 BCC 工具集的简化版本，专门针对函数级性能分析</li>
+<li>相比 BCC，bptrace 提供了更简洁的命令行接口，适合快速分析</li>
+<li>如果需要更复杂的自定义逻辑，仍需要使用 BCC 编写 Python&#x2F;C 脚本</li>
+</ul>
+<h3 id="6-Intel-Pin"><a href="#6-Intel-Pin" class="headerlink" title="6. Intel Pin"></a>6. Intel Pin</h3><p><strong>简介</strong>：Intel 开发的动态二进制插桩框架，功能强大但开销较高。</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>❌ <strong>不支持 attach</strong>，必须在程序启动时插桩</li>
+<li>✅ 可以统计函数调用次数和耗时（min&#x2F;max&#x2F;avg&#x2F;total）</li>
+<li>✅ 支持细粒度插桩（指令级）</li>
+<li>⚠️ 高开销（通常 10-100 倍）</li>
+<li>⏱️ <strong>耗时统计范围</strong>：统计墙上时钟时间（包括 IO、sleep 等所有时间）</li>
+</ul>
+<p><strong>权限要求</strong>：</p>
+<ul>
+<li><strong>普通用户权限</strong>：Intel Pin 不需要特殊权限，普通用户即可使用</li>
+<li><strong>读取目标程序</strong>：需要目标程序的读取权限</li>
+<li><strong>写入输出文件</strong>：需要输出目录的写入权限</li>
+</ul>
+<p><strong>限制</strong>：</p>
+<ul>
+<li>不支持 attach 到运行中的进程</li>
+<li>高开销，不适合生产环境</li>
+<li>主要适用于详细分析和研究</li>
+</ul>
+<p><strong>使用示例</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用 Pin 工具统计函数调用</span></span><br><span class="line">pin -t <span class="built_in">source</span>/tools/ManualExamples/obj-intel64/inscount0.so -- ./program</span><br><span class="line"></span><br><span class="line"><span class="comment"># 自定义 Pin 工具统计函数耗时</span></span><br><span class="line"><span class="comment"># 需要编写 Pin 工具（C++）</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="7-DynamoRIO"><a href="#7-DynamoRIO" class="headerlink" title="7. DynamoRIO"></a>7. DynamoRIO</h3><p><strong>简介</strong>：跨平台的动态二进制插桩框架，支持 Windows、Linux、macOS。</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>❌ <strong>不支持 attach</strong>，必须在程序启动时插桩</li>
+<li>✅ 可以统计函数调用次数和耗时（min&#x2F;max&#x2F;avg&#x2F;total）</li>
+<li>✅ 跨平台支持</li>
+<li>⚠️ 高开销</li>
+<li>⏱️ <strong>耗时统计范围</strong>：统计墙上时钟时间（包括 IO、sleep 等所有时间）</li>
+</ul>
+<p><strong>权限要求</strong>：</p>
+<ul>
+<li><strong>普通用户权限</strong>：DynamoRIO 不需要特殊权限，普通用户即可使用</li>
+<li><strong>读取目标程序</strong>：需要目标程序的读取权限</li>
+<li><strong>写入输出文件</strong>：需要输出目录的写入权限</li>
+<li><strong>Windows</strong>：可能需要管理员权限（取决于目标程序）</li>
+</ul>
+<p><strong>限制</strong>：</p>
+<ul>
+<li>不支持 attach 到运行中的进程</li>
+<li>高开销</li>
+<li>需要编写客户端工具</li>
+</ul>
+<p><strong>使用示例</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用 DynamoRIO 工具</span></span><br><span class="line">drrun -tool calltrace -- ./program</span><br><span class="line">drrun -tool memtrace -- ./program</span><br><span class="line"></span><br><span class="line"><span class="comment"># 自定义工具统计函数耗时</span></span><br><span class="line"><span class="comment"># 需要编写 DynamoRIO 客户端（C++）</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="8-Valgrind-Callgrind"><a href="#8-Valgrind-Callgrind" class="headerlink" title="8. Valgrind Callgrind"></a>8. Valgrind Callgrind</h3><p><strong>简介</strong>：Valgrind 工具集中的调用图分析工具。</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>❌ <strong>不支持 attach</strong>，必须在程序启动时插桩</li>
+<li>✅ 可以统计函数调用次数和耗时</li>
+<li>✅ 生成详细的调用图</li>
+<li>⚠️ 极高开销（通常 20-100 倍）</li>
+<li>⏱️ <strong>耗时统计范围</strong>：统计 CPU 时间（<strong>不包括</strong> IO 等待和 sleep 时间），只统计函数在 CPU 上实际执行的时间</li>
+</ul>
+<p><strong>权限要求</strong>：</p>
+<ul>
+<li><strong>普通用户权限</strong>：Valgrind 不需要特殊权限，普通用户即可使用</li>
+<li><strong>读取目标程序</strong>：需要目标程序的读取权限</li>
+<li><strong>写入输出文件</strong>：需要输出目录的写入权限</li>
+<li><strong>内存访问</strong>：Valgrind 需要访问进程内存，但不需要 root 权限</li>
+</ul>
+<p><strong>限制</strong>：</p>
+<ul>
+<li>不支持 attach</li>
+<li>极高开销，不适合生产环境</li>
+<li>主要用于开发阶段的详细分析</li>
+</ul>
+<p><strong>使用示例</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用 Callgrind 分析</span></span><br><span class="line">valgrind --tool=callgrind ./program</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看结果</span></span><br><span class="line">callgrind_annotate callgrind.out.&lt;pid&gt;</span><br><span class="line">kcachegrind callgrind.out.&lt;pid&gt;  <span class="comment"># GUI 工具</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="9-LD-PRELOAD-自定义库"><a href="#9-LD-PRELOAD-自定义库" class="headerlink" title="9. LD_PRELOAD + 自定义库"></a>9. LD_PRELOAD + 自定义库</h3><p><strong>简介</strong>：通过 LD_PRELOAD 机制拦截库函数调用，实现简单的动态插桩。</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>❌ <strong>不支持 attach</strong>，需要在启动时设置环境变量</li>
+<li>✅ 可以统计库函数调用次数和耗时</li>
+<li>✅ 低开销</li>
+<li>⚠️ 只能拦截库函数，不能拦截静态函数</li>
+<li>⏱️ <strong>耗时统计范围</strong>：统计墙上时钟时间（包括 IO、sleep 等所有时间），取决于使用的计时函数（如 <code>gettimeofday()</code>）</li>
+</ul>
+<p><strong>权限要求</strong>：</p>
+<ul>
+<li><strong>普通用户权限</strong>：LD_PRELOAD 不需要特殊权限，普通用户即可使用</li>
+<li><strong>读取目标程序</strong>：需要目标程序的读取权限</li>
+<li><strong>加载共享库</strong>：需要共享库的读取权限</li>
+<li><strong>设置环境变量</strong>：需要设置 <code>LD_PRELOAD</code> 环境变量的权限（通常都有）</li>
+</ul>
+<p><strong>限制</strong>：</p>
+<ul>
+<li>不支持 attach</li>
+<li>只能拦截库函数，不能拦截静态函数或内联函数</li>
+<li>需要手动编写包装代码</li>
+</ul>
+<p><strong>使用示例</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// wrapper.c - 包装库函数</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> _GNU_SOURCE</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;dlfcn.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;time.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/time.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">unsigned</span> <span class="type">long</span> call_count = <span class="number">0</span>;</span><br><span class="line"><span class="type">static</span> <span class="type">unsigned</span> <span class="type">long</span> total_time = <span class="number">0</span>;</span><br><span class="line"><span class="type">static</span> <span class="type">unsigned</span> <span class="type">long</span> min_time = ULONG_MAX;</span><br><span class="line"><span class="type">static</span> <span class="type">unsigned</span> <span class="type">long</span> max_time = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> __attribute__((constructor)) init() &#123;</span><br><span class="line">    <span class="comment">// 初始化</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> __attribute__((destructor)) fini() &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;调用次数: %lu\n&quot;</span>, call_count);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;总耗时: %lu us\n&quot;</span>, total_time);</span><br><span class="line">    <span class="keyword">if</span> (call_count &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;平均耗时: %lu us\n&quot;</span>, total_time / call_count);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;最小耗时: %lu us\n&quot;</span>, min_time);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;最大耗时: %lu us\n&quot;</span>, max_time);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 包装目标函数</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">target_function</span><span class="params">(<span class="type">int</span> arg)</span> &#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> <span class="title">start</span>, <span class="title">end</span>;</span></span><br><span class="line">    gettimeofday(&amp;start, <span class="literal">NULL</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 调用原始函数</span></span><br><span class="line">    <span class="type">int</span> (*original_func)(<span class="type">int</span>) = dlsym(RTLD_NEXT, <span class="string">&quot;target_function&quot;</span>);</span><br><span class="line">    <span class="type">int</span> result = original_func(arg);</span><br><span class="line">    </span><br><span class="line">    gettimeofday(&amp;end, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> elapsed = (end.tv_sec - start.tv_sec) * <span class="number">1000000</span> + </span><br><span class="line">                           (end.tv_usec - start.tv_usec);</span><br><span class="line">    </span><br><span class="line">    call_count++;</span><br><span class="line">    total_time += elapsed;</span><br><span class="line">    <span class="keyword">if</span> (elapsed &lt; min_time) min_time = elapsed;</span><br><span class="line">    <span class="keyword">if</span> (elapsed &gt; max_time) max_time = elapsed;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 编译包装库</span></span><br><span class="line">gcc -shared -fPIC -o wrapper.so wrapper.c -ldl</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用</span></span><br><span class="line">LD_PRELOAD=./wrapper.so ./program</span><br></pre></td></tr></table></figure>
+
+<h3 id="10-ltrace"><a href="#10-ltrace" class="headerlink" title="10. ltrace"></a>10. ltrace</h3><p><strong>简介</strong>：Linux 库函数调用跟踪工具。</p>
+<p><strong>特点</strong>：</p>
+<ul>
+<li>✅ 支持 attach 到正在运行的进程</li>
+<li>✅ 可以统计库函数调用次数</li>
+<li>⚠️ 只能统计库函数，不能统计自定义函数</li>
+<li>⚠️ 耗时统计功能有限</li>
+<li>⏱️ <strong>耗时统计范围</strong>：统计墙上时钟时间（包括 IO、sleep 等所有时间），但功能有限</li>
+</ul>
+<p><strong>权限要求</strong>：</p>
+<ul>
+<li><strong>跟踪自己的进程</strong>：普通用户权限即可</li>
+<li><strong>attach 到其他用户的进程</strong>：需要 root 权限或 <code>CAP_SYS_PTRACE</code> 能力</li>
+<li><strong>读取目标程序</strong>：需要目标程序的读取权限</li>
+<li><strong>ptrace 系统调用</strong>：attach 功能依赖 ptrace，受 <code>/proc/sys/kernel/yama/ptrace_scope</code> 限制：<ul>
+<li><code>0</code>：允许同一用户调试其权限范围内的任意进程</li>
+<li><code>1</code>：只允许调试直接子进程（默认值）</li>
+<li><code>2</code>：只有 root 或具备 <code>CAP_SYS_PTRACE</code> 的进程可以使用 ptrace</li>
+<li><code>3</code>：完全禁用 ptrace</li>
+</ul>
+</li>
+</ul>
+<p><strong>限制</strong>：</p>
+<ul>
+<li>只能跟踪库函数</li>
+<li>耗时统计功能有限</li>
+<li>不适合统计自定义函数</li>
+</ul>
+<p><strong>使用示例</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 跟踪库函数调用</span></span><br><span class="line">ltrace -p &lt;pid&gt; -c  <span class="comment"># 统计调用次数</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 跟踪特定函数</span></span><br><span class="line">ltrace -p &lt;pid&gt; -e <span class="string">&#x27;malloc+free&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="耗时统计范围详解"><a href="#耗时统计范围详解" class="headerlink" title="耗时统计范围详解"></a>耗时统计范围详解</h2><h3 id="墙上时钟时间-vs-CPU-时间"><a href="#墙上时钟时间-vs-CPU-时间" class="headerlink" title="墙上时钟时间 vs CPU 时间"></a>墙上时钟时间 vs CPU 时间</h3><p>理解不同工具统计的耗时范围对于正确解读性能数据至关重要：</p>
+<h4 id="1-墙上时钟时间（Wall-clock-Time）"><a href="#1-墙上时钟时间（Wall-clock-Time）" class="headerlink" title="1. 墙上时钟时间（Wall-clock Time）"></a>1. 墙上时钟时间（Wall-clock Time）</h4><p><strong>包括的内容</strong>：</p>
+<ul>
+<li>✅ CPU 执行时间</li>
+<li>✅ IO 等待时间（文件读写、网络通信等）</li>
+<li>✅ sleep 时间（<code>sleep()</code>, <code>usleep()</code>, <code>nanosleep()</code> 等）</li>
+<li>✅ 线程阻塞时间（等待锁、条件变量等）</li>
+<li>✅ 上下文切换时间</li>
+</ul>
+<p><strong>适用场景</strong>：</p>
+<ul>
+<li>了解函数的”真实”执行时间</li>
+<li>分析 IO 密集型函数的性能</li>
+<li>诊断包含阻塞操作的函数</li>
+<li>评估用户体验相关的性能指标</li>
+</ul>
+<p><strong>示例</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">slow_function</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="comment">// CPU 执行：1ms</span></span><br><span class="line">    do_computation();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// IO 等待：100ms</span></span><br><span class="line">    read_from_disk();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// sleep：50ms</span></span><br><span class="line">    sleep(<span class="number">0.05</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 总墙上时钟时间：~151ms</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>使用墙上时钟时间的工具</strong>：</p>
+<ul>
+<li>SystemTap、DTrace、eBPF&#x2F;BCC、bptrace</li>
+<li>Intel Pin、DynamoRIO</li>
+<li>LD_PRELOAD（使用 <code>gettimeofday()</code> 等）</li>
+<li>perf（默认配置）</li>
+</ul>
+<h4 id="2-CPU-时间（CPU-Time）"><a href="#2-CPU-时间（CPU-Time）" class="headerlink" title="2. CPU 时间（CPU Time）"></a>2. CPU 时间（CPU Time）</h4><p><strong>包括的内容</strong>：</p>
+<ul>
+<li>✅ CPU 执行时间</li>
+<li>❌ <strong>不包括</strong> IO 等待时间</li>
+<li>❌ <strong>不包括</strong> sleep 时间</li>
+<li>❌ <strong>不包括</strong> 线程阻塞时间</li>
+</ul>
+<p><strong>适用场景</strong>：</p>
+<ul>
+<li>分析 CPU 密集型函数的性能</li>
+<li>评估算法的计算复杂度</li>
+<li>识别 CPU 热点</li>
+<li>优化计算逻辑</li>
+</ul>
+<p><strong>示例</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">slow_function</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="comment">// CPU 执行：1ms（计入）</span></span><br><span class="line">    do_computation();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// IO 等待：100ms（不计入）</span></span><br><span class="line">    read_from_disk();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// sleep：50ms（不计入）</span></span><br><span class="line">    sleep(<span class="number">0.05</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// CPU 时间：~1ms（只包括 CPU 执行时间）</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>使用 CPU 时间的工具</strong>：</p>
+<ul>
+<li>Valgrind Callgrind（主要统计 CPU 时间）</li>
+</ul>
+<h4 id="3-实际应用建议"><a href="#3-实际应用建议" class="headerlink" title="3. 实际应用建议"></a>3. 实际应用建议</h4><p><strong>选择统计范围的原则</strong>：</p>
+<ol>
+<li><p><strong>IO 密集型函数</strong>：使用墙上时钟时间</p>
+<ul>
+<li>文件操作、网络通信、数据库查询</li>
+<li>需要了解包括等待时间在内的总耗时</li>
+</ul>
+</li>
+<li><p><strong>CPU 密集型函数</strong>：两种时间都关注</p>
+<ul>
+<li>算法计算、数据处理</li>
+<li>CPU 时间用于评估算法效率</li>
+<li>墙上时钟时间用于评估用户体验</li>
+</ul>
+</li>
+<li><p><strong>混合型函数</strong>：优先使用墙上时钟时间</p>
+<ul>
+<li>大多数实际应用中的函数</li>
+<li>墙上时钟时间更能反映真实性能</li>
+</ul>
+</li>
+</ol>
+<p><strong>注意事项</strong>：</p>
+<ul>
+<li>⚠️ <strong>多线程环境</strong>：墙上时钟时间可能小于 CPU 时间（并行执行）</li>
+<li>⚠️ <strong>IO 操作</strong>：如果函数包含 IO，墙上时钟时间会显著大于 CPU 时间</li>
+<li>⚠️ <strong>sleep 操作</strong>：如果函数包含 sleep，墙上时钟时间会包含 sleep 时间</li>
+<li>⚠️ <strong>上下文切换</strong>：频繁的上下文切换会增加墙上时钟时间</li>
+</ul>
+<p><strong>如何区分 CPU 时间和 IO 时间</strong>：</p>
+<p>如果使用统计墙上时钟时间的工具，可以通过以下方式区分：</p>
+<ol>
+<li><strong>结合系统调用跟踪</strong>：使用 <code>strace</code> 或 <code>perf trace</code> 查看 IO 系统调用</li>
+<li><strong>分析函数内部</strong>：如果函数耗时很长但 CPU 使用率低，可能是 IO 等待</li>
+<li><strong>使用 perf 的 CPU 时间模式</strong>：<code>perf record -e cpu-clock</code> 可以统计 CPU 时间</li>
+</ol>
+<h2 id="权限要求总结"><a href="#权限要求总结" class="headerlink" title="权限要求总结"></a>权限要求总结</h2><h3 id="权限类型说明"><a href="#权限类型说明" class="headerlink" title="权限类型说明"></a>权限类型说明</h3><h4 id="1-root-权限"><a href="#1-root-权限" class="headerlink" title="1. root 权限"></a>1. root 权限</h4><ul>
+<li><strong>含义</strong>：拥有系统最高权限</li>
+<li><strong>获取方式</strong>：使用 <code>sudo</code> 或切换到 root 用户</li>
+<li><strong>适用工具</strong>：perf、SystemTap、DTrace、eBPF&#x2F;BCC、bptrace（默认需要）</li>
+</ul>
+<h4 id="2-Linux-Capabilities（能力）"><a href="#2-Linux-Capabilities（能力）" class="headerlink" title="2. Linux Capabilities（能力）"></a>2. Linux Capabilities（能力）</h4><p>现代 Linux 系统使用 capabilities 机制，允许非 root 用户执行特定操作：</p>
+<ul>
+<li><strong>CAP_BPF</strong>：加载 eBPF 程序（Linux 5.8+）<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo <span class="built_in">setcap</span> cap_bpf+ep /path/to/tool</span><br></pre></td></tr></table></figure></li>
+<li><strong>CAP_SYS_PTRACE</strong>：使用 ptrace attach 到其他进程<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo <span class="built_in">setcap</span> cap_sys_ptrace+ep /path/to/tool</span><br></pre></td></tr></table></figure></li>
+<li><strong>CAP_SYS_ADMIN</strong>：访问内核符号和系统管理功能</li>
+<li><strong>CAP_SYS_MODULE</strong>：加载内核模块</li>
+</ul>
+<h4 id="3-普通用户权限"><a href="#3-普通用户权限" class="headerlink" title="3. 普通用户权限"></a>3. 普通用户权限</h4><ul>
+<li><strong>含义</strong>：不需要特殊权限，普通用户即可使用</li>
+<li><strong>适用工具</strong>：Intel Pin、DynamoRIO、Valgrind Callgrind、LD_PRELOAD</li>
+</ul>
+<h4 id="4-组权限"><a href="#4-组权限" class="headerlink" title="4. 组权限"></a>4. 组权限</h4><ul>
+<li><strong>stapdev 组</strong>：SystemTap 开发组，可以加载任意模块</li>
+<li><strong>stapusr 组</strong>：SystemTap 用户组，只能使用预编译模块</li>
+</ul>
+<h3 id="权限配置示例"><a href="#权限配置示例" class="headerlink" title="权限配置示例"></a>权限配置示例</h3><h4 id="配置-perf-非-root-使用"><a href="#配置-perf-非-root-使用" class="headerlink" title="配置 perf 非 root 使用"></a>配置 perf 非 root 使用</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 允许用户分析自己的进程</span></span><br><span class="line"><span class="built_in">echo</span> 0 | sudo <span class="built_in">tee</span> /proc/sys/kernel/perf_event_paranoid</span><br><span class="line"></span><br><span class="line"><span class="comment"># 或永久配置</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;kernel.perf_event_paranoid = 0&quot;</span> | sudo <span class="built_in">tee</span> -a /etc/sysctl.conf</span><br><span class="line">sudo sysctl -p</span><br></pre></td></tr></table></figure>
+
+<h4 id="配置-eBPF-BCC-非-root-使用（Linux-5-8-）"><a href="#配置-eBPF-BCC-非-root-使用（Linux-5-8-）" class="headerlink" title="配置 eBPF&#x2F;BCC 非 root 使用（Linux 5.8+）"></a>配置 eBPF&#x2F;BCC 非 root 使用（Linux 5.8+）</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 授予 Python 解释器 CAP_BPF 能力</span></span><br><span class="line">sudo <span class="built_in">setcap</span> cap_bpf+ep /usr/bin/python3</span><br><span class="line"></span><br><span class="line"><span class="comment"># 或授予特定 BCC 工具</span></span><br><span class="line">sudo <span class="built_in">setcap</span> cap_bpf+ep /usr/share/bcc/tools/funccount</span><br><span class="line">sudo <span class="built_in">setcap</span> cap_bpf+ep /usr/share/bcc/tools/funclatency</span><br></pre></td></tr></table></figure>
+
+<h4 id="配置-SystemTap-非-root-使用"><a href="#配置-SystemTap-非-root-使用" class="headerlink" title="配置 SystemTap 非 root 使用"></a>配置 SystemTap 非 root 使用</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 将用户添加到 stapusr 组</span></span><br><span class="line">sudo usermod -a -G stapusr <span class="variable">$USER</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 需要重新登录使组权限生效</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="配置-ptrace（用于-attach-功能）"><a href="#配置-ptrace（用于-attach-功能）" class="headerlink" title="配置 ptrace（用于 attach 功能）"></a>配置 ptrace（用于 attach 功能）</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看当前 ptrace_scope 设置</span></span><br><span class="line"><span class="built_in">cat</span> /proc/sys/kernel/yama/ptrace_scope</span><br><span class="line"></span><br><span class="line"><span class="comment"># 允许同一用户调试其权限范围内的进程（开发环境）</span></span><br><span class="line"><span class="built_in">echo</span> 0 | sudo <span class="built_in">tee</span> /proc/sys/kernel/yama/ptrace_scope</span><br><span class="line"></span><br><span class="line"><span class="comment"># 或永久配置</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;kernel.yama.ptrace_scope = 0&quot;</span> | sudo <span class="built_in">tee</span> -a /etc/sysctl.conf</span><br></pre></td></tr></table></figure>
+
+<h3 id="权限要求快速参考"><a href="#权限要求快速参考" class="headerlink" title="权限要求快速参考"></a>权限要求快速参考</h3><table>
+<thead>
+<tr>
+<th>工具</th>
+<th>跟踪自己的进程</th>
+<th>attach 到其他用户的进程</th>
+<th>内核级插桩</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>eBPF&#x2F;BCC</strong></td>
+<td>CAP_BPF（Linux 5.8+）</td>
+<td>root</td>
+<td>root</td>
+</tr>
+<tr>
+<td><strong>bptrace</strong></td>
+<td>CAP_BPF（Linux 5.8+）</td>
+<td>root</td>
+<td>root</td>
+</tr>
+<tr>
+<td><strong>SystemTap</strong></td>
+<td>stapusr 组</td>
+<td>root</td>
+<td>root</td>
+</tr>
+<tr>
+<td><strong>perf</strong></td>
+<td>普通用户（需配置）</td>
+<td>root</td>
+<td>root</td>
+</tr>
+<tr>
+<td><strong>DTrace</strong></td>
+<td>root</td>
+<td>root</td>
+<td>root</td>
+</tr>
+<tr>
+<td><strong>Intel Pin</strong></td>
+<td>普通用户</td>
+<td>N&#x2F;A</td>
+<td>N&#x2F;A</td>
+</tr>
+<tr>
+<td><strong>DynamoRIO</strong></td>
+<td>普通用户</td>
+<td>N&#x2F;A</td>
+<td>N&#x2F;A</td>
+</tr>
+<tr>
+<td><strong>Valgrind</strong></td>
+<td>普通用户</td>
+<td>N&#x2F;A</td>
+<td>N&#x2F;A</td>
+</tr>
+<tr>
+<td><strong>LD_PRELOAD</strong></td>
+<td>普通用户</td>
+<td>N&#x2F;A</td>
+<td>N&#x2F;A</td>
+</tr>
+<tr>
+<td><strong>ltrace</strong></td>
+<td>普通用户</td>
+<td>root 或 CAP_SYS_PTRACE</td>
+<td>N&#x2F;A</td>
+</tr>
+</tbody></table>
+<h3 id="安全注意事项"><a href="#安全注意事项" class="headerlink" title="安全注意事项"></a>安全注意事项</h3><p>⚠️ <strong>生产环境建议</strong>：</p>
+<ul>
+<li>避免使用 <code>perf_event_paranoid = -1</code>（允许所有用户）</li>
+<li>避免将用户添加到 <code>stapdev</code> 组（安全风险）</li>
+<li>谨慎配置 <code>ptrace_scope = 0</code>（允许任意进程调试）</li>
+<li>使用 capabilities 而非 root 权限（最小权限原则）</li>
+<li>定期审查已授予的 capabilities</li>
+</ul>
+<h2 id="工具选择建议"><a href="#工具选择建议" class="headerlink" title="工具选择建议"></a>工具选择建议</h2><h3 id="需要-attach-到运行中进程"><a href="#需要-attach-到运行中进程" class="headerlink" title="需要 attach 到运行中进程"></a>需要 attach 到运行中进程</h3><ol>
+<li><strong>eBPF&#x2F;BCC</strong>（推荐）：现代、低开销、功能强大</li>
+<li><strong>bptrace</strong>（推荐）：简洁易用，专门针对函数级性能分析</li>
+<li><strong>SystemTap</strong>：功能强大，脚本灵活</li>
+<li><strong>perf + uprobes</strong>：系统自带，简单易用</li>
+<li><strong>DTrace</strong>：如果使用 Solaris&#x2F;FreeBSD&#x2F;macOS</li>
+</ol>
+<h3 id="不需要-attach（可以重新启动程序）"><a href="#不需要-attach（可以重新启动程序）" class="headerlink" title="不需要 attach（可以重新启动程序）"></a>不需要 attach（可以重新启动程序）</h3><ol>
+<li><strong>Intel Pin &#x2F; DynamoRIO</strong>：需要详细分析时使用</li>
+<li><strong>Valgrind Callgrind</strong>：需要调用图分析时使用</li>
+<li><strong>LD_PRELOAD</strong>：简单场景，只统计库函数</li>
+</ol>
+<h3 id="统计指标对比"><a href="#统计指标对比" class="headerlink" title="统计指标对比"></a>统计指标对比</h3><table>
+<thead>
+<tr>
+<th>工具</th>
+<th>调用次数</th>
+<th>平均耗时</th>
+<th>最小耗时</th>
+<th>最大耗时</th>
+<th>总耗时</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>eBPF&#x2F;BCC</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>bptrace</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>SystemTap</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>perf + uprobes</td>
+<td>✅</td>
+<td>⚠️ 需脚本</td>
+<td>⚠️ 需脚本</td>
+<td>⚠️ 需脚本</td>
+<td>⚠️ 需脚本</td>
+</tr>
+<tr>
+<td>DTrace</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Intel Pin</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>DynamoRIO</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Valgrind Callgrind</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>LD_PRELOAD</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>ltrace</td>
+<td>✅</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+</tbody></table>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>对于 C&#x2F;C++ 程序的动态插桩，推荐使用以下工具：</p>
+<ol>
+<li><strong>生产环境 + 需要 attach</strong>：<strong>bptrace</strong>、<strong>eBPF&#x2F;BCC</strong> 或 <strong>SystemTap</strong></li>
+<li><strong>开发调试 + 详细分析</strong>：<strong>Intel Pin</strong> 或 <strong>DynamoRIO</strong></li>
+<li><strong>简单场景 + 库函数统计</strong>：<strong>LD_PRELOAD</strong></li>
+<li><strong>系统级分析</strong>：<strong>perf + uprobes</strong></li>
+</ol>
+<p>选择工具时需要考虑：</p>
+<ul>
+<li>是否需要 attach 到运行中的进程</li>
+<li>对性能开销的容忍度</li>
+<li>需要统计的详细程度</li>
+<li>系统平台和权限限制</li>
+<li><strong>耗时统计范围</strong>：大多数工具统计墙上时钟时间（包括 IO、sleep），只有 Valgrind Callgrind 统计 CPU 时间（不包括 IO、sleep）</li>
+<li><strong>权限要求</strong>：<ul>
+<li>内核级插桩工具（perf、SystemTap、eBPF&#x2F;BCC、bptrace）通常需要 root 权限或特殊 capabilities</li>
+<li>二进制插桩工具（Intel Pin、DynamoRIO、Valgrind）通常只需要普通用户权限</li>
+<li>attach 到其他用户的进程需要 root 权限或 <code>CAP_SYS_PTRACE</code> 能力</li>
+</ul>
+</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/12/03/perf/%E8%87%AA%E6%97%8B%E9%94%81%E9%80%80%E9%81%BF%E7%AE%97%E6%B3%95/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -219,7 +1043,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-04 11:04:41" itemprop="dateModified" datetime="2025-12-04T11:04:41+00:00">2025-12-04</time>
+                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
               </span>
 
           
@@ -816,7 +1640,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-04 11:04:41" itemprop="dateModified" datetime="2025-12-04T11:04:41+00:00">2025-12-04</time>
+                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
               </span>
 
           
@@ -1419,7 +2243,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-04 11:04:41" itemprop="dateModified" datetime="2025-12-04T11:04:41+00:00">2025-12-04</time>
+                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
               </span>
 
           
@@ -1563,7 +2387,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-04 11:04:41" itemprop="dateModified" datetime="2025-12-04T11:04:41+00:00">2025-12-04</time>
+                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
               </span>
 
           
@@ -1769,7 +2593,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-04 11:04:41" itemprop="dateModified" datetime="2025-12-04T11:04:41+00:00">2025-12-04</time>
+                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
               </span>
 
           
@@ -1834,7 +2658,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-04 11:04:41" itemprop="dateModified" datetime="2025-12-04T11:04:41+00:00">2025-12-04</time>
+                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
               </span>
 
           
@@ -1898,7 +2722,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-04 11:04:41" itemprop="dateModified" datetime="2025-12-04T11:04:41+00:00">2025-12-04</time>
+                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
               </span>
 
           
@@ -2007,7 +2831,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-04 11:04:41" itemprop="dateModified" datetime="2025-12-04T11:04:41+00:00">2025-12-04</time>
+                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2199,7 +3023,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-04 11:04:41" itemprop="dateModified" datetime="2025-12-04T11:04:41+00:00">2025-12-04</time>
+                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
               </span>
 
           
@@ -2221,471 +3045,6 @@
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ -fsanitize=thread test_memory_order_relaxed.cpp -lpthread</span><br></pre></td></tr></table></figure>
 
 <figure class="highlight cpp"><figcaption><span>test_memory_order_relaxed.cpp</span><a href="/blog/downloads/code/atomic/test_memory_order_relaxed.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;chrono&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;random&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">int</span> run_times = <span class="number">10</span>;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">uint32_t</span> num_threads = <span class="number">10</span>;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">uint64_t</span> increments_per_thread = <span class="number">1024</span> * <span class="number">1024</span> * <span class="number">32</span>;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">uint64_t</span> max_count = increments_per_thread * num_threads;</span><br><span class="line"></span><br><span class="line">atomic&lt;<span class="type">uint64_t</span>&gt; counter;</span><br><span class="line"></span><br><span class="line"><span class="comment">/** Random Delay in microseonds */</span></span><br><span class="line">std::random_device rd;</span><br><span class="line"><span class="function"><span class="keyword">thread_local</span> std::mt19937 <span class="title">gen</span><span class="params">(rd())</span></span>;</span><br><span class="line"><span class="keyword">thread_local</span> std::uniform_int_distribution&lt;&gt; <span class="built_in">dis</span>(<span class="number">0</span>, <span class="number">4095</span>);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">unpredictableDelay</span><span class="params">(<span class="type">int</span> extra = <span class="number">0</span>)</span> </span>{</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">dis</span>(gen) == <span class="number">0</span>) {</span><br><span class="line">        this_thread::<span class="built_in">sleep_for</span>(chrono::<span class="built_in">nanoseconds</span>(<span class="number">2000</span> + extra));</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">/** thread function for counting */</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">worker</span><span class="params">(<span class="type">int</span> id)</span> </span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; increments_per_thread; ++i) {</span><br><span class="line">        <span class="type">uint64_t</span> old = counter.<span class="built_in">load</span>(memory_order_relaxed);</span><br><span class="line">        <span class="comment">// 如果 load(relaxed) 不能看到当前最新值</span></span><br><span class="line">        <span class="comment">// 那么 CAS 就会加多次，最终结果会大于 max_count</span></span><br><span class="line">        <span class="keyword">while</span> (old &lt; max_count &amp;&amp;</span><br><span class="line">               !counter.<span class="built_in">compare_exchange_weak</span>(old, old + <span class="number">1</span>, memory_order_relaxed)) {</span><br><span class="line">            <span class="comment">// old is updated with the current value of counter</span></span><br><span class="line">            <span class="built_in">unpredictableDelay</span>(<span class="built_in">dis</span>(gen));</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    <span class="comment">// cout &lt;&lt; &quot;Worker &quot; &lt;&lt; id &lt;&lt; &quot; done.&quot; &lt;&lt; endl;</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">/** main function */</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> run = <span class="number">0</span>; run &lt; run_times; ++run) {</span><br><span class="line">        counter.<span class="built_in">store</span>(<span class="number">0</span>, memory_order_relaxed);</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Run &quot;</span> &lt;&lt; run &lt;&lt; <span class="string">&quot;: &quot;</span>;</span><br><span class="line">        thread threads[num_threads];</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; num_threads; ++i) {</span><br><span class="line">            threads[i] = <span class="built_in">thread</span>(worker, i);</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; num_threads; ++i) {</span><br><span class="line">            threads[i].<span class="built_in">join</span>();</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        cout &lt;&lt; (max_count == counter.<span class="built_in">load</span>() ? <span class="string">&quot;Correct&quot;</span> : <span class="string">&quot;Wrong&quot;</span>) &lt;&lt; endl;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/23/rdma/RDMA_RC%E9%80%9A%E4%BF%A1/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/09/23/rdma/RDMA_RC%E9%80%9A%E4%BF%A1/" class="post-title-link" itemprop="url">RDMA RC 通信</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-09-23 16:30:08" itemprop="dateCreated datePublished" datetime="2025-09-23T16:30:08+00:00">2025-09-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-04 11:04:41" itemprop="dateModified" datetime="2025-12-04T11:04:41+00:00">2025-12-04</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/RDMA/" itemprop="url" rel="index"><span itemprop="name">RDMA</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="RDMA-vs-TCP-IP-连接标识字段"><a href="#RDMA-vs-TCP-IP-连接标识字段" class="headerlink" title="RDMA vs TCP&#x2F;IP 连接标识字段"></a>RDMA vs TCP&#x2F;IP 连接标识字段</h2><table>
-<thead>
-<tr>
-<th align="center">字段名称</th>
-<th align="center">全称</th>
-<th align="center">作用说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">GID</td>
-<td align="center">Global Identifier</td>
-<td align="center">标识设备，类似于 IP 地址，128 位；RoCEv2 中为 IPv6 映射地址，InfiniBand 中由设备 GUID + 路由信息生成</td>
-</tr>
-<tr>
-<td align="center">QPN</td>
-<td align="center">Queue Pair Number</td>
-<td align="center">标识会话，每个 RDMA 会话使用一个 QP，QPN 是其唯一编号，类似于 TCP 的端口号</td>
-</tr>
-<tr>
-<td align="center">PSN</td>
-<td align="center">Packet Sequence Number</td>
-<td align="center">初始化连接时使用，用于数据包排序和连接建立，类似于 TCP 的序列号</td>
-</tr>
-<tr>
-<td align="center">LID</td>
-<td align="center">Local Identifier（可选）</td>
-<td align="center">InfiniBand fabric 中的本地路由地址，类似于交换机端口编号，仅在 InfiniBand 中使用</td>
-</tr>
-</tbody></table>
-<h2 id="InfiniBand-的连接建立流程（RC-模式）"><a href="#InfiniBand-的连接建立流程（RC-模式）" class="headerlink" title="InfiniBand 的连接建立流程（RC 模式）"></a>InfiniBand 的连接建立流程（RC 模式）</h2><table>
-<thead>
-<tr>
-<th align="center">阶段</th>
-<th align="center">状态</th>
-<th align="center">含义</th>
-<th align="center">关键配置项</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">1️⃣ INIT</td>
-<td align="center">IBV_QPS_INIT</td>
-<td align="center">初始化 QP</td>
-<td align="center">本地端口、访问权限、P_Key 等</td>
-</tr>
-<tr>
-<td align="center">2️⃣ RTR</td>
-<td align="center">IBV_QPS_RTR</td>
-<td align="center">Ready to Receive</td>
-<td align="center">远端 QPN、LID&#x2F;GID、PSN、MTU 等</td>
-</tr>
-<tr>
-<td align="center">3️⃣ RTS</td>
-<td align="center">IBV_QPS_RTS</td>
-<td align="center">Ready to Send</td>
-<td align="center">本地 PSN、重试参数、超时设置等</td>
-</tr>
-</tbody></table>
-<p>类比 TCP 的三次握手。</p>
-<p>为什么不像 TCP 那样自动握手？ InfiniBand 的设计目标是：</p>
-<ul>
-<li>极低延迟：避免协议协商，直接由应用控制连接建立。</li>
-<li>高吞吐：硬件直接处理数据流，减少内核干预。</li>
-<li>可预测性强：状态转换明确，调试和优化更容易。</li>
-<li>适用于受控环境：如 HPC、AI 训练、数据库加速，通常用于 HPC 或数据中心，不像 TCP 那样暴露在公网，不<br>需要防止恶意连接。（所以 QPN 一般是用户指定，且常常是顺序的；这与 TCP 的初始序列号截然不同）</li>
-</ul>
-<p>注：MTU 对比表</p>
-<table>
-<thead>
-<tr>
-<th align="center">技术类型</th>
-<th align="center">支持的 MTU 值（字节）</th>
-<th align="center">说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">Ethernet（标准）</td>
-<td align="center">1500</td>
-<td align="center">最常见的默认值，适用于大多数网络设备</td>
-</tr>
-<tr>
-<td align="center">InfiniBand</td>
-<td align="center">256, 512, 1024, 2048, 4096</td>
-<td align="center">固定值，由硬件和驱动支持</td>
-</tr>
-<tr>
-<td align="center">RoCE (RDMA over Converged Ethernet)</td>
-<td align="center">通常 ≤ Ethernet MTU（如 1500 或 9000）</td>
-<td align="center">实际使用值需减去 RoCE 协议头和 CRC，常见为 1024 或 4096</td>
-</tr>
-<tr>
-<td align="center">iWARP</td>
-<td align="center">受 TCP&#x2F;IP 栈限制，通常 ≤ 1500</td>
-<td align="center">依赖传统以太网 MTU，性能受限</td>
-</tr>
-</tbody></table>
-<p>InfiniBand 的 MTU 值由头文件 <code>&lt;infiniband/verbs.h&gt;</code> 定义：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">ibv_mtu</span> &#123;</span></span><br><span class="line">	IBV_MTU_256  = <span class="number">1</span>,</span><br><span class="line">	IBV_MTU_512  = <span class="number">2</span>,</span><br><span class="line">	IBV_MTU_1024 = <span class="number">3</span>,</span><br><span class="line">	IBV_MTU_2048 = <span class="number">4</span>,</span><br><span class="line">	IBV_MTU_4096 = <span class="number">5</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<h2 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h2><p><a target="_blank" rel="noopener" href="https://infiniband-doc.readthedocs.io/zh-cn/latest/8_ibv_examples/8_2_RDMA_RC_code.html">源码</a></p>
-<h3 id="resources-create"><a href="#resources-create" class="headerlink" title="resources_create"></a>resources_create</h3><ol>
-<li>TCP 建立连接 → 保存到 res.sock</li>
-<li>ibv_get_device_list</li>
-<li>ibv_get_device_name → 保存到 res.dev_name</li>
-<li>ibv_open_device → 保存到 res.ib_ctx</li>
-<li>ibv_query_port → 保存到 res.ib_port, res.port_attr</li>
-<li>ibv_alloc_pd → 保存到 res.pd</li>
-<li>ibv_create_cq → 保存到 res.cq</li>
-<li>malloc → 保存到 res.buf</li>
-<li>ibv_reg_mr → 保存到 res.mr</li>
-<li>ibv_create_qp → 保存到 res.qp</li>
-</ol>
-<h3 id="connect-qp"><a href="#connect-qp" class="headerlink" title="connect_qp"></a>connect_qp</h3><ol>
-<li>如果指定 gid_idx ，则以 ib_ctx 和 ib_port 调用 ibv_query_gid 查询本地的 gid；否则用 0 初始化<br>gid。</li>
-<li>填充 cm_con_data_t 结构体：<code>addr</code>(即 <code>res.buf</code>)、<code>mr-&gt;rkey</code>、<code>qp-&gt;qp_num</code>、<code>port_attr.lid</code></li>
-<li>通过 TCP socket 交换 cm_con_data_t 的信息，将远端 cm_con_data_t 保存到 res.remote_props</li>
-<li>调用 modify_qp_to_init（使用 ibv_modify_qp 修改 QP 的状态：RESET → INIT）</li>
-</ol>
-<table>
-<thead>
-<tr>
-<th align="center">参数字段</th>
-<th>作用描述</th>
-<th>是否必须设置</th>
-<th>设置原因</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">attr.qp_state &#x3D; IBV_QPS_INIT</td>
-<td>设置 QP 的目标状态为 INIT</td>
-<td>是</td>
-<td>明确告诉 HCA 要将 QP 转换到 INIT 状态</td>
-</tr>
-<tr>
-<td align="center">attr.port_num &#x3D; config.ib_port</td>
-<td>指定使用的物理端口号</td>
-<td>是</td>
-<td>多端口设备必须指定端口，否则无法建立连接</td>
-</tr>
-<tr>
-<td align="center">attr.pkey_index &#x3D; 0</td>
-<td>设置 P_Key 索引</td>
-<td>是</td>
-<td>InfiniBand 使用 P_Key 进行分区管理，默认使用索引 0</td>
-</tr>
-<tr>
-<td align="center"><code>attr.qp_access_flags = IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE</code></td>
-<td>设置本地和远程访问权限</td>
-<td>是</td>
-<td>决定远程节点是否能读写你的内存，必须在 INIT 状态设置</td>
-</tr>
-<tr>
-<td align="center"><code>flags = IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_ACCESS_FLAGS</code></td>
-<td>指定哪些字段有效并应用到 QP 属性结构体中</td>
-<td>是</td>
-<td>ibv_modify_qp 需要知道哪些字段是有效的，否则不会应用这些设置</td>
-</tr>
-</tbody></table>
-<p>注：InfiniBand 的分区类似以太网的 VLAN</p>
-<ul>
-<li>同一分区内的节点可以互通</li>
-<li>不同分区之间默认无法通信</li>
-<li>分区成员可以通过默认分区与 Subnet Manager 通信（如 IO 节点）</li>
-</ul>
-<ol start="5">
-<li>客户端调用 post_receive<ol>
-<li>准备 scatter&#x2F;gather entry：sge.addr, sge.length, seg.lkey</li>
-<li>准备 receive work request: wr_id, next（多个 receive wr 可以组成一个链表，一起提交）,<br>sge_list（sge 数组，多个不同内存区域的 sge 可一起提交）。</li>
-<li>调用 ibv_post_recv 提交 receive wr。</li>
-</ol>
-</li>
-<li>modify_qp_to_rtr：修改 QP 状态为 Readay to Receive：INIT → RTR</li>
-</ol>
-<table>
-<thead>
-<tr>
-<th align="center">字段&#x2F;参数名</th>
-<th align="center">类型&#x2F;值</th>
-<th align="center">说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">remote_qpn</td>
-<td align="center">uint32_t</td>
-<td align="center">远端 QP 编号，用于建立连接。</td>
-</tr>
-<tr>
-<td align="center">dlid</td>
-<td align="center">uint16_t</td>
-<td align="center">Destination LID：远端设备的本地标识符，用于本地路由。d 表示 destination（目的地）。</td>
-</tr>
-<tr>
-<td align="center">dgid</td>
-<td align="center">uint8_t*</td>
-<td align="center">Destination GID：远端设备的全局标识符，用于全局寻址。d 表示 destination（目的地）。</td>
-</tr>
-<tr>
-<td align="center">attr.qp_state</td>
-<td align="center">IBV_QPS_RTR</td>
-<td align="center">设置 QP 状态为 Ready to Receive。</td>
-</tr>
-<tr>
-<td align="center">attr.path_mtu</td>
-<td align="center">IBV_MTU_256</td>
-<td align="center">设置路径最大传输单元为 256 字节。</td>
-</tr>
-<tr>
-<td align="center">attr.dest_qp_num</td>
-<td align="center">remote_qpn</td>
-<td align="center">指定远端 QP 编号。</td>
-</tr>
-<tr>
-<td align="center">attr.rq_psn</td>
-<td align="center">0</td>
-<td align="center">接收队列的初始包序号。</td>
-</tr>
-<tr>
-<td align="center">attr.max_dest_rd_atomic</td>
-<td align="center">1</td>
-<td align="center">远端最多可处理的 RDMA Read&#x2F;Atomic 请求数。</td>
-</tr>
-<tr>
-<td align="center">attr.min_rnr_timer</td>
-<td align="center">0x12</td>
-<td align="center">最小 RNR 重试等待时间（单位为 655.36 微秒）。</td>
-</tr>
-<tr>
-<td align="center">attr.ah_attr.is_global</td>
-<td align="center">0 或 1</td>
-<td align="center">是否启用全局路由（GID）。</td>
-</tr>
-<tr>
-<td align="center">attr.ah_attr.dlid</td>
-<td align="center">dlid</td>
-<td align="center">设置远端 LID。</td>
-</tr>
-<tr>
-<td align="center">attr.ah_attr.sl</td>
-<td align="center">0</td>
-<td align="center">服务等级（Service Level）。</td>
-</tr>
-<tr>
-<td align="center">attr.ah_attr.src_path_bits</td>
-<td align="center">0</td>
-<td align="center">源路径位，通常为 0。</td>
-</tr>
-<tr>
-<td align="center">attr.ah_attr.port_num</td>
-<td align="center">config.ib_port</td>
-<td align="center">本地端口号。</td>
-</tr>
-<tr>
-<td align="center">attr.ah_attr.grh.dgid</td>
-<td align="center">dgid</td>
-<td align="center">设置远端 GID（如果启用全局路由）。</td>
-</tr>
-<tr>
-<td align="center">attr.ah_attr.grh.flow_label</td>
-<td align="center">0</td>
-<td align="center">GRH 流标签。</td>
-</tr>
-<tr>
-<td align="center">attr.ah_attr.grh.hop_limit</td>
-<td align="center">1</td>
-<td align="center">GRH 跳数限制。</td>
-</tr>
-<tr>
-<td align="center">attr.ah_attr.grh.sgid_index</td>
-<td align="center">config.gid_idx</td>
-<td align="center">本地 GID 索引。</td>
-</tr>
-<tr>
-<td align="center">attr.ah_attr.grh.traffic_class</td>
-<td align="center">0</td>
-<td align="center">GRH 流量类别。</td>
-</tr>
-<tr>
-<td align="center">flags</td>
-<td align="center">多个宏组合</td>
-<td align="center">指定哪些属性字段有效。</td>
-</tr>
-<tr>
-<td align="center">ibv_modify_qp()</td>
-<td align="center">函数调用</td>
-<td align="center">执行 QP 状态修改操作。</td>
-</tr>
-</tbody></table>
-<ol start="7">
-<li>modify_qp_to_rts</li>
-</ol>
-<table>
-<thead>
-<tr>
-<th align="center">参数字段</th>
-<th align="center">含义</th>
-<th align="center">说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">attr.qp_state &#x3D; IBV_QPS_RTS</td>
-<td align="center">设置 QP 状态为 RTS</td>
-<td align="center">表示该 QP 已准备好发送数据，是连接建立的最后一步</td>
-</tr>
-<tr>
-<td align="center">attr.timeout &#x3D; 0x12</td>
-<td align="center">超时时间</td>
-<td align="center">单位为 4.096μs，表示发送请求等待 ACK 的最大时间。0x12 ≈ 75μs</td>
-</tr>
-<tr>
-<td align="center">attr.retry_cnt &#x3D; 6</td>
-<td align="center">重试次数</td>
-<td align="center">如果未收到 ACK，最多重试 6 次</td>
-</tr>
-<tr>
-<td align="center">attr.rnr_retry &#x3D; 0</td>
-<td align="center">RNR 重试次数</td>
-<td align="center">对方未准备好接收时的重试次数。0 表示不重试（通常用于 UC 类型）</td>
-</tr>
-<tr>
-<td align="center">attr.sq_psn &#x3D; 0</td>
-<td align="center">Send Queue 的初始 PSN</td>
-<td align="center">PSN（Packet Sequence Number）用于包顺序控制，需与远端匹配</td>
-</tr>
-<tr>
-<td align="center">attr.max_rd_atomic &#x3D; 1</td>
-<td align="center">最大 RDMA Read 请求数</td>
-<td align="center">表示本端最多允许一个未完成的 RDMA Read 请求</td>
-</tr>
-<tr>
-<td align="center">flags</td>
-<td align="center">标志位</td>
-<td align="center">指定哪些字段在 ibv_modify_qp() 中有效，必须与设置的字段匹配</td>
-</tr>
-</tbody></table>
-<ol start="8">
-<li>用 TCP socket 同步交换 dummy 数据，以确保双方都进入 RTS 状态。</li>
-</ol>
-<h3 id="post-send"><a href="#post-send" class="headerlink" title="post_send"></a>post_send</h3><ol>
-<li>准备 scatter&#x2F;gather entry: addr, length, lkey</li>
-<li>准备 send work request: remote_addr, rkey, opcode, send_flags</li>
-</ol>
-<p><code>IBV_SEND_SIGNALED</code> 的作用</p>
-<table>
-<thead>
-<tr>
-<th align="center">功能</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">请求生成 CQE</td>
-<td>告诉 HCA：这个发送请求完成后，请在 CQ 中生成一个完成事件。</td>
-</tr>
-<tr>
-<td align="center">用于异步通知</td>
-<td>应用程序可以通过轮询或事件机制检测哪些请求完成了。</td>
-</tr>
-<tr>
-<td align="center">提高可控性</td>
-<td>你可以选择只对关键请求设置该标志，减少 CQE 数量，降低开销。</td>
-</tr>
-</tbody></table>
-<p>性能考虑：每个 CQE 都会占用资源，频繁生成会增加 CQ 处理负担。</p>
-<ul>
-<li>周期性 Signaled WR：可以只对每 N 个请求设置 IBV_SEND_SIGNALED，比如每 64 个请求生成一个 CQE。</li>
-<li>通过检查这个 WC 的 wr_id，你可以间接推断前面的 N 个 WR 已经完成（因为 InfiniBand 保证顺序完成）。</li>
-<li>避免 CQ 溢出：如果 CQ 太小而你对每个请求都设置了 SIGNALED，可能导致 CQ 溢出（CQ overrun）。</li>
-</ul>
-<ol start="3">
-<li>调用 ibv_post_send</li>
-</ol>
-<p>RNR 状态： Receiver Not Ready（接收方未准备好）</p>
-<p>触发条件：</p>
-<ul>
-<li>当发送方发送消息时，接收方的接收队列中没有足够的接收请求（Receive Request）来处理该消息。</li>
-<li>接收方会返回一个 RNR NACK（Negative Acknowledgement） 给发送方，表示暂时无法接收。</li>
-</ul>
-<p>发送方的处理流程：</p>
-<ul>
-<li>收到 RNR NACK 后，发送方会根据该 NACK 中指定的 RNR 重试等待时间（RNR Timer）进行等待。</li>
-<li>等待时间结束后，发送方会尝试重新发送消息。</li>
-<li>如果接收方在重试期间发布了新的接收请求，消息将被成功接收并返回 ACK。</li>
-<li>如果多次重试后仍未成功（超过最大 RNR 重试次数），发送方会报告一个 RNR 重试错误 的工作完成状态<br>（Work Completion）。</li>
-</ul>
-<h3 id="poll-completion"><a href="#poll-completion" class="headerlink" title="poll_completion"></a>poll_completion</h3><p>ibv_poll_cq</p>
-<h3 id="resources-destroy"><a href="#resources-destroy" class="headerlink" title="resources_destroy"></a>resources_destroy</h3><ul>
-<li>ibv_destroy_qp</li>
-<li>ibv_dereg_mr</li>
-<li>ibv_destroy_cq</li>
-<li>ibv_dealloc_pd</li>
-<li>ibv_close_device</li>
-<li>close: socket</li>
-</ul>
 
       
     </div>
@@ -2772,7 +3131,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">116</span>
+          <span class="site-state-item-count">117</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

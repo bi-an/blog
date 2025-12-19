@@ -188,6 +188,113 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/15/net/%E8%A7%A3%E5%86%B3Protol-not-available%E7%9A%84%E9%94%99%E8%AF%AF/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/15/net/%E8%A7%A3%E5%86%B3Protol-not-available%E7%9A%84%E9%94%99%E8%AF%AF/" class="post-title-link" itemprop="url">解决Protol not available的错误</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-08-15 10:45:33" itemprop="dateCreated datePublished" datetime="2025-08-15T10:45:33+00:00">2025-08-15</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h2><p>代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">getaddrinfo</span>(localhost, <span class="string">&quot;sunrpc&quot;</span>, &amp;hints, &amp;result); <span class="comment">// &quot;sunrpc&quot; 或 端口 111 都可以</span></span><br><span class="line"><span class="keyword">for</span> (<span class="type">const</span> <span class="keyword">auto</span> *rp = result; rp != <span class="literal">nullptr</span>; rp = rp-&gt;ai_next) &#123;</span><br><span class="line">    sock = <span class="built_in">socket</span>(rp-&gt;ai_family, rp-&gt;ai_socktype, rp-&gt;ai_protocol);</span><br><span class="line">    <span class="keyword">if</span> (sock == <span class="number">-1</span>) <span class="keyword">continue</span>;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">connect</span>(sock, rp-&gt;ai_addr, rp-&gt;ai_addrlen) != <span class="number">-1</span>) <span class="keyword">break</span>;  <span class="comment">// Success</span></span><br><span class="line">    <span class="built_in">perror</span>(<span class="string">&quot;connect failed&quot;</span>);</span><br><span class="line">    <span class="built_in">close</span>(sock);</span><br><span class="line">    sock = <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这段代码，<code>connect()</code> 返回 <code>-1</code> ，报错为 <code>Protol not available</code> 。</p>
+<ul>
+<li>但是我们明明是通过 <code>getaddrinfo()</code> 查询到的地址信息，为什么报错？</li>
+<li>这个报错也很具有误导性，我们开启了 <code>IPv4</code> ，没有开启 <code>IPv6</code>，如果开启 <code>IPv6</code>，这个错误会消失，不支持 <code>IPv4</code> ？</li>
+</ul>
+<h2 id="排查过程"><a href="#排查过程" class="headerlink" title="排查过程"></a>排查过程</h2><p>运行这些命令：</p>
+<ul>
+<li><code>hostname</code></li>
+<li><code>hostname -f</code></li>
+<li><code>hostname -a</code></li>
+<li><code>hostname -I</code></li>
+<li><code>hostnamectl</code></li>
+<li><code>cat /proc/sys/kernel/hostname</code></li>
+<li><code>more /etc/host*</code></li>
+<li><code>/sbin/ifconfig -a</code></li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ hostname</span><br><span class="line">$ <span class="built_in">cat</span> /etc/hosts</span><br><span class="line"><span class="comment"># Created by chnetinfo.sh.</span></span><br><span class="line"><span class="comment"># Do not remove the following line, or various programs</span></span><br><span class="line"><span class="comment"># that require network functionality will fail.</span></span><br><span class="line">::1       localhost.localdomain   localhost</span><br><span class="line">xx.xxx.xxx.xx   xiaoming-PC      xiaoming-PC.xiaoming-company.com</span><br></pre></td></tr></table></figure>
+
+<p>注：上面 <code>cat /etc/hosts</code> 的第二个 IP 进行了个人信息隐藏。<code>xx</code> 代表数字。</p>
+<p>说明：</p>
+<table>
+<thead>
+<tr>
+<th align="center">地址</th>
+<th align="center">协议版本</th>
+<th align="center">作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">127.0.0.1</td>
+<td align="center">IPv4</td>
+<td align="center">本地回环地址，用于本机内部通信</td>
+</tr>
+<tr>
+<td align="center">::1</td>
+<td align="center">IPv6</td>
+<td align="center">本地回环地址，用于本机内部通信</td>
+</tr>
+</tbody></table>
+<p>于是问题找到了：<code>/etc/hosts/</code> 只配置了 <code>::1</code> ，那么使用 IPv4 协议尝试 connect localhost 就会返回 -1 。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/12/os/Bazel%E5%85%A5%E9%97%A8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -219,7 +326,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-04 11:04:41" itemprop="dateModified" datetime="2025-12-04T11:04:41+00:00">2025-12-04</time>
+                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
               </span>
 
           
@@ -357,7 +464,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-04 11:04:41" itemprop="dateModified" datetime="2025-12-04T11:04:41+00:00">2025-12-04</time>
+                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
               </span>
 
           
@@ -533,7 +640,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-04 11:04:41" itemprop="dateModified" datetime="2025-12-04T11:04:41+00:00">2025-12-04</time>
+                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
               </span>
 
           
@@ -1278,7 +1385,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-04 11:04:41" itemprop="dateModified" datetime="2025-12-04T11:04:41+00:00">2025-12-04</time>
+                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
               </span>
 
           
@@ -1396,7 +1503,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-04 11:04:41" itemprop="dateModified" datetime="2025-12-04T11:04:41+00:00">2025-12-04</time>
+                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
               </span>
 
           
@@ -1492,7 +1599,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-04 11:04:41" itemprop="dateModified" datetime="2025-12-04T11:04:41+00:00">2025-12-04</time>
+                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
               </span>
 
           
@@ -1674,7 +1781,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-04 11:04:41" itemprop="dateModified" datetime="2025-12-04T11:04:41+00:00">2025-12-04</time>
+                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
               </span>
 
           
@@ -1968,7 +2075,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-04 11:04:41" itemprop="dateModified" datetime="2025-12-04T11:04:41+00:00">2025-12-04</time>
+                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
               </span>
 
           
@@ -2104,7 +2211,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-04 11:04:41" itemprop="dateModified" datetime="2025-12-04T11:04:41+00:00">2025-12-04</time>
+                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
               </span>
 
           
@@ -2239,73 +2346,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/04/16/dlfcn/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/04/16/dlfcn/" class="post-title-link" itemprop="url">dlfcn</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-04-16 00:20:34" itemprop="dateCreated datePublished" datetime="2025-04-16T00:20:34+00:00">2025-04-16</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-04 11:04:41" itemprop="dateModified" datetime="2025-12-04T11:04:41+00:00">2025-12-04</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <figure class="highlight cpp"><figcaption><span>Makefile</span><a href="/blog/downloads/code/dlfcn/Makefile">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">CXX = g++</span><br><span class="line">CXXFLAGS = -fPIC -Wall -Wextra</span><br><span class="line">LDFLAGS = -shared</span><br><span class="line"></span><br><span class="line">all: main libhello.so</span><br><span class="line"></span><br><span class="line">main: main.cpp</span><br><span class="line">	$(CXX) main.cpp -o main -ldl</span><br><span class="line"></span><br><span class="line">libhello.so: hello.cpp</span><br><span class="line">	$(CXX) $(CXXFLAGS) $(LDFLAGS) hello.cpp -o libhello.so</span><br><span class="line"></span><br><span class="line">clean:</span><br><span class="line">	rm -f main libhello.</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight cpp"><figcaption><span>main.cpp</span><a href="/blog/downloads/code/dlfcn/main.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;dlfcn.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*HelloFunc)</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="comment">// 打开共享库</span></span><br><span class="line">    <span class="type">void</span>* handle = <span class="built_in">dlopen</span>(<span class="string">&quot;./libhello.so&quot;</span>, RTLD_LAZY);</span><br><span class="line">    <span class="keyword">if</span> (!handle) {</span><br><span class="line">        std::cerr &lt;&lt; <span class="string">&quot;dlopen failed: &quot;</span> &lt;&lt; <span class="built_in">dlerror</span>() &lt;&lt; std::endl;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 清除之前的错误</span></span><br><span class="line">    <span class="built_in">dlerror</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取函数指针</span></span><br><span class="line">    HelloFunc hello = (HelloFunc)<span class="built_in">dlsym</span>(handle, <span class="string">&quot;hello&quot;</span>);</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>* dlsym_error = <span class="built_in">dlerror</span>();</span><br><span class="line">    <span class="keyword">if</span> (dlsym_error) {</span><br><span class="line">        std::cerr &lt;&lt; <span class="string">&quot;dlsym failed: &quot;</span> &lt;&lt; dlsym_error &lt;&lt; std::endl;</span><br><span class="line">        <span class="built_in">dlclose</span>(handle);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 打印函数地址</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Address of hello function: &quot;</span> &lt;&lt; <span class="built_in">reinterpret_cast</span>&lt;<span class="type">void</span>*&gt;(hello) &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调用函数</span></span><br><span class="line">    <span class="built_in">hello</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 关闭共享库</span></span><br><span class="line">    <span class="built_in">dlclose</span>(handle);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2377,7 +2417,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">116</span>
+          <span class="site-state-item-count">117</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
