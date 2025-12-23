@@ -188,6 +188,223 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/06/linux/bash%E8%B0%83%E8%AF%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/09/06/linux/bash%E8%B0%83%E8%AF%95/" class="post-title-link" itemprop="url">Bash Debugging</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-09-06 18:10:12" itemprop="dateCreated datePublished" datetime="2024-09-06T18:10:12+00:00">2024-09-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="启用调试模式"><a href="#启用调试模式" class="headerlink" title="启用调试模式"></a>启用调试模式</h2><ol>
+<li>命令行启用调试：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#使用 -x 和 -v 选项运行 main.sh 脚本。</span></span><br><span class="line">bash -xv main.sh</span><br></pre></td></tr></table></figure>
+
+<p>注意：调试输出是通过 <code>stderr</code> ，在试图重定向时要注意。</p>
+<ol start="2">
+<li>在脚本中启用调试：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">set</span> -xv</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>Short notation</th>
+<th>Long notation</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>set -f</td>
+<td>set -o noglob</td>
+<td>Disable file name generation using metacharacters (globbing).</td>
+</tr>
+<tr>
+<td>set -v</td>
+<td>set -o verbose</td>
+<td>Prints shell input lines as they are read.</td>
+</tr>
+<tr>
+<td>set -x</td>
+<td>set -o xtrace</td>
+<td>Print command traces before executing command.</td>
+</tr>
+</tbody></table>
+<p>参考<a target="_blank" rel="noopener" href="https://tldp.org/LDP/Bash-Beginners-Guide/html/sect_02_03.html">链接</a></p>
+<p>其他选项：</p>
+<ul>
+<li><code>set +e</code>：忽略错误继续运行（bash）。</li>
+<li><code>set -e</code>：遇错停止执行（bash）。</li>
+</ul>
+<ol start="3">
+<li>环境变量 <code>PS4</code></li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PS4=<span class="string">&#x27;+ $&#123;LINENO&#125;: &#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>可以搭配使用 <code>PS4</code> 环境变量，以在调试输出中打印命令所在的文件行号。</p>
+<p><code>PS4</code> 是一个 Bash 环境变量，用于定义调试模式下的提示符格式。<br>当你启用调试模式（通过 <code>set -x</code>）时，Bash 会在每一行执行之前打印调试信息，而 PS4 决定了这些调试信息的格式。<br><code>$LINENO</code>表示打印行号。</p>
+<h2 id="trap-DEBUG"><a href="#trap-DEBUG" class="headerlink" title="trap DEBUG"></a><code>trap DEBUG</code></h2><p>设置DEBUG陷阱，该陷阱在每一条“简单语句”执行完毕之后会被调用一次。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">set</span> -o functrace</span><br><span class="line">track_var=<span class="string">&quot;my_var&quot;</span></span><br><span class="line">old_value=<span class="string">&quot;&quot;</span></span><br><span class="line"><span class="function"><span class="title">check_var_change</span></span>() &#123;</span><br><span class="line">    new_value=<span class="string">&quot;<span class="variable">$&#123;!track_var&#125;</span>&quot;</span></span><br><span class="line">    <span class="keyword">if</span> [[ <span class="string">&quot;<span class="variable">$new_value</span>&quot;</span> != <span class="string">&quot;<span class="variable">$old_value</span>&quot;</span> ]]; <span class="keyword">then</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$track_var</span> changed to \&quot;<span class="variable">$new_value</span>\&quot; at <span class="variable">$BASH_LINENO</span>&quot;</span></span><br><span class="line">        old_value=<span class="string">&quot;<span class="variable">$new_value</span>&quot;</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">trap</span> check_var_change DEBUG</span><br></pre></td></tr></table></figure>
+
+<p>说明：监控<code>my_var</code>变量的变化，如果变化，则打印新值。</p>
+<p>注意：实际测试中，我们发现<code>trap</code>监控变量变化似乎会延迟，而<code>set -x</code>打印的信息是可靠的。</p>
+<h2 id="特殊变量"><a href="#特殊变量" class="headerlink" title="特殊变量"></a>特殊变量</h2><p>参考：<a target="_blank" rel="noopener" href="https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html">https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html</a></p>
+<ul>
+<li><code>BASH_LINENO</code>: 这是一个数组变量，‌用于表示当前执行的脚本或函数中每一行的行号。‌它特别适用于调试，‌因为它可以追踪到函数调用栈中每一层的行号。‌通过访问BASH_LINENO数组的不同索引，‌可以获取到不同函数调用层级对应的行号信息‌。</li>
+<li><code>LINENO</code>: 获取当前脚本行号‌，‌而不涉及函数调用栈的追踪‌。</li>
+<li><code>FUNCNAME</code>: 函数名</li>
+<li><code>BASH_SOURCE</code></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/06/linux/File-Exists/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/09/06/linux/File-Exists/" class="post-title-link" itemprop="url">File Exists</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-09-06 18:09:03" itemprop="dateCreated datePublished" datetime="2024-09-06T18:09:03+00:00">2024-09-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="判断文件是否存在"><a href="#判断文件是否存在" class="headerlink" title="判断文件是否存在"></a>判断文件是否存在</h1><h2 id="相关函数"><a href="#相关函数" class="headerlink" title="相关函数"></a>相关函数</h2><ul>
+<li><code>access</code></li>
+<li><code>stat</code></li>
+<li><code>inotify_node</code></li>
+<li><code>opendir</code></li>
+<li><code>readdir</code></li>
+</ul>
+<h2 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h2><p>文件系统并不会实时刷新缓存，尤其是在网络文件系统中。这会导致文件即使已经创建，<code>access</code>或<code>stat</code>函数依然返回”No such file”。<br>但是<code>ls</code>可以看到文件，这是因为<code>ls</code>和<code>access</code>函数的实现机制不同。</p>
+<p>例如：</p>
+<p>在<code>NFS</code>文件系统中，创建文件之后立即调用<code>stat</code>命令查看文件，<code>stat</code>会报告“文件不存在”。<br>删除文件之后立即调用<code>stat</code>命令查看文件，发现<code>stat</code>依然可以看到该文件。</p>
+<p>我们可以改用<code>readdir</code>来读取目录，因为目录会被更快地更新缓存。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/08/02/misc/vscode-config/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -219,7 +436,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -316,7 +533,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
 
           
@@ -398,7 +615,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -473,7 +690,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
 
           
@@ -545,7 +762,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1038,7 +1255,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1209,7 +1426,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1292,7 +1509,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1338,200 +1555,6 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
 <li><a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Memory-Protection.html">The GNU C Library (glibc) manual: 3.4 Memory Protection</a></li>
 </ul>
 
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/29/UML/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/29/UML/" class="post-title-link" itemprop="url">UML</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-29 11:10:46" itemprop="dateCreated datePublished" datetime="2024-01-29T11:10:46+00:00">2024-01-29</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/c-cpp/" itemprop="url" rel="index"><span itemprop="name">c/cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ol>
-<li><a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1176331">认识UML类关系——依赖、关联、聚合、组合、泛化</a></li>
-</ol>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/26/linux/Shell-Commands/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/26/linux/Shell-Commands/" class="post-title-link" itemprop="url">Shell Commands</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-26 15:57:35" itemprop="dateCreated datePublished" datetime="2024-01-26T15:57:35+00:00">2024-01-26</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="shuf"><a href="#shuf" class="headerlink" title="shuf"></a>shuf</h2><h2 id="cut"><a href="#cut" class="headerlink" title="cut"></a>cut</h2><h2 id="tr"><a href="#tr" class="headerlink" title="tr"></a>tr</h2><h2 id="lp"><a href="#lp" class="headerlink" title="lp"></a>lp</h2><h2 id="sort"><a href="#sort" class="headerlink" title="sort"></a>sort</h2><p>Options:</p>
-<pre><code>-t, --field-separator=SEP
-    use SEP instead of non-blank to blank transition
-
--k, --key=POS1[,POS2]
-    start a key at POS1 (origin 1), end it at POS2 (default end of line)
-
--h, --human-numeric-sort
-    compare human readable numbers (e.g., 2K 1G)
-
--n, --numeric-sort
-    compare according to string numerical value
-</code></pre>
-<h2 id="nproc"><a href="#nproc" class="headerlink" title="nproc"></a>nproc</h2><p>print the number of processing units avaiable.</p>
-<h2 id="od-xxd-hexdump"><a href="#od-xxd-hexdump" class="headerlink" title="od &#x2F; xxd &#x2F; hexdump"></a>od &#x2F; xxd &#x2F; hexdump</h2><p>read the binary file.</p>
-<p>Notes: byte order</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">echo</span> -n <span class="string">&quot;ABCD&quot;</span> | xxd</span><br><span class="line">00000000: 4142 4344                                ABCD</span><br><span class="line">$ <span class="built_in">echo</span> -n <span class="string">&quot;ABCD&quot;</span> | hexdump</span><br><span class="line">0000000 4241 4443                              </span><br><span class="line">0000004</span><br></pre></td></tr></table></figure>
-
-<p><a target="_blank" rel="noopener" href="https://unix.stackexchange.com/questions/282215/how-to-view-a-binary-file">Reference</a></p>
-<h2 id="comm-diff-tkdiff-cmp"><a href="#comm-diff-tkdiff-cmp" class="headerlink" title="comm &#x2F; diff &#x2F; tkdiff &#x2F; cmp"></a>comm &#x2F; diff &#x2F; tkdiff &#x2F; cmp</h2><p>Can be used to compare binary or non-binary files.</p>
-<h3 id="comm"><a href="#comm" class="headerlink" title="comm"></a>comm</h3><p>compare two sorted files line by line.</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cat</span> file1.txt </span><br><span class="line">apple</span><br><span class="line">banana</span><br><span class="line">cherry</span><br><span class="line"></span><br><span class="line">$ <span class="built_in">cat</span> file2.txt </span><br><span class="line">banana</span><br><span class="line">cherry</span><br><span class="line"><span class="built_in">date</span></span><br><span class="line">erase</span><br><span class="line"></span><br><span class="line">$ <span class="built_in">comm</span> file1.txt file2.txt </span><br><span class="line">apple</span><br><span class="line">                banana</span><br><span class="line">                cherry</span><br><span class="line">        <span class="built_in">date</span></span><br><span class="line">        erase</span><br></pre></td></tr></table></figure>
-
-<p>The file must be sorted before using the <code>comm</code> command. Otherwise it will complain that:</p>
-<pre><code>comm: file 1 is not in sorted order
-</code></pre>
-<p>and cannot work correctly. For example,</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cat</span> file1.txt </span><br><span class="line">apple</span><br><span class="line">cherry</span><br><span class="line">banana</span><br><span class="line"></span><br><span class="line">$ <span class="built_in">cat</span> file2.txt </span><br><span class="line">banana</span><br><span class="line">cherry</span><br><span class="line"><span class="built_in">date</span></span><br><span class="line">erase</span><br><span class="line"></span><br><span class="line">$ <span class="built_in">comm</span> file1.txt file2.txt </span><br><span class="line">apple</span><br><span class="line">        banana</span><br><span class="line">                cherry</span><br><span class="line"><span class="built_in">comm</span>: file 1 is not <span class="keyword">in</span> sorted order</span><br><span class="line">banana</span><br><span class="line">        <span class="built_in">date</span></span><br><span class="line">        erase</span><br><span class="line"><span class="built_in">comm</span>: input is not <span class="keyword">in</span> sorted order</span><br></pre></td></tr></table></figure>
-
-<h3 id="diff"><a href="#diff" class="headerlink" title="diff"></a>diff</h3><p>Syntax:</p>
-<pre><code>diff -u file1 file2
-</code></pre>
-<p>Options:</p>
-<pre><code>-e, --ed
-    output an ed script
-
--u, -U NUM, --unified[=NUM]
-    output NUM (default 3) lines of unified context
-    (that is, print NUM lines before and after the difference line)
-</code></pre>
-<h3 id="tkdiff"><a href="#tkdiff" class="headerlink" title="tkdiff"></a>tkdiff</h3><p>Use a GUI to display the differences.</p>
-<h3 id="cmp"><a href="#cmp" class="headerlink" title="cmp"></a>cmp</h3><p>Prints less information comparing to <code>diff</code>.</p>
-<p>Syntax:</p>
-<pre><code>cmp file1 file2
-</code></pre>
-<h2 id="ed-vim-sed-awk"><a href="#ed-vim-sed-awk" class="headerlink" title="ed&#x2F;vim&#x2F;sed&#x2F;awk"></a>ed&#x2F;vim&#x2F;sed&#x2F;awk</h2>
       
     </div>
 
@@ -1617,7 +1640,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">117</span>
+          <span class="site-state-item-count">119</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1630,7 +1653,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">49</span>
+        <span class="site-state-item-count">51</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -1736,6 +1759,19 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
 
 
 
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
 
 
   

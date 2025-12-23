@@ -188,6 +188,270 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/11/20/perf/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E6%8C%87%E6%A0%87%E5%92%8C%E6%A6%82%E5%BF%B5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/11/20/perf/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E6%8C%87%E6%A0%87%E5%92%8C%E6%A6%82%E5%BF%B5/" class="post-title-link" itemprop="url">性能分析指标和概念</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-11-20 15:54:29" itemprop="dateCreated datePublished" datetime="2025-11-20T15:54:29+00:00">2025-11-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E6%80%A7%E8%83%BD/" itemprop="url" rel="index"><span itemprop="name">性能</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="CPU-硬件层次概念"><a href="#CPU-硬件层次概念" class="headerlink" title="CPU 硬件层次概念"></a>CPU 硬件层次概念</h2><ul>
+<li>Package → 整个处理器封装，包含一个或多个 die。</li>
+<li>Socket (S) → 主板上的物理 CPU 插槽</li>
+<li>Die (D) → 封装里的裸片（可能有多个 chiplet&#x2F;die）</li>
+<li>Core (C) → die 上的计算核心</li>
+<li>Thread (T) → 核心里的硬件线程（SMT&#x2F;超线程），即逻辑处理器</li>
+</ul>
+<p>假设一台双路服务器，每个 socket 上的 CPU 封装里有两个 die，每个 die 有 8 个核心：</p>
+<ul>
+<li><code>S0-D0-C0</code> → Socket 0 上 Die 0 的 Core 0</li>
+<li><code>S0-D1-C3</code> → Socket 0 上 Die 1 的 Core 3</li>
+<li><code>S1-D0-C7</code> → Socket 1 上 Die 0 的 Core 7</li>
+</ul>
+<p>如果开启超线程，还可能进一步细分为：</p>
+<ul>
+<li><code>S0-D0-C0-T0</code> → Socket 0, Die 0, Core 0, Thread 0</li>
+<li><code>S0-D0-C0-T1</code> → Socket 0, Die 0, Core 0, Thread 1</li>
+</ul>
+<p>可以用命令 <code>lscpu</code> 或 <code>cat /proc/cpuinfo</code> 来查看逻辑 CPU ID 与 Socket&#x2F;Core&#x2F;Thread 的对应关系。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ lscpu</span><br><span class="line">...</span><br><span class="line">    Thread(s) per core:  2</span><br><span class="line">    Core(s) per socket:  4</span><br><span class="line">    Socket(s):           1</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">总逻辑 CPU 数量 = 1 × 4 × 2 = 8</span><br></pre></td></tr></table></figure>
+
+<p>nproc 输出的是 逻辑 CPU 数</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">nproc</span></span><br><span class="line">8</span><br></pre></td></tr></table></figure>
+
+<h2 id="CPU-微架构概念"><a href="#CPU-微架构概念" class="headerlink" title="CPU 微架构概念"></a>CPU 微架构概念</h2><ul>
+<li>Pipeline：指令执行的分阶段过程（取指、解码、执行、写回）。</li>
+<li>Width：每周期最多能发射多少条 uops（如 4‑wide）。</li>
+<li>Slot：每周期的发射机会，宽度决定 slot 数。</li>
+<li>ROB (Reorder Buffer)：乱序执行的关键结构，保证指令按程序顺序退休。</li>
+<li>Scheduler：调度器，决定哪些 uops 在某周期进入执行端口。</li>
+<li>Execution Ports：后端的执行单元入口，比如整数 ALU、浮点 FPU、Load&#x2F;Store。</li>
+<li>Branch Predictor：预测分支走向，减少流水线停顿。</li>
+</ul>
+<h2 id="存储与层次结构"><a href="#存储与层次结构" class="headerlink" title="存储与层次结构"></a>存储与层次结构</h2><ul>
+<li>Registers：CPU 内部的寄存器，最快的存储。</li>
+<li>Cache：分层缓存（L1、L2、L3），用于减少访存延迟。</li>
+<li>LLC (Last Level Cache)：最后一级缓存，通常是 L3，多个核心共享。</li>
+<li>Memory Controller：负责和 DRAM 通信。</li>
+<li>NUMA (Non-Uniform Memory Access)：多 socket 系统里，内存访问延迟因位置不同而不同。</li>
+</ul>
+<h2 id="性能分析相关"><a href="#性能分析相关" class="headerlink" title="性能分析相关"></a>性能分析相关</h2><ul>
+<li>IPC (Instructions Per Cycle)：每周期平均执行的指令数。</li>
+<li>ILP (Instruction-Level Parallelism)：指令级并行度，程序能提供多少独立指令。</li>
+<li>Topdown Metrics：Retiring、Bad Speculation、Frontend Bound、Backend Bound。</li>
+<li>BE&#x2F;Core vs BE&#x2F;Mem：后端瓶颈是算力不足还是访存延迟。</li>
+<li>CPI (Cycles Per Instruction)：每条指令平均耗费的周期数。</li>
+</ul>
+<h2 id="Top-Down-Microarchitecture-Analysis-TMA"><a href="#Top-Down-Microarchitecture-Analysis-TMA" class="headerlink" title="Top-Down Microarchitecture Analysis (TMA)"></a>Top-Down Microarchitecture Analysis (TMA)</h2><p>这是 Intel 提出的一个 CPU 性能瓶颈分析框架。它的核心思想是：把 CPU 每个周期的 发射机会（slot） 分门<br>别类，逐层细分，最终定位到性能瓶颈的根源。</p>
+<p>Topdown 是分层树状结构：</p>
+<ul>
+<li>Level 1：Retiring &#x2F; Bad Speculation &#x2F; Frontend Bound &#x2F; Backend Bound</li>
+<li>Level 2：Backend Bound → BE&#x2F;Core、BE&#x2F;Mem</li>
+<li>Level 3：BE&#x2F;Mem → L1 Bound、L2 Bound、DRAM Bound</li>
+</ul>
+<ol>
+<li>Level 1: 顶层四大分类</li>
+</ol>
+<p>在每个周期的 slot 中，CPU 的工作被划分为四类：</p>
+<ul>
+<li><p>Retiring</p>
+<ul>
+<li>指令成功退休（完成执行并写回结果）。</li>
+<li>这是“有用工作”，比例越高说明 CPU 利用率越好。</li>
+</ul>
+</li>
+<li><p>Bad Speculation</p>
+<ul>
+<li>由于错误预测（如分支预测失败、错误路径执行）导致的浪费。</li>
+<li>这些 slot 最终没有产生有效结果。</li>
+</ul>
+</li>
+<li><p>Frontend Bound (FE)</p>
+<ul>
+<li>前端受限：取指、解码、指令缓存不足。</li>
+<li>CPU 等待指令进入流水线。</li>
+</ul>
+</li>
+<li><p>Backend Bound (BE)</p>
+<ul>
+<li>后端受限：执行单元或数据不可用。</li>
+<li>CPU 等待算力资源或内存数据。</li>
+</ul>
+</li>
+</ul>
+<p>这四类加起来 ≈ 100%，覆盖了所有 slot 的去向。</p>
+<ol start="2">
+<li>Level 2: Backend 的进一步细分</li>
+</ol>
+<ul>
+<li>BE&#x2F;Core<ul>
+<li>后端瓶颈主要来自核心执行资源不足（算术逻辑单元、浮点单元、端口冲突）。</li>
+<li>程序算力密集。</li>
+</ul>
+</li>
+<li>BE&#x2F;Mem<ul>
+<li>后端瓶颈主要来自访存延迟（缓存未命中、DRAM 访问慢）。</li>
+<li>程序内存密集。</li>
+</ul>
+</li>
+</ul>
+<ol start="3">
+<li>Level 3: BE&#x2F;Mem 的进一步细分</li>
+</ol>
+<ul>
+<li>L1 Bound</li>
+<li>L2 Bound</li>
+<li>L3 Bound</li>
+<li>DRAM Bound</li>
+</ul>
+<h3 id="Roofline"><a href="#Roofline" class="headerlink" title="Roofline"></a>Roofline</h3><h2 id="性能分析工具"><a href="#性能分析工具" class="headerlink" title="性能分析工具"></a>性能分析工具</h2><ol>
+<li>perf (Linux)</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/andikleen/pmu-tools">Intel® pmu-tools</a> ：对 perf 的封装</li>
+<li><a target="_blank" rel="noopener" href="https://www.intel.com/content/www/us/en/developer/tools/oneapi/advisor-download.html">Intel Advisor</a></li>
+</ol>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
+<li>perf-ninja: <a target="_blank" rel="noopener" href="https://github.com/dendibakh/perf-ninja">代码</a> +<br><a target="_blank" rel="noopener" href="https://www.youtube.com/playlist?list=PLRWO2AL1QAV6bJAU2kgB4xfodGID43Y5d">视频</a></li>
+</ol>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/24/concurrency/memory_order%E5%AE%9E%E9%AA%8C/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/09/24/concurrency/memory_order%E5%AE%9E%E9%AA%8C/" class="post-title-link" itemprop="url">memory_order测试</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-09-24 14:32:53" itemprop="dateCreated datePublished" datetime="2025-09-24T14:32:53+00:00">2025-09-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="relaxed"><a href="#relaxed" class="headerlink" title="relaxed"></a>relaxed</h2><ul>
+<li>问：load(relaxed) 看到的是不是最新值？</li>
+<li>答：是的。</li>
+</ul>
+<p>经过多次测试（包括 TSAN），CAS(relaxed) 计数器都是正确的：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ -fsanitize=thread test_memory_order_relaxed.cpp -lpthread</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight cpp"><figcaption><span>test_memory_order_relaxed.cpp</span><a href="/blog/downloads/code/atomic/test_memory_order_relaxed.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;chrono&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;random&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">int</span> run_times = <span class="number">10</span>;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">uint32_t</span> num_threads = <span class="number">10</span>;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">uint64_t</span> increments_per_thread = <span class="number">1024</span> * <span class="number">1024</span> * <span class="number">32</span>;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">uint64_t</span> max_count = increments_per_thread * num_threads;</span><br><span class="line"></span><br><span class="line">atomic&lt;<span class="type">uint64_t</span>&gt; counter;</span><br><span class="line"></span><br><span class="line"><span class="comment">/** Random Delay in microseonds */</span></span><br><span class="line">std::random_device rd;</span><br><span class="line"><span class="function"><span class="keyword">thread_local</span> std::mt19937 <span class="title">gen</span><span class="params">(rd())</span></span>;</span><br><span class="line"><span class="keyword">thread_local</span> std::uniform_int_distribution&lt;&gt; <span class="built_in">dis</span>(<span class="number">0</span>, <span class="number">4095</span>);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">unpredictableDelay</span><span class="params">(<span class="type">int</span> extra = <span class="number">0</span>)</span> </span>{</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">dis</span>(gen) == <span class="number">0</span>) {</span><br><span class="line">        this_thread::<span class="built_in">sleep_for</span>(chrono::<span class="built_in">nanoseconds</span>(<span class="number">2000</span> + extra));</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">/** thread function for counting */</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">worker</span><span class="params">(<span class="type">int</span> id)</span> </span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; increments_per_thread; ++i) {</span><br><span class="line">        <span class="type">uint64_t</span> old = counter.<span class="built_in">load</span>(memory_order_relaxed);</span><br><span class="line">        <span class="comment">// 如果 load(relaxed) 不能看到当前最新值</span></span><br><span class="line">        <span class="comment">// 那么 CAS 就会加多次，最终结果会大于 max_count</span></span><br><span class="line">        <span class="keyword">while</span> (old &lt; max_count &amp;&amp;</span><br><span class="line">               !counter.<span class="built_in">compare_exchange_weak</span>(old, old + <span class="number">1</span>, memory_order_relaxed)) {</span><br><span class="line">            <span class="comment">// old is updated with the current value of counter</span></span><br><span class="line">            <span class="built_in">unpredictableDelay</span>(<span class="built_in">dis</span>(gen));</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    <span class="comment">// cout &lt;&lt; &quot;Worker &quot; &lt;&lt; id &lt;&lt; &quot; done.&quot; &lt;&lt; endl;</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">/** main function */</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> run = <span class="number">0</span>; run &lt; run_times; ++run) {</span><br><span class="line">        counter.<span class="built_in">store</span>(<span class="number">0</span>, memory_order_relaxed);</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Run &quot;</span> &lt;&lt; run &lt;&lt; <span class="string">&quot;: &quot;</span>;</span><br><span class="line">        thread threads[num_threads];</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; num_threads; ++i) {</span><br><span class="line">            threads[i] = <span class="built_in">thread</span>(worker, i);</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; num_threads; ++i) {</span><br><span class="line">            threads[i].<span class="built_in">join</span>();</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        cout &lt;&lt; (max_count == counter.<span class="built_in">load</span>() ? <span class="string">&quot;Correct&quot;</span> : <span class="string">&quot;Wrong&quot;</span>) &lt;&lt; endl;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/23/rdma/RDMA_RC%E9%80%9A%E4%BF%A1/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -219,7 +483,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -684,7 +948,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -993,7 +1257,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1387,7 +1651,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1481,7 +1745,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1610,7 +1874,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1719,7 +1983,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
 
           
@@ -1796,7 +2060,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1848,503 +2112,6 @@
 <p>Benchmark 代码：</p>
 <figure class="highlight cpp"><figcaption><span>TicketQueue_benchmark.cpp</span><a href="/blog/downloads/code/camel_mpmc/TicketQueue/TicketQueue_benchmark.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 基准测试函数</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> QueueType&gt;</span><br><span class="line"><span class="function"><span class="type">double</span> <span class="title">benchmark</span><span class="params">(<span class="type">const</span> std::string&amp; name, <span class="type">double</span>&amp; opsPerSec)</span> </span>{</span><br><span class="line">    QueueType queue;</span><br><span class="line">    std::atomic&lt;<span class="type">int</span>&gt; totalConsumed{<span class="number">0</span>};</span><br><span class="line">    std::map&lt;<span class="type">int</span>, <span class="type">double</span>&gt; threadWaitTimes;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> start = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 启动生产者线程</span></span><br><span class="line">    std::vector&lt;std::thread&gt; producers;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> p = <span class="number">0</span>; p &lt; NUM_PRODUCERS; ++p) {</span><br><span class="line">        producers.<span class="built_in">emplace_back</span>([&amp;queue, p]() {</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; ITEMS_PER_PRODUCER; ++i) {</span><br><span class="line">                queue.<span class="built_in">enqueue</span>(i + p * ITEMS_PER_PRODUCER);</span><br><span class="line">            }</span><br><span class="line">        });</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 启动消费者线程</span></span><br><span class="line">    std::vector&lt;std::thread&gt; consumers;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> c = <span class="number">0</span>; c &lt; NUM_CONSUMERS; ++c) {</span><br><span class="line">        consumers.<span class="built_in">emplace_back</span>([&amp;queue, &amp;totalConsumed, c, &amp;threadWaitTimes]() {</span><br><span class="line">            <span class="type">int</span> item;</span><br><span class="line">            <span class="keyword">auto</span> localStart = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">            <span class="keyword">while</span> (<span class="literal">true</span>) {</span><br><span class="line">                <span class="keyword">auto</span> t0 = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">                <span class="keyword">while</span> (!queue.<span class="built_in">try_dequeue</span>(item)) {</span><br><span class="line">                    <span class="comment">// busy wait</span></span><br><span class="line">                }</span><br><span class="line">                <span class="keyword">auto</span> t1 = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">                threadWaitTimes[c] +=</span><br><span class="line">                    std::chrono::<span class="built_in">duration</span>&lt;<span class="type">double</span>&gt;(t1 - t0).<span class="built_in">count</span>();</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> (++totalConsumed &gt;= N)</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">            }</span><br><span class="line">            <span class="keyword">auto</span> localEnd = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">            <span class="type">double</span> threadTime =</span><br><span class="line">                std::chrono::<span class="built_in">duration</span>&lt;<span class="type">double</span>&gt;(localEnd - localStart).<span class="built_in">count</span>();</span><br><span class="line">            std::cout &lt;&lt; <span class="string">&quot;Consumer &quot;</span> &lt;&lt; c &lt;&lt; <span class="string">&quot; finished in &quot;</span> &lt;&lt; threadTime</span><br><span class="line">                      &lt;&lt; <span class="string">&quot;s, wait time: &quot;</span> &lt;&lt; threadWaitTimes[c] &lt;&lt; <span class="string">&quot;s\n&quot;</span>;</span><br><span class="line">        });</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; t : producers)</span><br><span class="line">        t.<span class="built_in">join</span>();</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; t : consumers)</span><br><span class="line">        t.<span class="built_in">join</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> end = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">    std::chrono::duration&lt;<span class="type">double</span>&gt; elapsed = end - start;</span><br><span class="line">    opsPerSec = N / elapsed.<span class="built_in">count</span>();</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;\n&quot;</span></span><br><span class="line">              &lt;&lt; name &lt;&lt; <span class="string">&quot; completed in &quot;</span> &lt;&lt; elapsed.<span class="built_in">count</span>()</span><br><span class="line">              &lt;&lt; <span class="string">&quot;s, throughput: &quot;</span> &lt;&lt; opsPerSec &lt;&lt; <span class="string">&quot; ops/sec\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> elapsed.<span class="built_in">count</span>();</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="type">double</span> opsBlock = <span class="number">0.0</span>, opsTicket = <span class="number">0.0</span>;</span><br><span class="line">    <span class="type">double</span> timeBlock = <span class="built_in">benchmark</span>&lt;BlockQueue&gt;(<span class="string">&quot;BlockQueue&quot;</span>, opsBlock);</span><br><span class="line">    <span class="type">double</span> timeTicket = <span class="built_in">benchmark</span>&lt;TicketQueue&gt;(<span class="string">&quot;TicketQueue&quot;</span>, opsTicket);</span><br><span class="line">    <span class="type">double</span> speedup = opsTicket / opsBlock;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; std::left &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">14</span>) &lt;&lt; <span class="string">&quot;Queue Type&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">12</span>) &lt;&lt; <span class="string">&quot;Time (s)&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">20</span>) &lt;&lt; <span class="string">&quot;Throughput (ops/s)&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">10</span>) &lt;&lt; <span class="string">&quot;Speedup&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;|\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; std::<span class="built_in">string</span>(<span class="number">70</span>, <span class="string">&#x27;-&#x27;</span>) &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// BlockQueue row</span></span><br><span class="line">    std::cout &lt;&lt; std::left &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">14</span>) &lt;&lt; <span class="string">&quot;BlockQueue&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">12</span>) &lt;&lt; std::fixed &lt;&lt; std::<span class="built_in">setprecision</span>(<span class="number">6</span>)</span><br><span class="line">              &lt;&lt; timeBlock &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">20</span>) &lt;&lt; std::fixed</span><br><span class="line">              &lt;&lt; std::<span class="built_in">setprecision</span>(<span class="number">0</span>) &lt;&lt; opsBlock &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">10</span>)</span><br><span class="line">              &lt;&lt; <span class="string">&quot;1.00×&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;|\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// TicketQueue row</span></span><br><span class="line">    std::ostringstream speedupStream;</span><br><span class="line">    speedupStream &lt;&lt; std::fixed &lt;&lt; std::<span class="built_in">setprecision</span>(<span class="number">2</span>) &lt;&lt; speedup &lt;&lt; <span class="string">&quot;×&quot;</span>;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; std::left &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">14</span>) &lt;&lt; <span class="string">&quot;TicketQueue&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">12</span>) &lt;&lt; std::fixed &lt;&lt; std::<span class="built_in">setprecision</span>(<span class="number">6</span>)</span><br><span class="line">              &lt;&lt; timeTicket &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">20</span>) &lt;&lt; std::fixed</span><br><span class="line">              &lt;&lt; std::<span class="built_in">setprecision</span>(<span class="number">0</span>) &lt;&lt; opsTicket &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">10</span>)</span><br><span class="line">              &lt;&lt; speedupStream.<span class="built_in">str</span>() &lt;&lt; <span class="string">&quot;|\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
 
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/13/concurrency/SPSC-lock-free-queue/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/09/13/concurrency/SPSC-lock-free-queue/" class="post-title-link" itemprop="url">单生产者 - 单消费者 无锁队列</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-09-13 17:09:37" itemprop="dateCreated datePublished" datetime="2025-09-13T17:09:37+00:00">2025-09-13</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/concurrency/" itemprop="url" rel="index"><span itemprop="name">concurrency</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>这是阅读 Cameron Desrochers 的 <a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2013/a-fast-lock-free-queue-for-c++">A Fast Lock-Free Queue for C++</a> 源码的笔记。</p>
-<p>仓库地址：<a target="_blank" rel="noopener" href="https://github.com/cameron314/readerwriterqueue">https://github.com/cameron314/readerwriterqueue</a></p>
-<p>其他参考文献：</p>
-<p><a target="_blank" rel="noopener" href="https://preshing.com/20120612/an-introduction-to-lock-free-programming/">An Introduction to Lock-Free Programming</a><br><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=A8eCGOqgvH4&list=PLjwoip0ltHwHCe0Nw7PDPtzlJP7rUouRL">C++ and Beyond 2012: Herb Sutter - atomic Weapons 1 of 2</a><br><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=KeLBd2EJLOU">C++ and Beyond 2012: Herb Sutter - atomic Weapons 2 of 2</a></p>
-<h2 id="内存屏障"><a href="#内存屏障" class="headerlink" title="内存屏障"></a>内存屏障</h2><p>约束 memory loads&#x2F;stores 的顺序。</p>
-<ul>
-<li>releaase 内存屏障：告诉 CPU，如果屏障之后的任何写入变得可见，那么屏障之前的任何写入都应该在其他核心中可见，前提是其他核心在读取 写屏障之后写入的数据 后执行读屏障。<br>换句话说，如果线程 B 可以看到在另一个线程 A 上的写屏障之后写入的新值，那么在执行读屏障（在线程 B 上）之后，可以保证在线程 A 上的写屏障之前发生的所有写入在线程 B 上可见。</li>
-</ul>
-<h2 id="实现细节"><a href="#实现细节" class="headerlink" title="实现细节"></a>实现细节</h2><ol>
-<li>block: 一个连续的环形缓冲区，用来存储元素。这样可以预分配内存。</li>
-<li>块过小（这不利于无锁）时，无需将所有现有元素复制到新的块中；多个块（大小独立）以循环链表的形式链接在一起。</li>
-<li>当前插入的块称为 “尾块”，当前消费的块称为 “头块”。</li>
-<li>头索引指向下一个要读取的满槽；尾索引指向下一个要插入的空槽。如果两个索引相等，则块为空（确切地说，当队列已满时，恰好有一个插槽为空，以避免在具有相同头和尾索引的满块和空块之间产生歧义）。</li>
-<li>为了允许队列对任意线程创建 &#x2F; 析构（独立于生产 &#x2F; 消费线程），全内存屏障（memory_order_acq_cst）被用在析构函数地最后、析构函数的开头（这会强制所有的 CPU cores 同步 outstanding changes）。显然，在析构函数可以被安全地调用之前，生产者和消费者必须已经停止使用该队列。</li>
-</ol>
-<h2 id="Give-me-the-codes"><a href="#Give-me-the-codes" class="headerlink" title="Give me the codes"></a>Give me the codes</h2><ol>
-<li>用户不需要管理内存。</li>
-<li>预分配内存，在连续的块中。</li>
-<li><code>try_enqueue</code>: 保证不会分配内存（队列有初始容量）；</li>
-<li><code>enqueue</code>: 会根据需要动态扩容。</li>
-<li>没有使用 CAS loop；这意味者 enqueue 和 dequeue 是 O(1) 的（没有计入内存分配的时间）。</li>
-<li>因为在 x86 平台，内存屏障是空操作，所以 enqueue 和 dequeue 是一系列简单的 loads 和 stores (and branches) 。</li>
-</ol>
-<p>此代码仅仅适用于以原子方式处理 自然对齐的整型（aligned integer） 和 原生指针大小（native-pointer-size） 的 loads&#x2F;stores 的 CPU 上；<br>幸运的是，这包括了所有的现代处理器（包括 ARM, x86&#x2F;x86_64 和 PowerPC）。<br>它不是为在 DEC Alpha 上运行而设计的（DEC Alpha 似乎具有有史以来最弱的内存排序保证）。</p>
-<p>注：在 x86 上，memory_order_acquire&#x2F;release 通常不需要额外指令就能实现语义，但仍然能限制编译器的重排。<br>fetch_add 不是一个原子操作，而是三个：load, add, store. 所以不适用上述说的 “自然对齐的整型” 或“原生指针大小”的 load&#x2F;store.</p>
-<h2 id="性能优化点"><a href="#性能优化点" class="headerlink" title="性能优化点"></a>性能优化点</h2><ol>
-<li>平凡析构：跳过析构，直接释放内存。</li>
-<li><a target="_blank" rel="noopener" href="http://www.cse.cuhk.edu.hk/~pclee/www/pubs/ancs09poster.pdf">MCRingBuffer paper</a><ol>
-<li>cache line padding</li>
-<li>local control variables<ol>
-<li>减少对全局 read&#x2F;write 指针的读取</li>
-</ol>
-</li>
-<li>local block</li>
-</ol>
-</li>
-</ol>
-<h2 id="正确性测试"><a href="#正确性测试" class="headerlink" title="正确性测试"></a>正确性测试</h2><ol>
-<li>定义不可预测性延时函数，用于模拟线程调度。</li>
-<li>写线程塞入 32 M 个数据；读线程读取 32 M 次。读写线程中使用 unpredDelay() 模拟调度延迟。</li>
-<li>测试能否顺序读取，失败则打印日志，不退出。</li>
-<li>测试程序无限运行，每次使用一个写线程和读线程。直至手动 Ctrl C 关闭。</li>
-</ol>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/08/%E6%B5%8B%E8%AF%95%E7%A3%81%E7%9B%98%E6%80%A7%E8%83%BD/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/09/08/%E6%B5%8B%E8%AF%95%E7%A3%81%E7%9B%98%E6%80%A7%E8%83%BD/" class="post-title-link" itemprop="url">测试磁盘性能</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-09-08 11:27:57" itemprop="dateCreated datePublished" datetime="2025-09-08T11:27:57+00:00">2025-09-08</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="查看磁盘类型"><a href="#查看磁盘类型" class="headerlink" title="查看磁盘类型"></a>查看磁盘类型</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ lsblk -d -o name,rota,<span class="built_in">type</span>,size,model</span><br><span class="line">NAME ROTA TYPE  SIZE MODEL</span><br><span class="line">sda     1 disk  1.8T PERC H740P Mini</span><br></pre></td></tr></table></figure>
-
-<p><code>ROTA=1</code>：这是旋转磁盘。</p>
-<h2 id="测试方法"><a href="#测试方法" class="headerlink" title="测试方法"></a>测试方法</h2><p>顺序写吞吐测试（逼近最大写入速度）</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fio --name=seqwrite --rw=write --bs=1M --size=5G --numjobs=4 --iodepth=32 --direct=1 --runtime=60 --group_reporting</span><br></pre></td></tr></table></figure>
-
-<p>随机读 IOPS 测试（逼近最大并发处理能力）</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fio --name=randread --rw=randread --bs=4k --size=5G --numjobs=4 --iodepth=64 --direct=1 --runtime=60 --group_reporting</span><br></pre></td></tr></table></figure>
-
-<p>混合读写测试（模拟数据库负载）</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fio --name=mixrw --rw=randrw --rwmixread=70 --bs=4k --size=5G --numjobs=4 --iodepth=32 --direct=1 --runtime=60 --group_reporting</span><br></pre></td></tr></table></figure>
-
-
-<h2 id="磁盘的测试结果"><a href="#磁盘的测试结果" class="headerlink" title="磁盘的测试结果"></a>磁盘的测试结果</h2><p>由于是旋转磁盘，iodepth 总是 1（设成其他值不会生效）</p>
-<p><strong>单线程读写文件：</strong></p>
-<details>
-  <summary>点击展开代码</summary>
-  <pre>
-    <figure class="highlight bash"><figcaption><span>fio_bs_test.sh</span><a href="/blog/downloads/code/fio_bs_test.sh">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试参数</span></span><br><span class="line">DEVICE=<span class="string">&quot;./testfile&quot;</span>   <span class="comment"># 修改为你要测试的文件或设备路径</span></span><br><span class="line">RUNTIME=30                       <span class="comment"># 每个测试运行时间（秒）</span></span><br><span class="line"><span class="comment"># BLOCK_SIZES=(&quot;4k&quot; &quot;16k&quot; &quot;64k&quot; &quot;256k&quot; &quot;1M&quot; &quot;4M&quot; &quot;16M&quot; &quot;32M&quot; &quot;64M&quot; &quot;128M&quot;)  # 测试块大小列表</span></span><br><span class="line">BLOCK_SIZES=(<span class="string">&quot;128M&quot;</span> <span class="string">&quot;64M&quot;</span> <span class="string">&quot;32M&quot;</span> <span class="string">&quot;16M&quot;</span> <span class="string">&quot;4M&quot;</span> <span class="string">&quot;1M&quot;</span> <span class="string">&quot;256k&quot;</span> <span class="string">&quot;64k&quot;</span> <span class="string">&quot;16k&quot;</span> <span class="string">&quot;4k&quot;</span>)  <span class="comment"># 测试块大小列表</span></span><br><span class="line">LOG_FILE=<span class="string">&quot;fio_bs_output.log&quot;</span>        <span class="comment"># 原始输出日志文件</span></span><br><span class="line">PERFORMANCE_LOG=<span class="string">&quot;fio_bs_performance.log&quot;</span>  <span class="comment"># 性能结果日志文件</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 输出表头</span></span><br><span class="line"><span class="built_in">printf</span> <span class="string">&quot;%-8s | %-10s | %-8s | %-10s | %-10s\n&quot;</span> <span class="string">&quot;RW&quot;</span> <span class="string">&quot;BlockSize&quot;</span> <span class="string">&quot;IOPS&quot;</span> <span class="string">&quot;BW(MiB/s)&quot;</span> <span class="string">&quot;AvgLat(ms)&quot;</span> | <span class="built_in">tee</span> <span class="string">&quot;<span class="variable">$PERFORMANCE_LOG</span>&quot;</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;-------------------------------------------------------------&quot;</span> | <span class="built_in">tee</span> -a <span class="string">&quot;<span class="variable">$PERFORMANCE_LOG</span>&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;&quot;</span> &gt; <span class="string">&quot;<span class="variable">$LOG_FILE</span>&quot;</span>  <span class="comment"># 清空日志文件</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 循环测试不同块大小</span></span><br><span class="line"><span class="keyword">for</span> RW <span class="keyword">in</span> <span class="built_in">read</span> write; <span class="keyword">do</span></span><br><span class="line">  <span class="keyword">for</span> BS <span class="keyword">in</span> <span class="string">&quot;<span class="variable">${BLOCK_SIZES[@]}</span>&quot;</span>; <span class="keyword">do</span></span><br><span class="line">    OUTPUT=$(fio --name=bs_test \</span><br><span class="line">                 --filename=<span class="string">&quot;<span class="variable">$DEVICE</span>&quot;</span> \</span><br><span class="line">                 --rw=<span class="variable">$RW</span> \</span><br><span class="line">                 --bs=<span class="variable">$BS</span> \</span><br><span class="line">                 --size=1G \</span><br><span class="line">                 --time_based \</span><br><span class="line">                 --runtime=<span class="variable">$RUNTIME</span> \</span><br><span class="line">                 --numjobs=1 \</span><br><span class="line">                 --direct=1 \</span><br><span class="line">                 --ioengine=psync \</span><br><span class="line">                 --group_reporting)</span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;----------------------------------------------&quot;</span> &gt;&gt; <span class="string">&quot;<span class="variable">$LOG_FILE</span>&quot;</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$OUTPUT</span>&quot;</span> &gt;&gt; <span class="string">&quot;<span class="variable">$LOG_FILE</span>&quot;</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;&quot;</span> &gt;&gt; <span class="string">&quot;<span class="variable">$LOG_FILE</span>&quot;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 提取关键指标</span></span><br><span class="line">    <span class="built_in">read</span> IOPS BW BWUNIT LAT LAT_UNIT &lt;&lt;&lt; $(<span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$OUTPUT</span>&quot;</span> | awk <span class="string">&#x27;</span></span><br><span class="line"><span class="string">        /IOPS=/ {match($0, /IOPS= *([0-9.]+)/, iops)}</span></span><br><span class="line"><span class="string">        /BW=/ {</span></span><br><span class="line"><span class="string">            match($0, /BW= *([0-9.]+)([KMG]iB)\/s/, bwinfo)</span></span><br><span class="line"><span class="string">            bwval=bwinfo[1]; bwunit=bwinfo[2]</span></span><br><span class="line"><span class="string">        }</span></span><br><span class="line"><span class="string">        /clat \(/ {match($0, /avg= *([0-9.]+),/, lat); match($0, /\(([^)]+)\)/, lat_unit)}</span></span><br><span class="line"><span class="string">        END {print iops[1], bwval, bwunit, lat[1], lat_unit[1]}</span></span><br><span class="line"><span class="string">    &#x27;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 延迟单位换算</span></span><br><span class="line">    <span class="keyword">if</span> [ <span class="string">&quot;<span class="variable">$LAT_UNIT</span>&quot;</span> = <span class="string">&quot;usec&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">        LAT_MS=$(awk <span class="string">&quot;BEGIN {printf \&quot;%.2f\&quot;, <span class="variable">$LAT</span>/1000}&quot;</span>)</span><br><span class="line">    <span class="keyword">elif</span> [ <span class="string">&quot;<span class="variable">$LAT_UNIT</span>&quot;</span> = <span class="string">&quot;msec&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">        LAT_MS=<span class="variable">$LAT</span></span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        LAT_MS=<span class="string">&quot;Unknown&quot;</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 带宽单位换算为 MiB/s</span></span><br><span class="line">    <span class="keyword">case</span> <span class="string">&quot;<span class="variable">$BWUNIT</span>&quot;</span> <span class="keyword">in</span></span><br><span class="line">        <span class="string">&quot;KiB&quot;</span>) BW_MIB=$(awk <span class="string">&quot;BEGIN {printf \&quot;%.2f\&quot;, <span class="variable">$BW</span>/1024}&quot;</span>) ;;</span><br><span class="line">        <span class="string">&quot;MiB&quot;</span>) BW_MIB=<span class="variable">$BW</span> ;;</span><br><span class="line">        <span class="string">&quot;GiB&quot;</span>) BW_MIB=$(awk <span class="string">&quot;BEGIN {printf \&quot;%.2f\&quot;, <span class="variable">$BW</span>*1024}&quot;</span>) ;;</span><br><span class="line">        *) BW_MIB=<span class="string">&quot;Unknown&quot;</span> ;;</span><br><span class="line">    <span class="keyword">esac</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 输出结果行</span></span><br><span class="line">    <span class="built_in">printf</span> <span class="string">&quot;%-8s | %-10s | %-8s | %-10s | %-10s\n&quot;</span> <span class="string">&quot;<span class="variable">$RW</span>&quot;</span> <span class="string">&quot;<span class="variable">$BS</span>&quot;</span> <span class="string">&quot;<span class="variable">$IOPS</span>&quot;</span> <span class="string">&quot;<span class="variable">$BW_MIB</span>&quot;</span> <span class="string">&quot;<span class="variable">$LAT_MS</span>&quot;</span> | <span class="built_in">tee</span> -a <span class="string">&quot;<span class="variable">$PERFORMANCE_LOG</span>&quot;</span></span><br><span class="line">  <span class="keyword">done</span></span><br><span class="line"><span class="keyword">done</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除 fio 创建的测试文件</span></span><br><span class="line"><span class="built_in">rm</span> -f <span class="string">&quot;<span class="variable">$DEVICE</span>&quot;</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;测试完成，结果已保存到 <span class="variable">$LOG_FILE</span> 和 <span class="variable">$PERFORMANCE_LOG</span>&quot;</span></span><br></pre></td></tr></table></figure>
-  </pre>
-</details>
-
-
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">RW       | BlockSize  | IOPS     | BW(MiB/s)  | AvgLat(ms)</span><br><span class="line">-----------------------------------------------------------</span><br><span class="line">read     | 4k         | 194      | 0.76       | 5.14</span><br><span class="line">read     | 16k        | 239      | 3.74       | 4.17</span><br><span class="line">read     | 64k        | 347      | 21.7       | 2.88</span><br><span class="line">read     | 256k       | 271      | 67.9       | 3.68</span><br><span class="line">read     | 1M         | 94       | 94.9       | 10.53</span><br><span class="line">read     | 4M         | 14       | 57.2       | 69.74</span><br><span class="line">read     | 16M        | 6        | 97.6       | 163.96</span><br><span class="line">read     | 32M        | 3        | 111        | 288.99</span><br><span class="line">read     | 64M        | 1        | 112        | 573.70</span><br><span class="line">read     | 128M       | 0        | 112        | 1147.00</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">RW       | BlockSize  | IOPS     | BW(MiB/s)  | AvgLat(ms)</span><br><span class="line">-----------------------------------------------------------</span><br><span class="line">write    | 4k         | 1884     | 7.36       | 0.53</span><br><span class="line">write    | 16k        | 1452     | 22.7       | 0.69</span><br><span class="line">write    | 64k        | 793      | 49.6       | 1.26</span><br><span class="line">write    | 256k       | 307      | 76.8       | 3.24</span><br><span class="line">write    | 1M         | 100      | 100        | 9.96</span><br><span class="line">write    | 4M         | 18       | 73.7       | 53.99</span><br><span class="line">write    | 16M        | 5        | 93.8       | 169.43</span><br><span class="line">write    | 32M        | 3        | 101        | 313.24</span><br><span class="line">write    | 64M        | 1        | 107        | 594.46</span><br><span class="line">write    | 128M       | 0        | 102        | 1249.35</span><br></pre></td></tr></table></figure>
-
-
-<p>当 BlockSize&#x3D;32M 以后，写入性能基本达到顶峰（110 MiB&#x2F;s），和旋转磁盘的参数基本一致。</p>
-<p><strong>多线程读写同一个文件，BS&#x3D;64KiB：</strong></p>
-<details>
-  <summary>点击展开代码</summary>
-  <pre>
-    <figure class="highlight bash"><figcaption><span>fio_mt_test.sh</span><a href="/blog/downloads/code/fio_mt_test.sh">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"></span><br><span class="line">DEVICE=<span class="string">&quot;./mt_testfile&quot;</span>   <span class="comment"># 测试文件路径</span></span><br><span class="line">RUNTIME=30            <span class="comment"># 每个测试运行时间（秒）</span></span><br><span class="line">THREADS=(1 2 4 8 16 32 64 72 120)  <span class="comment"># 测试线程数列表</span></span><br><span class="line">BLOCK_SIZE=<span class="string">&quot;64k&quot;</span>      <span class="comment"># 块大小，可根据需要修改</span></span><br><span class="line">LOG_FILE=<span class="string">&quot;fio_thread_output.log&quot;</span></span><br><span class="line">PERFORMANCE_LOG=<span class="string">&quot;fio_thread_performance.log&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 输出表头</span></span><br><span class="line"><span class="built_in">printf</span> <span class="string">&quot;%-8s | %-8s | %-10s | %-10s | %-10s\n&quot;</span> <span class="string">&quot;RW&quot;</span> <span class="string">&quot;Threads&quot;</span> <span class="string">&quot;IOPS&quot;</span> <span class="string">&quot;BW(MiB/s)&quot;</span> <span class="string">&quot;AvgLat(ms)&quot;</span> | <span class="built_in">tee</span> <span class="string">&quot;<span class="variable">$PERFORMANCE_LOG</span>&quot;</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;---------------------------------------------------------------&quot;</span> | <span class="built_in">tee</span> -a <span class="string">&quot;<span class="variable">$PERFORMANCE_LOG</span>&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;&quot;</span> &gt; <span class="string">&quot;<span class="variable">$LOG_FILE</span>&quot;</span>  <span class="comment"># 清空日志文件</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> RW <span class="keyword">in</span> <span class="built_in">read</span> write; <span class="keyword">do</span></span><br><span class="line">  <span class="keyword">for</span> THREAD <span class="keyword">in</span> <span class="string">&quot;<span class="variable">${THREADS[@]}</span>&quot;</span>; <span class="keyword">do</span></span><br><span class="line">    OUTPUT=$(fio --name=thread_test \</span><br><span class="line">                 --filename=<span class="string">&quot;<span class="variable">$DEVICE</span>&quot;</span> \</span><br><span class="line">                 --rw=<span class="variable">$RW</span> \</span><br><span class="line">                 --bs=<span class="variable">$BLOCK_SIZE</span> \</span><br><span class="line">                 --size=5G \</span><br><span class="line">                 --time_based \</span><br><span class="line">                 --runtime=<span class="variable">$RUNTIME</span> \</span><br><span class="line">                 --numjobs=<span class="variable">$THREAD</span> \</span><br><span class="line">                 --direct=1 \</span><br><span class="line">                 --ioengine=psync \</span><br><span class="line">                 --group_reporting)</span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;---------------------------------------------------------------&quot;</span> &gt;&gt; <span class="string">&quot;<span class="variable">$LOG_FILE</span>&quot;</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$OUTPUT</span>&quot;</span> &gt;&gt; <span class="string">&quot;<span class="variable">$LOG_FILE</span>&quot;</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;&quot;</span> &gt;&gt; <span class="string">&quot;<span class="variable">$LOG_FILE</span>&quot;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 提取关键指标</span></span><br><span class="line">    <span class="built_in">read</span> IOPS BW BWUNIT LAT LAT_UNIT &lt;&lt;&lt; $(<span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$OUTPUT</span>&quot;</span> | awk <span class="string">&#x27;</span></span><br><span class="line"><span class="string">        /IOPS=/ {match($0, /IOPS= *([0-9.]+)/, iops)}</span></span><br><span class="line"><span class="string">        /BW=/ {</span></span><br><span class="line"><span class="string">            match($0, /BW= *([0-9.]+)([KMG]iB)\/s/, bwinfo)</span></span><br><span class="line"><span class="string">            bwval=bwinfo[1]; bwunit=bwinfo[2]</span></span><br><span class="line"><span class="string">        }</span></span><br><span class="line"><span class="string">        /clat \(/ {match($0, /avg= *([0-9.]+),/, lat); match($0, /\(([^)]+)\)/, lat_unit)}</span></span><br><span class="line"><span class="string">        END {print iops[1], bwval, bwunit, lat[1], lat_unit[1]}</span></span><br><span class="line"><span class="string">    &#x27;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 延迟单位换算</span></span><br><span class="line">    <span class="keyword">if</span> [ <span class="string">&quot;<span class="variable">$LAT_UNIT</span>&quot;</span> = <span class="string">&quot;usec&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">        LAT_MS=$(awk <span class="string">&quot;BEGIN {printf \&quot;%.2f\&quot;, <span class="variable">$LAT</span>/1000}&quot;</span>)</span><br><span class="line">    <span class="keyword">elif</span> [ <span class="string">&quot;<span class="variable">$LAT_UNIT</span>&quot;</span> = <span class="string">&quot;msec&quot;</span> ]; <span class="keyword">then</span></span><br><span class="line">        LAT_MS=<span class="variable">$LAT</span></span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        LAT_MS=<span class="string">&quot;Unknown&quot;</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 带宽单位换算为 MiB/s</span></span><br><span class="line">    <span class="keyword">case</span> <span class="string">&quot;<span class="variable">$BWUNIT</span>&quot;</span> <span class="keyword">in</span></span><br><span class="line">        <span class="string">&quot;KiB&quot;</span>) BW_MIB=$(awk <span class="string">&quot;BEGIN {printf \&quot;%.2f\&quot;, <span class="variable">$BW</span>/1024}&quot;</span>) ;;</span><br><span class="line">        <span class="string">&quot;MiB&quot;</span>) BW_MIB=<span class="variable">$BW</span> ;;</span><br><span class="line">        <span class="string">&quot;GiB&quot;</span>) BW_MIB=$(awk <span class="string">&quot;BEGIN {printf \&quot;%.2f\&quot;, <span class="variable">$BW</span>*1024}&quot;</span>) ;;</span><br><span class="line">        *) BW_MIB=<span class="string">&quot;Unknown&quot;</span> ;;</span><br><span class="line">    <span class="keyword">esac</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 输出结果行</span></span><br><span class="line">  <span class="built_in">printf</span> <span class="string">&quot;%-8s | %-8s | %-10s | %-10s | %-10s\n&quot;</span> <span class="string">&quot;<span class="variable">$RW</span>&quot;</span> <span class="string">&quot;<span class="variable">$THREAD</span>&quot;</span> <span class="string">&quot;<span class="variable">$IOPS</span>&quot;</span> <span class="string">&quot;<span class="variable">$BW_MIB</span>&quot;</span> <span class="string">&quot;<span class="variable">$LAT_MS</span>&quot;</span> | <span class="built_in">tee</span> -a <span class="string">&quot;<span class="variable">$PERFORMANCE_LOG</span>&quot;</span></span><br><span class="line">  <span class="keyword">done</span></span><br><span class="line"><span class="keyword">done</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">rm</span> -f <span class="string">&quot;<span class="variable">$DEVICE</span>&quot;</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;测试完成，结果已保存到 <span class="variable">$LOG_FILE</span> 和 <span class="variable">$PERFORMANCE_LOG</span>&quot;</span></span><br></pre></td></tr></table></figure>
-  </pre>
-</details>
-
-
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">RW       | Threads  | IOPS       | BW(MiB/s)  | AvgLat(ms)</span><br><span class="line">------------------------------------------------------------</span><br><span class="line">read     | 1        | 826        | 51.6       | 1.21</span><br><span class="line">read     | 2        | 1300       | 81.3       | 1.54</span><br><span class="line">read     | 4        | 1681       | 105        | 2.38</span><br><span class="line">read     | 8        | 1778       | 111        | 4.49</span><br><span class="line">read     | 16       | 1789       | 112        | 8.93</span><br><span class="line">read     | 32       | 1790       | 112        | 17.86</span><br><span class="line">read     | 64       | 1789       | 112        | 35.73</span><br><span class="line">read     | 72       | 1790       | 112        | 40.18</span><br><span class="line">read     | 120      | 1789       | 112        | 66.98</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">RW       | Threads  | IOPS       | BW(MiB/s)  | AvgLat(ms)</span><br><span class="line">------------------------------------------------------------</span><br><span class="line">write    | 1        | 847        | 52.9       | 1.18</span><br><span class="line">write    | 2        | 1367       | 85.5       | 1.46</span><br><span class="line">write    | 4        | 1757       | 110        | 2.27</span><br><span class="line">write    | 8        | 1786       | 112        | 4.47</span><br><span class="line">write    | 16       | 1788       | 112        | 8.92</span><br><span class="line">write    | 32       | 1788       | 112        | 17.79</span><br><span class="line">write    | 64       | 1788       | 112        | 35.09</span><br><span class="line">write    | 72       | 1788       | 112        | 39.54</span><br><span class="line">write    | 120      | 1784       | 112        | 64.50</span><br></pre></td></tr></table></figure>
-
-<p>当线程数增加，IO 性能随之提高，可能原因是 64KiB 小块数据大量提交到 I&#x2F;O 队列，操作系统能更好地完成读写路径优化。<br>但达到8线程的时候，就基本到达性能顶峰了。</p>
-<p>注意：fio 多线程写入同一个文件是没有加锁的，如果超过 page cache (一般是 4 KB)，那么可能乱序写入。</p>
-<h2 id="概念（以-fio-为例）"><a href="#概念（以-fio-为例）" class="headerlink" title="概念（以 fio 为例）"></a>概念（以 fio 为例）</h2><h3 id="ioengine"><a href="#ioengine" class="headerlink" title="ioengine"></a>ioengine</h3><p>ioengine（I&#x2F;O 引擎）是 fio 提供以执行读写任务的底层接口。不同的引擎代表不同的 I&#x2F;O 模型，比如同步、异步、内存映射、零拷贝等。</p>
-<table>
-<thead>
-<tr>
-<th align="center">引擎名称</th>
-<th align="center">类型</th>
-<th align="center">特点与用途</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">sync</td>
-<td align="center">同步</td>
-<td align="center">默认方式，每次 I&#x2F;O 都等待完成，适合简单测试</td>
-</tr>
-<tr>
-<td align="center">psync</td>
-<td align="center">同步</td>
-<td align="center">使用 pread&#x2F;pwrite，可指定偏移，略快</td>
-</tr>
-<tr>
-<td align="center">libaio</td>
-<td align="center">异步</td>
-<td align="center">Linux 异步 I&#x2F;O，适合高性能 SSD&#x2F;NVMe</td>
-</tr>
-<tr>
-<td align="center">io_uring</td>
-<td align="center">异步</td>
-<td align="center">新一代 Linux 异步接口，低延迟、高并发</td>
-</tr>
-<tr>
-<td align="center">mmap</td>
-<td align="center">内存映射</td>
-<td align="center">将文件映射到内存，适合大文件顺序访问</td>
-</tr>
-<tr>
-<td align="center">splice</td>
-<td align="center">零拷贝</td>
-<td align="center">用于高效数据传输，减少 CPU 和内存开销</td>
-</tr>
-<tr>
-<td align="center">windowsaio</td>
-<td align="center">异步</td>
-<td align="center">Windows 原生异步 I&#x2F;O，适合多线程写入</td>
-</tr>
-<tr>
-<td align="center">net</td>
-<td align="center">网络</td>
-<td align="center">用于网络 I&#x2F;O 测试，如 socket 传输</td>
-</tr>
-<tr>
-<td align="center">sg</td>
-<td align="center">SCSI</td>
-<td align="center">用于直接访问 SCSI 设备</td>
-</tr>
-</tbody></table>
-<p>每种 ioengine 都依赖操作系统提供的底层 I&#x2F;O 接口。例如：</p>
-<table>
-<thead>
-<tr>
-<th align="center">ioengine 类型</th>
-<th align="center">操作系统要求</th>
-<th align="center">是否异步</th>
-<th align="center">说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">sync &#x2F; psync</td>
-<td align="center">所有系统</td>
-<td align="center">❌</td>
-<td align="center">使用标准阻塞 I&#x2F;O，几乎总是可用</td>
-</tr>
-<tr>
-<td align="center">libaio</td>
-<td align="center">Linux，需安装 libaio 库</td>
-<td align="center">✅</td>
-<td align="center">依赖 Linux 的异步 I&#x2F;O 接口</td>
-</tr>
-<tr>
-<td align="center">io_uring</td>
-<td align="center">Linux ≥ 5.1，推荐 ≥ 5.4</td>
-<td align="center">✅</td>
-<td align="center">依赖新内核特性和 liburing 库</td>
-</tr>
-<tr>
-<td align="center">windowsaio</td>
-<td align="center">Windows</td>
-<td align="center">✅</td>
-<td align="center">使用 Windows 原生异步 I&#x2F;O</td>
-</tr>
-<tr>
-<td align="center">mmap</td>
-<td align="center">所有主流系统</td>
-<td align="center">❌</td>
-<td align="center">使用内存映射，适合顺序读写</td>
-</tr>
-<tr>
-<td align="center">posixaio</td>
-<td align="center">POSIX 兼容系统</td>
-<td align="center">✅</td>
-<td align="center">使用 aio_read &#x2F; aio_write 接口</td>
-</tr>
-</tbody></table>
-<p>你可以指定任意 ioengine （默认值是 sync &#x2F; psync），但它是否能运行，必须得到操作系统的支持。这包括内核版本、系统接口、库文件等。如果系统不支持，fio 会报错或自动回退。</p>
-<p>查看支持列表：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fio --enghelp</span><br></pre></td></tr></table></figure>
-
-<p>这会列出当前系统上可用的 ioengine，但注意：列出来 ≠ 能用，还要看运行时是否报错。</p>
-<p>实际测试：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fio --name=<span class="built_in">test</span> --ioengine=io_uring --rw=write --size=1G --bs=1M</span><br></pre></td></tr></table></figure>
-
-<p>如果不支持，会报错，例如：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fio: pid=132756, err=38/file:engines/io_uring.c:1351, func=io_queue_init, error=Function not implemented</span><br></pre></td></tr></table></figure>
-
-<h3 id="iodepth"><a href="#iodepth" class="headerlink" title="iodepth"></a>iodepth</h3><p><code>--iodepth</code> 是传递给内核的参数。</p>
-<p>如果你不显式设置 <code>--iodepth</code>，那么 fio 会根据所选的 I&#x2F;O 引擎（<code>--ioengine</code>） 来决定默认值</p>
-<table>
-<thead>
-<tr>
-<th align="center">I&#x2F;O 引擎</th>
-<th align="center">默认 iodepth</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">sync &#x2F; psync &#x2F; vsync</td>
-<td align="center">1（同步 I&#x2F;O，只能一个一个处理）</td>
-</tr>
-<tr>
-<td align="center">libaio &#x2F; io_uring</td>
-<td align="center">1，但可以设置更高以启用异步并发</td>
-</tr>
-<tr>
-<td align="center">mmap &#x2F; pread &#x2F; pwrite</td>
-<td align="center">1</td>
-</tr>
-<tr>
-<td align="center">windowsaio（Windows）</td>
-<td align="center">1</td>
-</tr>
-<tr>
-<td align="center">sg（SCSI generic）</td>
-<td align="center">1</td>
-</tr>
-</tbody></table>
-<p>fio 并不会主动维护队列，队列是内核的特性。</p>
-<table>
-<thead>
-<tr>
-<th align="center">I&#x2F;O 引擎</th>
-<th align="center">队列位置</th>
-<th align="center">是否异步</th>
-<th align="center">说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">psync &#x2F; sync</td>
-<td align="center">无队列（直接调用）</td>
-<td align="center">否</td>
-<td align="center">每次写入调用 write()，无排队机制</td>
-</tr>
-<tr>
-<td align="center">libaio</td>
-<td align="center">内核空间</td>
-<td align="center">✅ 是</td>
-<td align="center">使用 Linux AIO，队列在内核中，由 io_submit() 提交</td>
-</tr>
-<tr>
-<td align="center">io_uring</td>
-<td align="center">用户 + 内核共享</td>
-<td align="center">✅ 是</td>
-<td align="center">使用环形缓冲区，用户空间提交，内核空间处理</td>
-</tr>
-<tr>
-<td align="center">mmap &#x2F; null</td>
-<td align="center">用户空间</td>
-<td align="center">❌ 否</td>
-<td align="center">模拟或跳过实际 I&#x2F;O，不涉及内核队列</td>
-</tr>
-</tbody></table>
-<ul>
-<li>对于支持异步 I&#x2F;O 的引擎（如 libaio 或 io_uring），你可以设置更高的 iodepth（如 32、64、128）来模拟高并发负载；</li>
-<li>对 SSD 或 NVMe 设备，高 iodepth 能显著提升 IOPS 和吞吐量；</li>
-<li>对机械硬盘，提升有限，但仍可用于测试调度策略和队列行为。</li>
-</ul>
-<p>但如果你的 ioengine 是 sync 或 psync，这些是同步阻塞 I&#x2F;O，根本不支持高并发，所以 iodepth 实际上不会生效。</p>
-<table>
-<thead>
-<tr>
-<th align="center">参数</th>
-<th align="center">说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">–name&#x3D;seqwrite</td>
-<td align="center">定义测试任务的名称为 seqwrite，用于标识输出结果</td>
-</tr>
-<tr>
-<td align="center">–rw&#x3D;write</td>
-<td align="center">设置为顺序写入模式（sequential write），数据按顺序写入磁盘</td>
-</tr>
-<tr>
-<td align="center">–bs&#x3D;1M</td>
-<td align="center">每次 I&#x2F;O 操作的块大小为 1MB，适合测试吞吐量</td>
-</tr>
-<tr>
-<td align="center">–size&#x3D;5G</td>
-<td align="center">每个线程写入的总数据量为 5GB（不是总共，是每个 job）</td>
-</tr>
-<tr>
-<td align="center">–numjobs&#x3D;4</td>
-<td align="center">启动 4 个并发线程（job），模拟多线程写入场景</td>
-</tr>
-<tr>
-<td align="center">–iodepth&#x3D;32</td>
-<td align="center">每个线程的 I&#x2F;O 队列深度为 32，表示最多可同时挂起 32 个 I&#x2F;O 请求 <br> 本例中每个线程会发起 5G&#x2F;1M&#x3D;5120 个 I&#x2F;O 请求</td>
-</tr>
-<tr>
-<td align="center">–direct&#x3D;1</td>
-<td align="center">绕过系统缓存，直接对磁盘进行读写，更真实地反映设备性能</td>
-</tr>
-<tr>
-<td align="center">–runtime&#x3D;60</td>
-<td align="center">测试持续时间为 60 秒，优先于 –size，<br>1. 即使数据写完也继续写更多数据直到时间结束 &lt; br&gt;2. 如果没有写完，则时间到就结束</td>
-</tr>
-<tr>
-<td align="center">–group_reporting</td>
-<td align="center">汇总所有线程的测试结果，输出整体性能指标而不是每个线程单独显示</td>
-</tr>
-</tbody></table>
-<p>可能的代码实现：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;libaio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> FILE_PATH <span class="string">&quot;testfile.bin&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> BLOCK_SIZE 4096</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> IODEPTH 4  <span class="comment">// 控制并发请求数量</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">int</span> fd = open(FILE_PATH, O_CREAT | O_WRONLY | O_DIRECT, <span class="number">0644</span>);</span><br><span class="line">    <span class="keyword">if</span> (fd &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        perror(<span class="string">&quot;open&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// io_setup 是 libaio 的函数</span></span><br><span class="line">    <span class="type">io_context_t</span> ctx = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> (io_setup(IODEPTH, &amp;ctx) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        perror(<span class="string">&quot;io_setup&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">iocb</span> *<span class="title">iocbs</span>[<span class="title">IODEPTH</span>];</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">iocb</span> <span class="title">iocb_array</span>[<span class="title">IODEPTH</span>];</span></span><br><span class="line">    <span class="type">char</span> *buffers[IODEPTH];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; IODEPTH; i++) &#123;</span><br><span class="line">        <span class="comment">// 分配对齐内存</span></span><br><span class="line">        posix_memalign((<span class="type">void</span>**)&amp;buffers[i], BLOCK_SIZE, BLOCK_SIZE);</span><br><span class="line">        <span class="built_in">memset</span>(buffers[i], <span class="string">&#x27;A&#x27;</span> + i, BLOCK_SIZE);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 初始化 iocb</span></span><br><span class="line">        io_prep_pwrite(&amp;iocb_array[i], fd, buffers[i], BLOCK_SIZE, i * BLOCK_SIZE);</span><br><span class="line">        iocbs[i] = &amp;iocb_array[i];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 提交所有请求</span></span><br><span class="line">    <span class="type">int</span> ret = io_submit(ctx, IODEPTH, iocbs);</span><br><span class="line">    <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        perror(<span class="string">&quot;io_submit&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 等待所有请求完成</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">io_event</span> <span class="title">events</span>[<span class="title">IODEPTH</span>];</span></span><br><span class="line">    io_getevents(ctx, IODEPTH, IODEPTH, events, <span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 清理</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; IODEPTH; i++) &#123;</span><br><span class="line">        <span class="built_in">free</span>(buffers[i]);</span><br><span class="line">    &#125;</span><br><span class="line">    io_destroy(ctx);</span><br><span class="line">    close(fd);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;All %d I/O requests completed.\n&quot;</span>, IODEPTH);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-<h3 id="延迟"><a href="#延迟" class="headerlink" title="延迟"></a>延迟</h3><table>
-<thead>
-<tr>
-<th>指标</th>
-<th>含义</th>
-<th>描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>slat</td>
-<td>Submission Latency</td>
-<td>从 fio 发起 I&#x2F;O 请求到内核接收该请求的时间。通常很短，单位是微秒（usec）。</td>
-</tr>
-<tr>
-<td>clat</td>
-<td>Completion Latency</td>
-<td>从内核接收请求到 I&#x2F;O 操作完成的时间。这个是最能反映存储设备性能的部分。</td>
-</tr>
-<tr>
-<td>lat</td>
-<td>Total Latency</td>
-<td>总延迟，即 slat + clat，表示从 fio 发起请求到 I&#x2F;O 完成的整个过程。</td>
-</tr>
-</tbody></table>
-<h3 id="结果分析"><a href="#结果分析" class="headerlink" title="结果分析"></a>结果分析</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">$ fio --name=seqwrite --rw=write --bs=1M --size=5G --numjobs=2 --direct=1 --runtime=60 --group_reporting</span><br><span class="line">seqwrite: (g=0): rw=write, bs=(R) 1024KiB-1024KiB, (W) 1024KiB-1024KiB, (T) 1024KiB-1024KiB, ioengine=psync, iodepth=1</span><br><span class="line">...</span><br><span class="line">fio-3.41</span><br><span class="line">Starting 2 processes</span><br><span class="line">seqwrite: Laying out IO file (1 file / 5120MiB)</span><br><span class="line">seqwrite: Laying out IO file (1 file / 5120MiB)</span><br><span class="line">Jobs: 2 (f=2): [W(2)][100.0%][w=112MiB/s][w=112 IOPS][eta 00m:00s]</span><br><span class="line">seqwrite: (groupid=0, <span class="built_in">jobs</span>=2): err= 0: pid=70688: Sun Sep  7 22:37:47 2025</span><br><span class="line">  write: IOPS=111, BW=111MiB/s (117MB/s)(6685MiB/60016msec); 0 zone resets</span><br><span class="line">    clat (usec): min=9606, max=74763, avg=17922.82, stdev=1446.89</span><br><span class="line">     lat (usec): min=9628, max=74791, avg=17951.49, stdev=1446.80</span><br><span class="line">    clat percentiles (usec):</span><br><span class="line">     |  1.00th=[15008],  5.00th=[16319], 10.00th=[16909], 20.00th=[17433],</span><br><span class="line">     | 30.00th=[17695], 40.00th=[17695], 50.00th=[17957], 60.00th=[17957],</span><br><span class="line">     | 70.00th=[18220], 80.00th=[18482], 90.00th=[19006], 95.00th=[19268],</span><br><span class="line">     | 99.00th=[21365], 99.50th=[22414], 99.90th=[32375], 99.95th=[40109],</span><br><span class="line">     | 99.99th=[74974]</span><br><span class="line">   bw (KiB/s): min=96062, max=116736, per=100.00%, avg=114150.20, stdev=1061.35, samples=238</span><br><span class="line">   iops        : min=   92, max=  114, avg=110.77, stdev= 1.18, samples=238</span><br><span class="line">  lat (msec)   : 10=0.03%, 20=97.43%, 50=2.53%, 100=0.01%</span><br><span class="line">  cpu          : usr=0.22%, sys=0.75%, ctx=6717, majf=0, minf=67</span><br><span class="line">  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, &gt;=64=0.0%</span><br><span class="line">     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, &gt;=64=0.0%</span><br><span class="line">     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, &gt;=64=0.0%</span><br><span class="line">     issued rwts: total=0,6685,0,0 short=0,0,0,0 dropped=0,0,0,0</span><br><span class="line">     latency   : target=0, window=0, percentile=100.00%, depth=1</span><br><span class="line"></span><br><span class="line">Run status group 0 (all <span class="built_in">jobs</span>):</span><br><span class="line">  WRITE: bw=111MiB/s (117MB/s), 111MiB/s-111MiB/s (117MB/s-117MB/s), io=6685MiB (7010MB), run=60016-60016mse</span><br></pre></td></tr></table></figure>
-
-<p>🧾 测试配置解析<br>bash<br>fio –name&#x3D;seqwrite –rw&#x3D;write –bs&#x3D;1M –size&#x3D;10G –numjobs&#x3D;1 –direct&#x3D;1 –runtime&#x3D;60 –group_reporting<br>参数	含义<br>rw&#x3D;write	顺序写入<br>bs&#x3D;1M	每次写入块大小为 1MiB<br>numjobs&#x3D;1	单线程写入<br>direct&#x3D;1	使用 Direct I&#x2F;O，绕过页缓存<br>ioengine&#x3D;psync	使用同步 I&#x2F;O（每次 pwrite()）<br>iodepth&#x3D;1	每次只挂起一个 I&#x2F;O 请求（同步模式下默认如此）<br>📊 性能结果概览<br>指标	数值	说明<br>IOPS	96	每秒执行 96 次写入操作<br>带宽	96.2 MiB&#x2F;s（101 MB&#x2F;s）	每秒写入约 96 MiB 数据<br>总写入量	5772 MiB	在 60 秒内完成的写入总量<br>延迟（avg clat）	10.36 ms	每次写入的平均完成时间<br>CPU 使用率	usr&#x3D;0.46%, sys&#x3D;1.23%	CPU 负载极低，瓶颈不在 CPU<br>⏱ 延迟分布分析<br>50% 的写入延迟低于 9.9 ms</p>
-<p>95% 的写入低于 12.5 ms</p>
-<p>99.95% 的写入延迟达到了 22.9 ms</p>
-<p>最慢的写入高达 28.2 ms</p>
-<p>尾部延迟略高，说明偶尔会有磁盘响应变慢的情况，可能是设备内部缓存刷新或寻址造成。</p>
-<p>📈 带宽波动情况<br>平均带宽：约 96 MiB&#x2F;s</p>
-<p>最小带宽：60 MiB&#x2F;s</p>
-<p>最大带宽：104 MiB&#x2F;s</p>
-<p>标准差：6.2 MiB&#x2F;s → 表明带宽相对稳定，但仍有轻微波动</p>
-<p>🧠 深层解读<br>✅ 为什么 IOPS ≈ 带宽（MiB&#x2F;s）？<br>因为你设置了 bs&#x3D;1M，每次写入 1MiB 数据，所以：</p>
-<p>Code<br>IOPS × Block Size &#x3D; Bandwidth<br>96 IOPS × 1 MiB &#x3D; 96 MiB&#x2F;s<br>✅ 为什么 Direct I&#x2F;O？<br>绕过页缓存，测试的是磁盘的真实物理性能，避免被内存加速 “欺骗”。</p>
-<p>✅ 为什么使用 psync？<br>psync 是同步写入，每次调用 pwrite()，适合模拟数据库或日志系统的写入行为。但它无法并发挂起多个请求，限制了吞吐。</p>
-<p>📌 性能瓶颈分析<br>磁盘类型：如果是 HDD，这个结果（96 MiB&#x2F;s）非常合理；如果是 SSD，则偏低，可能受限于同步 I&#x2F;O 或单线程。</p>
-<p>IO 引擎限制：psync 是阻塞式，无法发挥磁盘的并发能力。</p>
-<p>线程数限制：只有一个线程，磁盘可能未被充分利用。</p>
 
       
     </div>
@@ -2431,7 +2198,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">117</span>
+          <span class="site-state-item-count">119</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -2444,7 +2211,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">49</span>
+        <span class="site-state-item-count">51</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -2550,6 +2317,19 @@
 
 
 
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
 
 
   

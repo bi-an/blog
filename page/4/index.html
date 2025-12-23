@@ -188,6 +188,262 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/19/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/19/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/" class="post-title-link" itemprop="url">内存管理</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-08-19 20:12:58" itemprop="dateCreated datePublished" datetime="2025-08-19T20:12:58+00:00">2025-08-19</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="线程安全性"><a href="#线程安全性" class="headerlink" title="线程安全性"></a>线程安全性</h2><p>malloc 是线程安全的，但有一些细节需要注意。</p>
+<ol>
+<li>线程安全含义</li>
+</ol>
+<p>线程安全：多个线程同时调用 malloc&#x2F;free 不会破坏堆管理结构，也不会导致内存管理崩溃。</p>
+<p>实现方法：</p>
+<p>glibc malloc 在内部使用 锁（mutex 或 spinlock） 保护全局堆管理数据结构</p>
+<p>不同线程同时申请或释放内存，内核保证堆表一致</p>
+<ol start="2">
+<li>限制与注意事项</li>
+</ol>
+<p>性能问题</p>
+<p>多线程频繁 malloc&#x2F;free，锁竞争可能成为瓶颈</p>
+<p>对性能敏感的程序可能使用：</p>
+<p>线程本地缓存（thread-local cache） 的 jemalloc &#x2F; tcmalloc</p>
+<p>避免全局锁竞争</p>
+<p>信号处理上下文不安全</p>
+<p>虽然线程安全，但 malloc 在信号处理函数里不安全</p>
+<p>原因：</p>
+<p>信号可能打断正在执行的 malloc</p>
+<p>malloc 内部锁可能被持有 → 再次调用可能死锁</p>
+<p>所以 signal handler 中不能直接调用 malloc&#x2F;free</p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>malloc&#x2F;glibc</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>多线程调用安全</td>
+<td>✅ 是线程安全的</td>
+</tr>
+<tr>
+<td>信号处理函数调用安全</td>
+<td>❌ 不安全</td>
+</tr>
+<tr>
+<td>性能</td>
+<td>可能锁竞争，需要优化（jemalloc&#x2F;tcmalloc）</td>
+</tr>
+</tbody></table>
+<h2 id="信号安全"><a href="#信号安全" class="headerlink" title="信号安全"></a>信号安全</h2><p>malloc &#x2F; free 内部会修改全局堆管理结构（如 free list）</p>
+<p>如果信号到达时主程序正在调用 malloc 或 free，信号处理函数里再次调用 malloc&#x2F;free → 堆数据结构可能被破坏，<br>可能导致崩溃或内存泄漏</p>
+<p>虽然线程安全，但 malloc 在信号处理函数里不安全</p>
+<p>原因：</p>
+<ul>
+<li>信号可能打断正在执行的 malloc</li>
+<li>malloc 内部锁可能被持有 → 再次调用可能死锁</li>
+</ul>
+<p>所以 signal handler 中不能直接调用 malloc&#x2F;free</p>
+<h3 id="安全做法"><a href="#安全做法" class="headerlink" title="安全做法"></a>安全做法</h3><p>信号处理函数里只做：</p>
+<ul>
+<li>设置标志位（sig_atomic_t flag &#x3D; 1;）</li>
+<li>写入 pipe &#x2F; eventfd</li>
+<li>调用 async-signal-safe 系统调用（write(), _exit()）</li>
+</ul>
+<p>之后由主程序在安全上下文处理 malloc&#x2F;free 或其他复杂操作</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/19/os/%E4%BF%A1%E5%8F%B7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/19/os/%E4%BF%A1%E5%8F%B7/" class="post-title-link" itemprop="url">信号</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-08-19 20:08:39" itemprop="dateCreated datePublished" datetime="2025-08-19T20:08:39+00:00">2025-08-19</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="异步信号"><a href="#异步信号" class="headerlink" title="异步信号"></a>异步信号</h2><p>锁、malloc 等不能在信号处理函数里用。这里涉及到 异步信号安全 (async-signal-safe) 的概念。</p>
+<ol>
+<li>信号处理函数的执行环境</li>
+</ol>
+<p>当一个信号到达进程时，内核 异步中断当前执行流，立即跳转到信号处理函数执行。</p>
+<p>这意味着：</p>
+<p>当前线程可能 正在持有锁（mutex、spinlock 等）</p>
+<p>当前线程可能 正在使用 malloc&#x2F;free，操作堆数据结构</p>
+<ol start="2">
+<li>为什么不能调用这些函数</li>
+</ol>
+<p>锁（mutex 等）</p>
+<p>如果信号处理函数里调用 pthread_mutex_lock()：</p>
+<p>线程可能已经在信号到达前持有这个锁</p>
+<p>信号处理函数再次尝试加锁 → 死锁</p>
+<p>malloc &#x2F; free</p>
+<p>malloc 内部会修改全局堆管理结构（如 free list）</p>
+<p>如果信号到达时主程序正在调用 malloc 或 free，信号处理函数里再次调用 malloc&#x2F;free → 堆数据结构可能被破坏</p>
+<p>可能导致崩溃或内存泄漏</p>
+<ol start="3">
+<li>async-signal-safe 函数</li>
+</ol>
+<p>POSIX 定义了一组 “异步信号安全函数”（async-signal-safe functions）</p>
+<p>信号处理函数中 只允许调用这些函数</p>
+<p>常用安全函数示例：</p>
+<p>_exit()</p>
+<p>write()（低级系统调用，不会锁堆）</p>
+<p>sig_atomic_t 类型变量赋值</p>
+<p>总结</p>
+<table>
+<thead>
+<tr>
+<th>函数类型</th>
+<th>可在信号处理函数里用？</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>pthread_mutex_lock</td>
+<td>❌</td>
+<td>可能已持锁 → 死锁</td>
+</tr>
+<tr>
+<td>malloc&#x2F;free</td>
+<td>❌</td>
+<td>可能正在操作堆 → 数据结构破坏</td>
+</tr>
+<tr>
+<td>write(fd, buf, n)</td>
+<td>✅</td>
+<td>系统调用，不会破坏用户态结构</td>
+</tr>
+<tr>
+<td>_exit()</td>
+<td>✅</td>
+<td>安全终止进程</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>核心思想：信号是异步的，中断当前执行流，调用非 async-signal-safe 函数可能破坏正在执行的操作，导致不可预测的行为。</p>
+</blockquote>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/19/concurrency/thread_local%E7%9A%84%E5%AE%9E%E7%8E%B0/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -219,7 +475,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -335,7 +591,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -409,7 +665,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
 
           
@@ -542,7 +798,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -705,7 +961,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -970,7 +1226,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1357,7 +1613,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1664,7 +1920,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
+                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
               </span>
 
           
@@ -1858,276 +2114,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/16/os/%E7%94%A8%E6%88%B7%E6%80%81%E5%92%8C%E5%86%85%E6%A0%B8%E6%80%81/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/16/os/%E7%94%A8%E6%88%B7%E6%80%81%E5%92%8C%E5%86%85%E6%A0%B8%E6%80%81/" class="post-title-link" itemprop="url">用户态和内核态</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-16 13:31:26" itemprop="dateCreated datePublished" datetime="2025-08-16T13:31:26+00:00">2025-08-16</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="用户空间和内核空间是隔离的"><a href="#用户空间和内核空间是隔离的" class="headerlink" title="用户空间和内核空间是隔离的"></a>用户空间和内核空间是隔离的</h2><p>切换内核态和用户态为什么要内存复制？</p>
-<table>
-<thead>
-<tr>
-<th>问题</th>
-<th>描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>安全性</td>
-<td>用户程序可能传入非法地址，导致内核崩溃或被利用攻击</td>
-</tr>
-<tr>
-<td>稳定性</td>
-<td>用户程序可能在 <code>poll()</code> 返回前修改数组，导致内核读取不一致</td>
-</tr>
-<tr>
-<td>内存管理</td>
-<td>用户空间内存可能被 swap 出或者释放，内核无法保证访问有效</td>
-</tr>
-</tbody></table>
-<h2 id="内核态"><a href="#内核态" class="headerlink" title="内核态"></a>内核态</h2><p>我们在说“切换到内核态”时，其实指的是 CPU 特权级别从用户态（ring3）切换到内核态（ring0） 的过程。</p>
-<p>用户态 vs 内核态</p>
-<p>用户态（user mode）</p>
-<p>应用程序（比如你写的 C++ 程序）运行的环境。</p>
-<p>权限受限，不能直接操作硬件（如磁盘、网卡），也不能随便访问内核内存。</p>
-<p>只能通过 系统调用 (syscall) 向内核请求服务。</p>
-<p>内核态（kernel mode）</p>
-<p>操作系统内核运行的环境。</p>
-<p>拥有最高权限（ring0），可以操作 CPU 指令集、内存管理、驱动、硬件寄存器。</p>
-<p>系统调用的实现代码就在内核态里。</p>
-<p>“切换到内核态”的过程</p>
-<p>当你调用一个系统调用，比如：</p>
-<p>read(fd, buf, size);</p>
-<p>你的程序在 用户态，调用 read()。</p>
-<p>实际上 read() 会触发一条特殊指令（例如 Linux x86-64 用 syscall 指令）。</p>
-<p>CPU 捕捉到这个指令，自动：</p>
-<p>从用户态切换到内核态。</p>
-<p>切换到内核栈。</p>
-<p>保存用户态寄存器上下文。</p>
-<p>跳到系统调用处理函数（比如 sys_read）。</p>
-<p>内核态代码执行 sys_read，比如访问文件系统、检查 socket buffer。</p>
-<p>处理完后返回，CPU 再切回用户态，恢复上下文，继续执行应用代码。</p>
-<p>🔹 为什么要区分用户态&#x2F;内核态？</p>
-<p>安全：用户程序不能直接操作硬件。</p>
-<p>稳定性：即使用户程序崩溃，内核和其他进程不会受影响。</p>
-<p>性能隔离：内核提供抽象（系统调用接口），避免应用直接干扰底层资源。</p>
-<p>✅ 所以，总结一句：<br>“切换到内核态”就是 CPU 从运行普通用户代码（权限受限）切换到执行内核代码（最高权限）的过程，常常发生在系统调用、异常、硬件中断时。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/16/cpp/C++%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/16/cpp/C++%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8/" class="post-title-link" itemprop="url">C++右值引用</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-16 10:54:08" itemprop="dateCreated datePublished" datetime="2025-08-16T10:54:08+00:00">2025-08-16</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-19 12:21:46" itemprop="dateModified" datetime="2025-12-19T12:21:46+00:00">2025-12-19</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="1-左值、将亡值、纯右值"><a href="#1-左值、将亡值、纯右值" class="headerlink" title="1. 左值、将亡值、纯右值"></a>1. 左值、将亡值、纯右值</h2><p>C++11的值必定属于：左值、右值（将亡值、纯右值）三者之一。不是左值就是右值。详见值类别。</p>
-<ul>
-<li><strong>左值</strong>的特点：“有名字、可以取址”。没有名字或者不能取址，则必定是右值。</li>
-<li><strong>右值</strong>的特点：即将消亡，也就是说“会被析构”。<ul>
-<li><strong>纯右值</strong>：一定没有名字。比如除去<code>string</code>之外字面值常量、函数返回值、运算表达式。</li>
-<li><strong>将亡值</strong>：即将消亡的值：比如临时变量，一旦离开作用域就会被销毁；可能没有名字，例如函数的返回值（非引用）。</li>
-</ul>
-</li>
-</ul>
-<p>示例：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">A</span>(); <span class="comment">// 匿名对象的作用域仅限于语句中，一旦离开当前语句，就会析构。</span></span><br><span class="line">    <span class="built_in">getchar</span>(); <span class="comment">// 暂停</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="2-引用、右值引用"><a href="#2-引用、右值引用" class="headerlink" title="2. 引用、右值引用"></a>2. 引用、右值引用</h2><p>右值引用涉及“右值”和“引用”两个概念。</p>
-<ul>
-<li><strong>引用</strong>不是对象，所以定义一个“右值引用”不会调用构造函数，避免了多余的构造过程。</li>
-<li><strong>右值</strong>是即将析构的值，把右值绑定到右值引用上，延长了右值的生命期，所以右值对象没有析构。</li>
-</ul>
-<h3 id="右值引用规则："><a href="#右值引用规则：" class="headerlink" title="右值引用规则："></a>右值引用规则：</h3><ul>
-<li>可以把左值绑定到左值引用。</li>
-<li>可以把右值绑定到右值引用。</li>
-<li>不允许把左值绑定到右值引用。</li>
-<li>不允许把右值绑定到左值引用。</li>
-<li><code>const</code>左值引用可以接受左值或右值。</li>
-</ul>
-<p>示例：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> a1 = <span class="number">10</span>; <span class="comment">// 10是纯右值</span></span><br><span class="line"><span class="type">const</span> <span class="type">int</span>&amp; aa = <span class="number">10</span>; <span class="comment">// 常量引用可以接受右值</span></span><br><span class="line"><span class="type">int</span>&amp;&amp; aaa = <span class="number">10</span>; <span class="comment">// 右值引用接受右值</span></span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="3-引用和右值引用是左值"><a href="#3-引用和右值引用是左值" class="headerlink" title="3. 引用和右值引用是左值"></a>3. 引用和右值引用是左值</h2><p>引用（包括右值引用）本身是左值，可以取址，但不能对右值取址。</p>
-<p>示例：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;utility&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun1</span><span class="params">(<span class="type">int</span>&amp; t)</span> </span>&#123; <span class="comment">// 接受一个左值参数</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun2</span><span class="params">(<span class="type">int</span>&amp;&amp; t)</span> </span>&#123; <span class="comment">// 接受一个右值参数，但t本身是左值</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> a = <span class="number">10</span>;</span><br><span class="line">    <span class="type">int</span>&amp;&amp; ra = <span class="built_in">move</span>(a); <span class="comment">// move(a)返回一个右值，ra却是一个左值</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">fun1</span>(ra); <span class="comment">// 正确：ra是左值，可以绑定到左值引用</span></span><br><span class="line">    <span class="built_in">fun2</span>(<span class="built_in">move</span>(a)); <span class="comment">// 正确：move(a)返回一个右值</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="4-复制构造函数和移动构造函数"><a href="#4-复制构造函数和移动构造函数" class="headerlink" title="4. 复制构造函数和移动构造函数"></a>4. 复制构造函数和移动构造函数</h2><h3 id="为什么右值引用的构造函数被视为“移动”语义？"><a href="#为什么右值引用的构造函数被视为“移动”语义？" class="headerlink" title="为什么右值引用的构造函数被视为“移动”语义？"></a>为什么右值引用的构造函数被视为“移动”语义？</h3><p>因为输入参数是一个引用（右值引用也是引用），可以直接访问所引对象的资源并接管它，同时将源对象的资源置空。</p>
-<p>示例：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">A</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">A</span>() &#123; cout &lt;&lt; <span class="string">&quot;A()&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line">    <span class="built_in">A</span>(<span class="type">const</span> A&amp;) &#123; cout &lt;&lt; <span class="string">&quot;A(const A&amp;)&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line">    <span class="built_in">A</span>(A&amp;&amp;) &#123; cout &lt;&lt; <span class="string">&quot;A(A&amp;&amp;)&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    A a;</span><br><span class="line">    <span class="function">A <span class="title">b</span><span class="params">(std::move(a))</span></span>; <span class="comment">// 调用移动构造函数</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="5-完美转发"><a href="#5-完美转发" class="headerlink" title="5. 完美转发"></a>5. 完美转发</h2><p>完美转发是指对模板参数实现完美转发：即输入什么类型（左值、右值）的参数，就是什么类型的参数。</p>
-<h3 id="引用折叠规则："><a href="#引用折叠规则：" class="headerlink" title="引用折叠规则："></a>引用折叠规则：</h3><ul>
-<li>如果有左值引用，优先折叠成左值引用。</li>
-<li>如果只有右值引用，参数推导成右值引用。</li>
-</ul>
-<p>示例：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">RunCode</span><span class="params">(<span class="type">int</span>&amp; m)</span> </span>&#123; cout &lt;&lt; <span class="string">&quot;lvalue ref&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">RunCode</span><span class="params">(<span class="type">int</span>&amp;&amp; m)</span> </span>&#123; cout &lt;&lt; <span class="string">&quot;rvalue ref&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">PerfectForward</span><span class="params">(T&amp;&amp; t)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">RunCode</span>(<span class="built_in">static_cast</span>&lt;T&amp;&amp;&gt;(t)); <span class="comment">// 保证完美转发</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> a = <span class="number">10</span>;</span><br><span class="line">    <span class="built_in">PerfectForward</span>(a); <span class="comment">// lvalue ref</span></span><br><span class="line">    <span class="built_in">PerfectForward</span>(<span class="built_in">move</span>(a)); <span class="comment">// rvalue ref</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="6-移动构造函数、移动赋值函数、复制构造函数、复制赋值函数"><a href="#6-移动构造函数、移动赋值函数、复制构造函数、复制赋值函数" class="headerlink" title="6. 移动构造函数、移动赋值函数、复制构造函数、复制赋值函数"></a>6. 移动构造函数、移动赋值函数、复制构造函数、复制赋值函数</h2><h3 id="移动构造函数的注意事项："><a href="#移动构造函数的注意事项：" class="headerlink" title="移动构造函数的注意事项："></a>移动构造函数的注意事项：</h3><ul>
-<li>移动构造函数不允许抛出异常，建议添加<code>noexcept</code>关键字。</li>
-<li>使用<code>std::move_if_noexcept</code>可以在移动构造函数抛出异常时回退到复制构造函数。</li>
-</ul>
-<p>示例：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">A</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">A</span>() &#123; cout &lt;&lt; <span class="string">&quot;A()&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line">    <span class="built_in">A</span>(<span class="type">const</span> A&amp;) &#123; cout &lt;&lt; <span class="string">&quot;A(const A&amp;)&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line">    <span class="built_in">A</span>(A&amp;&amp;) <span class="keyword">noexcept</span> &#123; cout &lt;&lt; <span class="string">&quot;A(A&amp;&amp;)&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    A a;</span><br><span class="line">    <span class="function">A <span class="title">b</span><span class="params">(std::move(a))</span></span>; <span class="comment">// 调用移动构造函数</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="7-编译器优化"><a href="#7-编译器优化" class="headerlink" title="7. 编译器优化"></a>7. 编译器优化</h2><p>编译器默认会采用“返回值优化”（RVO或NRVO）。要观察移动语义与复制语义的不同，应该关闭编译器优化。</p>
-<p>关闭优化命令：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ -o <span class="built_in">test</span> main.cc -fno-elide-constructors</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="8-合成的移动操作"><a href="#8-合成的移动操作" class="headerlink" title="8. 合成的移动操作"></a>8. 合成的移动操作</h2><p>如果没有定义复制构造&#x2F;赋值函数，编译器会为我们合成（浅复制）。但如果自定义了复制构造函数、复制赋值运算符或析构函数，编译器将不会合成移动构造&#x2F;赋值函数。</p>
-<p>示例：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">A</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">A</span>() &#123; cout &lt;&lt; <span class="string">&quot;A()&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line">    <span class="built_in">A</span>(<span class="type">const</span> A&amp;) &#123; cout &lt;&lt; <span class="string">&quot;A(const A&amp;)&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line">    <span class="built_in">A</span>(A&amp;&amp;) &#123; cout &lt;&lt; <span class="string">&quot;A(A&amp;&amp;)&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    A a;</span><br><span class="line">    <span class="function">A <span class="title">b</span><span class="params">(std::move(a))</span></span>; <span class="comment">// 调用移动构造函数</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="9-std-move的实现"><a href="#9-std-move的实现" class="headerlink" title="9. std::move的实现"></a>9. <code>std::move</code>的实现</h2><p><code>std::move</code>是一个类型转换，没有完成其他工作。</p>
-<p>实现：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="keyword">typename</span> std::remove_reference&lt;T&gt;::<span class="function">type&amp;&amp; <span class="title">move</span><span class="params">(T&amp;&amp; t)</span> <span class="keyword">noexcept</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">static_cast</span>&lt;<span class="keyword">typename</span> std::remove_reference&lt;T&gt;::type&amp;&amp;&gt;(t);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="10-unique-ptr与std-move"><a href="#10-unique-ptr与std-move" class="headerlink" title="10. unique_ptr与std::move"></a>10. <code>unique_ptr</code>与<code>std::move</code></h2><p>示例：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;memory&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="function">unique_ptr&lt;<span class="type">int</span>&gt; <span class="title">up</span><span class="params">(<span class="keyword">new</span> <span class="type">int</span>(<span class="number">10</span>))</span></span>;</span><br><span class="line">    unique_ptr&lt;<span class="type">int</span>&gt; p = std::<span class="built_in">move</span>(up); <span class="comment">// 现在up为空</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>解释：<code>std::move</code>调用<code>unique_ptr</code>的移动构造函数，转移<code>up</code>所拥有的资源，并将<code>up</code>置为空。</p>
-<hr>
-<h2 id="11-右值与sizeof"><a href="#11-右值与sizeof" class="headerlink" title="11. 右值与sizeof"></a>11. 右值与<code>sizeof</code></h2><p>示例：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">A</span> &#123;</span><br><span class="line">    <span class="type">int</span> x, y;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">f</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    cout &lt;&lt; <span class="built_in">sizeof</span>(<span class="built_in">int</span>()) &lt;&lt; endl; <span class="comment">// 1</span></span><br><span class="line">    cout &lt;&lt; <span class="built_in">sizeof</span>(<span class="number">10</span>) &lt;&lt; endl; <span class="comment">// 4</span></span><br><span class="line">    cout &lt;&lt; <span class="built_in">sizeof</span>(A) &lt;&lt; endl; <span class="comment">// 8</span></span><br><span class="line">    cout &lt;&lt; <span class="built_in">sizeof</span>(<span class="built_in">A</span>()) &lt;&lt; endl; <span class="comment">// 1</span></span><br><span class="line">    cout &lt;&lt; <span class="built_in">sizeof</span>(<span class="built_in">f</span>()) &lt;&lt; endl; <span class="comment">// 4</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
-<li>《深入理解C++11: C++新特性解析与应用》</li>
-<li>《C++ Primer 第五版》</li>
-<li>C++中文 - API参考文档</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2199,7 +2185,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">117</span>
+          <span class="site-state-item-count">119</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -2212,7 +2198,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">49</span>
+        <span class="site-state-item-count">51</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -2318,6 +2304,19 @@
 
 
 
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
 
 
   

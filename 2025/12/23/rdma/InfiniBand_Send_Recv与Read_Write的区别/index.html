@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="引言InfiniBand&#x2F;RDMA 提供了两种截然不同的数据传输模式：Send&#x2F;Recv 和 Read&#x2F;Write。这两种模式在底层实现机制、CPU 参与度、对端感知性和传输控制策略方面存在根本性差异。 核心差异对比基本特性对比   维度 Send&#x2F;Recv Read&#x2F;Write    操作码 IBV_WR_SEND IBV_WR_RDMA_WRI">
+<meta property="og:type" content="article">
+<meta property="og:title" content="InfiniBand Send&#x2F;Recv与Read&#x2F;Write的区别">
+<meta property="og:url" content="https://bi-an.github.io/blog/2025/12/23/rdma/InfiniBand_Send_Recv%E4%B8%8ERead_Write%E7%9A%84%E5%8C%BA%E5%88%AB/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="引言InfiniBand&#x2F;RDMA 提供了两种截然不同的数据传输模式：Send&#x2F;Recv 和 Read&#x2F;Write。这两种模式在底层实现机制、CPU 参与度、对端感知性和传输控制策略方面存在根本性差异。 核心差异对比基本特性对比   维度 Send&#x2F;Recv Read&#x2F;Write    操作码 IBV_WR_SEND IBV_WR_RDMA_WRI">
+<meta property="og:locale">
+<meta property="article:published_time" content="2025-12-23T16:32:46.000Z">
+<meta property="article:modified_time" content="2025-12-23T11:34:45.876Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="InfiniBand RDMA">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2025/12/23/rdma/InfiniBand_Send_Recv%E4%B8%8ERead_Write%E7%9A%84%E5%8C%BA%E5%88%AB/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>InfiniBand Send/Recv与Read/Write的区别 | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/12/23/rdma/InfiniBand_Send_Recv%E4%B8%8ERead_Write%E7%9A%84%E5%8C%BA%E5%88%AB/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          InfiniBand Send/Recv与Read/Write的区别
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2025-12-23 16:32:46 / Modified: 11:34:45" itemprop="dateCreated datePublished" datetime="2025-12-23T16:32:46+00:00">2025-12-23</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/RDMA/" itemprop="url" rel="index"><span itemprop="name">RDMA</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>InfiniBand&#x2F;RDMA 提供了两种截然不同的数据传输模式：<strong>Send&#x2F;Recv</strong> 和 <strong>Read&#x2F;Write</strong>。这两种模式在底层实现机制、CPU 参与度、对端感知性和传输控制策略方面存在根本性差异。</p>
+<h2 id="核心差异对比"><a href="#核心差异对比" class="headerlink" title="核心差异对比"></a>核心差异对比</h2><h3 id="基本特性对比"><a href="#基本特性对比" class="headerlink" title="基本特性对比"></a>基本特性对比</h3><table>
+<thead>
+<tr>
+<th align="center">维度</th>
+<th align="center">Send&#x2F;Recv</th>
+<th align="center">Read&#x2F;Write</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>操作码</strong></td>
+<td align="center"><code>IBV_WR_SEND</code></td>
+<td align="center"><code>IBV_WR_RDMA_WRITE</code><br><code>IBV_WR_RDMA_READ</code></td>
+</tr>
+<tr>
+<td align="center"><strong>CPU 参与</strong></td>
+<td align="center">接收端必须参与（post recv）</td>
+<td align="center">对端 CPU 不参与</td>
+</tr>
+<tr>
+<td align="center"><strong>对端感知</strong></td>
+<td align="center">完全感知（CQ 事件）</td>
+<td align="center">不感知（无事件）</td>
+</tr>
+<tr>
+<td align="center"><strong>流控机制</strong></td>
+<td align="center">有（RNR 机制）</td>
+<td align="center">无</td>
+</tr>
+<tr>
+<td align="center"><strong>传输速率控制</strong></td>
+<td align="center">受接收端节制</td>
+<td align="center">不受对端节制</td>
+</tr>
+<tr>
+<td align="center"><strong>内存注册要求</strong></td>
+<td align="center">发送端和接收端都需要</td>
+<td align="center">发起端和对端都需要（对端需设置 REMOTE 权限）</td>
+</tr>
+<tr>
+<td align="center"><strong>远程地址信息</strong></td>
+<td align="center">不需要</td>
+<td align="center">需要（remote_addr + rkey）</td>
+</tr>
+<tr>
+<td align="center"><strong>完成事件</strong></td>
+<td align="center">双方都有</td>
+<td align="center">仅发起端有</td>
+</tr>
+<tr>
+<td align="center"><strong>使用复杂度</strong></td>
+<td align="center">需要双方协调</td>
+<td align="center">只需发起端操作</td>
+</tr>
+<tr>
+<td align="center"><strong>性能</strong></td>
+<td align="center">高（硬件加速）</td>
+<td align="center">最高（零拷贝，无 CPU 参与）</td>
+</tr>
+</tbody></table>
+<h3 id="工作机制对比"><a href="#工作机制对比" class="headerlink" title="工作机制对比"></a>工作机制对比</h3><table>
+<thead>
+<tr>
+<th align="center">步骤</th>
+<th align="center">Send&#x2F;Recv</th>
+<th align="center">Read&#x2F;Write</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>1. 准备工作</strong></td>
+<td align="center">接收端预先 post recv</td>
+<td align="center">对端注册内存并传递 R_Key</td>
+</tr>
+<tr>
+<td align="center"><strong>2. 发起操作</strong></td>
+<td align="center">发送端 post send</td>
+<td align="center">发起端 post RDMA Read&#x2F;Write</td>
+</tr>
+<tr>
+<td align="center"><strong>3. 数据传输</strong></td>
+<td align="center">HCA 匹配 Receive WR 并写入缓冲区</td>
+<td align="center">HCA 直接访问远程内存</td>
+</tr>
+<tr>
+<td align="center"><strong>4. 完成通知</strong></td>
+<td align="center">双方 CQ 都有完成事件</td>
+<td align="center">仅发起端 CQ 有完成事件</td>
+</tr>
+<tr>
+<td align="center"><strong>5. 对端状态</strong></td>
+<td align="center">接收端知道数据到达</td>
+<td align="center">对端 CPU 完全无感知</td>
+</tr>
+</tbody></table>
+<h3 id="CPU-参与度与对端感知性"><a href="#CPU-参与度与对端感知性" class="headerlink" title="CPU 参与度与对端感知性"></a>CPU 参与度与对端感知性</h3><table>
+<thead>
+<tr>
+<th align="center">方面</th>
+<th align="center">Send&#x2F;Recv</th>
+<th align="center">Read&#x2F;Write</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>接收端操作</strong></td>
+<td align="center">必须预先 post recv</td>
+<td align="center">无需任何操作</td>
+</tr>
+<tr>
+<td align="center"><strong>接收端 CPU</strong></td>
+<td align="center">必须参与，处理 CQ 事件</td>
+<td align="center">完全不参与</td>
+</tr>
+<tr>
+<td align="center"><strong>接收端控制</strong></td>
+<td align="center">可以控制接收速率</td>
+<td align="center">无法控制传输速率</td>
+</tr>
+<tr>
+<td align="center"><strong>对端 CPU 状态</strong></td>
+<td align="center">需要处理接收事件</td>
+<td align="center">可以执行其他任务或休眠</td>
+</tr>
+<tr>
+<td align="center"><strong>数据到达感知</strong></td>
+<td align="center">完全感知（CQ 事件）</td>
+<td align="center">不感知</td>
+</tr>
+<tr>
+<td align="center"><strong>传输时机控制</strong></td>
+<td align="center">可以控制接收时机</td>
+<td align="center">无法控制传输时机</td>
+</tr>
+<tr>
+<td align="center"><strong>数据来源信息</strong></td>
+<td align="center">知道数据来源（QP 编号）</td>
+<td align="center">不知道数据来源</td>
+</tr>
+<tr>
+<td align="center"><strong>数据大小信息</strong></td>
+<td align="center">知道数据大小</td>
+<td align="center">不知道传输大小</td>
+</tr>
+<tr>
+<td align="center"><strong>传输完成感知</strong></td>
+<td align="center">通过 CQ 事件知道</td>
+<td align="center">无法直接知道</td>
+</tr>
+<tr>
+<td align="center"><strong>同步机制</strong></td>
+<td align="center">通过 CQ 事件同步</td>
+<td align="center">需要额外机制（Send&#x2F;Recv 或轮询）</td>
+</tr>
+</tbody></table>
+<h3 id="传输速率控制"><a href="#传输速率控制" class="headerlink" title="传输速率控制"></a>传输速率控制</h3><table>
+<thead>
+<tr>
+<th align="center">方面</th>
+<th align="center">Send&#x2F;Recv</th>
+<th align="center">Read&#x2F;Write</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>流控机制</strong></td>
+<td align="center">RNR（Receiver Not Ready）机制</td>
+<td align="center">无流控机制</td>
+</tr>
+<tr>
+<td align="center"><strong>速率控制方</strong></td>
+<td align="center">接收端控制（通过 post recv 频率）</td>
+<td align="center">发起端完全控制</td>
+</tr>
+<tr>
+<td align="center"><strong>RNR 处理</strong></td>
+<td align="center">发送端收到 RNR NACK，等待重试</td>
+<td align="center">不适用</td>
+</tr>
+<tr>
+<td align="center"><strong>对端限制能力</strong></td>
+<td align="center">可以限制接收速率</td>
+<td align="center">无法限制传输速率</td>
+</tr>
+<tr>
+<td align="center"><strong>潜在风险</strong></td>
+<td align="center">接收端可能过载（但可通过流控避免）</td>
+<td align="center">对端可能被数据淹没</td>
+</tr>
+<tr>
+<td align="center"><strong>性能特点</strong></td>
+<td align="center">受接收端处理能力限制</td>
+<td align="center">可达到网络带宽上限</td>
+</tr>
+</tbody></table>
+<p><strong>RNR 机制参数</strong>：</p>
+<table>
+<thead>
+<tr>
+<th align="center">参数</th>
+<th align="left">说明</th>
+<th align="left">典型值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><code>rnr_retry</code></td>
+<td align="left">RNR 重试次数（0-7，7 表示无限重试）</td>
+<td align="left">7</td>
+</tr>
+<tr>
+<td align="center"><code>min_rnr_timer</code></td>
+<td align="left">最小 RNR 等待时间（单位：655.36 微秒）</td>
+<td align="left">0x12</td>
+</tr>
+</tbody></table>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在 modify_qp_to_rts 中设置</span></span><br><span class="line">attr.rnr_retry = <span class="number">7</span>;          <span class="comment">// RNR 重试次数</span></span><br><span class="line">attr.min_rnr_timer = <span class="number">0x12</span>;   <span class="comment">// 最小 RNR 等待时间</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="API-与代码示例"><a href="#API-与代码示例" class="headerlink" title="API 与代码示例"></a>API 与代码示例</h2><h3 id="关键函数"><a href="#关键函数" class="headerlink" title="关键函数"></a>关键函数</h3><h4 id="ibv-post-recv"><a href="#ibv-post-recv" class="headerlink" title="ibv_post_recv()"></a>ibv_post_recv()</h4><p>接收端必须预先调用此函数提交 Receive WR：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;infiniband/verbs.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">ibv_post_recv</span><span class="params">(<span class="keyword">struct</span> ibv_qp *qp, </span></span><br><span class="line"><span class="params">                  <span class="keyword">struct</span> ibv_recv_wr *wr,</span></span><br><span class="line"><span class="params">                  <span class="keyword">struct</span> ibv_recv_wr **bad_wr)</span>;</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th align="center">参数</th>
+<th align="left">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><code>qp</code></td>
+<td align="left">队列对句柄</td>
+</tr>
+<tr>
+<td align="center"><code>wr</code></td>
+<td align="left">Receive Work Request 链表头</td>
+</tr>
+<tr>
+<td align="center"><code>bad_wr</code></td>
+<td align="left">如果提交失败，返回失败的 WR 指针</td>
+</tr>
+</tbody></table>
+<p><strong>返回值</strong>：成功返回 0，失败返回错误码</p>
+<h4 id="ibv-post-send"><a href="#ibv-post-send" class="headerlink" title="ibv_post_send()"></a>ibv_post_send()</h4><p>发送端调用此函数提交 Send WR 或 RDMA Read&#x2F;Write WR：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">ibv_post_send</span><span class="params">(<span class="keyword">struct</span> ibv_qp *qp,</span></span><br><span class="line"><span class="params">                  <span class="keyword">struct</span> ibv_send_wr *wr,</span></span><br><span class="line"><span class="params">                  <span class="keyword">struct</span> ibv_send_wr **bad_wr)</span>;</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th align="center">参数</th>
+<th align="left">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><code>qp</code></td>
+<td align="left">队列对句柄</td>
+</tr>
+<tr>
+<td align="center"><code>wr</code></td>
+<td align="left">Send Work Request 链表头</td>
+</tr>
+<tr>
+<td align="center"><code>bad_wr</code></td>
+<td align="left">如果提交失败，返回失败的 WR 指针</td>
+</tr>
+</tbody></table>
+<h3 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h3><h4 id="Receive-Work-Request"><a href="#Receive-Work-Request" class="headerlink" title="Receive Work Request"></a>Receive Work Request</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_recv_wr</span> &#123;</span></span><br><span class="line">    <span class="type">uint64_t</span>                wr_id;      <span class="comment">// 工作请求标识符</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">ibv_recv_wr</span>     *<span class="title">next</span>;</span>       <span class="comment">// 下一个 WR（可组成链表）</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">ibv_sge</span>         *<span class="title">sg_list</span>;</span>    <span class="comment">// Scatter/Gather 元素数组</span></span><br><span class="line">    <span class="type">int</span>                     num_sge;    <span class="comment">// SGE 数量</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Send-Work-Request"><a href="#Send-Work-Request" class="headerlink" title="Send Work Request"></a>Send Work Request</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_send_wr</span> &#123;</span></span><br><span class="line">    <span class="type">uint64_t</span>                wr_id;           <span class="comment">// 工作请求标识符</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">ibv_send_wr</span>     *<span class="title">next</span>;</span>            <span class="comment">// 下一个 WR</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">ibv_sge</span>         *<span class="title">sg_list</span>;</span>         <span class="comment">// Scatter/Gather 元素数组</span></span><br><span class="line">    <span class="type">int</span>                     num_sge;         <span class="comment">// SGE 数量</span></span><br><span class="line">    <span class="class"><span class="keyword">enum</span> <span class="title">ibv_wr_opcode</span>      <span class="title">opcode</span>;</span>          <span class="comment">// 操作类型</span></span><br><span class="line">    <span class="type">int</span>                     send_flags;      <span class="comment">// 发送标志</span></span><br><span class="line">    <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">            <span class="type">uint64_t</span>        remote_addr;     <span class="comment">// 远程地址（RDMA 操作使用）</span></span><br><span class="line">            <span class="type">uint32_t</span>        rkey;            <span class="comment">// 远程密钥（RDMA 操作使用）</span></span><br><span class="line">        &#125; rdma;</span><br><span class="line">        <span class="comment">// ... 其他操作类型</span></span><br><span class="line">    &#125; wr;</span><br><span class="line">    <span class="type">uint32_t</span>                imm_data;        <span class="comment">// 立即数据（可选）</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Scatter-Gather-Element"><a href="#Scatter-Gather-Element" class="headerlink" title="Scatter&#x2F;Gather Element"></a>Scatter&#x2F;Gather Element</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_sge</span> &#123;</span></span><br><span class="line">    <span class="type">uint64_t</span>        addr;    <span class="comment">// 缓冲区地址</span></span><br><span class="line">    <span class="type">uint32_t</span>        length;  <span class="comment">// 缓冲区长度</span></span><br><span class="line">    <span class="type">uint32_t</span>        lkey;    <span class="comment">// 本地内存区域密钥</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="操作码与标志位"><a href="#操作码与标志位" class="headerlink" title="操作码与标志位"></a>操作码与标志位</h3><table>
+<thead>
+<tr>
+<th align="center">操作码</th>
+<th align="left">说明</th>
+<th align="left">使用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><code>IBV_WR_SEND</code></td>
+<td align="left">Send&#x2F;Recv 模式</td>
+<td align="left">需要接收端确认的消息传递</td>
+</tr>
+<tr>
+<td align="center"><code>IBV_WR_RDMA_WRITE</code></td>
+<td align="left">RDMA Write</td>
+<td align="left">将本地数据写入远程内存</td>
+</tr>
+<tr>
+<td align="center"><code>IBV_WR_RDMA_WRITE_WITH_IMM</code></td>
+<td align="left">RDMA Write with Immediate</td>
+<td align="left">写入数据并通知对端</td>
+</tr>
+<tr>
+<td align="center"><code>IBV_WR_RDMA_READ</code></td>
+<td align="left">RDMA Read</td>
+<td align="left">从远程内存读取数据</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th align="center">标志位</th>
+<th align="left">说明</th>
+<th align="left">使用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><code>IBV_SEND_FENCE</code></td>
+<td align="left">栅栏标志，确保顺序</td>
+<td align="left">需要保证操作顺序</td>
+</tr>
+<tr>
+<td align="center"><code>IBV_SEND_SIGNALED</code></td>
+<td align="left">请求完成通知</td>
+<td align="left">需要知道操作完成</td>
+</tr>
+<tr>
+<td align="center"><code>IBV_SEND_SOLICITED</code></td>
+<td align="left">请求立即通知（用于 Send with Immediate）</td>
+<td align="left">Send with Immediate</td>
+</tr>
+<tr>
+<td align="center"><code>IBV_SEND_INLINE</code></td>
+<td align="left">内联发送（小数据直接放在 WR 中）</td>
+<td align="left">小数据快速发送</td>
+</tr>
+</tbody></table>
+<h3 id="Send-Recv-代码示例"><a href="#Send-Recv-代码示例" class="headerlink" title="Send&#x2F;Recv 代码示例"></a>Send&#x2F;Recv 代码示例</h3><h4 id="接收端代码"><a href="#接收端代码" class="headerlink" title="接收端代码"></a>接收端代码</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1. 准备接收缓冲区</span></span><br><span class="line"><span class="type">char</span> *recv_buffer = <span class="built_in">malloc</span>(BUFFER_SIZE);</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_mr</span> *<span class="title">recv_mr</span> =</span> ibv_reg_mr(pd, recv_buffer, BUFFER_SIZE,</span><br><span class="line">                                    IBV_ACCESS_LOCAL_WRITE);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 2. 准备 Scatter/Gather Element</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_sge</span> <span class="title">recv_sge</span>;</span></span><br><span class="line">recv_sge.addr = (<span class="type">uintptr_t</span>)recv_buffer;</span><br><span class="line">recv_sge.length = BUFFER_SIZE;</span><br><span class="line">recv_sge.lkey = recv_mr-&gt;lkey;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 3. 准备 Receive Work Request</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_recv_wr</span> <span class="title">recv_wr</span>, *<span class="title">bad_recv_wr</span>;</span></span><br><span class="line"><span class="built_in">memset</span>(&amp;recv_wr, <span class="number">0</span>, <span class="keyword">sizeof</span>(recv_wr));</span><br><span class="line">recv_wr.wr_id = (<span class="type">uintptr_t</span>)recv_buffer;</span><br><span class="line">recv_wr.sg_list = &amp;recv_sge;</span><br><span class="line">recv_wr.num_sge = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 4. 提交 Receive WR（必须预先提交）</span></span><br><span class="line"><span class="keyword">if</span> (ibv_post_recv(qp, &amp;recv_wr, &amp;bad_recv_wr)) &#123;</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;Failed to post receive WR\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 5. 等待接收完成</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_wc</span> <span class="title">wc</span>;</span></span><br><span class="line"><span class="type">int</span> ne;</span><br><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">    ne = ibv_poll_cq(cq, <span class="number">1</span>, &amp;wc);</span><br><span class="line">&#125; <span class="keyword">while</span> (ne == <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (wc.status != IBV_WC_SUCCESS) &#123;</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;Receive failed with status: %s\n&quot;</span>,</span><br><span class="line">            ibv_wc_status_str(wc.status));</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="发送端代码"><a href="#发送端代码" class="headerlink" title="发送端代码"></a>发送端代码</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1. 准备发送缓冲区</span></span><br><span class="line"><span class="type">char</span> *send_buffer = <span class="built_in">malloc</span>(BUFFER_SIZE);</span><br><span class="line"><span class="built_in">memcpy</span>(send_buffer, data_to_send, data_size);</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_mr</span> *<span class="title">send_mr</span> =</span> ibv_reg_mr(pd, send_buffer, BUFFER_SIZE,</span><br><span class="line">                                     IBV_ACCESS_LOCAL_WRITE);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 2. 准备 Scatter/Gather Element</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_sge</span> <span class="title">send_sge</span>;</span></span><br><span class="line">send_sge.addr = (<span class="type">uintptr_t</span>)send_buffer;</span><br><span class="line">send_sge.length = data_size;</span><br><span class="line">send_sge.lkey = send_mr-&gt;lkey;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 3. 准备 Send Work Request</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_send_wr</span> <span class="title">send_wr</span>, *<span class="title">bad_send_wr</span>;</span></span><br><span class="line"><span class="built_in">memset</span>(&amp;send_wr, <span class="number">0</span>, <span class="keyword">sizeof</span>(send_wr));</span><br><span class="line">send_wr.wr_id = (<span class="type">uintptr_t</span>)send_buffer;</span><br><span class="line">send_wr.opcode = IBV_WR_SEND;              <span class="comment">// Send/Recv 模式</span></span><br><span class="line">send_wr.send_flags = IBV_SEND_SIGNALED;    <span class="comment">// 请求完成通知</span></span><br><span class="line">send_wr.sg_list = &amp;send_sge;</span><br><span class="line">send_wr.num_sge = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 4. 提交 Send WR</span></span><br><span class="line"><span class="keyword">if</span> (ibv_post_send(qp, &amp;send_wr, &amp;bad_send_wr)) &#123;</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;Failed to post send WR\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 5. 等待发送完成</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_wc</span> <span class="title">wc</span>;</span></span><br><span class="line"><span class="type">int</span> ne;</span><br><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">    ne = ibv_poll_cq(cq, <span class="number">1</span>, &amp;wc);</span><br><span class="line">&#125; <span class="keyword">while</span> (ne == <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+
+<h3 id="Read-Write-代码示例"><a href="#Read-Write-代码示例" class="headerlink" title="Read&#x2F;Write 代码示例"></a>Read&#x2F;Write 代码示例</h3><h4 id="RDMA-Write-操作"><a href="#RDMA-Write-操作" class="headerlink" title="RDMA Write 操作"></a>RDMA Write 操作</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 发起端代码</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_send_wr</span> <span class="title">write_wr</span>, *<span class="title">bad_wr</span>;</span></span><br><span class="line"><span class="built_in">memset</span>(&amp;write_wr, <span class="number">0</span>, <span class="keyword">sizeof</span>(write_wr));</span><br><span class="line"></span><br><span class="line">write_wr.wr_id = (<span class="type">uintptr_t</span>)local_buffer;</span><br><span class="line">write_wr.opcode = IBV_WR_RDMA_WRITE;        <span class="comment">// RDMA Write</span></span><br><span class="line">write_wr.send_flags = IBV_SEND_SIGNALED;</span><br><span class="line">write_wr.sg_list = &amp;sge;</span><br><span class="line">write_wr.num_sge = <span class="number">1</span>;</span><br><span class="line">write_wr.wr.rdma.remote_addr = remote_addr;  <span class="comment">// 远程内存地址</span></span><br><span class="line">write_wr.wr.rdma.rkey = remote_rkey;         <span class="comment">// 远程内存密钥</span></span><br><span class="line"></span><br><span class="line">ibv_post_send(qp, &amp;write_wr, &amp;bad_wr);</span><br></pre></td></tr></table></figure>
+
+<h4 id="RDMA-Read-操作"><a href="#RDMA-Read-操作" class="headerlink" title="RDMA Read 操作"></a>RDMA Read 操作</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_send_wr</span> <span class="title">read_wr</span>, *<span class="title">bad_wr</span>;</span></span><br><span class="line"><span class="built_in">memset</span>(&amp;read_wr, <span class="number">0</span>, <span class="keyword">sizeof</span>(read_wr));</span><br><span class="line"></span><br><span class="line">read_wr.wr_id = (<span class="type">uintptr_t</span>)local_buffer;</span><br><span class="line">read_wr.opcode = IBV_WR_RDMA_READ;          <span class="comment">// RDMA Read</span></span><br><span class="line">read_wr.send_flags = IBV_SEND_SIGNALED;</span><br><span class="line">read_wr.sg_list = &amp;sge;</span><br><span class="line">read_wr.num_sge = <span class="number">1</span>;</span><br><span class="line">read_wr.wr.rdma.remote_addr = remote_addr;  <span class="comment">// 远程内存地址</span></span><br><span class="line">read_wr.wr.rdma.rkey = remote_rkey;         <span class="comment">// 远程内存密钥</span></span><br><span class="line"></span><br><span class="line">ibv_post_send(qp, &amp;read_wr, &amp;bad_wr);</span><br></pre></td></tr></table></figure>
+
+<h4 id="内存注册要求"><a href="#内存注册要求" class="headerlink" title="内存注册要求"></a>内存注册要求</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 对端注册内存（允许远程访问）</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_mr</span> *<span class="title">remote_mr</span> =</span> ibv_reg_mr(pd, remote_buffer, BUFFER_SIZE,</span><br><span class="line">                                       IBV_ACCESS_LOCAL_WRITE |      <span class="comment">// 本地写权限</span></span><br><span class="line">                                       IBV_ACCESS_REMOTE_READ |      <span class="comment">// 允许远程读</span></span><br><span class="line">                                       IBV_ACCESS_REMOTE_WRITE);     <span class="comment">// 允许远程写</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 将 R_Key 和地址传递给发起端</span></span><br><span class="line"><span class="comment">// remote_addr = (uint64_t)remote_buffer;</span></span><br><span class="line"><span class="comment">// remote_rkey = remote_mr-&gt;rkey;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="同步机制"><a href="#同步机制" class="headerlink" title="同步机制"></a>同步机制</h2><h3 id="Send-Recv-同步机制"><a href="#Send-Recv-同步机制" class="headerlink" title="Send&#x2F;Recv 同步机制"></a>Send&#x2F;Recv 同步机制</h3><p><strong>关键问题</strong>：ibv_post_recv 必须在 ibv_post_send 之前吗？</p>
+<p><strong>答案</strong>：不是必须在 <code>ibv_post_send</code> 之前调用，但必须在数据到达之前 post recv。</p>
+<h4 id="调用顺序说明"><a href="#调用顺序说明" class="headerlink" title="调用顺序说明"></a>调用顺序说明</h4><table>
+<thead>
+<tr>
+<th align="center">场景</th>
+<th align="left">说明</th>
+<th align="left">是否可行</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>预先 post recv</strong></td>
+<td align="left">在发送端 post send 之前，接收端预先 post recv</td>
+<td align="left">✅ 推荐做法</td>
+</tr>
+<tr>
+<td align="center"><strong>同时调用</strong></td>
+<td align="left">接收端和发送端同时调用（不同线程&#x2F;进程）</td>
+<td align="left">✅ 可行，但需要确保 recv 先完成</td>
+</tr>
+<tr>
+<td align="center"><strong>延迟 post recv</strong></td>
+<td align="left">发送端先 post send，接收端后 post recv</td>
+<td align="left">⚠️ 可能导致 RNR 错误</td>
+</tr>
+</tbody></table>
+<h4 id="工作原理"><a href="#工作原理" class="headerlink" title="工作原理"></a>工作原理</h4><ol>
+<li><p><strong>接收队列（RQ）机制</strong>：</p>
+<ul>
+<li>接收端调用 <code>ibv_post_recv()</code> 将 Receive WR 提交到接收队列（RQ）</li>
+<li>当数据包到达时，HCA 硬件从 RQ 中取出一个 Receive WR</li>
+<li>如果 RQ 中没有 Receive WR，HCA 返回 RNR（Receiver Not Ready）NACK</li>
+</ul>
+</li>
+<li><p><strong>时序要求</strong>：</p>
+<ul>
+<li><strong>不是</strong>要求 <code>ibv_post_recv()</code> 必须在 <code>ibv_post_send()</code> 之前调用</li>
+<li><strong>而是</strong>要求数据包到达时，RQ 中必须有可用的 Receive WR</li>
+<li>由于网络延迟，通常可以预先 post recv</li>
+</ul>
+</li>
+</ol>
+<h4 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h4><p><strong>场景 1：预先批量 post recv（推荐）</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 接收端：预先批量提交多个 Receive WR</span></span><br><span class="line"><span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; BATCH_SIZE; i++) &#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">ibv_recv_wr</span> <span class="title">recv_wr</span>, *<span class="title">bad_wr</span>;</span></span><br><span class="line">    <span class="comment">// ... 准备 recv_wr</span></span><br><span class="line">    ibv_post_recv(qp, &amp;recv_wr, &amp;bad_wr);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 此时发送端可以随时 post send</span></span><br><span class="line"><span class="comment">// 发送端：随时发送数据</span></span><br><span class="line">ibv_post_send(qp, &amp;send_wr, &amp;bad_send_wr);</span><br></pre></td></tr></table></figure>
+
+<p><strong>场景 2：RNR 错误处理</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 发送端处理 RNR 错误</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_wc</span> <span class="title">wc</span>;</span></span><br><span class="line">ibv_poll_cq(cq, <span class="number">1</span>, &amp;wc);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (wc.status == IBV_WC_RNR_RETRY_EXC_ERR) &#123;</span><br><span class="line">    <span class="comment">// RNR 重试次数超限</span></span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;RNR retry exceeded\n&quot;</span>);</span><br><span class="line">&#125; <span class="keyword">else</span> <span class="keyword">if</span> (wc.status == IBV_WC_REM_OP_ERR) &#123;</span><br><span class="line">    <span class="comment">// 可能是 RNR 错误</span></span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;Remote operation error, possibly RNR\n&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="最佳实践"><a href="#最佳实践" class="headerlink" title="最佳实践"></a>最佳实践</h4><table>
+<thead>
+<tr>
+<th align="center">实践</th>
+<th align="left">说明</th>
+<th align="left">原因</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>预先批量 post recv</strong></td>
+<td align="left">在连接建立后立即批量提交多个 Receive WR</td>
+<td align="left">避免 RNR 错误，提高性能</td>
+</tr>
+<tr>
+<td align="center"><strong>保持 RQ 中有足够的 WR</strong></td>
+<td align="left">接收完成后立即重新 post recv</td>
+<td align="left">确保持续接收能力</td>
+</tr>
+<tr>
+<td align="center"><strong>使用应用层同步</strong></td>
+<td align="left">如果必须延迟 post recv，使用同步机制</td>
+<td align="left">避免 RNR 错误</td>
+</tr>
+<tr>
+<td align="center"><strong>合理设置 RNR 参数</strong></td>
+<td align="left">设置合适的 <code>rnr_retry</code> 和 <code>min_rnr_timer</code></td>
+<td align="left">给接收端时间 post recv</td>
+</tr>
+</tbody></table>
+<h3 id="Read-Write-同步机制"><a href="#Read-Write-同步机制" class="headerlink" title="Read&#x2F;Write 同步机制"></a>Read&#x2F;Write 同步机制</h3><p>由于 Read&#x2F;Write 操作对端无感知，需要额外的同步机制来保证数据一致性和操作顺序。</p>
+<h4 id="同步问题"><a href="#同步问题" class="headerlink" title="同步问题"></a>同步问题</h4><table>
+<thead>
+<tr>
+<th align="center">问题</th>
+<th align="left">说明</th>
+<th align="left">影响</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>数据写入完成通知</strong></td>
+<td align="left">对端不知道数据何时写入完成</td>
+<td align="left">可能读取到未完成的数据</td>
+</tr>
+<tr>
+<td align="center"><strong>数据读取时机</strong></td>
+<td align="left">对端不知道何时被读取</td>
+<td align="left">可能在修改时被读取，导致数据不一致</td>
+</tr>
+<tr>
+<td align="center"><strong>操作顺序保证</strong></td>
+<td align="left">多个 RDMA 操作的顺序</td>
+<td align="left">可能乱序执行，导致逻辑错误</td>
+</tr>
+<tr>
+<td align="center"><strong>并发访问</strong></td>
+<td align="left">本地 CPU 和远程 RDMA 同时访问</td>
+<td align="left">可能导致数据竞争</td>
+</tr>
+</tbody></table>
+<h4 id="同步机制对比"><a href="#同步机制对比" class="headerlink" title="同步机制对比"></a>同步机制对比</h4><table>
+<thead>
+<tr>
+<th align="center">机制</th>
+<th align="left">说明</th>
+<th align="left">适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>RDMA Write with Immediate</strong></td>
+<td align="left">写入数据的同时发送立即数据通知</td>
+<td align="left">需要通知对端数据已写入</td>
+</tr>
+<tr>
+<td align="center"><strong>Send&#x2F;Recv 通知</strong></td>
+<td align="left">通过 Send&#x2F;Recv 发送完成通知</td>
+<td align="left">需要确认和流控</td>
+</tr>
+<tr>
+<td align="center"><strong>内存屏障（Fence）</strong></td>
+<td align="left">使用 <code>IBV_SEND_FENCE</code> 保证顺序</td>
+<td align="left">需要保证操作顺序</td>
+</tr>
+<tr>
+<td align="center"><strong>原子操作</strong></td>
+<td align="left">使用原子操作作为同步点</td>
+<td align="left">需要细粒度同步</td>
+</tr>
+<tr>
+<td align="center"><strong>版本号&#x2F;双缓冲</strong></td>
+<td align="left">使用版本号或双缓冲机制</td>
+<td align="left">需要检测数据变化或无锁读取</td>
+</tr>
+</tbody></table>
+<h4 id="RDMA-Write-with-Immediate"><a href="#RDMA-Write-with-Immediate" class="headerlink" title="RDMA Write with Immediate"></a>RDMA Write with Immediate</h4><p>在写入数据的同时，发送立即数据通知对端：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 发起端：写入数据并通知</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_send_wr</span> <span class="title">write_wr</span>, *<span class="title">bad_wr</span>;</span></span><br><span class="line"><span class="built_in">memset</span>(&amp;write_wr, <span class="number">0</span>, <span class="keyword">sizeof</span>(write_wr));</span><br><span class="line"></span><br><span class="line">write_wr.wr_id = (<span class="type">uintptr_t</span>)local_buffer;</span><br><span class="line">write_wr.opcode = IBV_WR_RDMA_WRITE_WITH_IMM;  <span class="comment">// 带立即数据的 Write</span></span><br><span class="line">write_wr.send_flags = IBV_SEND_SIGNALED;</span><br><span class="line">write_wr.sg_list = &amp;sge;</span><br><span class="line">write_wr.num_sge = <span class="number">1</span>;</span><br><span class="line">write_wr.wr.rdma.remote_addr = remote_addr;</span><br><span class="line">write_wr.wr.rdma.rkey = remote_rkey;</span><br><span class="line">write_wr.imm_data = htonl(NOTIFICATION_FLAG);  <span class="comment">// 立即数据（网络字节序）</span></span><br><span class="line"></span><br><span class="line">ibv_post_send(qp, &amp;write_wr, &amp;bad_wr);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 对端：接收立即数据通知（需要预先 post recv）</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_recv_wr</span> <span class="title">recv_wr</span>, *<span class="title">bad_recv_wr</span>;</span></span><br><span class="line"><span class="comment">// ... 准备 Receive WR</span></span><br><span class="line">ibv_post_recv(qp, &amp;recv_wr, &amp;bad_recv_wr);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 轮询 CQ，接收立即数据通知</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_wc</span> <span class="title">wc</span>;</span></span><br><span class="line">ibv_poll_cq(cq, <span class="number">1</span>, &amp;wc);</span><br><span class="line"><span class="keyword">if</span> (wc.opcode == IBV_WC_RECV_RDMA_WITH_IMM) &#123;</span><br><span class="line">    <span class="type">uint32_t</span> imm_data = ntohl(wc.imm_data);</span><br><span class="line">    <span class="comment">// 知道数据已经写入，可以安全读取</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="内存屏障（Fence）机制"><a href="#内存屏障（Fence）机制" class="headerlink" title="内存屏障（Fence）机制"></a>内存屏障（Fence）机制</h4><p>使用 <code>IBV_SEND_FENCE</code> 保证操作顺序：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 场景：需要保证多个 RDMA Write 的顺序</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_send_wr</span> <span class="title">wr</span>[3], *<span class="title">bad_wr</span>;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// WR 1: 写入元数据</span></span><br><span class="line">wr[<span class="number">0</span>].opcode = IBV_WR_RDMA_WRITE;</span><br><span class="line">wr[<span class="number">0</span>].send_flags = <span class="number">0</span>;</span><br><span class="line">wr[<span class="number">0</span>].next = &amp;wr[<span class="number">1</span>];</span><br><span class="line"></span><br><span class="line"><span class="comment">// WR 2: Fence，确保前面的操作完成</span></span><br><span class="line">wr[<span class="number">1</span>].opcode = IBV_WR_RDMA_WRITE;</span><br><span class="line">wr[<span class="number">1</span>].send_flags = IBV_SEND_FENCE;  <span class="comment">// 栅栏标志</span></span><br><span class="line">wr[<span class="number">1</span>].next = &amp;wr[<span class="number">2</span>];</span><br><span class="line"></span><br><span class="line"><span class="comment">// WR 3: 写入标志位（表示数据已准备好）</span></span><br><span class="line">wr[<span class="number">2</span>].opcode = IBV_WR_RDMA_WRITE;</span><br><span class="line">wr[<span class="number">2</span>].send_flags = IBV_SEND_SIGNALED;</span><br><span class="line">wr[<span class="number">2</span>].next = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line">ibv_post_send(qp, &amp;wr[<span class="number">0</span>], &amp;bad_wr);</span><br><span class="line"><span class="comment">// 保证：元数据写入 → Fence → 标志位写入（顺序执行）</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>Fence 的作用</strong>：</p>
+<ul>
+<li>确保 Fence 之前的所有操作在 Fence 之后的操作之前完成</li>
+<li>保证操作的全局顺序（跨多个 QP）</li>
+<li>适用于需要严格顺序的场景</li>
+</ul>
+<h4 id="原子操作同步"><a href="#原子操作同步" class="headerlink" title="原子操作同步"></a>原子操作同步</h4><p>使用原子操作作为同步点：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 对端：准备数据后，使用原子操作设置标志</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_send_wr</span> <span class="title">atomic_wr</span>, *<span class="title">bad_wr</span>;</span></span><br><span class="line"><span class="built_in">memset</span>(&amp;atomic_wr, <span class="number">0</span>, <span class="keyword">sizeof</span>(atomic_wr));</span><br><span class="line"></span><br><span class="line"><span class="comment">// 关键操作码：Compare and Swap 原子操作</span></span><br><span class="line"><span class="comment">// 作用：原子地比较远程内存的值，如果等于期望值则交换为新值</span></span><br><span class="line"><span class="comment">// 特点：这是硬件保证的原子操作，不会被其他操作打断，用于实现同步原语</span></span><br><span class="line">atomic_wr.opcode = IBV_WR_ATOMIC_CMP_AND_SWP;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 关键标志位：请求完成通知</span></span><br><span class="line"><span class="comment">// 作用：操作完成后在 CQ 中生成完成事件，用于确认原子操作是否成功</span></span><br><span class="line"><span class="comment">// 注意：原子操作的成功/失败通过 Work Completion 的状态字段判断</span></span><br><span class="line">atomic_wr.send_flags = IBV_SEND_SIGNALED;</span><br><span class="line">atomic_wr.sg_list = &amp;sge;  <span class="comment">// 本地缓冲区，用于存储旧值</span></span><br><span class="line">atomic_wr.num_sge = <span class="number">1</span>;</span><br><span class="line">atomic_wr.wr.atomic.remote_addr = remote_flag_addr;  <span class="comment">// 远程标志位地址</span></span><br><span class="line">atomic_wr.wr.atomic.rkey = remote_rkey;</span><br><span class="line">atomic_wr.wr.atomic.compare_add = <span class="number">0</span>;      <span class="comment">// 期望值：0（未准备好）</span></span><br><span class="line">atomic_wr.wr.atomic.swap = <span class="number">1</span>;              <span class="comment">// 新值：1（已准备好）</span></span><br><span class="line"></span><br><span class="line">ibv_post_send(qp, &amp;atomic_wr, &amp;bad_wr);</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th align="center">操作码</th>
+<th align="left">说明</th>
+<th align="left">用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><code>IBV_WR_ATOMIC_CMP_AND_SWP</code></td>
+<td align="left">Compare and Swap</td>
+<td align="left">条件更新标志位</td>
+</tr>
+<tr>
+<td align="center"><code>IBV_WR_ATOMIC_FETCH_AND_ADD</code></td>
+<td align="left">Fetch and Add</td>
+<td align="left">计数器操作</td>
+</tr>
+</tbody></table>
+<h4 id="Read-时的并发安全"><a href="#Read-时的并发安全" class="headerlink" title="Read 时的并发安全"></a>Read 时的并发安全</h4><p><strong>问题</strong>：如果 Read 时对端 CPU 正在修改数据，可能导致读取到不一致的数据。</p>
+<p><strong>解决方案</strong>：</p>
+<p><strong>版本号机制</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 数据结构</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">data_with_version</span> &#123;</span></span><br><span class="line">    <span class="type">uint64_t</span> version;      <span class="comment">// 版本号</span></span><br><span class="line">    <span class="type">char</span> data[BUFFER_SIZE]; <span class="comment">// 实际数据</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 对端：修改数据时增加版本号</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">update_data</span><span class="params">(<span class="keyword">struct</span> data_with_version *buf)</span> &#123;</span><br><span class="line">    prepare_new_data(buf-&gt;data);</span><br><span class="line">    __sync_synchronize();  <span class="comment">// 内存屏障</span></span><br><span class="line">    __sync_add_and_fetch(&amp;buf-&gt;version, <span class="number">1</span>);  <span class="comment">// 原子增加版本号</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 发起端：读取时检查版本号</span></span><br><span class="line"><span class="type">uint64_t</span> old_version = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">    <span class="type">uint64_t</span> version_before = read_version();</span><br><span class="line">    __sync_synchronize();</span><br><span class="line">    read_data(buffer);</span><br><span class="line">    __sync_synchronize();</span><br><span class="line">    <span class="type">uint64_t</span> version_after = read_version();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果版本号相同，说明读取期间数据未变化</span></span><br><span class="line">    <span class="keyword">if</span> (version_before == version_after &amp;&amp; version_before != old_version) &#123;</span><br><span class="line">        <span class="keyword">break</span>;  <span class="comment">// 数据一致，可以使用</span></span><br><span class="line">    &#125;</span><br><span class="line">    old_version = version_before;</span><br><span class="line">&#125; <span class="keyword">while</span> (<span class="number">1</span>);</span><br></pre></td></tr></table></figure>
+
+<p><strong>双缓冲机制</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 对端：使用两个缓冲区交替</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">double_buffer</span> &#123;</span></span><br><span class="line">    <span class="type">char</span> buffer[<span class="number">2</span>][BUFFER_SIZE];</span><br><span class="line">    <span class="keyword">volatile</span> <span class="type">int</span> active_index;  <span class="comment">// 当前活跃缓冲区索引</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 对端：修改数据</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">update_data</span><span class="params">(<span class="keyword">struct</span> double_buffer *db)</span> &#123;</span><br><span class="line">    <span class="type">int</span> write_index = <span class="number">1</span> - db-&gt;active_index;  <span class="comment">// 写入非活跃缓冲区</span></span><br><span class="line">    prepare_data(db-&gt;buffer[write_index]);</span><br><span class="line">    __sync_synchronize();</span><br><span class="line">    __sync_lock_test_and_set(&amp;db-&gt;active_index, write_index);  <span class="comment">// 切换缓冲区</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 发起端：读取数据</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">read_data</span><span class="params">(<span class="keyword">struct</span> double_buffer *db)</span> &#123;</span><br><span class="line">    <span class="type">int</span> read_index = db-&gt;active_index;  <span class="comment">// 读取当前活跃缓冲区</span></span><br><span class="line">    rdma_read(db-&gt;buffer[read_index]);   <span class="comment">// RDMA Read</span></span><br><span class="line">    <span class="comment">// 即使对端切换缓冲区，读取的也是完整的数据</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="同步机制选择建议"><a href="#同步机制选择建议" class="headerlink" title="同步机制选择建议"></a>同步机制选择建议</h4><table>
+<thead>
+<tr>
+<th align="center">场景</th>
+<th align="left">推荐机制</th>
+<th align="left">原因</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>需要通知对端数据已写入</strong></td>
+<td align="left">RDMA Write with Immediate</td>
+<td align="left">高性能 + 通知</td>
+</tr>
+<tr>
+<td align="center"><strong>需要严格顺序</strong></td>
+<td align="left">Fence + Send&#x2F;Recv</td>
+<td align="left">保证操作顺序</td>
+</tr>
+<tr>
+<td align="center"><strong>需要检测数据变化</strong></td>
+<td align="left">版本号机制</td>
+<td align="left">可以检测并发修改</td>
+</tr>
+<tr>
+<td align="center"><strong>需要无锁读取</strong></td>
+<td align="left">双缓冲机制</td>
+<td align="left">避免锁竞争</td>
+</tr>
+<tr>
+<td align="center"><strong>需要细粒度控制</strong></td>
+<td align="left">原子标志位</td>
+<td align="left">精确控制读写时机</td>
+</tr>
+</tbody></table>
+<h2 id="应用与实践"><a href="#应用与实践" class="headerlink" title="应用与实践"></a>应用与实践</h2><h3 id="应用场景对比"><a href="#应用场景对比" class="headerlink" title="应用场景对比"></a>应用场景对比</h3><table>
+<thead>
+<tr>
+<th align="center">场景类型</th>
+<th align="center">Send&#x2F;Recv</th>
+<th align="center">Read&#x2F;Write</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>请求-响应模式</strong></td>
+<td align="center">✅ 适合（RPC、数据库查询）</td>
+<td align="center">❌ 不适合</td>
+</tr>
+<tr>
+<td align="center"><strong>需要流控</strong></td>
+<td align="center">✅ 适合（接收端处理能力有限）</td>
+<td align="center">❌ 不适合</td>
+</tr>
+<tr>
+<td align="center"><strong>需要确认</strong></td>
+<td align="center">✅ 适合（事务提交、状态同步）</td>
+<td align="center">❌ 不适合</td>
+</tr>
+<tr>
+<td align="center"><strong>小数据频繁交互</strong></td>
+<td align="center">✅ 适合</td>
+<td align="center">❌ 不适合</td>
+</tr>
+<tr>
+<td align="center"><strong>协议实现</strong></td>
+<td align="center">✅ 适合（分布式一致性协议）</td>
+<td align="center">❌ 不适合</td>
+</tr>
+<tr>
+<td align="center"><strong>高性能计算（HPC）</strong></td>
+<td align="center">❌ 不适合</td>
+<td align="center">✅ 适合（科学计算、数值模拟）</td>
+</tr>
+<tr>
+<td align="center"><strong>AI 训练</strong></td>
+<td align="center">❌ 不适合</td>
+<td align="center">✅ 适合（参数同步，对端 CPU 繁忙）</td>
+</tr>
+<tr>
+<td align="center"><strong>存储系统</strong></td>
+<td align="center">❌ 不适合</td>
+<td align="center">✅ 适合（块存储、文件系统）</td>
+</tr>
+<tr>
+<td align="center"><strong>批量数据传输</strong></td>
+<td align="center">❌ 不适合</td>
+<td align="center">✅ 适合（大数据传输）</td>
+</tr>
+<tr>
+<td align="center"><strong>零拷贝需求</strong></td>
+<td align="center">❌ 不适合</td>
+<td align="center">✅ 适合（避免 CPU 参与）</td>
+</tr>
+</tbody></table>
+<h3 id="混合使用策略"><a href="#混合使用策略" class="headerlink" title="混合使用策略"></a>混合使用策略</h3><p>在实际应用中，可以混合使用两种模式：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 示例：使用 Send/Recv 进行控制，使用 Write 进行数据传输</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 1. 通过 Send/Recv 交换元数据</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">metadata</span> &#123;</span></span><br><span class="line">    <span class="type">uint64_t</span> data_addr;</span><br><span class="line">    <span class="type">uint32_t</span> data_rkey;</span><br><span class="line">    <span class="type">size_t</span> data_size;</span><br><span class="line">&#125; meta;</span><br><span class="line">send_metadata(&amp;meta);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 2. 通过 RDMA Write 传输实际数据</span></span><br><span class="line">rdma_write_data(meta.data_addr, meta.data_rkey, data_buffer, meta.data_size);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 3. 通过 Send/Recv 发送完成通知</span></span><br><span class="line">send_completion_notification();</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th align="center">用途</th>
+<th align="left">使用的模式</th>
+<th align="left">原因</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">元数据交换</td>
+<td align="left">Send&#x2F;Recv</td>
+<td align="left">需要确认和流控</td>
+</tr>
+<tr>
+<td align="center">数据传输</td>
+<td align="left">Read&#x2F;Write</td>
+<td align="left">需要最高性能</td>
+</tr>
+<tr>
+<td align="center">完成通知</td>
+<td align="left">Send&#x2F;Recv</td>
+<td align="left">需要确认</td>
+</tr>
+</tbody></table>
+<h3 id="性能优化"><a href="#性能优化" class="headerlink" title="性能优化"></a>性能优化</h3><table>
+<thead>
+<tr>
+<th align="center">优化策略</th>
+<th align="left">Send&#x2F;Recv</th>
+<th align="left">Read&#x2F;Write</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>批量操作</strong></td>
+<td align="left">批量提交 Receive WR</td>
+<td align="left">批量提交 Read&#x2F;Write WR</td>
+</tr>
+<tr>
+<td align="center"><strong>Signaling 策略</strong></td>
+<td align="left">周期性 Signaling（每 N 个请求）</td>
+<td align="left">避免频繁 Signaling</td>
+</tr>
+<tr>
+<td align="center"><strong>内存对齐</strong></td>
+<td align="left">建议对齐</td>
+<td align="left">强烈建议对齐（64 字节）</td>
+</tr>
+<tr>
+<td align="center"><strong>队列大小</strong></td>
+<td align="left">合理设置 max_recv_wr</td>
+<td align="left">合理设置 max_send_wr</td>
+</tr>
+<tr>
+<td align="center"><strong>RNR 参数</strong></td>
+<td align="left">合理设置 rnr_retry 和 min_rnr_timer</td>
+<td align="left">不适用</td>
+</tr>
+</tbody></table>
+<p><strong>Send&#x2F;Recv 性能优化代码</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1. 批量提交 Receive WR</span></span><br><span class="line"><span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; BATCH_SIZE; i++) &#123;</span><br><span class="line">    post_recv_wr();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 2. 周期性 Signaling</span></span><br><span class="line"><span class="keyword">if</span> (count % <span class="number">64</span> == <span class="number">0</span>) &#123;</span><br><span class="line">    send_wr.send_flags |= IBV_SEND_SIGNALED;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Read&#x2F;Write 性能优化代码</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1. 批量操作</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_send_wr</span> *<span class="title">wr_list</span> =</span> build_wr_list();</span><br><span class="line">ibv_post_send(qp, wr_list, &amp;bad_wr);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 2. 避免频繁 Signaling</span></span><br><span class="line">write_wr.send_flags = <span class="number">0</span>;  <span class="comment">// 不请求完成通知</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 3. 内存对齐</span></span><br><span class="line">posix_memalign((<span class="type">void</span>**)&amp;buffer, <span class="number">64</span>, size);  <span class="comment">// 64 字节对齐</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h3><table>
+<thead>
+<tr>
+<th align="center">注意事项</th>
+<th align="left">Send&#x2F;Recv</th>
+<th align="left">Read&#x2F;Write</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>必须预先 post recv</strong></td>
+<td align="left">✅ 必须</td>
+<td align="left">❌ 不需要</td>
+</tr>
+<tr>
+<td align="center"><strong>及时处理 CQ 事件</strong></td>
+<td align="left">✅ 必须（避免 CQ 溢出）</td>
+<td align="left">✅ 必须（仅发起端）</td>
+</tr>
+<tr>
+<td align="center"><strong>合理设置队列大小</strong></td>
+<td align="left">✅ 重要</td>
+<td align="left">✅ 重要</td>
+</tr>
+<tr>
+<td align="center"><strong>内存访问权限</strong></td>
+<td align="left">✅ 需要</td>
+<td align="left">✅ 需要（对端需设置 REMOTE 权限）</td>
+</tr>
+<tr>
+<td align="center"><strong>R_Key 安全</strong></td>
+<td align="left">❌ 不需要</td>
+<td align="left">✅ 重要（需要安全传递）</td>
+</tr>
+<tr>
+<td align="center"><strong>同步机制</strong></td>
+<td align="left">✅ 通过 CQ 事件</td>
+<td align="left">✅ 需要额外机制</td>
+</tr>
+<tr>
+<td align="center"><strong>内存边界检查</strong></td>
+<td align="left">✅ 需要</td>
+<td align="left">✅ 需要（避免越界访问）</td>
+</tr>
+<tr>
+<td align="center"><strong>并发安全</strong></td>
+<td align="left">✅ 需要应用层同步</td>
+<td align="left">✅ 需要应用层同步</td>
+</tr>
+</tbody></table>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Send&#x2F;Recv 和 Read&#x2F;Write 代表了 InfiniBand&#x2F;RDMA 的两种不同设计哲学：</p>
+<table>
+<thead>
+<tr>
+<th align="center">模式</th>
+<th align="left">设计哲学</th>
+<th align="left">核心特点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>Send&#x2F;Recv</strong></td>
+<td align="left">协作和流控</td>
+<td align="left">接收端参与，有流控机制，适合需要确认的场景</td>
+</tr>
+<tr>
+<td align="center"><strong>Read&#x2F;Write</strong></td>
+<td align="left">极致性能和 CPU 卸载</td>
+<td align="left">对端 CPU 不参与，无流控，适合高性能场景</td>
+</tr>
+</tbody></table>
+<p>在实际应用中，应根据具体场景的需求，灵活选择或组合使用这两种模式，充分发挥 InfiniBand&#x2F;RDMA 的性能优势。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/InfiniBand-RDMA/" rel="tag"># InfiniBand RDMA</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2025/12/23/rdma/InfiniBand%E5%85%B3%E9%94%AE%E6%A6%82%E5%BF%B5/" rel="prev" title="InfiniBand关键概念">
+      <i class="fa fa-chevron-left"></i> InfiniBand关键概念
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%95%E8%A8%80"><span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E5%B7%AE%E5%BC%82%E5%AF%B9%E6%AF%94"><span class="nav-text">核心差异对比</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E7%89%B9%E6%80%A7%E5%AF%B9%E6%AF%94"><span class="nav-text">基本特性对比</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B7%A5%E4%BD%9C%E6%9C%BA%E5%88%B6%E5%AF%B9%E6%AF%94"><span class="nav-text">工作机制对比</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CPU-%E5%8F%82%E4%B8%8E%E5%BA%A6%E4%B8%8E%E5%AF%B9%E7%AB%AF%E6%84%9F%E7%9F%A5%E6%80%A7"><span class="nav-text">CPU 参与度与对端感知性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%A0%E8%BE%93%E9%80%9F%E7%8E%87%E6%8E%A7%E5%88%B6"><span class="nav-text">传输速率控制</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#API-%E4%B8%8E%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B"><span class="nav-text">API 与代码示例</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E9%94%AE%E5%87%BD%E6%95%B0"><span class="nav-text">关键函数</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ibv-post-recv"><span class="nav-text">ibv_post_recv()</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ibv-post-send"><span class="nav-text">ibv_post_send()</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-text">数据结构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Receive-Work-Request"><span class="nav-text">Receive Work Request</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Send-Work-Request"><span class="nav-text">Send Work Request</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Scatter-Gather-Element"><span class="nav-text">Scatter&#x2F;Gather Element</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%93%8D%E4%BD%9C%E7%A0%81%E4%B8%8E%E6%A0%87%E5%BF%97%E4%BD%8D"><span class="nav-text">操作码与标志位</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Send-Recv-%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B"><span class="nav-text">Send&#x2F;Recv 代码示例</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8E%A5%E6%94%B6%E7%AB%AF%E4%BB%A3%E7%A0%81"><span class="nav-text">接收端代码</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%91%E9%80%81%E7%AB%AF%E4%BB%A3%E7%A0%81"><span class="nav-text">发送端代码</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Read-Write-%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B"><span class="nav-text">Read&#x2F;Write 代码示例</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#RDMA-Write-%E6%93%8D%E4%BD%9C"><span class="nav-text">RDMA Write 操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#RDMA-Read-%E6%93%8D%E4%BD%9C"><span class="nav-text">RDMA Read 操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E6%B3%A8%E5%86%8C%E8%A6%81%E6%B1%82"><span class="nav-text">内存注册要求</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8C%E6%AD%A5%E6%9C%BA%E5%88%B6"><span class="nav-text">同步机制</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Send-Recv-%E5%90%8C%E6%AD%A5%E6%9C%BA%E5%88%B6"><span class="nav-text">Send&#x2F;Recv 同步机制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%B0%83%E7%94%A8%E9%A1%BA%E5%BA%8F%E8%AF%B4%E6%98%8E"><span class="nav-text">调用顺序说明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86"><span class="nav-text">工作原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B"><span class="nav-text">代码示例</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="nav-text">最佳实践</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Read-Write-%E5%90%8C%E6%AD%A5%E6%9C%BA%E5%88%B6"><span class="nav-text">Read&#x2F;Write 同步机制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%8C%E6%AD%A5%E9%97%AE%E9%A2%98"><span class="nav-text">同步问题</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%8C%E6%AD%A5%E6%9C%BA%E5%88%B6%E5%AF%B9%E6%AF%94"><span class="nav-text">同步机制对比</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#RDMA-Write-with-Immediate"><span class="nav-text">RDMA Write with Immediate</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E5%B1%8F%E9%9A%9C%EF%BC%88Fence%EF%BC%89%E6%9C%BA%E5%88%B6"><span class="nav-text">内存屏障（Fence）机制</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8E%9F%E5%AD%90%E6%93%8D%E4%BD%9C%E5%90%8C%E6%AD%A5"><span class="nav-text">原子操作同步</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Read-%E6%97%B6%E7%9A%84%E5%B9%B6%E5%8F%91%E5%AE%89%E5%85%A8"><span class="nav-text">Read 时的并发安全</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%8C%E6%AD%A5%E6%9C%BA%E5%88%B6%E9%80%89%E6%8B%A9%E5%BB%BA%E8%AE%AE"><span class="nav-text">同步机制选择建议</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E4%B8%8E%E5%AE%9E%E8%B7%B5"><span class="nav-text">应用与实践</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF%E5%AF%B9%E6%AF%94"><span class="nav-text">应用场景对比</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%B7%E5%90%88%E4%BD%BF%E7%94%A8%E7%AD%96%E7%95%A5"><span class="nav-text">混合使用策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96"><span class="nav-text">性能优化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="nav-text">注意事项</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">51</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://cuda-doc.readthedocs.io/" title="https:&#x2F;&#x2F;cuda-doc.readthedocs.io" rel="noopener" target="_blank">CUDA中文手册</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://infiniband-doc.readthedocs.io/" title="https:&#x2F;&#x2F;infiniband-doc.readthedocs.io&#x2F;" rel="noopener" target="_blank">InfiniBand中文手册</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+</body>
+</html>
