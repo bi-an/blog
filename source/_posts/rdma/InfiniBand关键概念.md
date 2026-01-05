@@ -49,6 +49,8 @@ SGE 描述了一个内存缓冲区的位置和大小，包含：
 
 一个 WR 可以包含多个 SGE，实现分散/聚集 I/O。
 
+注: SGE 专门用于描述本地散布的缓冲区, 即散布读写(Scatter read/write), 类似于 Linux 的 `writev` / `readv` 函数.
+
 ### 8. LID (Local Identifier) - 本地标识符
 LID 是 InfiniBand 网络中每个端口的唯一标识符，用于路由数据包。
 
