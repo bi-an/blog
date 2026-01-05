@@ -188,6 +188,108 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/14/concurrency/MPMC-Lock-free-Queue/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/09/14/concurrency/MPMC-Lock-free-Queue/" class="post-title-link" itemprop="url">多生产者 - 多消费者 无锁队列</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-09-14 15:05:08" itemprop="dateCreated datePublished" datetime="2025-09-14T15:05:08+00:00">2025-09-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-01-05 13:20:31" itemprop="dateModified" datetime="2026-01-05T13:20:31+00:00">2026-01-05</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/concurrency/" itemprop="url" rel="index"><span itemprop="name">concurrency</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>这是阅读 Cameron Desrochers 的<br><a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2014/a-fast-general-purpose-lock-free-queue-for-c++">A Fast General Purpose Lock-Free Queue for C++</a><br>源码的笔记。</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2014/detailed-design-of-a-lock-free-queue">Detailed Design of a Lock-Free Queue</a></li>
+<li><a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2014/solving-the-aba-problem-for-lock-free-free-lists">Solving the ABA Problem for Lock-Free Free Lists</a></li>
+</ul>
+<h2 id="系统概览"><a href="#系统概览" class="headerlink" title="系统概览"></a>系统概览</h2><p>MPMC 队列由一系列 SPMC 队列组成。消费者使用启发式 (heuristic) 来决定消费哪个 SPMC 队列。允许批量入列<br>和出列，只需要很小的额外开销。</p>
+<p>producer 需要一些 thread-local 数据； consumer 也可以用一些可选的 thread-local 数据来加速；这些<br>thread-local 数据可以与用户分配的 tokens 关联；如果用户没有为生产者提供 tokens ，则使用无锁哈希表（<br>以当前线程 ID 为键）来查找线程本地生产者队列：每个 SPMC 队列都使用一个预分配的 token （或隐式分配的<br>token，如果没有提供的话）来创建。由于 token 包含相当于线程特定的数据，因此它们不应该同时在多个线程中<br>使用（尽管可以将 token 的所有权转移给另一个线程；特别是，这允许在线程池任务中使用令牌，即使运行任务<br>的线程在中途发生变化）。</p>
+<p>所有生产者队列都以无锁链表的形式连接在一起。当显式生产者不再有元素被添加时（即其令牌被销毁），它会被<br>标记为与任何生产者都无关联，但它会保留在链表中，且其内存不会被释放；下一个新生产者会重用旧生产者的内<br>存（这样，无锁生产者列表就只能添加）。隐式生产者永远不会被销毁（直到高层队列本身被销毁），因为无法知<br>道给定线程是否已完成对数据结构的使用。需要注意的是，最坏情况下的出队速度取决于生产者队列的数量，即使<br>它们都为空。</p>
+<p>显式生产者队列和隐式生产者队列的生命周期存在根本区别：显式生产者队列的生产生命周期有限，与令牌的生命<br>周期绑定；而隐式生产者队列的生产生命周期不受限制，且与高级队列本身的生命周期相同。因此，为了最大化速<br>度和内存利用率，我们使用了两种略有不同的 SPMC 算法。通常，显式生产者队列设计得更快，占用的内存也更多<br>；而隐式生产者队列设计得更慢，但会将更多内存回收到高级队列的全局池中。为了获得最佳速度，请始终使用显<br>式令牌（除非您觉得它太不方便）。</p>
+<p>任何分配的内存只有在高级队列被销毁时才会释放（尽管存在一些重用机制）。内存分配可以预先完成，如果内存<br>不足，操作就会失败（而不是分配更多内存）。如果需要，用户可以覆盖各种默认大小参数（以及队列使用的内存<br>分配函数）。</p>
+<h2 id="Full-API-pseudocode"><a href="#Full-API-pseudocode" class="headerlink" title="Full API (pseudocode)"></a>Full API (pseudocode)</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Allocates more memory if necessary</span></span><br><span class="line">enqueue(item) : bool</span><br><span class="line">enqueue(prod_token, item) : bool</span><br><span class="line">enqueue_bulk(item_first, count) : bool</span><br><span class="line">enqueue_bulk(prod_token, item_first, count) : bool</span><br><span class="line"></span><br><span class="line"><span class="comment"># Fails if not enough memory to enqueue</span></span><br><span class="line">try_enqueue(item) : bool</span><br><span class="line">try_enqueue(prod_token, item) : bool</span><br><span class="line">try_enqueue_bulk(item_first, count) : bool</span><br><span class="line">try_enqueue_bulk(prod_token, item_first, count) : bool</span><br><span class="line"></span><br><span class="line"><span class="comment"># Attempts to dequeue from the queue (never allocates)</span></span><br><span class="line">try_dequeue(item&amp;) : bool</span><br><span class="line">try_dequeue(cons_token, item&amp;) : bool</span><br><span class="line">try_dequeue_bulk(item_first, max) : size_t</span><br><span class="line">try_dequeue_bulk(cons_token, item_first, max) : size_t</span><br><span class="line"></span><br><span class="line"><span class="comment"># If you happen to know which producer you want to dequeue from</span></span><br><span class="line">try_dequeue_from_producer(prod_token, item&amp;) : bool</span><br><span class="line">try_dequeue_bulk_from_producer(prod_token, item_first, max) : size_t</span><br><span class="line"></span><br><span class="line"><span class="comment"># A not-necessarily-accurate count of the total number of elements</span></span><br><span class="line">size_approx() : size_t</span><br></pre></td></tr></table></figure>
+
+<h2 id="Producer-Queue-SPMC-Design"><a href="#Producer-Queue-SPMC-Design" class="headerlink" title="Producer Queue (SPMC) Design"></a>Producer Queue (SPMC) Design</h2><h3 id="隐式和显式版本的共享设计"><a href="#隐式和显式版本的共享设计" class="headerlink" title="隐式和显式版本的共享设计"></a>隐式和显式版本的共享设计</h3><p>生产者队列由块组成（显式和隐式生产者队列使用相同的块对象，以实现更好的内存共享）。初始状态下，它没有<br>块。每个块可以容纳固定数量的元素（所有块的容量相同，均为 2 的幂）。此外，块包含一个标志，指示已填充<br>的槽位是否已被完全消耗（显式版本使用此标志来判断块何时为空），以及一个原子计数器，用于计数已完全出队<br>的元素数量（隐式版本使用此标志来判断块何时为空）。</p>
+<p>为了实现无锁操作，生产者队列可以被认为是一个抽象的无限数组。尾部索引指示生产者下一个可用的槽位；它同<br>时也是已入队元素数量的两倍（ <strong>入队计数 (enqueue count)</strong> ）。尾部索引仅由生产者写入，并且始终递增（除<br>非溢出并回绕，但就我们的目的而言，这种情况仍被视为“递增”）。由于只有一个线程在更新相关变量，因此生产<br>一个元素的过程非常简单。头索引指示下一个可以被消费的元素。头索引由消费者原子地递增，可能并发进行。为<br>了防止头索引达到&#x2F;超过感知到的尾部索引，我们使用了一个额外的原子计数器： <strong>出队计数 (dequeue count)</strong><br>。出队计数是乐观的，即当消费者推测有元素需要出队时，它会递增。如果出队计数在递增后的值小于入队计数（<br>尾部），则保证至少有一个元素要出队（即使考虑到并发性），并且可以安全地递增头部索引，因为知道之后它会<br>小于尾部索引。另一方面，如果出队计数在递增后超过（或等于）尾部，则出队操作失败，并且出队计数在逻辑上<br>会递减（以使其最终与入队计数保持一致）：这可以通过直接递减出队计数来实现，但是（为了增加并行性并使所<br>有相关变量单调递增），改为递增**出队过量提交计数器 (dequeue overcommit counter)**。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">出队计数的逻辑值 = 出队计数变量 - 出队过量提交值</span><br></pre></td></tr></table></figure>
+
+<p>在消费时，一旦如上所述确定了有效索引，仍然需要将其映射到一个块以及该块中的偏移量；为此会使用某种索引<br>数据结构（具体使用哪种结构取决于它是隐式队列还是显式队列）。最后，可以将元素移出，并更新某种状态，以<br>便最终知道该块何时完全消费。下文将分别在隐式和显式队列的各个部分中对这些机制进行完整描述。</p>
+<p>如前所述，尾部和头部的索引&#x2F;计数最终会溢出。这是预料之中的，并且已被考虑在内。因此，索引&#x2F;计数被视为存<br>在于一个与最大整数值大小相同的圆上（类似于 360 度的圆，其中 359 在 1 之前）。为了检查一个索引&#x2F;计数（<br>例如 a）是否位于另一个索引&#x2F;计数（例如 b）之前（即逻辑小于），我们必须确定 a 是否沿着圆上的顺时针圆弧<br>更接近 b。使用以下”环形小于”算法（32 位版本）：<code>a &lt; b</code> 变为 <code>a - b &gt; (1U &lt;&lt; 31U)</code>。<code>a &lt;= b</code> 变为<br><code>a - b - 1ULL &gt; (1ULL &lt;&lt; 31ULL)</code>。请注意，环形减法“仅适用于”普通无符号整数（假设为二进制补码）。需要<br>注意的是，尾部索引的增量不会超过头部索引（这会破坏队列）。请注意，尽管如此，从技术上讲仍然存在竞争条<br>件，即消费者（或生产者）看到的索引值过于陈旧，几乎比当前值落后一整圈（甚至更多！），从而导致队列的内<br>部状态损坏。但在实践中，这不是问题，因为遍历 2^31 个值（对于 32 位索引类型）需要一段时间，而其他核心<br>到那时会看到更新的值。实际上，许多无锁算法都基于相关的标签指针习语（tag-pointer idiom），其中前 16<br>位用于重复递增的标签，后 16 位用于指针值；这依赖于类似的假设，即一个核心不能将标签递增超过 2^15 次，<br>而其他核心却不知道。尽管如此，队列的默认索引类型是 64 位宽（如果 16 位看起来就足够了，那么理论上应该<br>可以避免任何潜在的竞争）。</p>
+<p>内存分配失败也会得到妥善处理，不会损坏队列（只会报告失败）。此外，队列元素本身在操作时也应确保不会抛<br>出异常。</p>
+<h3 id="Block-Pools"><a href="#Block-Pools" class="headerlink" title="Block Pools"></a>Block Pools</h3><p>有两种不同的块池可供使用：首先，有一个初始的预分配块数组。一旦使用完毕，该池将永远保持为空。这简化了<br>其无等待（wait-free）实现，只需一条 fetch-and-add 原子指令（用于获取空闲块的下一个索引）并进行检查（<br>以确保该索引在范围内）。其次，有一个无锁（但非无等待）的全局空闲列表（“全局”是指对高级队列而言是全局<br>的），其中包含已用完且可重复使用的块，该列表实现为一个无锁单链表：头指针最初指向空（null）。要将块添<br>加到空闲列表，需要将块的下一个指针设置为头指针，然后使用比较并交换 (CAS) 更新头指针，使其指向该块，<br>前提是头指针未发生更改；如果发生更改，则重复该过程（这是一个经典的无锁 CAS 循环设计模式）。要从空闲<br>列表中移除一个块，可以使用类似的算法：读取头部块的下一个指针，然后将头部设置为该下一个指针（使用<br>CAS），前提是在此期间头部块没有发生变化。为了避免 ABA 问题，每个块都有一个引用计数，在执行 CAS 移除<br>块之前会递增，之后会递减；如果在块的引用计数大于 0 的情况下尝试将其重新添加到空闲列表中，则会设置一<br>个标志，指示该块应该在空闲列表中，并且下一个线程在完成最后一个引用的持有后会检查此标志，并将该块添加<br>到列表中（这种方法有效，因为我们不关心顺序）。我<br>在<a target="_blank" rel="noopener" href="http://moodycamel.com/blog/2014/solving-the-aba-problem-for-lock-free-free-lists">另一篇博文</a>中更<br>详细地描述了这个无锁空闲列表的具体设计和实现。当生产者队列需要新块时，它首先检查初始块池，然后检查全<br>局空闲列表，只有当它在那里找不到空闲块时，它才会在堆上分配一个新块（如果不允许内存分配，则失败）。</p>
+<h2 id="基准测试"><a href="#基准测试" class="headerlink" title="基准测试"></a>基准测试</h2><h3 id="Ticket-System"><a href="#Ticket-System" class="headerlink" title="Ticket System"></a>Ticket System</h3><p>BlockQueue（只用分块）：使用分块内存布局，但不使用 ticket 分发机制。</p>
+<figure class="highlight cpp"><figcaption><span>TicketQueue_benchmark.cpp</span><a href="/blog/downloads/code/camel_mpmc/TicketQueue/TicketQueue_benchmark.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">constexpr</span> <span class="type">size_t</span> BLOCK_SIZE = <span class="number">64</span>;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">int</span> N = <span class="number">1&#x27;000&#x27;000</span>;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">int</span> NUM_PRODUCERS = <span class="number">8</span>;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">int</span> NUM_CONSUMERS = <span class="number">8</span>;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">int</span> ITEMS_PER_PRODUCER = N / NUM_PRODUCERS;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">Slot</span> {</span><br><span class="line">    std::atomic&lt;<span class="type">bool</span>&gt; ready;</span><br><span class="line">    <span class="type">int</span> data;</span><br><span class="line">};</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">Block</span> {</span><br><span class="line">    Slot slots[BLOCK_SIZE];</span><br><span class="line">};</span><br><span class="line"></span><br><span class="line"><span class="comment">// BlockQueue: 分块但无 ticket</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">BlockQueue</span> {</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">BlockQueue</span>() : <span class="built_in">head</span>(<span class="number">0</span>), <span class="built_in">tail</span>(<span class="number">0</span>) {</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">enqueue</span><span class="params">(<span class="type">int</span> value)</span> </span>{</span><br><span class="line">        <span class="type">size_t</span> index = head.<span class="built_in">fetch_add</span>(<span class="number">1</span>) % BLOCK_SIZE;</span><br><span class="line">        block.slots[index].data = value;</span><br><span class="line">        block.slots[index].ready.<span class="built_in">store</span>(<span class="literal">true</span>, std::memory_order_release);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">try_dequeue</span><span class="params">(<span class="type">int</span>&amp; value)</span> </span>{</span><br><span class="line">        <span class="type">size_t</span> index = tail.<span class="built_in">fetch_add</span>(<span class="number">1</span>) % BLOCK_SIZE;</span><br><span class="line">        <span class="keyword">if</span> (!block.slots[index].ready.<span class="built_in">load</span>(std::memory_order_acquire))</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        value = block.slots[index].data;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::atomic&lt;<span class="type">size_t</span>&gt; head;</span><br><span class="line">    std::atomic&lt;<span class="type">size_t</span>&gt; tail;</span><br><span class="line">    Block block;</span><br><span class="line">};</span><br></pre></td></tr></table></figure>
+
+<p>TicketQueue（分块 + ticket）：模拟 moodycamel 的 ticket 分发方式。</p>
+<figure class="highlight cpp"><figcaption><span>TicketQueue_benchmark.cpp</span><a href="/blog/downloads/code/camel_mpmc/TicketQueue/TicketQueue_benchmark.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// TicketQueue: 分块 + ticket</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TicketQueue</span> {</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">TicketQueue</span>() : <span class="built_in">head</span>(<span class="number">0</span>), <span class="built_in">tail</span>(<span class="number">0</span>) {</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">enqueue</span><span class="params">(<span class="type">int</span> value)</span> </span>{</span><br><span class="line">        <span class="type">size_t</span> ticket = head.<span class="built_in">fetch_add</span>(<span class="number">1</span>);</span><br><span class="line">        <span class="type">size_t</span> index = ticket % BLOCK_SIZE;</span><br><span class="line">        block.slots[index].data = value;</span><br><span class="line">        block.slots[index].ready.<span class="built_in">store</span>(<span class="literal">true</span>, std::memory_order_release);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">try_dequeue</span><span class="params">(<span class="type">int</span>&amp; value)</span> </span>{</span><br><span class="line">        <span class="type">size_t</span> ticket = tail.<span class="built_in">fetch_add</span>(<span class="number">1</span>);</span><br><span class="line">        <span class="type">size_t</span> index = ticket % BLOCK_SIZE;</span><br><span class="line">        <span class="keyword">while</span> (!block.slots[index].ready.<span class="built_in">load</span>(std::memory_order_acquire)) {</span><br><span class="line">            <span class="comment">// 自旋等待</span></span><br><span class="line">        }</span><br><span class="line">        value = block.slots[index].data;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::atomic&lt;<span class="type">size_t</span>&gt; head;</span><br><span class="line">    std::atomic&lt;<span class="type">size_t</span>&gt; tail;</span><br><span class="line">    Block block;</span><br><span class="line">};</span><br></pre></td></tr></table></figure>
+
+<p>Benchmark 代码：</p>
+<figure class="highlight cpp"><figcaption><span>TicketQueue_benchmark.cpp</span><a href="/blog/downloads/code/camel_mpmc/TicketQueue/TicketQueue_benchmark.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 基准测试函数</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> QueueType&gt;</span><br><span class="line"><span class="function"><span class="type">double</span> <span class="title">benchmark</span><span class="params">(<span class="type">const</span> std::string&amp; name, <span class="type">double</span>&amp; opsPerSec)</span> </span>{</span><br><span class="line">    QueueType queue;</span><br><span class="line">    std::atomic&lt;<span class="type">int</span>&gt; totalConsumed{<span class="number">0</span>};</span><br><span class="line">    std::map&lt;<span class="type">int</span>, <span class="type">double</span>&gt; threadWaitTimes;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> start = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 启动生产者线程</span></span><br><span class="line">    std::vector&lt;std::thread&gt; producers;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> p = <span class="number">0</span>; p &lt; NUM_PRODUCERS; ++p) {</span><br><span class="line">        producers.<span class="built_in">emplace_back</span>([&amp;queue, p]() {</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; ITEMS_PER_PRODUCER; ++i) {</span><br><span class="line">                queue.<span class="built_in">enqueue</span>(i + p * ITEMS_PER_PRODUCER);</span><br><span class="line">            }</span><br><span class="line">        });</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 启动消费者线程</span></span><br><span class="line">    std::vector&lt;std::thread&gt; consumers;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> c = <span class="number">0</span>; c &lt; NUM_CONSUMERS; ++c) {</span><br><span class="line">        consumers.<span class="built_in">emplace_back</span>([&amp;queue, &amp;totalConsumed, c, &amp;threadWaitTimes]() {</span><br><span class="line">            <span class="type">int</span> item;</span><br><span class="line">            <span class="keyword">auto</span> localStart = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">            <span class="keyword">while</span> (<span class="literal">true</span>) {</span><br><span class="line">                <span class="keyword">auto</span> t0 = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">                <span class="keyword">while</span> (!queue.<span class="built_in">try_dequeue</span>(item)) {</span><br><span class="line">                    <span class="comment">// busy wait</span></span><br><span class="line">                }</span><br><span class="line">                <span class="keyword">auto</span> t1 = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">                threadWaitTimes[c] +=</span><br><span class="line">                    std::chrono::<span class="built_in">duration</span>&lt;<span class="type">double</span>&gt;(t1 - t0).<span class="built_in">count</span>();</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> (++totalConsumed &gt;= N)</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">            }</span><br><span class="line">            <span class="keyword">auto</span> localEnd = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">            <span class="type">double</span> threadTime =</span><br><span class="line">                std::chrono::<span class="built_in">duration</span>&lt;<span class="type">double</span>&gt;(localEnd - localStart).<span class="built_in">count</span>();</span><br><span class="line">            std::cout &lt;&lt; <span class="string">&quot;Consumer &quot;</span> &lt;&lt; c &lt;&lt; <span class="string">&quot; finished in &quot;</span> &lt;&lt; threadTime</span><br><span class="line">                      &lt;&lt; <span class="string">&quot;s, wait time: &quot;</span> &lt;&lt; threadWaitTimes[c] &lt;&lt; <span class="string">&quot;s\n&quot;</span>;</span><br><span class="line">        });</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; t : producers)</span><br><span class="line">        t.<span class="built_in">join</span>();</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; t : consumers)</span><br><span class="line">        t.<span class="built_in">join</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> end = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">    std::chrono::duration&lt;<span class="type">double</span>&gt; elapsed = end - start;</span><br><span class="line">    opsPerSec = N / elapsed.<span class="built_in">count</span>();</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;\n&quot;</span></span><br><span class="line">              &lt;&lt; name &lt;&lt; <span class="string">&quot; completed in &quot;</span> &lt;&lt; elapsed.<span class="built_in">count</span>()</span><br><span class="line">              &lt;&lt; <span class="string">&quot;s, throughput: &quot;</span> &lt;&lt; opsPerSec &lt;&lt; <span class="string">&quot; ops/sec\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> elapsed.<span class="built_in">count</span>();</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="type">double</span> opsBlock = <span class="number">0.0</span>, opsTicket = <span class="number">0.0</span>;</span><br><span class="line">    <span class="type">double</span> timeBlock = <span class="built_in">benchmark</span>&lt;BlockQueue&gt;(<span class="string">&quot;BlockQueue&quot;</span>, opsBlock);</span><br><span class="line">    <span class="type">double</span> timeTicket = <span class="built_in">benchmark</span>&lt;TicketQueue&gt;(<span class="string">&quot;TicketQueue&quot;</span>, opsTicket);</span><br><span class="line">    <span class="type">double</span> speedup = opsTicket / opsBlock;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; std::left &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">14</span>) &lt;&lt; <span class="string">&quot;Queue Type&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">12</span>) &lt;&lt; <span class="string">&quot;Time (s)&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">20</span>) &lt;&lt; <span class="string">&quot;Throughput (ops/s)&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">10</span>) &lt;&lt; <span class="string">&quot;Speedup&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;|\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; std::<span class="built_in">string</span>(<span class="number">70</span>, <span class="string">&#x27;-&#x27;</span>) &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// BlockQueue row</span></span><br><span class="line">    std::cout &lt;&lt; std::left &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">14</span>) &lt;&lt; <span class="string">&quot;BlockQueue&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">12</span>) &lt;&lt; std::fixed &lt;&lt; std::<span class="built_in">setprecision</span>(<span class="number">6</span>)</span><br><span class="line">              &lt;&lt; timeBlock &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">20</span>) &lt;&lt; std::fixed</span><br><span class="line">              &lt;&lt; std::<span class="built_in">setprecision</span>(<span class="number">0</span>) &lt;&lt; opsBlock &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">10</span>)</span><br><span class="line">              &lt;&lt; <span class="string">&quot;1.00×&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;|\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// TicketQueue row</span></span><br><span class="line">    std::ostringstream speedupStream;</span><br><span class="line">    speedupStream &lt;&lt; std::fixed &lt;&lt; std::<span class="built_in">setprecision</span>(<span class="number">2</span>) &lt;&lt; speedup &lt;&lt; <span class="string">&quot;×&quot;</span>;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; std::left &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">14</span>) &lt;&lt; <span class="string">&quot;TicketQueue&quot;</span></span><br><span class="line">              &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">12</span>) &lt;&lt; std::fixed &lt;&lt; std::<span class="built_in">setprecision</span>(<span class="number">6</span>)</span><br><span class="line">              &lt;&lt; timeTicket &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">20</span>) &lt;&lt; std::fixed</span><br><span class="line">              &lt;&lt; std::<span class="built_in">setprecision</span>(<span class="number">0</span>) &lt;&lt; opsTicket &lt;&lt; <span class="string">&quot;| &quot;</span> &lt;&lt; std::<span class="built_in">setw</span>(<span class="number">10</span>)</span><br><span class="line">              &lt;&lt; speedupStream.<span class="built_in">str</span>() &lt;&lt; <span class="string">&quot;|\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/13/concurrency/SPSC-lock-free-queue/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -219,7 +321,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+                <time title="Modified: 2026-01-05 13:20:31" itemprop="dateModified" datetime="2026-01-05T13:20:31+00:00">2026-01-05</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -335,7 +437,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+                <time title="Modified: 2026-01-05 13:20:31" itemprop="dateModified" datetime="2026-01-05T13:20:31+00:00">2026-01-05</time>
               </span>
 
           
@@ -716,7 +818,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+                <time title="Modified: 2026-01-05 13:20:31" itemprop="dateModified" datetime="2026-01-05T13:20:31+00:00">2026-01-05</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -791,7 +893,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+                <time title="Modified: 2026-01-05 13:20:31" itemprop="dateModified" datetime="2026-01-05T13:20:31+00:00">2026-01-05</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -953,7 +1055,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+                <time title="Modified: 2026-01-05 13:20:31" itemprop="dateModified" datetime="2026-01-05T13:20:31+00:00">2026-01-05</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1253,7 +1355,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+                <time title="Modified: 2026-01-05 13:20:31" itemprop="dateModified" datetime="2026-01-05T13:20:31+00:00">2026-01-05</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1900,7 +2002,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+                <time title="Modified: 2026-01-05 13:20:31" itemprop="dateModified" datetime="2026-01-05T13:20:31+00:00">2026-01-05</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2067,7 +2169,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+                <time title="Modified: 2026-01-05 13:20:31" itemprop="dateModified" datetime="2026-01-05T13:20:31+00:00">2026-01-05</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2230,7 +2332,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+                <time title="Modified: 2026-01-05 13:20:31" itemprop="dateModified" datetime="2026-01-05T13:20:31+00:00">2026-01-05</time>
               </span>
 
           
@@ -2255,434 +2357,6 @@
 
 <p>方案三</p>
 <figure class="highlight cpp"><figcaption><span>3_pipeline.cpp</span><a href="/blog/downloads/code/tbb/pipeline/3_pipeline.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 方案 3: TBB 流水线</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tbb/tbb.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;tasks.hpp&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    tbb::<span class="built_in">parallel_pipeline</span>(</span><br><span class="line">        <span class="comment">/* max_number_of_live_token */</span> <span class="number">4</span>,</span><br><span class="line">        <span class="comment">// Stage 1: 读网络数据</span></span><br><span class="line">        tbb::<span class="built_in">make_filter</span>&lt;<span class="type">void</span>, DataChunk&gt;(</span><br><span class="line">            tbb::filter_mode::serial_in_order,</span><br><span class="line">            [](tbb::flow_control&amp; fc) -&gt; DataChunk {</span><br><span class="line">                DataChunk chunk;</span><br><span class="line">                <span class="keyword">if</span> (!<span class="built_in">read_from_network</span>(chunk)) {  <span class="comment">// 返回 false 时结束</span></span><br><span class="line">                    fc.<span class="built_in">stop</span>();</span><br><span class="line">                }</span><br><span class="line">                <span class="keyword">return</span> chunk;</span><br><span class="line">            }) &amp;</span><br><span class="line">            <span class="comment">// Stage 2: CPU 压缩</span></span><br><span class="line">            tbb::<span class="built_in">make_filter</span>&lt;DataChunk, CompressedChunk&gt;(</span><br><span class="line">                tbb::filter_mode::parallel,</span><br><span class="line">                [](DataChunk chunk) -&gt; CompressedChunk {</span><br><span class="line">                    CompressedChunk <span class="built_in">out</span>(chunk.data.<span class="built_in">size</span>());</span><br><span class="line">                    tbb::<span class="built_in">parallel_for</span>(<span class="built_in">size_t</span>(<span class="number">0</span>), chunk.data.<span class="built_in">size</span>(), [&amp;](<span class="type">size_t</span> i) {</span><br><span class="line">                        out.data[i] = <span class="built_in">compress_byte</span>(chunk.data[i]);</span><br><span class="line">                    });</span><br><span class="line">                    <span class="keyword">return</span> out;</span><br><span class="line">                }) &amp;</span><br><span class="line">            <span class="comment">// Stage 3: 写文件</span></span><br><span class="line">            tbb::<span class="built_in">make_filter</span>&lt;CompressedChunk, <span class="type">void</span>&gt;(</span><br><span class="line">                tbb::filter_mode::serial_in_order,</span><br><span class="line">                [](CompressedChunk out) {</span><br><span class="line">                    <span class="built_in">write_to_file</span>(out);  <span class="comment">// 可以异步</span></span><br><span class="line">                }));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/19/net/%E5%BC%82%E6%AD%A5IO/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/19/net/%E5%BC%82%E6%AD%A5IO/" class="post-title-link" itemprop="url">异步IO</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-19 20:26:00" itemprop="dateCreated datePublished" datetime="2025-08-19T20:26:00+00:00">2025-08-19</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">操作系统</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="IO模型概念"><a href="#IO模型概念" class="headerlink" title="IO模型概念"></a>IO模型概念</h2><p>IO 模型通常按两条维度划分：</p>
-<ol>
-<li><p>阻塞 vs 非阻塞</p>
-<ul>
-<li>阻塞 IO（Blocking IO）：调用 read&#x2F;recv 等函数时，如果数据没准备好，进程会被挂起，直到数据就绪。</li>
-<li>非阻塞 IO（Non-blocking IO）：调用 read&#x2F;recv 时，如果数据没准备好，直接返回 EAGAIN 或 EWOULDBLOCK，进程继续做别的事情。</li>
-</ul>
-</li>
-<li><p>同步 vs 异步</p>
-<ul>
-<li><p>同步（Synchronous）：调用者要等待操作完成才能继续。</p>
-<ul>
-<li>阻塞 IO + 同步：最常见，比如普通 read(fd, buf, n)</li>
-<li>非阻塞 IO + 同步：调用立即返回，如果没数据则报错或返回 0</li>
-</ul>
-</li>
-<li><p>异步（Asynchronous）：调用者发起操作后，不需要等待，操作完成时通过回调、信号、事件通知等告知结果。</p>
-</li>
-</ul>
-</li>
-</ol>
-<p>⚡ 关键：异步 IO 的核心是不阻塞当前线程，而结果通知是通过事件或回调完成的。</p>
-<h2 id="Linux-常见异步-IO-方式"><a href="#Linux-常见异步-IO-方式" class="headerlink" title="Linux 常见异步 IO 方式"></a>Linux 常见异步 IO 方式</h2><p>Linux 下主要有四种机制：</p>
-<ol>
-<li><p>POSIX AIO（aio_* 系列）</p>
-<ul>
-<li><p>系统调用：aio_read(), aio_write()</p>
-</li>
-<li><p>完成通知方式：</p>
-<ul>
-<li>轮询 aio_error()</li>
-<li>信号通知 SIGIO</li>
-<li>回调函数 sigevent.sigev_notify &#x3D; SIGEV_THREAD</li>
-</ul>
-</li>
-<li><p>使用场景：文件 IO，可以在后台发起读写请求，主线程继续工作。</p>
-</li>
-<li><p>⚠️ 目前性能不如 epoll + 线程池模拟异步。</p>
-</li>
-</ul>
-</li>
-<li><p>信号驱动 IO（SIGIO）</p>
-<ul>
-<li>进程或文件描述符注册 F_SETOWN，开启 O_ASYNC</li>
-<li>当 fd 可读写时，内核发信号给进程</li>
-<li>通常用于少量 fd 的异步事件</li>
-</ul>
-</li>
-<li><p>I&#x2F;O 多路复用（select, poll, epoll）</p>
-<ul>
-<li><p>本质是非阻塞 + 事件通知</p>
-</li>
-<li><p>Epoll + 非阻塞 IO 可以模拟高效的异步 IO</p>
-</li>
-<li><p>适合网络服务器、socket 编程</p>
-</li>
-<li><p>典型流程：</p>
-<ul>
-<li>设置 fd 为非阻塞（否则 read&#x2F;write 可能阻塞，因为 epoll 本质是同步的）</li>
-<li>注册 fd 到 epoll，关注 EPOLLIN &#x2F; EPOLLOUT</li>
-<li>调用 epoll_wait 等待事件</li>
-<li>事件触发时读取或写入数据</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Linux AIO（io_uring）</p>
-<ul>
-<li>新一代高性能异步 IO 接口</li>
-<li>支持文件、网络 IO</li>
-<li>提供 提交队列 + 完成队列，几乎零系统调用开销</li>
-<li>可以真正做到线程几乎不阻塞等待</li>
-</ul>
-</li>
-</ol>
-<h3 id="异步-IO-的优点"><a href="#异步-IO-的优点" class="headerlink" title="异步 IO 的优点"></a>异步 IO 的优点</h3><ul>
-<li>不阻塞主线程，提高吞吐量</li>
-<li>可同时处理大量 IO（特别是网络&#x2F;文件服务器）</li>
-<li>与多线程相比，降低线程上下文切换开销</li>
-</ul>
-<h3 id="异步-IO-的缺点"><a href="#异步-IO-的缺点" class="headerlink" title="异步 IO 的缺点"></a>异步 IO 的缺点</h3><ul>
-<li>编程复杂度高（需要事件驱动、回调或状态机）</li>
-<li>错误处理和信号安全问题复杂</li>
-<li>文件异步 IO 性能在传统 AIO 下不一定比多线程高</li>
-</ul>
-<h3 id="Linux-下常见异步-I-O-机制对比"><a href="#Linux-下常见异步-I-O-机制对比" class="headerlink" title="Linux 下常见异步 I&#x2F;O 机制对比"></a>Linux 下常见异步 I&#x2F;O 机制对比</h3><table>
-<thead>
-<tr>
-<th>特性 &#x2F; 机制</th>
-<th>POSIX AIO</th>
-<th>epoll + 非阻塞 IO</th>
-<th>io_uring</th>
-<th>信号驱动 IO (SIGIO)</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><strong>类型</strong></td>
-<td>异步文件 IO</td>
-<td>多路复用 + 非阻塞网络 IO</td>
-<td>高性能异步 IO</td>
-<td>异步事件通知</td>
-</tr>
-<tr>
-<td><strong>支持对象</strong></td>
-<td>文件</td>
-<td>文件描述符（socket、管道等）</td>
-<td>文件 + 网络 + 其他 IO</td>
-<td>文件描述符（socket、pipe）</td>
-</tr>
-<tr>
-<td><strong>用户态&#x2F;内核态</strong></td>
-<td>系统调用提交，内核异步处理</td>
-<td>用户态轮询&#x2F;等待事件，内核检查 fd</td>
-<td>用户态 SQ + 内核 CQ</td>
-<td>用户注册 fd，内核通过信号通知</td>
-</tr>
-<tr>
-<td><strong>提交方式</strong></td>
-<td>aio_read&#x2F;aio_write</td>
-<td>写入 fd 并通过 epoll_wait 检查</td>
-<td>写入 SQ（批量可提交）</td>
-<td>设置 O_ASYNC + F_SETOWN</td>
-</tr>
-<tr>
-<td><strong>完成通知</strong></td>
-<td>信号 &#x2F; 回调 &#x2F; aio_error轮询</td>
-<td>epoll_wait 返回就绪事件</td>
-<td>完成队列 (CQ)，阻塞或非阻塞读取</td>
-<td>信号处理函数 (SIGIO)</td>
-</tr>
-<tr>
-<td><strong>性能</strong></td>
-<td>中等，系统调用多</td>
-<td>高，单线程处理大量 fd</td>
-<td>很高，几乎零系统调用，批量提交</td>
-<td>较低，信号开销大，适合少量 fd</td>
-</tr>
-<tr>
-<td><strong>编程复杂度</strong></td>
-<td>中等偏复杂</td>
-<td>中等，需要状态机处理</td>
-<td>高，但灵活，可批量和链式操作</td>
-<td>高，信号处理函数限制多，必须信号安全</td>
-</tr>
-<tr>
-<td><strong>适合场景</strong></td>
-<td>文件异步读写</td>
-<td>高并发网络服务器</td>
-<td>高性能文件和网络 IO</td>
-<td>少量异步事件或控制信号触发场景</td>
-</tr>
-</tbody></table>
-<h2 id="Linux-io-uring"><a href="#Linux-io-uring" class="headerlink" title="Linux io_uring"></a>Linux io_uring</h2><p>io_uring 是 Linux 内核自 5.1 版本引入的一个异步 I&#x2F;O 框架，它提供了 低延迟、高吞吐的异步文件和网络 I&#x2F;O。它的特点是：</p>
-<ul>
-<li>零拷贝提交：应用程序可以直接向内核提交 I&#x2F;O 请求，无需系统调用每次阻塞。</li>
-<li>环形队列机制：通过共享内存的 提交队列（Submission Queue, SQ） 和 完成队列（Completion Queue, CQ），用户态和内核态可以高效交互。</li>
-<li>支持多种 I&#x2F;O 类型：文件读写、网络收发、文件同步、缓冲区操作等。</li>
-<li>批量提交和完成：可以一次提交多个 I&#x2F;O 请求，并批量获取完成结果。</li>
-</ul>
-<p>简单理解：它把传统阻塞 I&#x2F;O 的 “系统调用来回” 改成了 共享环形队列 + 异步通知。</p>
-<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><ol>
-<li>方法一：从 APT 安装</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install liburing-dev</span><br></pre></td></tr></table></figure>
-
-<p>检查安装路径</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ls</span> /usr/include/liburing.h</span><br></pre></td></tr></table></figure>
-
-<ol start="2">
-<li>方法二：从源码安装</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/axboe/liburing.git</span><br><span class="line"><span class="built_in">cd</span> liburing</span><br><span class="line">make</span><br><span class="line">sudo make install</span><br></pre></td></tr></table></figure>
-
-<h3 id="io-uring-的核心数据结构"><a href="#io-uring-的核心数据结构" class="headerlink" title="io_uring 的核心数据结构"></a>io_uring 的核心数据结构</h3><p>Submission Queue（SQ）</p>
-<ul>
-<li>用户态将 I&#x2F;O 请求放入 SQ。</li>
-<li>SQ 是一个环形数组，存放 io_uring_sqe（I&#x2F;O 请求条目）。</li>
-<li>用户通过 系统调用 io_uring_enter 将 SQ 中的新请求通知内核。</li>
-<li>内核会按顺序处理 SQ 中的 I&#x2F;O 请求。</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th>字段</th>
-<th>作用</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><code>opcode</code></td>
-<td>I&#x2F;O 类型，如读、写、fsync、accept、sendmsg</td>
-</tr>
-<tr>
-<td><code>fd</code></td>
-<td>文件描述符</td>
-</tr>
-<tr>
-<td><code>off</code></td>
-<td>偏移量（文件 I&#x2F;O）</td>
-</tr>
-<tr>
-<td><code>addr</code></td>
-<td>用户缓冲区地址</td>
-</tr>
-<tr>
-<td><code>len</code></td>
-<td>I&#x2F;O 数据长度</td>
-</tr>
-<tr>
-<td><code>flags</code></td>
-<td>请求标志，如 <code>IOSQE_FIXED_FILE</code>、<code>IOSQE_IO_LINK</code></td>
-</tr>
-</tbody></table>
-<p>Completion Queue（CQ）</p>
-<ul>
-<li>内核完成 I&#x2F;O 后，将结果写入 CQ。</li>
-<li>CQ 也是一个环形数组，存放 io_uring_cqe（完成条目）。</li>
-<li>用户可以轮询或等待 CQ 获取完成结果。</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th>字段</th>
-<th>作用</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><code>res</code></td>
-<td>I&#x2F;O 结果，成功为正数（读写字节数），失败为负错误码</td>
-</tr>
-<tr>
-<td><code>user_data</code></td>
-<td>用户自定义数据，方便识别请求</td>
-</tr>
-</tbody></table>
-<h3 id="io-uring-工作流程"><a href="#io-uring-工作流程" class="headerlink" title="io_uring 工作流程"></a>io_uring 工作流程</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">+-----------+          +-----------+</span><br><span class="line">| User App  | &lt;-----&gt;  |  Kernel  |</span><br><span class="line">+-----------+          +-----------+</span><br><span class="line">      |                     |</span><br><span class="line">      |  write SQE to SQ    | &lt;- Submission Queue</span><br><span class="line">      |--------------------&gt;|</span><br><span class="line">      |                     |</span><br><span class="line">      |   io_uring_enter    | &lt;- 通知内核处理</span><br><span class="line">      |--------------------&gt;|</span><br><span class="line">      |                     |</span><br><span class="line">      | &lt;------------------ | &lt;- CQE 放入 CQ</span><br><span class="line">      |  read CQE from CQ   |</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>用户态填充 SQE（Submission Queue Entry）。</li>
-<li>调用 io_uring_enter() 提交 SQE （不阻塞）。</li>
-<li>内核处理 I&#x2F;O 请求。</li>
-<li>内核把完成结果写入 CQ。</li>
-<li>用户态可以：<ul>
-<li>轮询 CQ：主动读取 CQE（Completion Queue Entry）</li>
-<li>注册回调（liburing 新版本支持 IORING_SETUP_IOPOLL + IORING_SETUP_SQPOLL 或自己封装）</li>
-</ul>
-</li>
-</ul>
-<p>注意：</p>
-<ul>
-<li>异步 I&#x2F;O ≠ 必须用回调。关键是提交后不阻塞等待，可以同步轮询完成结果，也可以异步触发回调。</li>
-<li>回调是一种可选的使用方式。</li>
-<li>最核心的是 共享环形队列 + 完成队列，用户可以同步取结果也可以异步通知。</li>
-</ul>
-<h3 id="为什么-io-uring-没有强制回调"><a href="#为什么-io-uring-没有强制回调" class="headerlink" title="为什么 io_uring 没有强制回调"></a>为什么 io_uring 没有强制回调</h3><p>传统异步 I&#x2F;O（比如 Windows IOCP）必须注册回调或事件句柄，因为内核不会给你“主动通知”。</p>
-<p>Linux io_uring 的设计哲学是：</p>
-<ul>
-<li>用户态和内核共享内存 → 用户态可以自己轮询完成队列。</li>
-<li>减少系统调用次数 → 不依赖信号或回调触发。</li>
-<li>需要回调时，用户可以自己封装一个事件循环。</li>
-</ul>
-<p>所以你看到 io_uring 的官方示例都是 顺序写代码，但是仍然是异步 I&#x2F;O，因为：</p>
-<ul>
-<li>提交后内核可以并行处理多个 I&#x2F;O。</li>
-<li>用户态无需阻塞等待内核完成处理（可以去做别的事）。</li>
-</ul>
-<h3 id="io-uring-的使用示例（C-语言）"><a href="#io-uring-的使用示例（C-语言）" class="headerlink" title="io_uring 的使用示例（C 语言）"></a>io_uring 的使用示例（C 语言）</h3><figure class="highlight cpp"><figcaption><span>io_uring_hello.c</span><a href="/blog/downloads/code/io/io_uring_hello.c">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;liburing.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> QUEUE_DEPTH  8</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> BUFFER_SIZE  1024</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">io_uring</span> ring;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">io_uring_sqe</span> *sqe;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">io_uring_cqe</span> *cqe;</span><br><span class="line">    <span class="type">int</span> ret, fd;</span><br><span class="line">    <span class="type">char</span> buf[BUFFER_SIZE];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 打开文件</span></span><br><span class="line">    fd = <span class="built_in">open</span>(<span class="string">&quot;test.txt&quot;</span>, O_RDONLY);</span><br><span class="line">    <span class="keyword">if</span> (fd &lt; <span class="number">0</span>) {</span><br><span class="line">        <span class="built_in">perror</span>(<span class="string">&quot;open&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 初始化 io_uring</span></span><br><span class="line">    ret = <span class="built_in">io_uring_queue_init</span>(QUEUE_DEPTH, &amp;ring, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) {</span><br><span class="line">        <span class="built_in">perror</span>(<span class="string">&quot;io_uring_queue_init&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取提交队列条目</span></span><br><span class="line">    sqe = <span class="built_in">io_uring_get_sqe</span>(&amp;ring);</span><br><span class="line">    <span class="keyword">if</span> (!sqe) {</span><br><span class="line">        <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;io_uring_get_sqe failed\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 准备读取操作</span></span><br><span class="line">    <span class="built_in">io_uring_prep_read</span>(sqe, fd, buf, BUFFER_SIZE, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 提交到内核</span></span><br><span class="line">    ret = <span class="built_in">io_uring_submit</span>(&amp;ring);</span><br><span class="line">    <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) {</span><br><span class="line">        <span class="built_in">perror</span>(<span class="string">&quot;io_uring_submit&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 等待完成</span></span><br><span class="line">    ret = <span class="built_in">io_uring_wait_cqe</span>(&amp;ring, &amp;cqe);</span><br><span class="line">    <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) {</span><br><span class="line">        <span class="built_in">perror</span>(<span class="string">&quot;io_uring_wait_cqe&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 读取结果</span></span><br><span class="line">    <span class="keyword">if</span> (cqe-&gt;res &lt; <span class="number">0</span>) {</span><br><span class="line">        <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;Async read failed: %d\n&quot;</span>, cqe-&gt;res);</span><br><span class="line">    } <span class="keyword">else</span> {</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Read %d bytes: %.*s\n&quot;</span>, cqe-&gt;res, cqe-&gt;res, buf);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 通知内核完成</span></span><br><span class="line">    <span class="built_in">io_uring_cqe_seen</span>(&amp;ring, cqe);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 关闭</span></span><br><span class="line">    <span class="built_in">io_uring_queue_exit</span>(&amp;ring);</span><br><span class="line">    <span class="built_in">close</span>(fd);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-
-<p>这个例子展示了 最基本的异步文件读取：</p>
-<ul>
-<li>初始化 ring。</li>
-<li>获取一个 SQE 并填充读请求。</li>
-<li>提交 SQE。</li>
-<li>等待 CQE 获取结果。</li>
-<li>标记完成并清理。</li>
-</ul>
-<h2 id="Boost-asio"><a href="#Boost-asio" class="headerlink" title="Boost asio"></a>Boost asio</h2><p>要区分 操作系统级别的异步 I&#x2F;O 和 asio 的抽象，因为 asio 并不是单一机制，而是根据平台选择最优实现。具体分析如下：</p>
-<h3 id="asio-的工作原理"><a href="#asio-的工作原理" class="headerlink" title="asio 的工作原理"></a>asio 的工作原理</h3><p>asio 提供 异步接口（async_read, async_write 等），程序不会阻塞线程</p>
-<p>内部实现方式根据平台不同而不同：</p>
-<table>
-<thead>
-<tr>
-<th>平台</th>
-<th>异步方式</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Linux</td>
-<td>基于 <strong>epoll &#x2F; io_uring &#x2F; AIO</strong>，是真正的内核异步 I&#x2F;O（零拷贝，内核通知完成）</td>
-</tr>
-<tr>
-<td>Windows</td>
-<td>基于 <strong>IOCP</strong>（I&#x2F;O Completion Ports），内核异步 I&#x2F;O</td>
-</tr>
-<tr>
-<td>Mac &#x2F; BSD</td>
-<td>基于 <strong>kqueue &#x2F; poll</strong>，有些情况下是模拟异步（多线程或事件轮询）</td>
-</tr>
-</tbody></table>
-<p>要确认 asio 在你的 Linux 机器上选择了哪种底层 I&#x2F;O 机制，可以按下面几个方法操作：</p>
-<ol>
-<li>查看 asio 使用的 I&#x2F;O 对象</li>
-</ol>
-<p>asio 有两个主要 I&#x2F;O 后端：</p>
-<ul>
-<li>旧版 AIO &#x2F; epoll（select_reactor &#x2F; epoll_reactor）</li>
-<li>io_uring（在新版本 Boost.Asio 或 standalone Asio 支持）</li>
-</ul>
-<p>在 编译时，asio 会检测系统特性：</p>
-<ul>
-<li>如果 Linux 内核 ≥ 5.1，asio 默认启用 io_uring</li>
-<li>否则使用 epoll</li>
-</ul>
-<ol start="2">
-<li>通过宏或配置查看</li>
-</ol>
-<p>在你的 asio 头文件中，可能有如下宏：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">if</span> defined(BOOST_ASIO_HAS_IOURING)</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;asio will use io_uring\n&quot;</span>;</span><br><span class="line"><span class="meta">#<span class="keyword">elif</span> defined(BOOST_ASIO_HAS_EPOLL)</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;asio will use epoll\n&quot;</span>;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
-
-<p>这些宏在 boost&#x2F;asio&#x2F;detail&#x2F;config.hpp 或 asio&#x2F;config.hpp 中定义，表示底层机制。</p>
-<ol start="3">
-<li>运行时确认</li>
-</ol>
-<p>asio 本身没有公开 API 显示底层 I&#x2F;O 类型，但可以通过系统调用监控判断：</p>
-<p>使用 strace 观察程序 I&#x2F;O：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">strace -f ./your_program 2&gt;&amp;1 | grep io_uring</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>如果看到 io_uring_setup、io_uring_enter 系统调用，就说明启用了 io_uring</li>
-<li>如果没有，只看到 epoll_wait &#x2F; epoll_ctl，说明使用的是 epoll</li>
-</ul>
-<p>对 epoll，strace 会显示 epoll_create1 &#x2F; epoll_ctl &#x2F; epoll_wait</p>
-<h3 id="阻塞-vs-异步"><a href="#阻塞-vs-异步" class="headerlink" title="阻塞 vs 异步"></a>阻塞 vs 异步</h3><table>
-<thead>
-<tr>
-<th>类型</th>
-<th>描述</th>
-<th>asio 中的表现</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>阻塞 I&#x2F;O</td>
-<td>调用时线程被挂起，等待 I&#x2F;O 完成</td>
-<td>不使用，线程会被阻塞，TBB 线程占用</td>
-</tr>
-<tr>
-<td>模拟异步</td>
-<td>内核不支持真正异步，用线程轮询或线程池实现</td>
-<td>Mac&#x2F;BSD 某些场景下可能是模拟</td>
-</tr>
-<tr>
-<td>真正异步 I&#x2F;O</td>
-<td>内核支持，操作提交后立即返回，完成由内核通知</td>
-<td>Linux&#x2F;io_uring、Windows IOCP 就是真正异步</td>
-</tr>
-</tbody></table>
 
       
     </div>
@@ -2769,7 +2443,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-count">120</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -2830,7 +2504,7 @@
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2025</span>
+  <span itemprop="copyrightYear">2026</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

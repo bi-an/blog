@@ -188,6 +188,269 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/12/25/cpp/CLI11-%E5%91%BD%E4%BB%A4%E8%A1%8C%E8%A7%A3%E6%9E%90%E5%BA%93%E7%9A%84%E4%BD%BF%E7%94%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/12/25/cpp/CLI11-%E5%91%BD%E4%BB%A4%E8%A1%8C%E8%A7%A3%E6%9E%90%E5%BA%93%E7%9A%84%E4%BD%BF%E7%94%A8/" class="post-title-link" itemprop="url">CLI11-命令行解析库的使用</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-12-25 15:05:48" itemprop="dateCreated datePublished" datetime="2025-12-25T15:05:48+00:00">2025-12-25</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-01-05 13:20:31" itemprop="dateModified" datetime="2026-01-05T13:20:31+00:00">2026-01-05</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="CLI11-简介"><a href="#CLI11-简介" class="headerlink" title="CLI11 简介"></a>CLI11 简介</h2><p>CLI11 是一个用于处理命令行参数和选项的 C++ 库，旨在简化 C++ 应用程序的命令行界面开发。其主要特点包括：</p>
+<ol>
+<li><strong>简单易用</strong>：提供直观的 API，使开发者能够轻松定义和解析命令行选项</li>
+<li><strong>现代 C++ 支持</strong>：充分利用现代 C++ 特性，如类型推导和 lambda 表达式</li>
+<li><strong>丰富的选项支持</strong>：支持标志选项、位置参数、可选参数和必选参数等</li>
+<li><strong>类型安全</strong>：在解析和处理命令行参数时提供类型安全的机制</li>
+<li><strong>灵活的错误处理</strong>：提供多种错误处理方式，包括参数验证失败时的错误提示和帮助信息的自动生成</li>
+<li><strong>跨平台支持</strong>：可在主流操作系统上运行，包括 Windows、macOS 和各种 Linux 发行版</li>
+</ol>
+<h3 id="下载和安装"><a href="#下载和安装" class="headerlink" title="下载和安装"></a>下载和安装</h3><p>CLI11 是一个单头文件库，安装非常简单。有以下几种安装方式：</p>
+<h4 id="方式一：单文件头文件（推荐）"><a href="#方式一：单文件头文件（推荐）" class="headerlink" title="方式一：单文件头文件（推荐）"></a>方式一：单文件头文件（推荐）</h4><ol>
+<li>从 <a target="_blank" rel="noopener" href="https://github.com/CLIUtils/CLI11">CLI11 GitHub 仓库</a> 下载最新的 <code>CLI11.hpp</code> 文件</li>
+<li>将 <code>CLI11.hpp</code> 复制到您的项目包含目录中</li>
+<li>在代码中直接包含即可使用：<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;CLI11.hpp&quot;</span></span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<h4 id="方式二：使用-CMake-集成"><a href="#方式二：使用-CMake-集成" class="headerlink" title="方式二：使用 CMake 集成"></a>方式二：使用 CMake 集成</h4><p>如果您的项目使用 CMake，可以通过以下方式集成：</p>
+<ol>
+<li><p><strong>作为 Git 子模块</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git submodule add https://github.com/CLIUtils/CLI11.git</span><br></pre></td></tr></table></figure>
+<p>在 <code>CMakeLists.txt</code> 中：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">add_subdirectory</span>(CLI11)</span><br><span class="line"><span class="keyword">target_link_libraries</span>(your_target CLI11::CLI11)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>使用 FetchContent</strong>（CMake 3.11+）：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">include</span>(FetchContent)</span><br><span class="line">FetchContent_Declare(</span><br><span class="line">  CLI11</span><br><span class="line">  GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git</span><br><span class="line">  GIT_TAG        v2.<span class="number">4.1</span>  <span class="comment"># 使用最新版本标签</span></span><br><span class="line">)</span><br><span class="line">FetchContent_MakeAvailable(CLI11)</span><br><span class="line"><span class="keyword">target_link_libraries</span>(your_target CLI11::CLI11)</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h4 id="方式三：包管理器安装"><a href="#方式三：包管理器安装" class="headerlink" title="方式三：包管理器安装"></a>方式三：包管理器安装</h4><ul>
+<li><strong>vcpkg</strong>：<code>vcpkg install cli11</code></li>
+<li><strong>Conan</strong>：<code>conan install CLI11/2.4.1@cliutils/stable</code></li>
+<li><strong>Homebrew</strong>（macOS）：<code>brew install cli11</code></li>
+</ul>
+<h4 id="方式四：全局安装"><a href="#方式四：全局安装" class="headerlink" title="方式四：全局安装"></a>方式四：全局安装</h4><p>将 <code>CLI11.hpp</code> 复制到系统共享文件夹位置（如 <code>/opt/CLI11</code> 或 <code>/usr/local/include</code>），然后在 CMake 中：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">include_directories</span>(/opt/CLI11)</span><br></pre></td></tr></table></figure>
+
+<p><strong>注意</strong>：<code>CLI11.hpp</code> 包含整个命令行解析库的核心功能。如果需要使用单独的实用工具（如 Timer、AutoTimer），需要单独复制相应的头文件。</p>
+<h2 id="CLI11-API-层级关系"><a href="#CLI11-API-层级关系" class="headerlink" title="CLI11 API 层级关系"></a>CLI11 API 层级关系</h2><h3 id="CLI11-的核心数据结构"><a href="#CLI11-的核心数据结构" class="headerlink" title="CLI11 的核心数据结构"></a>CLI11 的核心数据结构</h3><p>CLI11 有三个核心数据结构：</p>
+<ol>
+<li><p><strong><code>App</code></strong> - 应用根对象</p>
+<ul>
+<li>所有选项和子命令的容器</li>
+<li>代表整个命令行应用程序</li>
+<li><strong>Subcommand</strong> 实际上就是 <code>App</code> 对象，不是独立的数据结构。<ul>
+<li><code>add_subcommand()</code> 返回 <code>App*</code>，所以 Subcommand 可以无限嵌套。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong><code>Option</code></strong> - 选项对象</p>
+<ul>
+<li>通过 <code>add_flag()</code> 或 <code>add_option()</code> 创建</li>
+<li><strong><code>add_flag()</code></strong> → 返回 <code>Option*</code><ul>
+<li>布尔标志，不需要值</li>
+<li>示例: <code>app.add_flag(&quot;-v&quot;, verbose)</code></li>
+</ul>
+</li>
+<li><strong><code>add_option()</code></strong> → 返回 <code>Option*</code><ul>
+<li>需要值的选项</li>
+<li>示例: <code>app.add_option(&quot;-f&quot;, file, &quot;File path&quot;)</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong><code>Option_group</code></strong> - 选项组（继承自 <code>App</code>）</p>
+<ul>
+<li><strong>继承关系</strong>: <code>class Option_group : public App</code></li>
+<li>本质上是 <code>App</code> 对象，可以使用 <code>App</code> 的所有方法</li>
+<li>用于组织相关选项</li>
+<li>通过 <code>add_option_group()</code> 创建，返回 <code>Option_group*</code>（可转换为 <code>App*</code>）</li>
+<li>用于实现 Suboption 功能</li>
+<li><strong>嵌套支持</strong>: 因为继承自 <code>App</code>，可以在 <code>Option_group</code> 中再创建 <code>Option_group</code> 实现多层嵌套</li>
+</ul>
+</li>
+</ol>
+<h3 id="层级结构"><a href="#层级结构" class="headerlink" title="层级结构"></a>层级结构</h3><h4 id="层级-0-App（应用根对象）"><a href="#层级-0-App（应用根对象）" class="headerlink" title="层级 0: App（应用根对象）"></a>层级 0: App（应用根对象）</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">CLI::App <span class="title">app</span><span class="params">(<span class="string">&quot;description&quot;</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>所有选项和子命令的顶层容器</li>
+</ul>
+<h4 id="层级-1-App-的直接子级（三种平级对象）"><a href="#层级-1-App-的直接子级（三种平级对象）" class="headerlink" title="层级 1: App 的直接子级（三种平级对象）"></a>层级 1: App 的直接子级（三种平级对象）</h4><p><strong>Option（选项）</strong> - 通过 <code>add_flag()</code> 或 <code>add_option()</code> 添加</p>
+<ul>
+<li><code>add_flag()</code>: 布尔标志，不需要值</li>
+<li><code>add_option()</code>: 需要值的选项</li>
+<li>两者都返回 <code>Option*</code>，独立存在</li>
+</ul>
+<p><strong>Subcommand（子命令）</strong> - 通过 <code>add_subcommand()</code> 添加</p>
+<ul>
+<li>返回 <code>App*</code> 对象，可以继续调用 <code>add_subcommand()</code> 实现无限嵌套</li>
+<li>独立存在，本身也是 App 类型</li>
+</ul>
+<p><strong>Option_group（选项组）</strong> - 通过 <code>add_option_group()</code> 添加</p>
+<ul>
+<li>返回 <code>Option_group*</code>（继承自 App）</li>
+<li>用于组织选项，实现 Suboption 功能</li>
+</ul>
+<h4 id="层级-2-依赖关系"><a href="#层级-2-依赖关系" class="headerlink" title="层级 2: 依赖关系"></a>层级 2: 依赖关系</h4><p><strong>Suboption（子选项）</strong> - 通过 <code>Option_group + needs()</code> 实现</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">app.<span class="built_in">add_flag</span>(<span class="string">&quot;-add&quot;</span>, add_flag);  <span class="comment">// 父选项</span></span><br><span class="line">CLI::Option_group *add_group = app.<span class="built_in">add_option_group</span>(<span class="string">&quot;add_suboptions&quot;</span>, <span class="string">&quot;Sub-options for -add&quot;</span>);</span><br><span class="line">add_group-&gt;<span class="built_in">add_option</span>(<span class="string">&quot;-file&quot;</span>, file_path);  <span class="comment">// 子选项</span></span><br><span class="line">add_group-&gt;<span class="built_in">needs</span>(app.<span class="built_in">get_option</span>(<span class="string">&quot;-add&quot;</span>));  <span class="comment">// 建立依赖</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>使用: <code>myprog -add -file path.txt</code>（必须先有 <code>-add</code>）</li>
+<li>多层嵌套: 在 <code>Option_group</code> 中再创建 <code>Option_group</code></li>
+</ul>
+<p><strong>Subcommand 的 Option</strong> - 属于 Subcommand</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">CLI::App *start = app.<span class="built_in">add_subcommand</span>(<span class="string">&quot;start&quot;</span>);</span><br><span class="line">start-&gt;<span class="built_in">add_option</span>(<span class="string">&quot;-f&quot;</span>, file_path);  <span class="comment">// 子命令的选项</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>使用: <code>myprog start -f file.txt</code></li>
+</ul>
+<h3 id="关键区别"><a href="#关键区别" class="headerlink" title="关键区别"></a>关键区别</h3><table>
+<thead>
+<tr>
+<th>类型</th>
+<th>API 函数</th>
+<th>返回类型</th>
+<th>层级</th>
+<th>独立性</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>App</strong></td>
+<td><code>CLI::App app(&quot;desc&quot;)</code></td>
+<td><code>App</code></td>
+<td>0</td>
+<td>根对象</td>
+<td>应用根对象</td>
+</tr>
+<tr>
+<td><strong>Option (flag)</strong></td>
+<td><code>app.add_flag()</code></td>
+<td><code>Option*</code></td>
+<td>1</td>
+<td>独立</td>
+<td><code>myprog -v</code></td>
+</tr>
+<tr>
+<td><strong>Option (option)</strong></td>
+<td><code>app.add_option()</code></td>
+<td><code>Option*</code></td>
+<td>1</td>
+<td>独立</td>
+<td><code>myprog -f file.txt</code></td>
+</tr>
+<tr>
+<td><strong>Subcommand</strong></td>
+<td><code>app.add_subcommand()</code></td>
+<td><code>App*</code></td>
+<td>1</td>
+<td>独立，可嵌套</td>
+<td><code>myprog start</code></td>
+</tr>
+<tr>
+<td><strong>Suboption</strong></td>
+<td><code>Option_group + needs()</code></td>
+<td>-</td>
+<td>2</td>
+<td>依赖父 Option</td>
+<td><code>myprog -add -file path.txt</code></td>
+</tr>
+<tr>
+<td><strong>Subcommand 的 Option</strong></td>
+<td><code>subcmd-&gt;add_option()</code></td>
+<td><code>Option*</code></td>
+<td>2</td>
+<td>属于 Subcommand</td>
+<td><code>myprog start -f file.txt</code></td>
+</tr>
+</tbody></table>
+<h2 id="一个-Suboption-的示例程序"><a href="#一个-Suboption-的示例程序" class="headerlink" title="一个 Suboption 的示例程序"></a>一个 Suboption 的示例程序</h2><p>以下是一个 Suboption 的示例程序，<strong>不支持子命令</strong>，<strong>使用单横线作为长选项</strong>，<strong>支持子选项</strong>。<br>我们选择这个示例是因为 Subcommand 的实现比较简单（就是 App 的无限嵌套），所以我们写了一个支持子选项的示例程序来演示更复杂的用法。</p>
+<h3 id="示例程序的层级结构"><a href="#示例程序的层级结构" class="headerlink" title="示例程序的层级结构"></a>示例程序的层级结构</h3><p>示例程序演示了<strong>三级层级</strong>结构：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">App (myprog)</span><br><span class="line">├── Option (-add)          ← Level 1: 顶级选项 (flag)</span><br><span class="line">├── Option (-del)          ← Level 1: 顶级选项 (flag, 与 -add 平级)</span><br><span class="line">├── Option (-force)        ← Level 1: 顶级选项 (flag, 与 -add 平级)</span><br><span class="line">└── Option_group (add_suboptions)  ← Level 2: 子选项组</span><br><span class="line">    ├── Option (-file)     ← Level 2: -add 的子选项 (需要值)</span><br><span class="line">    ├── Option (-recursive)← Level 2: -add 的子选项 (flag, 不需要值)</span><br><span class="line">    └── Option_group (file_suboptions)  ← Level 3: -file 的子选项组</span><br><span class="line">        ├── Option (-encoding)   ← Level 3: -file 的子选项 (需要值)</span><br><span class="line">        └── Option (-overwrite)  ← Level 3: -file 的子选项 (flag, 不需要值)</span><br></pre></td></tr></table></figure>
+
+<p>依赖关系通过以下方式建立：</p>
+<ul>
+<li><code>add_group-&gt;needs(add_option)</code> - 使选项组要求 <code>-add</code> 选项必须存在</li>
+<li><code>file_group-&gt;needs(file_option)</code> - 使文件子选项组要求 <code>-file</code> 选项必须存在</li>
+</ul>
+<p><strong>示例命令行：</strong></p>
+<ul>
+<li>仅 Level 1: <code>myprog -add -del -force</code></li>
+<li>Level 1 + 2: <code>myprog -add -file path/to/file.txt -recursive -del -force</code></li>
+<li>Level 1 + 2 + 3: <code>myprog -add -file path/to/file.txt -encoding utf8 -overwrite -del -force</code></li>
+</ul>
+<h3 id="文件说明"><a href="#文件说明" class="headerlink" title="文件说明"></a>文件说明</h3><h4 id="suboption-example-cpp-示例程序"><a href="#suboption-example-cpp-示例程序" class="headerlink" title="suboption_example.cpp - 示例程序"></a>suboption_example.cpp - 示例程序</h4><p><code>suboption_example.cpp</code> 是一个可执行的示例程序，用于演示子选项功能。可以直接运行并测试功能。</p>
+ <figure class="highlight cpp"><figcaption><span>suboption_example.cpp</span><a href="/blog/downloads/code/CLI11/suboption_example.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Copyright (c) 2017-2025, University of Cincinnati, developed by Henry Schreiner</span></span><br><span class="line"><span class="comment">// under NSF AWARD 1414736 and by the respective contributors.</span></span><br><span class="line"><span class="comment">// All rights reserved.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// SPDX-License-Identifier: BSD-3-Clause</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 示例程序：演示子选项功能（三级层级）</span></span><br><span class="line"><span class="comment">// 编译: g++ -std=c++11 example.cpp -I../../include -o example</span></span><br><span class="line"><span class="comment">// 运行示例:</span></span><br><span class="line"><span class="comment">//   ./example -add -file path/to/file.txt -recursive -del -force</span></span><br><span class="line"><span class="comment">//   ./example -add -file path/to/file.txt -encoding utf8 -overwrite -del -force</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> CLI11_SINGLE_FILE</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;CLI11.hpp&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;CLI/CLI.hpp&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> **argv)</span> </span>{</span><br><span class="line">    CLI::App app{<span class="string">&quot;SubOption Example Program&quot;</span>};</span><br><span class="line"></span><br><span class="line">    <span class="type">bool</span> add_flag = <span class="literal">false</span>;</span><br><span class="line">    <span class="type">bool</span> del_flag = <span class="literal">false</span>;</span><br><span class="line">    <span class="type">bool</span> force_flag = <span class="literal">false</span>;</span><br><span class="line">    std::string file_path;        <span class="comment">// Level 2: 需要值的选项</span></span><br><span class="line">    <span class="type">bool</span> recursive_flag = <span class="literal">false</span>;  <span class="comment">// Level 2: 标志选项</span></span><br><span class="line">    std::string encoding;         <span class="comment">// Level 3: 需要值的选项</span></span><br><span class="line">    <span class="type">bool</span> overwrite_flag = <span class="literal">false</span>;  <span class="comment">// Level 3: 标志选项</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 允许非标准选项名（单破折号后面跟多个字符）</span></span><br><span class="line">    app.<span class="built_in">allow_non_standard_option_names</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 平级选项：-add, -del, -force</span></span><br><span class="line">    app.<span class="built_in">add_flag</span>(<span class="string">&quot;-add&quot;</span>, add_flag, <span class="string">&quot;Add option&quot;</span>);</span><br><span class="line">    app.<span class="built_in">add_flag</span>(<span class="string">&quot;-del&quot;</span>, del_flag, <span class="string">&quot;Delete option&quot;</span>);</span><br><span class="line">    app.<span class="built_in">add_flag</span>(<span class="string">&quot;-force&quot;</span>, force_flag, <span class="string">&quot;Force option&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// -add 的子选项：-file (需要值) 和 -recursive (标志)</span></span><br><span class="line">    <span class="comment">// 使用选项组来实现子选项功能</span></span><br><span class="line">    CLI::Option_group *add_group = app.<span class="built_in">add_option_group</span>(<span class="string">&quot;add_suboptions&quot;</span>, <span class="string">&quot;Sub-options for -add&quot;</span>);</span><br><span class="line">    add_group-&gt;<span class="built_in">allow_non_standard_option_names</span>();  <span class="comment">// 选项组也需要启用非标准选项名</span></span><br><span class="line">    add_group-&gt;<span class="built_in">add_option</span>(<span class="string">&quot;-file&quot;</span>, file_path, <span class="string">&quot;File path (requires a value)&quot;</span>);</span><br><span class="line">    add_group-&gt;<span class="built_in">add_flag</span>(<span class="string">&quot;-recursive&quot;</span>, recursive_flag, <span class="string">&quot;Process recursively (flag, no value needed)&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 子选项需要 -add 选项存在</span></span><br><span class="line">    CLI::Option *add_option = app.<span class="built_in">get_option</span>(<span class="string">&quot;-add&quot;</span>);</span><br><span class="line">    add_group-&gt;<span class="built_in">needs</span>(add_option);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 第三级层级：-file 的子选项</span></span><br><span class="line">    <span class="comment">// 在 -file 选项组下再创建一个选项组</span></span><br><span class="line">    CLI::Option_group *file_group = add_group-&gt;<span class="built_in">add_option_group</span>(<span class="string">&quot;file_suboptions&quot;</span>, <span class="string">&quot;Sub-options for -file&quot;</span>);</span><br><span class="line">    file_group-&gt;<span class="built_in">allow_non_standard_option_names</span>();</span><br><span class="line">    file_group-&gt;<span class="built_in">add_option</span>(<span class="string">&quot;-encoding&quot;</span>, encoding, <span class="string">&quot;File encoding (requires a value, e.g., utf8, gbk)&quot;</span>);</span><br><span class="line">    file_group-&gt;<span class="built_in">add_flag</span>(<span class="string">&quot;-overwrite&quot;</span>, overwrite_flag, <span class="string">&quot;Overwrite existing file (flag, no value needed)&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 子子选项需要 -file 选项存在</span></span><br><span class="line">    <span class="keyword">auto</span> *file_option = add_group-&gt;<span class="built_in">get_option</span>(<span class="string">&quot;-file&quot;</span>);</span><br><span class="line">    file_group-&gt;<span class="built_in">needs</span>(file_option);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 解析命令行参数</span></span><br><span class="line">    <span class="keyword">try</span> {</span><br><span class="line">        app.<span class="built_in">parse</span>(argc, argv);</span><br><span class="line">    } <span class="built_in">catch</span>(<span class="type">const</span> CLI::ParseError &amp;e) {</span><br><span class="line">        <span class="keyword">return</span> app.<span class="built_in">exit</span>(e);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 输出结果</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;解析结果:\n&quot;</span>;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;  -add: &quot;</span> &lt;&lt; (add_flag ? <span class="string">&quot;true&quot;</span> : <span class="string">&quot;false&quot;</span>) &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;  -del: &quot;</span> &lt;&lt; (del_flag ? <span class="string">&quot;true&quot;</span> : <span class="string">&quot;false&quot;</span>) &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;  -force: &quot;</span> &lt;&lt; (force_flag ? <span class="string">&quot;true&quot;</span> : <span class="string">&quot;false&quot;</span>) &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(add_flag) {</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;  -file: &quot;</span> &lt;&lt; (file_path.<span class="built_in">empty</span>() ? <span class="string">&quot;(未设置)&quot;</span> : file_path) &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;  -recursive: &quot;</span> &lt;&lt; (recursive_flag ? <span class="string">&quot;true&quot;</span> : <span class="string">&quot;false&quot;</span>) &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span>(!file_path.<span class="built_in">empty</span>()) {</span><br><span class="line">            std::cout &lt;&lt; <span class="string">&quot;    -encoding: &quot;</span> &lt;&lt; (encoding.<span class="built_in">empty</span>() ? <span class="string">&quot;(未设置)&quot;</span> : encoding) &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">            std::cout &lt;&lt; <span class="string">&quot;    -overwrite: &quot;</span> &lt;&lt; (overwrite_flag ? <span class="string">&quot;true&quot;</span> : <span class="string">&quot;false&quot;</span>) &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+
+<h5 id="构建和运行示例程序"><a href="#构建和运行示例程序" class="headerlink" title="构建和运行示例程序"></a>构建和运行示例程序</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /home/zhigaoz/code/CLI11/build</span><br><span class="line">cmake --build . --target suboption_example</span><br><span class="line"><span class="comment"># Run examples</span></span><br><span class="line">./tests/suboption_test/suboption_example --<span class="built_in">help</span></span><br><span class="line">./tests/suboption_test/suboption_example -add</span><br><span class="line">./tests/suboption_test/suboption_example -add -file path/to/file.txt -encoding utf8 -overwrite -del -force</span><br></pre></td></tr></table></figure>
+
+<h3 id="实现细节"><a href="#实现细节" class="headerlink" title="实现细节"></a>实现细节</h3><p>测试使用 CLI11 的 <code>Option_group</code> 功能和 <code>needs()</code> 方法，确保子选项只有在父选项存在时才有效。</p>
+<h4 id="关键实现细节"><a href="#关键实现细节" class="headerlink" title="关键实现细节"></a>关键实现细节</h4><ol>
+<li><p><strong>非标准选项名</strong>: </p>
+<ul>
+<li>使用 <code>app.allow_non_standard_option_names()</code> 允许单破折号后面跟多个字符的选项（例如 <code>-add</code> 而不是 <code>--add</code>）</li>
+</ul>
+</li>
+<li><p><strong>选项组创建</strong>:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">CLI::Option_group *file_group = add_group-&gt;<span class="built_in">add_option_group</span>(<span class="string">&quot;file_suboptions&quot;</span>, <span class="string">&quot;Sub-options for -file&quot;</span>);</span><br><span class="line">file_group-&gt;<span class="built_in">allow_non_standard_option_names</span>();</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>依赖关系</strong>:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">CLI::Option *add_option = app.<span class="built_in">get_option</span>(<span class="string">&quot;-add&quot;</span>);</span><br><span class="line">add_group-&gt;<span class="built_in">needs</span>(add_option);  <span class="comment">// 子选项需要 -add 选项存在</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>添加子选项</strong>:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 注意：CLI11 没有 add_suboption() 函数</span></span><br><span class="line"><span class="comment">// 子选项通过在 Option_group 中使用 add_option() 或 add_flag() 实现</span></span><br><span class="line">add_group-&gt;<span class="built_in">add_option</span>(<span class="string">&quot;-file&quot;</span>, file_path, <span class="string">&quot;File path (requires a value)&quot;</span>);</span><br><span class="line">add_group-&gt;<span class="built_in">add_flag</span>(<span class="string">&quot;-recursive&quot;</span>, recursive_flag, <span class="string">&quot;Process recursively (flag, no value needed)&quot;</span>);</span><br></pre></td></tr></table></figure></li>
+</ol>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/12/23/rdma/InfiniBand_Send_Recv%E4%B8%8ERead_Write%E7%9A%84%E5%8C%BA%E5%88%AB/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -211,10 +474,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2025-12-23 16:32:46 / Modified: 11:34:45" itemprop="dateCreated datePublished" datetime="2025-12-23T16:32:46+00:00">2025-12-23</time>
+              <time title="Created: 2025-12-23 16:32:46" itemprop="dateCreated datePublished" datetime="2025-12-23T16:32:46+00:00">2025-12-23</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-01-05 13:20:31" itemprop="dateModified" datetime="2026-01-05T13:20:31+00:00">2026-01-05</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -1026,10 +1295,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2025-12-23 15:36:17 / Modified: 11:34:45" itemprop="dateCreated datePublished" datetime="2025-12-23T15:36:17+00:00">2025-12-23</time>
+              <time title="Created: 2025-12-23 15:36:17" itemprop="dateCreated datePublished" datetime="2025-12-23T15:36:17+00:00">2025-12-23</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-01-05 13:20:31" itemprop="dateModified" datetime="2026-01-05T13:20:31+00:00">2026-01-05</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -1080,6 +1355,7 @@
 <li>L_Key（用于验证访问权限）</li>
 </ul>
 <p>一个 WR 可以包含多个 SGE，实现分散&#x2F;聚集 I&#x2F;O。</p>
+<p>注: SGE 专门用于描述本地散布的缓冲区, 即散布读写(Scatter read&#x2F;write), 类似于 Linux 的 <code>writev</code> &#x2F; <code>readv</code> 函数.</p>
 <h3 id="8-LID-Local-Identifier-本地标识符"><a href="#8-LID-Local-Identifier-本地标识符" class="headerlink" title="8. LID (Local Identifier) - 本地标识符"></a>8. LID (Local Identifier) - 本地标识符</h3><p>LID 是 InfiniBand 网络中每个端口的唯一标识符，用于路由数据包。</p>
 <h3 id="9-AH-Address-Handle-地址句柄"><a href="#9-AH-Address-Handle-地址句柄" class="headerlink" title="9. AH (Address Handle) - 地址句柄"></a>9. AH (Address Handle) - 地址句柄</h3><p>地址句柄用于 UD (Unreliable Datagram) 传输类型，包含目标地址信息。每个 AH 属于一个 PD，用于在 UD QP 发送数据时指定目标地址。AH 包含：</p>
 <ul>
@@ -1432,7 +1708,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+                <time title="Modified: 2026-01-05 13:20:31" itemprop="dateModified" datetime="2026-01-05T13:20:31+00:00">2026-01-05</time>
               </span>
 
           
@@ -2262,7 +2538,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+                <time title="Modified: 2026-01-05 13:20:31" itemprop="dateModified" datetime="2026-01-05T13:20:31+00:00">2026-01-05</time>
               </span>
 
           
@@ -2859,7 +3135,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+                <time title="Modified: 2026-01-05 13:20:31" itemprop="dateModified" datetime="2026-01-05T13:20:31+00:00">2026-01-05</time>
               </span>
 
           
@@ -3462,7 +3738,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+                <time title="Modified: 2026-01-05 13:20:31" itemprop="dateModified" datetime="2026-01-05T13:20:31+00:00">2026-01-05</time>
               </span>
 
           
@@ -3606,7 +3882,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+                <time title="Modified: 2026-01-05 13:20:31" itemprop="dateModified" datetime="2026-01-05T13:20:31+00:00">2026-01-05</time>
               </span>
 
           
@@ -3812,7 +4088,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+                <time title="Modified: 2026-01-05 13:20:31" itemprop="dateModified" datetime="2026-01-05T13:20:31+00:00">2026-01-05</time>
               </span>
 
           
@@ -3877,7 +4153,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
+                <time title="Modified: 2026-01-05 13:20:31" itemprop="dateModified" datetime="2026-01-05T13:20:31+00:00">2026-01-05</time>
               </span>
 
           
@@ -3892,115 +4168,6 @@
 
       
           
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/11/21/perf/core-bound/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/11/21/perf/core-bound/" class="post-title-link" itemprop="url">Core Bound</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-11-21 14:05:58" itemprop="dateCreated datePublished" datetime="2025-11-21T14:05:58+00:00">2025-11-21</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-12-23 11:34:45" itemprop="dateModified" datetime="2025-12-23T11:34:45+00:00">2025-12-23</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p>Core Bound 指 CPU 核心计算能力受限。包括两种：</p>
-<ol>
-<li>硬件的计算资源不足（吞吐量受限）</li>
-</ol>
-<ul>
-<li>port 冲突：例如 Intel Skylake 架构上，除法和平方根运算都会被分配到 port 0 上，如果大量的类似耗时操<br>作排队，那么就会体现为硬件算力的限制。</li>
-</ul>
-<p><strong>Port 指的是 CPU 内部的 执行端口（execution ports）。</strong></p>
-<blockquote>
-<p>现代 CPU（尤其是 Intel、AMD 的 x86-64 架构）采用 超标量、乱序执行，有多个功能单元可以并行执行不同<br>类型的指令。</p>
-<p>每个功能单元挂在一个 端口 (port) 上，负责特定类型的操作，比如：</p>
-<ul>
-<li>整数运算端口（加减、逻辑运算）</li>
-<li>浮点运算端口（乘法、除法、加法）</li>
-<li>加载端口（从内存读取数据）</li>
-<li>存储端口（写数据到内存）</li>
-</ul>
-<p>CPU 的调度器会把指令分配到合适的端口执行。</p>
-<p>如果某类端口资源不足，就会出现 port bound（端口受限），性能瓶颈来自于某个端口的拥塞。</p>
-<p>👉 举例： Intel Skylake 架构有 8 个端口：</p>
-<ul>
-<li>Port 0&#x2F;1：整数和浮点运算</li>
-<li>Port 2&#x2F;3：加载（Load）</li>
-<li>Port 4：存储地址计算</li>
-<li>Port 5：存储数据</li>
-<li>Port 6：分支预测</li>
-<li>Port 7：整数运算</li>
-</ul>
-</blockquote>
-<ol start="2">
-<li>指令间的依赖（增加延迟）</li>
-</ol>
-<p>例如链表的遍历，CPU 无法对其并行。</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (n) &#123;</span><br><span class="line">    n = n-&gt;next;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="优化方法"><a href="#优化方法" class="headerlink" title="优化方法"></a>优化方法</h2><p>第 1 种计算能力受限的问题，最好的办法是升级 CPU，换成具有更多除数的型号，或者将计算任务卸载到加速器<br>上。</p>
-<p>第 2 种数据依赖链的问题，可能需要重写算法。下面介绍一些有名的优化方法：</p>
-<ol>
-<li>向量化</li>
-<li>函数 inline 化</li>
-<li>循环转换</li>
-<li>编译器内建函数</li>
-<li>其他</li>
-</ol>
-<p>目的是减少执行的指令或用更好的汇编指令替代。</p>
-
       
     </div>
 
@@ -4086,7 +4253,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-count">120</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -4147,7 +4314,7 @@
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2025</span>
+  <span itemprop="copyrightYear">2026</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
