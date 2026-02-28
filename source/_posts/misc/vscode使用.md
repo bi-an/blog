@@ -148,3 +148,18 @@ cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
 就会在构建目录中生成该文件
 
 Bear 工具：适用于非 CMake 项目（如 Makefile），通过拦截编译命令生成该文件
+
+
+## 标签页高亮
+
+Setting -> 搜索 "workbench.colorCustomizations" --> "Edit in setting.json"
+
+写入以下内容：
+
+```json
+"workbench.colorCustomizations": {
+    "tab.activeBorderTop": "#6a6ce4",
+    "tab.activeBackground": "#200b6c",
+    "tab.activeBorder": "#6a6ce4",
+},
+```
