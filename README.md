@@ -130,16 +130,3 @@ npm uninstall <package-name>
   以通常不需要显式指定。
 - `--save-dev`: 如果该插件是作为开发依赖（ devDependencies）安装的，卸载时可以使用此选项。
 - `-g`: 如果该插件是全局安装的，可以加上 -g 选项来卸载全局插件。
-
-## 目录
-
-```
-notes/
-  ├── debugging/        # 堆栈、符号表、gdb、core dump
-  ├── performance/      # perf、flamegraph、优化技巧
-  ├── concurrency/      # 并发、多线程、atomic
-  ├── cpp/              # C++ 语言技巧
-  ├── tools/            # addr2line、objdump、cmake、clang-format
-  ├── system/           # Linux 系统编程
-  └── misc/             # 临时内容
-```
