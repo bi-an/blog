@@ -21,6 +21,7 @@ cd themes/next && git submodule init && git submodule update
 Priority:
 
 `hexo` reads the `theme: <theme_name>` key-value from `_config.yml`, then
+
 - `themes/<theme_name>/_config.yml` overwrites `_config.yml`.
 - `_config.<theme_name>.yml` overwrites `themes/<theme_name>/_config.yml`.
 
@@ -71,20 +72,19 @@ npm install <package-name>
 
 局部安装的包只对当前项目可用，不会在全局命令行中可用。
 
+2. 全局安装路径当你使用 -g 选项全局安装插件时，插件会安装到全局 node_modules 文件夹中。全局路径的具
+   体位置取决于你的系统配置。
 
-2. 全局安装路径
-当你使用 -g 选项全局安装插件时，插件会安装到全局 node_modules 文件夹中。全局路径的具体位置取决于你的系统配置。
-
-查看全局安装路径：
-你可以通过以下命令查看 npm 全局安装路径：
+查看全局安装路径：你可以通过以下命令查看 npm 全局安装路径：
 
 ```bash
 npm root -g
 ```
 
 常见全局安装路径：
-* Linux/macOS： `/usr/local/lib/node_modules/`
-* Windows： `C:\Users\<username>\AppData\Roaming\npm\node_modules`
+
+- Linux/macOS： `/usr/local/lib/node_modules/`
+- Windows： `C:\Users\<username>\AppData\Roaming\npm\node_modules`
 
 如果你运行全局安装命令：
 
@@ -102,10 +102,10 @@ npm install <package-name>
 
 选项：
 
-* `--save`: 将插件添加到 package.json 文件的 dependencies 中（注意： npm v5 及以后默认会保存到 package.json，
-所以通常不需要显式指定。
-* `--save-dev`: 如果希望插件作为开发依赖（ devDependencies）安装。
-* `-g`: 全局安装插件。
+- `--save`: 将插件添加到 package.json 文件的 dependencies 中（注意： npm v5 及以后默认会保存到
+  package.json，所以通常不需要显式指定。
+- `--save-dev`: 如果希望插件作为开发依赖（ devDependencies）安装。
+- `-g`: 全局安装插件。
 
 安装全部依赖：
 
@@ -115,8 +115,8 @@ npm install <package-name>
 npm install
 ```
 
-安装完成后，当前目录下会生成或修改 package.json 、 package-lock.json 和 node_modules 文件夹，
-其中记录和安装了相关插件。
+安装完成后，当前目录下会生成或修改 package.json 、 package-lock.json 和 node_modules 文件夹，其中记
+录和安装了相关插件。
 
 ### 卸载
 
@@ -126,7 +126,20 @@ npm uninstall <package-name>
 
 常用选项：
 
-* `--save`: 从 package.json 文件中的 dependencies 部分移除该包（ npm v5 及以后已经默认包含此行为，
-所以通常不需要显式指定。
-* `--save-dev`: 如果该插件是作为开发依赖（ devDependencies）安装的，卸载时可以使用此选项。
-* `-g`: 如果该插件是全局安装的，可以加上 -g 选项来卸载全局插件。
+- `--save`: 从 package.json 文件中的 dependencies 部分移除该包（ npm v5 及以后已经默认包含此行为，所
+  以通常不需要显式指定。
+- `--save-dev`: 如果该插件是作为开发依赖（ devDependencies）安装的，卸载时可以使用此选项。
+- `-g`: 如果该插件是全局安装的，可以加上 -g 选项来卸载全局插件。
+
+## 目录
+
+```
+notes/
+  ├── debugging/        # 堆栈、符号表、gdb、core dump
+  ├── performance/      # perf、flamegraph、优化技巧
+  ├── concurrency/      # 并发、多线程、atomic
+  ├── cpp/              # C++ 语言技巧
+  ├── tools/            # addr2line、objdump、cmake、clang-format
+  ├── system/           # Linux 系统编程
+  └── misc/             # 临时内容
+```
