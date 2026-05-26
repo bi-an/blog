@@ -188,6 +188,256 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/04/22/%E4%BB%8E%E5%85%B1%E4%BA%AB%E5%BA%93%E5%81%8F%E7%A7%BB%E5%8F%8D%E6%9F%A5%E7%AC%A6%E5%8F%B7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2026/04/22/%E4%BB%8E%E5%85%B1%E4%BA%AB%E5%BA%93%E5%81%8F%E7%A7%BB%E5%8F%8D%E6%9F%A5%E7%AC%A6%E5%8F%B7/" class="post-title-link" itemprop="url">从共享库偏移反查符号</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2026-04-22 14:20:41" itemprop="dateCreated datePublished" datetime="2026-04-22T14:20:41+00:00">2026-04-22</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-05-26 03:53:31" itemprop="dateModified" datetime="2026-05-26T03:53:31+00:00">2026-05-26</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/04/22/debugging/%E4%BB%8E%E5%85%B1%E4%BA%AB%E5%BA%93%E5%81%8F%E7%A7%BB%E5%8F%8D%E6%9F%A5%E7%AC%A6%E5%8F%B7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2026/04/22/debugging/%E4%BB%8E%E5%85%B1%E4%BA%AB%E5%BA%93%E5%81%8F%E7%A7%BB%E5%8F%8D%E6%9F%A5%E7%AC%A6%E5%8F%B7/" class="post-title-link" itemprop="url">从共享库偏移反查符号（Linux / ELF）</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2026-04-22 14:20:41" itemprop="dateCreated datePublished" datetime="2026-04-22T14:20:41+00:00">2026-04-22</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-05-26 03:53:31" itemprop="dateModified" datetime="2026-05-26T03:53:31+00:00">2026-05-26</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p><strong>变量约定：</strong></p>
+<ul>
+<li><code>LIB</code>：要解析的 <code>*.so</code> 绝对或相对路径（请换成你的文件）。</li>
+<li><code>OFF</code>：栈里 <code>+0x...</code> 的十六进制偏移；下文示例中 **<code>OFF = 0x8fa860</code>**（与 <code>addr2line</code> 所用一致）。</li>
+<li><code>PC</code>：栈里 <code>[0x...]</code> 的<strong>进程内</strong>虚拟地址；示例 **<code>PC = 0x15182684b860</code>**（会随每次运行&#x2F;ASLR 变化<br>，仅为与下组 <code>BASE</code> 配套的一例）。</li>
+<li><code>BASE</code>：与上式满足 <strong><code>PC - BASE = OFF</code></strong> 的映射基址；示例 **<code>BASE = 0x151825f51000</code>**。具体取<br><code>maps</code> 中哪一段以实际进程为准。</li>
+</ul>
+<hr>
+<h2 id="场景"><a href="#场景" class="headerlink" title="场景"></a>场景</h2><p>栈回溯里常见这种形式：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/path/to/libapp.so(+0x8fa860)[0x15182684b860]</span><br></pre></td></tr></table></figure>
+
+<p>含义：</p>
+<ul>
+<li>**<code>libapp.so</code>**：出问题的共享库（例名，请替换为实际名）。</li>
+<li><strong><code>+0x8fa860</code><strong>：相对该次映射</strong>基址</strong>的偏移（**示例中固定为上述 <code>OFF</code>**）。</li>
+<li><strong><code>[0x15182684b860]</code><strong>：当时的绝对虚拟地址（</strong>示例</strong>；单独用时需配合 <code>maps</code> 中的 <code>BASE</code>）。</li>
+</ul>
+<p>调试时通常先用 <strong><code>+0x...</code> 偏移</strong> 对 <strong>磁盘上的 <code>.so</code> 文件</strong> 做解析。</p>
+<hr>
+<h2 id="首选：addr2line"><a href="#首选：addr2line" class="headerlink" title="首选：addr2line"></a>首选：<code>addr2line</code></h2><p>在带有 <strong>debug info</strong>（<code>-g</code>，且未 strip 掉调试信息）的 <code>.so</code> 上：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">addr2line -e /path/to/libapp.so -f -C 0x8fa860</span><br></pre></td></tr></table></figure>
+
+<p><strong>形态示例（你本机实跑时会是你的函数与路径）：</strong></p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">myapp::CommandHandler(int, char const**, long, char const*)</span><br><span class="line">/path/to/src/cli/handler.cpp:42</span><br></pre></td></tr></table></figure>
+
+<p><code>addr2line</code> 可能把路径记成<strong>编译时目录</strong>（如 <code>out/../handler.cpp</code>），以 DWARF 记录为准；若行号对不上<br>，多半是<strong>二进制与当前源码</strong>不是同一版构建。</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>-e FILE</code></td>
+<td>指定 ELF（<code>.so</code> 或可执行文件）</td>
+</tr>
+<tr>
+<td><code>-f</code></td>
+<td>同时打印函数名</td>
+</tr>
+<tr>
+<td><code>-C</code></td>
+<td>Demangle C++ 符号</td>
+</tr>
+</tbody></table>
+<h3 id="从「PC-映射基址」反算并调用（注意-64-位运算）"><a href="#从「PC-映射基址」反算并调用（注意-64-位运算）" class="headerlink" title="从「PC + 映射基址」反算并调用（注意 64 位运算）"></a>从「PC + 映射基址」反算并调用（注意 64 位运算）</h3><p><code>addr2line</code> 需要的是<strong>相对</strong>该 ELF <strong>文件布局</strong>的偏移，通常就是栈上 <code>+0x...</code>，此处即<br>**<code>0x8fa860</code>**。若你只有 <code>PC</code> 和 <code>BASE</code>，应得到 <code>OFF = PC - BASE</code>（在 64 位下计算）。</p>
+<p><strong>Bash 的 <code>$(( ... ))</code> 对很大的十六进制字面量会溢出</strong>；大地址用 Python 等做减法后再喂给<br><code>addr2line</code>。</p>
+<p><strong>脚本形态（数值与上节 <code>PC</code> &#x2F; <code>OFF</code> &#x2F; <code>BASE</code> 一致）：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">python3 &lt;&lt;<span class="string">&#x27;PY&#x27;</span></span><br><span class="line">import subprocess</span><br><span class="line">so = <span class="string">&quot;/path/to/libapp.so&quot;</span>  <span class="comment"># 换成你的 LIB</span></span><br><span class="line">pc = 0x15182684b860</span><br><span class="line">off = 0x8fa860             <span class="comment"># 与栈中 +0x8fa860 相同</span></span><br><span class="line">base = pc - off</span><br><span class="line"><span class="built_in">print</span>(f<span class="string">&quot;BASE = 0x&#123;pc:x&#125; - 0x&#123;off:x&#125; = 0x&#123;base:x&#125;&quot;</span>)</span><br><span class="line">subprocess.run([<span class="string">&quot;addr2line&quot;</span>, <span class="string">&quot;-e&quot;</span>, so, <span class="string">&quot;-f&quot;</span>, <span class="string">&quot;-C&quot;</span>, hex(pc - base)], check=False)</span><br><span class="line">PY</span><br></pre></td></tr></table></figure>
+
+<p><strong>形态示例（<code>BASE</code> 行与上式为算术一致的一例；函数名&#x2F;路径为占位）：</strong></p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">BASE = 0x15182684b860 - 0x8fa860 = 0x151825f51000</span><br><span class="line">myapp::CommandHandler(int, char const**, long, char const*)</span><br><span class="line">/path/to/src/cli/handler.cpp:42</span><br></pre></td></tr></table></figure>
+
+<p>当 <code>pc - base</code> 与栈中 <code>+0x8fa860</code> 一致时，与直接 <code>addr2line -e ... -C 0x8fa860</code> 等价。</p>
+<hr>
+<h2 id="补充：nm-objdump（看落在哪个符号里）"><a href="#补充：nm-objdump（看落在哪个符号里）" class="headerlink" title="补充：nm &#x2F; objdump（看落在哪个符号里）"></a>补充：<code>nm</code> &#x2F; <code>objdump</code>（看落在哪个符号里）</h2><p>无行号信息或想确认符号边界时，可按地址排序查看。全量往往很长，可只取前几行，或用 <code>grep</code> 搜<strong>已知</strong>子<br>串（来自 demangle 后的名字片段）。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nm -n --defined-only /path/to/libapp.so | <span class="built_in">head</span> -5</span><br></pre></td></tr></table></figure>
+
+<p><strong>形态示例：</strong></p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">0000000000000000 n _GLOBAL_OFFSET_TABLE_</span><br><span class="line">000000000000a000 t _ZN3App6WidgetC1Ev</span><br><span class="line">000000000000a030 t _ZN3App6WidgetD1Ev</span><br><span class="line">000000000000a060 t _ZN3App4InitEi</span><br><span class="line">000000000000a090 t _ZN3App3RunEv</span><br></pre></td></tr></table></figure>
+
+<p>粗判：在排序列表里找 <strong>地址不大于目标 <code>0x8fa860</code> 的最后一个</strong>对应函数符号。精确行号仍以 <code>addr2line</code><br>为准。</p>
+<p>符号条数可能很大，例如某次对<strong>同一类大 <code>.so</code></strong> 的统计（仅作数量级参考）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nm -n --defined-only /path/to/libapp.so | <span class="built_in">wc</span> -l</span><br></pre></td></tr></table></figure>
+
+<p><strong>形态示例：</strong></p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">86817</span><br></pre></td></tr></table></figure>
+
+<p>用 <code>objdump</code> 在符号表里按<strong>短关键字</strong>辅助定位；下面地址与<strong>偏移 <code>0x8fa860</code></strong> 配套（符号起点略小于该<br>PC，落在函数体内）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">objdump -t /path/to/libapp.so | grep <span class="string">&#x27;CommandHandler&#x27;</span> | <span class="built_in">head</span> -3</span><br></pre></td></tr></table></figure>
+
+<p><strong>形态示例：</strong></p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">00000000008fa71a l     F .text	0000000000000abc              _ZN5myapp15CommandHandlerEiPPKclS1_</span><br></pre></td></tr></table></figure>
+
+<p>行首 <code>0x8fa71a</code> 为该符号的<strong>起点</strong>，大小 <code>0xabc</code>；<code>0x8fa860</code> 落在区间 <code>[0x8fa71a, 0x8fa71a+0xabc)</code><br>内。精确行号仍以 <code>addr2line</code> 为准。</p>
+<h3 id="readelf：查看-LOAD-段"><a href="#readelf：查看-LOAD-段" class="headerlink" title="readelf：查看 LOAD 段"></a><code>readelf</code>：查看 LOAD 段</h3><p>下面来自与上述 <strong><code>0x8fa860</code></strong> 同一 ELF 样例的 <strong><code>readelf -l | head -20</code><strong>（段尺寸因库而异，此组与示<br>例偏移</strong>同时出现</strong>时便于对照；若你换库则整段以本机为准）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">readelf -l /path/to/libapp.so | <span class="built_in">head</span> -20</span><br></pre></td></tr></table></figure>
+
+<p><strong>配套示例输出：</strong></p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">Elf file type is DYN (Shared object file)</span><br><span class="line">Entry point 0x0</span><br><span class="line">There are 9 program headers, starting at offset 64</span><br><span class="line"></span><br><span class="line">Program Headers:</span><br><span class="line">  Type           Offset             VirtAddr           PhysAddr</span><br><span class="line">                 FileSiz            MemSiz              Flags  Align</span><br><span class="line">  LOAD           0x0000000000000000 0x0000000000000000 0x0000000000000000</span><br><span class="line">                 0x00000000007aa408 0x00000000007aa408  R      0x1000</span><br><span class="line">  LOAD           0x00000000007ab000 0x00000000007ab000 0x00000000007ab000</span><br><span class="line">                 0x00000000007bf251 0x00000000007bf251  R E    0x1000</span><br><span class="line">  LOAD           0x0000000000f6b000 0x0000000000f6b000 0x0000000000f6b000</span><br><span class="line">                 0x0000000000317c05 0x0000000000317c05  R      0x1000</span><br><span class="line">  LOAD           0x0000000001282e20 0x0000000001283e20 0x0000000001283e20</span><br><span class="line">                 0x00000000000c67c8 0x00000000000e2b68  RW     0x1000</span><br><span class="line">  DYNAMIC        0x00000000012ec758 0x00000000012ed758 0x00000000012ed758</span><br><span class="line">                 0x0000000000000530 0x0000000000000530  RW     0x8</span><br><span class="line">  NOTE           0x0000000000000238 0x0000000000000238 0x0000000000000238</span><br><span class="line">                 0x0000000000000024 0x0000000000000024  R      0x4</span><br></pre></td></tr></table></figure>
+
+<p>不同 <code>readelf</code> 版本与不同 ELF 细节可能略有差异，以<strong>本机实跑</strong>为准。</p>
+<hr>
+<h2 id="C-符号-demangle"><a href="#C-符号-demangle" class="headerlink" title="C++ 符号 demangle"></a>C++ 符号 demangle</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;_ZN5myapp15CommandHandlerEiPPKclS1_&#x27;</span> | c++filt</span><br></pre></td></tr></table></figure>
+
+<p><strong>形态示例：</strong></p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">myapp::CommandHandler(int, char const**, long, char const*)</span><br></pre></td></tr></table></figure>
+
+<p>（上式 mangled 名须换成你从 <code>nm</code>&#x2F;<code>objdump</code>&#x2F;栈上看到的真实字符串。）</p>
+<hr>
+<h2 id="文件是符号链时"><a href="#文件是符号链时" class="headerlink" title="文件是符号链时"></a>文件是符号链时</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">file /path/to/libapp.so</span><br></pre></td></tr></table></figure>
+
+<p><strong>形态示例：</strong></p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/path/to/libapp.so: symbolic link to ../../build/obj/libapp.so</span><br></pre></td></tr></table></figure>
+
+<p><code>addr2line</code> 应针对<strong>实际打开的那份 ELF</strong>（解析符号链后的目标或你确认参与调试的那份）；若安装目录下链<br>到构建树，以 inode 与更新时间为准，避免对旧副本解析。</p>
+<hr>
+<h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2><ol>
+<li><p><strong><code>??</code> 或明显不对</strong></p>
+<ul>
+<li>二进制被 strip、或 debug 在单独文件且工具未找到 → 需带 debug 的构建物或 <code>DEBUGINFOD</code> 等。</li>
+</ul>
+</li>
+<li><p><strong>行号与当前仓库不一致</strong></p>
+<ul>
+<li>对应栈的二进制与当前源码<strong>版本&#x2F;配置</strong>不同 → 以<strong>构建该库</strong>时的源码为准。</li>
+</ul>
+</li>
+<li><p><strong>大地址用 Bash 做 <code>PC - BASE</code></strong></p>
+<ul>
+<li>易 32 位溢出；用 <code>python3</code> 或能表示 64 位无符号&#x2F;有符号整数的工具计算后再调 <code>addr2line</code>。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="最小复现（变量-一次-addr2line）"><a href="#最小复现（变量-一次-addr2line）" class="headerlink" title="最小复现（变量 + 一次 addr2line）"></a>最小复现（变量 + 一次 <code>addr2line</code>）</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">SO=/path/to/libapp.so</span><br><span class="line">OFF=0x8fa860</span><br><span class="line"></span><br><span class="line">addr2line -e <span class="string">&quot;<span class="variable">$SO</span>&quot;</span> -f -C <span class="string">&quot;<span class="variable">$OFF</span>&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>形态示例：</strong></p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">myapp::CommandHandler(int, char const**, long, char const*)</span><br><span class="line">/path/to/src/cli/handler.cpp:42</span><br></pre></td></tr></table></figure>
+
+<p>将 <code>SO</code> 换成你的库路径；<strong>偏移</strong>若与栈上一致，可继续用 <strong><code>0x8fa860</code></strong> 作对照。函数名、源路径与行号以<br>你本机 <code>addr2line</code> 输出为准（受调试信息与构建一致性约束）。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/02/12/english/IPA/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -211,10 +461,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2026-02-12 23:47:36 / Modified: 15:49:17" itemprop="dateCreated datePublished" datetime="2026-02-12T23:47:36+00:00">2026-02-12</time>
+              <time title="Created: 2026-02-12 23:47:36" itemprop="dateCreated datePublished" datetime="2026-02-12T23:47:36+00:00">2026-02-12</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-05-26 03:53:31" itemprop="dateModified" datetime="2026-05-26T03:53:31+00:00">2026-05-26</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -516,7 +772,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-02-12 15:49:17" itemprop="dateModified" datetime="2026-02-12T15:49:17+00:00">2026-02-12</time>
+                <time title="Modified: 2026-05-26 03:53:31" itemprop="dateModified" datetime="2026-05-26T03:53:31+00:00">2026-05-26</time>
               </span>
 
           
@@ -779,7 +1035,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-02-12 15:49:17" itemprop="dateModified" datetime="2026-02-12T15:49:17+00:00">2026-02-12</time>
+                <time title="Modified: 2026-05-26 03:53:31" itemprop="dateModified" datetime="2026-05-26T03:53:31+00:00">2026-05-26</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1600,7 +1856,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-02-12 15:49:17" itemprop="dateModified" datetime="2026-02-12T15:49:17+00:00">2026-02-12</time>
+                <time title="Modified: 2026-05-26 03:53:31" itemprop="dateModified" datetime="2026-05-26T03:53:31+00:00">2026-05-26</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2005,7 +2261,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-02-12 15:49:17" itemprop="dateModified" datetime="2026-02-12T15:49:17+00:00">2026-02-12</time>
+                <time title="Modified: 2026-05-26 03:53:31" itemprop="dateModified" datetime="2026-05-26T03:53:31+00:00">2026-05-26</time>
               </span>
 
           
@@ -2835,7 +3091,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-02-12 15:49:17" itemprop="dateModified" datetime="2026-02-12T15:49:17+00:00">2026-02-12</time>
+                <time title="Modified: 2026-05-26 03:53:31" itemprop="dateModified" datetime="2026-05-26T03:53:31+00:00">2026-05-26</time>
               </span>
 
           
@@ -3432,7 +3688,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-02-12 15:49:17" itemprop="dateModified" datetime="2026-02-12T15:49:17+00:00">2026-02-12</time>
+                <time title="Modified: 2026-05-26 03:53:31" itemprop="dateModified" datetime="2026-05-26T03:53:31+00:00">2026-05-26</time>
               </span>
 
           
@@ -4035,7 +4291,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-02-12 15:49:17" itemprop="dateModified" datetime="2026-02-12T15:49:17+00:00">2026-02-12</time>
+                <time title="Modified: 2026-05-26 03:53:31" itemprop="dateModified" datetime="2026-05-26T03:53:31+00:00">2026-05-26</time>
               </span>
 
           
@@ -4144,277 +4400,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/11/26/perf/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/11/26/perf/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7/" class="post-title-link" itemprop="url">性能分析工具</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-11-26 10:12:33" itemprop="dateCreated datePublished" datetime="2025-11-26T10:12:33+00:00">2025-11-26</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-02-12 15:49:17" itemprop="dateModified" datetime="2026-02-12T15:49:17+00:00">2026-02-12</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="性能分析工具"><a href="#性能分析工具" class="headerlink" title="性能分析工具"></a>性能分析工具</h2><table>
-<thead>
-<tr>
-<th>工具</th>
-<th align="center">类型&#x2F;定位</th>
-<th align="center">attach 支持</th>
-<th align="center">分析范围</th>
-<th align="center">特点</th>
-<th align="center">与 perf 的关系</th>
-<th align="center">开源&#x2F;商业授权</th>
-<th align="center">适用人群</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Oracle Performance Analyzer (PA)</td>
-<td align="center">企业级性能分析器，Oracle Developer Studio 套件</td>
-<td align="center">✅</td>
-<td align="center">用户态程序 (C&#x2F;C++&#x2F;Java&#x2F;Fortran&#x2F;Scala)，并行应用</td>
-<td align="center">GUI 丰富，低开销采样，函数&#x2F;源代码&#x2F;指令级分析</td>
-<td align="center">独立工具</td>
-<td align="center">商业软件 (Oracle Developer Studio)</td>
-<td align="center">企业&#x2F;科研环境下的应用开发者</td>
-</tr>
-<tr>
-<td>perf</td>
-<td align="center">Linux 内核自带性能分析框架</td>
-<td align="center">✅</td>
-<td align="center">用户态 + 内核态 + 硬件事件</td>
-<td align="center">功能全面，支持调用链、硬件计数器，生态丰富 (eBPF, flamegraph)</td>
-<td align="center">基础框架</td>
-<td align="center">开源 (GPL，Linux 内核自带)</td>
-<td align="center">系统工程师，底层性能调优</td>
-</tr>
-<tr>
-<td>gprofng</td>
-<td align="center">GNU 新一代应用性能分析器</td>
-<td align="center">✅</td>
-<td align="center">用户态程序 (C&#x2F;C++&#x2F;Java&#x2F;Scala)，跨平台</td>
-<td align="center">基于实验目录，支持 GUI，跨语言，继承 Oracle PA 思路</td>
-<td align="center">独立工具</td>
-<td align="center">开源 (GNU 工具链)</td>
-<td align="center">应用开发者，跨平台性能优化</td>
-</tr>
-<tr>
-<td>gprof</td>
-<td align="center">经典 GNU 性能分析器 (1980s)</td>
-<td align="center">❌</td>
-<td align="center">用户态程序 (C&#x2F;C++)</td>
-<td align="center">需编译时 -pg，生成 gmon.out，功能有限，不支持多线程&#x2F;attach</td>
-<td align="center">独立工具</td>
-<td align="center">开源 (GNU 工具链)</td>
-<td align="center">学术&#x2F;教学场景，简单函数级分析</td>
-</tr>
-<tr>
-<td>Intel PMU Tools</td>
-<td align="center">Intel 提供的硬件性能计数器工具集</td>
-<td align="center">✅</td>
-<td align="center">硬件事件 (CPU pipeline、cache、branch、memory)</td>
-<td align="center">基于 PMU，提供 top-down 分析，解释微架构瓶颈</td>
-<td align="center">依赖 perf 收集数据，属于 perf 的增强解释层</td>
-<td align="center">开源 (MIT&#x2F;Apache 许可，Intel GitHub 提供)</td>
-<td align="center">系统&#x2F;性能工程师，硬件级调优</td>
-</tr>
-<tr>
-<td>Intel Advisor</td>
-<td align="center">高级性能优化工具 (Intel oneAPI 套件)</td>
-<td align="center">✅</td>
-<td align="center">用户态程序，尤其是 HPC 应用</td>
-<td align="center">提供矢量化分析、内存访问优化、并行化建议，GUI 支持</td>
-<td align="center">独立工具</td>
-<td align="center">商业软件 (Intel oneAPI 套件，部分免费版)</td>
-<td align="center">HPC 开发者，科学计算优化</td>
-</tr>
-<tr>
-<td>Intel VTune Profiler</td>
-<td align="center">深度性能分析器</td>
-<td align="center">✅</td>
-<td align="center">CPU&#x2F;GPU&#x2F;FPGA、内存、线程、I&#x2F;O、微架构</td>
-<td align="center">微架构级剖析，支持 cache、pipeline、分支预测，功能全面</td>
-<td align="center">独立工具，但可结合 perf 数据</td>
-<td align="center">商业软件 (Intel oneAPI 套件，提供免费社区版)</td>
-<td align="center">系统&#x2F;性能工程师，硬件与应用优化</td>
-</tr>
-<tr>
-<td>Linaro MAP (Arm Forge MAP)</td>
-<td align="center">HPC 并行应用性能分析器</td>
-<td align="center">✅</td>
-<td align="center">MPI、OpenMP、UPC 等大规模并行应用</td>
-<td align="center">低开销采样，跨节点整体分析，源代码行级耗时展示，GUI 可视化</td>
-<td align="center">独立工具</td>
-<td align="center">商业软件 (Arm Forge 套件，需许可证)</td>
-<td align="center">HPC 开发者，超级计算机环境</td>
-</tr>
-</tbody></table>
-<p><strong>差异总结</strong></p>
-<ul>
-<li>Oracle PA &#x2F; gprofng：应用层性能分析，强调 GUI 和跨语言支持。</li>
-<li>perf：系统级通用工具，是底层框架。</li>
-<li>gprof：老工具，功能有限，不支持 attach。</li>
-<li>Intel PMU Tools：基于 perf，提供 Intel CPU 微架构解释，是 perf 的增强解释层。</li>
-<li>Intel Advisor：智能优化建议工具，适合 HPC 和科学计算。</li>
-<li>Intel VTune Profiler：深度剖析工具，能揭示硬件微架构瓶颈，适合单节点和复杂应用。</li>
-<li>Linaro MAP：专为 HPC 并行应用设计，低开销，跨节点整体性能分析。</li>
-</ul>
-<p><strong>结论</strong></p>
-<ul>
-<li>应用层性能分析：Oracle PA、gprofng</li>
-<li>系统&#x2F;内核级调优：perf</li>
-<li>硬件级微架构分析：Intel PMU Tools、Intel VTune Profiler</li>
-<li>智能优化建议 (HPC)：Intel Advisor</li>
-<li>大规模并行应用分析 (HPC)：Linaro MAP</li>
-</ul>
-<p>👉 可以把它们看作一个层次结构：</p>
-<ul>
-<li>gprof → gprofng&#x2F;Oracle PA → perf → Intel PMU Tools&#x2F;VTune → Advisor&#x2F;MAP</li>
-<li>逐步从函数级分析 → 应用性能 → 系统级 → 硬件级 → HPC 并行整体优化。</li>
-</ul>
-<h3 id="Performance-Analyzer"><a href="#Performance-Analyzer" class="headerlink" title="Performance Analyzer"></a>Performance Analyzer</h3><p>Oracle Developer Studio 提供了多种工具：Performance Analyzer、Thread Analyzer。</p>
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afagg.html#OSSPAgrkam">Performance Analyzer 官方文档</a></p>
-</blockquote>
-<h4 id="收集数据"><a href="#收集数据" class="headerlink" title="收集数据"></a>收集数据</h4><p>使用 <code>collect</code> 命令收集数据<br>（<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afadn.html#scrolltoc">官方文档</a>）。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">collect collect-options program program-arguments</span><br></pre></td></tr></table></figure>
-
-<h4 id="开始性能分析"><a href="#开始性能分析" class="headerlink" title="开始性能分析"></a>开始性能分析</h4><p>使用 <code>analyzer</code> 命令进行性能分析<br>（<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afafs.html#scrolltoc">官方文档</a>）。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">analyzer [control-options] [experiment | experiment-list]</span><br></pre></td></tr></table></figure>
-
-<p>例如：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">analyzer -c test.1.er test.4.er</span><br></pre></td></tr></table></figure>
-
-<h3 id="Thread-Analyzer"><a href="#Thread-Analyzer" class="headerlink" title="Thread Analyzer"></a>Thread Analyzer</h3><blockquote>
-<p><a target="_blank" rel="noopener" href="https://www.oracle.com/application-development/technologies/developerstudio-features.html#thread-analyzer-tab">Thread Analyzer 官方文档</a></p>
-</blockquote>
-<h2 id="计时"><a href="#计时" class="headerlink" title="计时"></a>计时</h2><h3 id="计时工具-time"><a href="#计时工具-time" class="headerlink" title="计时工具 time"></a>计时工具 <code>time</code></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ /usr/bin/time -p <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
-
-<p>Or,</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ time <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
-
-<p>其中（参<br>考<a target="_blank" rel="noopener" href="https://ostechnix.com/how-to-find-the-execution-time-of-a-command-or-process-in-linux/">链接</a>），</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">type</span> -a time</span><br><span class="line">time is a shell keyword</span><br><span class="line">time is /usr/bin/time</span><br></pre></td></tr></table></figure>
-
-<h3 id="软件和硬件定时器"><a href="#软件和硬件定时器" class="headerlink" title="软件和硬件定时器"></a>软件和硬件定时器</h3><p><a target="_blank" rel="noopener" href="https://weedge.github.io/perf-book-cn/zh/chapters/2-Measuring-Performance/2-5_SW_and_HW_Timers_cn.html">https://weedge.github.io/perf-book-cn/zh/chapters/2-Measuring-Performance/2-5_SW_and_HW_Timers_cn.html</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/11/21/perf/Bad-Speculation/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/11/21/perf/Bad-Speculation/" class="post-title-link" itemprop="url">Bad Speculation</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-11-21 15:29:24" itemprop="dateCreated datePublished" datetime="2025-11-21T15:29:24+00:00">2025-11-21</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-02-12 15:49:17" itemprop="dateModified" datetime="2026-02-12T15:49:17+00:00">2026-02-12</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p>Bad Speculation 指不好的预测，尤其是分支预测。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -4486,7 +4471,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">121</span>
+          <span class="site-state-item-count">123</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
