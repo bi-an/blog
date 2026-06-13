@@ -1,0 +1,136 @@
+---
+categories: cpp
+date: 2025-11-20 15:54:29
+tags:
+- cpp
+- optimize
+- performance
+title: 性能分析指标和概念
+---
+
+## CPU 硬件层次概念
+
+- Package → 整个处理器封装，包含一个或多个 die。
+- Socket (S) → 主板上的物理 CPU 插槽
+- Die (D) → 封装里的裸片（可能有多个 chiplet/die）
+- Core (C) → die 上的计算核心
+- Thread (T) → 核心里的硬件线程（SMT/超线程），即逻辑处理器
+
+假设一台双路服务器，每个 socket 上的 CPU 封装里有两个 die，每个 die 有 8 个核心：
+
+- `S0-D0-C0` → Socket 0 上 Die 0 的 Core 0
+- `S0-D1-C3` → Socket 0 上 Die 1 的 Core 3
+- `S1-D0-C7` → Socket 1 上 Die 0 的 Core 7
+
+如果开启超线程，还可能进一步细分为：
+
+- `S0-D0-C0-T0` → Socket 0, Die 0, Core 0, Thread 0
+- `S0-D0-C0-T1` → Socket 0, Die 0, Core 0, Thread 1
+
+可以用命令 `lscpu` 或 `cat /proc/cpuinfo` 来查看逻辑 CPU ID 与 Socket/Core/Thread 的对应关系。
+
+```bash
+$ lscpu
+...
+    Thread(s) per core:  2
+    Core(s) per socket:  4
+    Socket(s):           1
+...
+```
+
+```
+总逻辑 CPU 数量 = 1 × 4 × 2 = 8
+```
+
+nproc 输出的是 逻辑 CPU 数
+
+```bash
+$ nproc
+8
+```
+
+## CPU 微架构概念
+
+- Pipeline：指令执行的分阶段过程（取指、解码、执行、写回）。
+- Width：每周期最多能发射多少条 uops（如 4‑wide）。
+- Slot：每周期的发射机会，宽度决定 slot 数。
+- ROB (Reorder Buffer)：乱序执行的关键结构，保证指令按程序顺序退休。
+- Scheduler：调度器，决定哪些 uops 在某周期进入执行端口。
+- Execution Ports：后端的执行单元入口，比如整数 ALU、浮点 FPU、Load/Store。
+- Branch Predictor：预测分支走向，减少流水线停顿。
+
+## 存储与层次结构
+
+- Registers：CPU 内部的寄存器，最快的存储。
+- Cache：分层缓存（L1、L2、L3），用于减少访存延迟。
+- LLC (Last Level Cache)：最后一级缓存，通常是 L3，多个核心共享。
+- Memory Controller：负责和 DRAM 通信。
+- NUMA (Non-Uniform Memory Access)：多 socket 系统里，内存访问延迟因位置不同而不同。
+
+## 性能分析相关
+
+- IPC (Instructions Per Cycle)：每周期平均执行的指令数。
+- ILP (Instruction-Level Parallelism)：指令级并行度，程序能提供多少独立指令。
+- Topdown Metrics：Retiring、Bad Speculation、Frontend Bound、Backend Bound。
+- BE/Core vs BE/Mem：后端瓶颈是算力不足还是访存延迟。
+- CPI (Cycles Per Instruction)：每条指令平均耗费的周期数。
+
+## Top-Down Microarchitecture Analysis (TMA)
+
+这是 Intel 提出的一个 CPU 性能瓶颈分析框架。它的核心思想是：把 CPU 每个周期的 发射机会（slot） 分门
+别类，逐层细分，最终定位到性能瓶颈的根源。
+
+Topdown 是分层树状结构：
+
+- Level 1：Retiring / Bad Speculation / Frontend Bound / Backend Bound
+- Level 2：Backend Bound → BE/Core、BE/Mem
+- Level 3：BE/Mem → L1 Bound、L2 Bound、DRAM Bound
+
+1. Level 1: 顶层四大分类
+
+在每个周期的 slot 中，CPU 的工作被划分为四类：
+
+- Retiring
+  - 指令成功退休（完成执行并写回结果）。
+  - 这是“有用工作”，比例越高说明 CPU 利用率越好。
+- Bad Speculation
+  - 由于错误预测（如分支预测失败、错误路径执行）导致的浪费。
+  - 这些 slot 最终没有产生有效结果。
+- Frontend Bound (FE)
+  - 前端受限：取指、解码、指令缓存不足。
+  - CPU 等待指令进入流水线。
+- Backend Bound (BE)
+
+  - 后端受限：执行单元或数据不可用。
+  - CPU 等待算力资源或内存数据。
+
+这四类加起来 ≈ 100%，覆盖了所有 slot 的去向。
+
+2. Level 2: Backend 的进一步细分
+
+- BE/Core
+  - 后端瓶颈主要来自核心执行资源不足（算术逻辑单元、浮点单元、端口冲突）。
+  - 程序算力密集。
+- BE/Mem
+  - 后端瓶颈主要来自访存延迟（缓存未命中、DRAM 访问慢）。
+  - 程序内存密集。
+
+3. Level 3: BE/Mem 的进一步细分
+
+- L1 Bound
+- L2 Bound
+- L3 Bound
+- DRAM Bound
+
+### Roofline
+
+## 性能分析工具
+
+1. perf (Linux)
+2. [Intel® pmu-tools](https://github.com/andikleen/pmu-tools) ：对 perf 的封装
+3. [Intel Advisor](https://www.intel.com/content/www/us/en/developer/tools/oneapi/advisor-download.html)
+
+## 参考
+
+1. perf-ninja: [代码](https://github.com/dendibakh/perf-ninja) +
+   [视频](https://www.youtube.com/playlist?list=PLRWO2AL1QAV6bJAU2kgB4xfodGID43Y5d)
