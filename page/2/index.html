@@ -188,6 +188,159 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/11/26/tech/concurrent/concurrency-debugging-tools/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/11/26/tech/concurrent/concurrency-debugging-tools/" class="post-title-link" itemprop="url">并发调试工具</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-11-26 10:32:15" itemprop="dateCreated datePublished" datetime="2025-11-26T10:32:15+00:00">2025-11-26</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-06-14 06:58:21" itemprop="dateModified" datetime="2026-06-14T06:58:21+00:00">2026-06-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/concurrent/" itemprop="url" rel="index"><span itemprop="name">concurrent</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="常用-C-并发调试工具-ThreadSanitizer-TSan"><a href="#常用-C-并发调试工具-ThreadSanitizer-TSan" class="headerlink" title="常用 C++ 并发调试工具 ThreadSanitizer (TSan)"></a>常用 C++ 并发调试工具 ThreadSanitizer (TSan)</h2><ul>
+<li>LLVM&#x2F;Clang 提供的运行时检测工具<ul>
+<li>能精准捕获 数据竞争，输出冲突内存地址、访问栈回溯和涉及线程</li>
+</ul>
+</li>
+<li>Helgrind (Valgrind 工具集)<ul>
+<li>专门用于检测 死锁 和 锁误用</li>
+<li>通过监视线程对共享内存的访问来发现潜在冲突</li>
+</ul>
+</li>
+<li>rr (Record and Replay Debugger)<ul>
+<li>可以记录程序执行过程并重放</li>
+<li>适合调试 难以复现的并发 bug，如竞态条件和原子性问题</li>
+</ul>
+</li>
+<li>Clang Static Analyzer<ul>
+<li>静态分析工具，在编译阶段发现潜在的并发问题</li>
+<li>可检测未加锁访问共享变量、内存序错误等</li>
+</ul>
+</li>
+<li>PVS-Studio<ul>
+<li>商业静态分析工具</li>
+<li>能在 CI 流程中提前发现并发安全隐患</li>
+</ul>
+</li>
+</ul>
+<p>适用场景</p>
+<ul>
+<li>数据竞争 (Data Race) → 使用 ThreadSanitizer</li>
+<li>死锁 (Deadlock) → 使用 Helgrind</li>
+<li>难复现的竞态条件 → 使用 rr</li>
+</ul>
+<p>编译阶段预防 → 使用 Clang Static Analyzer &#x2F; PVS-Studio</p>
+<p>这些工具往往需要结合使用：例如 TSan + Helgrind + rr 的组合拳，可以覆盖运行时检测、死锁分析和重放调试<br>，从而大幅提升并发问题定位效率</p>
+<table>
+<thead>
+<tr>
+<th>工具</th>
+<th>语言&#x2F;平台</th>
+<th>主要功能</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ThreadSanitizer</td>
+<td>C&#x2F;C++ (Clang&#x2F;LLVM)</td>
+<td>数据竞争检测</td>
+<td>运行时发现共享变量冲突</td>
+</tr>
+<tr>
+<td>Helgrind</td>
+<td>C&#x2F;C++ (Valgrind)</td>
+<td>死锁检测、锁误用</td>
+<td>多线程同步问题</td>
+</tr>
+<tr>
+<td>rr</td>
+<td>C&#x2F;C++ (Linux)</td>
+<td>执行记录与重放</td>
+<td>难复现的竞态条件</td>
+</tr>
+<tr>
+<td>Clang Static Analyzer</td>
+<td>C&#x2F;C++</td>
+<td>静态分析并发隐患</td>
+<td>编译阶段预防</td>
+</tr>
+<tr>
+<td>PVS-Studio</td>
+<td>C&#x2F;C++</td>
+<td>商业静态分析</td>
+<td>CI 流程集成</td>
+</tr>
+<tr>
+<td><strong>Oracle Thread Analyzer</strong></td>
+<td>Java (Oracle 工具链)</td>
+<td>线程可视化、死锁检测</td>
+<td>Java 并发调试</td>
+</tr>
+</tbody></table>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/11/26/tech/cpp/optimize/performance-analysis-tools/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -219,7 +372,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 03:24:30" itemprop="dateModified" datetime="2026-06-14T03:24:30+00:00">2026-06-14</time>
+                <time title="Modified: 2026-06-14 06:58:21" itemprop="dateModified" datetime="2026-06-14T06:58:21+00:00">2026-06-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -434,7 +587,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 03:24:30" itemprop="dateModified" datetime="2026-06-14T03:24:30+00:00">2026-06-14</time>
+                <time title="Modified: 2026-06-14 06:58:21" itemprop="dateModified" datetime="2026-06-14T06:58:21+00:00">2026-06-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -508,7 +661,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 03:24:30" itemprop="dateModified" datetime="2026-06-14T03:24:30+00:00">2026-06-14</time>
+                <time title="Modified: 2026-06-14 06:58:21" itemprop="dateModified" datetime="2026-06-14T06:58:21+00:00">2026-06-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -581,7 +734,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 03:24:30" itemprop="dateModified" datetime="2026-06-14T03:24:30+00:00">2026-06-14</time>
+                <time title="Modified: 2026-06-14 06:58:21" itemprop="dateModified" datetime="2026-06-14T06:58:21+00:00">2026-06-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -699,7 +852,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 03:24:30" itemprop="dateModified" datetime="2026-06-14T03:24:30+00:00">2026-06-14</time>
+                <time title="Modified: 2026-06-14 06:58:21" itemprop="dateModified" datetime="2026-06-14T06:58:21+00:00">2026-06-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -891,7 +1044,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 03:24:30" itemprop="dateModified" datetime="2026-06-14T03:24:30+00:00">2026-06-14</time>
+                <time title="Modified: 2026-06-14 06:58:21" itemprop="dateModified" datetime="2026-06-14T06:58:21+00:00">2026-06-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -972,7 +1125,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 03:24:30" itemprop="dateModified" datetime="2026-06-14T03:24:30+00:00">2026-06-14</time>
+                <time title="Modified: 2026-06-14 06:58:21" itemprop="dateModified" datetime="2026-06-14T06:58:21+00:00">2026-06-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1437,7 +1590,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 03:24:30" itemprop="dateModified" datetime="2026-06-14T03:24:30+00:00">2026-06-14</time>
+                <time title="Modified: 2026-06-14 06:58:21" itemprop="dateModified" datetime="2026-06-14T06:58:21+00:00">2026-06-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1746,7 +1899,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 03:24:30" itemprop="dateModified" datetime="2026-06-14T03:24:30+00:00">2026-06-14</time>
+                <time title="Modified: 2026-06-14 06:58:21" itemprop="dateModified" datetime="2026-06-14T06:58:21+00:00">2026-06-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2105,100 +2258,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/16/tech/concurrent/memory-reclamation-in-concurrency/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/09/16/tech/concurrent/memory-reclamation-in-concurrency/" class="post-title-link" itemprop="url">并发中的内存回收</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-09-16 23:04:01" itemprop="dateCreated datePublished" datetime="2025-09-16T23:04:01+00:00">2025-09-16</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 03:24:30" itemprop="dateModified" datetime="2026-06-14T03:24:30+00:00">2026-06-14</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/concurrent/" itemprop="url" rel="index"><span itemprop="name">concurrent</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Hazard-Pointers（危险指针）"><a href="#Hazard-Pointers（危险指针）" class="headerlink" title="Hazard Pointers（危险指针）"></a>Hazard Pointers（危险指针）</h2><p>✅ 作用：保护正在访问的指针，防止它被其他线程释放。</p>
-<p>每个线程维护一组“hazard slots”，用于声明当前正在使用的节点。</p>
-<p>在释放节点前，必须检查是否有线程将其标记为 hazard。如果有，就延迟释放。</p>
-<p>📌 优点：精细控制：每个指针都可以独立保护。</p>
-<p>快速释放：一旦没有线程标记该节点，就可以立即释放。</p>
-<p>⚠️ 缺点：每个线程需要维护额外的指针集合。</p>
-<p>实现复杂度较高，尤其在高并发场景下。</p>
-<h2 id="Epoch-Based-Reclamation（基于世代的回收）"><a href="#Epoch-Based-Reclamation（基于世代的回收）" class="headerlink" title="Epoch-Based Reclamation（基于世代的回收）"></a>Epoch-Based Reclamation（基于世代的回收）</h2><p>✅ 作用：将所有线程的操作划分到一个“epoch”（时间段）中。</p>
-<p>每个线程在进入临界区时记录当前 epoch，退出时清除。</p>
-<p>被删除的节点会挂到当前 epoch 的垃圾列表中，只有当所有线程都离开该 epoch，才安全释放这些节点。</p>
-<p>📌 优点：实现简单，性能好，适合高吞吐量场景。</p>
-<p>不需要每个指针都单独保护。</p>
-<p>⚠️ 缺点：回收延迟：必须等待所有线程退出当前 epoch。</p>
-<p>对长时间运行的线程敏感，可能阻止垃圾回收。</p>
-<p>🧠 为什么需要它们？</p>
-<p>在 lock-free 数据结构中，节点可能被多个线程同时访问或修改。没有互斥锁保护时，直接释放内存可能导致：</p>
-<ul>
-<li>悬挂指针：其他线程还在访问被释放的节点。</li>
-<li>ABA 问题：节点被释放后地址复用，导致逻辑错误。</li>
-</ul>
-
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2270,7 +2329,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">123</span>
+          <span class="site-state-item-count">125</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
