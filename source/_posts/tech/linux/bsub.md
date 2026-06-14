@@ -11,10 +11,10 @@ title: bsub用法
 
 寻找 hostname 所在的 queue ：
 
-{% include_code lang:bash bsub/find_host_queue.sh %}
+{% include_code tech/linux/bsub-01.sh %}
 
 ## auto_submit_to_host_queue.sh
 
 根据提供的 hostname ，自动寻找最空闲的队列提交 bsub 作业：
 
-{% include_code lang:bash bsub/auto_submit_to_host_queue.sh %}
+{% include_code tech/linux/bsub-02.sh %}

@@ -7,7 +7,7 @@ tags:
 title: dlfcn
 ---
 
-{% include_code lang:cpp dlfcn/Makefile %}
-{% include_code lang:cpp dlfcn/fake_dlfcn.cpp %}
-{% include_code lang:cpp dlfcn/main.cpp %}
-{% include_code lang:cpp dlfcn/testlib.cpp %}
+{% include_code tech/cpp/third-lib/dlfcn-01.Makefile %}
+{% include_code lang:cpp fake_tech/cpp/third-lib/dlfcn-02.cpp %}
+{% include_code tech/cpp/third-lib/dlfcn-03.cpp %}
+{% include_code lang:cpp fake_tech/cpp/third-lib/dlfcn-04.cpp %}

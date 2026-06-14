@@ -18,4 +18,4 @@ title: memory_order测试
 g++ -fsanitize=thread test_memory_order_relaxed.cpp -lpthread
 ```
 
-{% include_code lang:cpp atomic/test_memory_order_relaxed.cpp %}
+{% include_code tech/concurrent/memory-order-experiment-01.cpp %}

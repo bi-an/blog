@@ -1,4 +1,4 @@
-# Hexo 博客最终定型目录架构
+# Hexo 博客目录架构
 
 **统一规范**
 
@@ -10,7 +10,7 @@
 
 - 交叉内容：物理目录归大类，标签做关联
 
-- 全局文件夹/子目录：一律使用单数，禁止复数
+- 目录命名：`_posts`目录下的目录统一采用Golang命名规则，使用单数。
 
 ---
 
@@ -23,22 +23,42 @@ source
 │   ├── word/               # study/word 笔记配图
 │   └── movie/              # study/movie 笔记配图
 │
-├── download/               # 下载类资源总目录
+├── downloads/              # 下载资源总目录
 │   └── code/               # 代码文件总目录
-│       ├── go/             # Go 语言代码
-│       ├── python/         # Python 代码
-│       ├── js/             # JavaScript 代码
-│       └── shell/          # Shell 脚本
+│       ├── tech/           
+│       │   ├── cpp/        # 完整镜像 _posts/tech/cpp 二级所有子目录
+│       │   │   ├── basic/
+│       │   │   ├── compile-link/
+│       │   │   ├── build-tool/
+│       │   │   ├── assembly/
+│       │   │   ├── debug/
+│       │   │   ├── performance-optimize/
+│       │   │   ├── third-lib/
+│       │   │   ├── cpp-book/
+│       │   │   └── cpp-project/
+│       │   ├── process/
+│       │   ├── thread/
+│       │   ├── concurrent/
+│       │   ├── io/
+│       │   ├── algo/
+│       │   ├── linux/
+│       │   ├── ic/
+│       │   └── project/
+│       ├── site/           # 镜像 _posts/site
+│       └── study/          # 镜像 _posts/study 二级子目录
+│           ├── idiom/
+│           ├── word/
+│           └── movie/
 │
 └── _posts/
     ├── tech/                   # 核心技术体系
     │   ├── cpp/                    # C/C++ 完整技术栈（应用层）
     │   │   ├── basic               # 语法、STL、新特性、基础编程
     │   │   ├── compile-link        # 编译流程、汇编阶段、链接原理、静态/动态库
-    │   │   ├── make-cmake          # Makefile / CMake 工程构建
+    │   │   ├── build-tool          # Makefile / CMake 工程构建
     │   │   ├── assembly            # 纯汇编指令、反汇编、内联汇编
     │   │   ├── debug               # GDB调试、内存排查、崩溃分析、问题定位
-    │   │   ├── optimize            # 代码性能优化、内存优化、调优方法论
+    │   │   ├── performance-optimize            # 代码性能优化、内存优化、调优方法论
     │   │   ├── third-lib           # 第三方库实操、使用教程（libtirpc等）
     │   │   ├── cpp-book            # C/C++ 相关书籍笔记
     │   │   └── cpp-project         # C/C++ 落地实战项目
@@ -96,7 +116,7 @@ source
 
 - **compile\-link**：编译流程、链接机制、静态/动态库、符号解析
 
-- **make\-cmake**：Makefile、CMake工程构建与脚本
+- **build\-tool**：Makefile、CMake、Bazel等构建工具与脚本
 
 - **assembly**：汇编指令、反汇编、内联汇编
 
@@ -270,46 +290,110 @@ source
 
 引用示例：`![配图](/image/movie/forrest-gump-01.jpg)`
 
-### download/code 代码资源命名与引用规范
+### downloads/code 代码资源命名与引用规范
 
-所有技术笔记配套代码碎片，**强制统一命名规则**，无特殊例外、无需场景判断，适配 include\_code 插件引入。
+适配 Hexo include\_code 插件，全站笔记配套代码执行统一命名规则，无特例。
 
-- **全部笔记配套代码（唯一规则）**：无论单文件/多文件、无论是否完整Demo，只要是服务于某一篇笔记的代码碎片，一律使用 `笔记名-序号.后缀`
+- **笔记配套代码**：所有服务于 Markdown 笔记的代码碎片，统一命名为 `笔记名-序号.后缀`
 
-- **纯独立项目代码（豁免）**：存放于 project 项目目录、不属于任意单篇笔记配套的完整工程代码，可使用语义化命名
+- **独立工程代码**：project 目录下不属于任何笔记的完整工程，可使用语义化命名
 
-示例：io\-uring\-principle\.md 笔记配套代码
+代码资源统一存放于 `downloads/code`，目录镜像规则：1:1 复刻 `_posts` 真实目录，完整镜像一、二级目录；仅 cpp、study 存在的三级业务目录同步镜像，其余领域不新建空目录。采用 include\_code 插件绝对路径引入代码。
 
-- 统一规范命名：`io-uring-principle-01.c`、`io-uring-principle-02.c`
+#### 技术代码示例（downloads/code/tech/cpp/basic）
 
-- 废除旧语义命名特例：不再允许 `io_uring_hello.c` 这类脱离笔记名的碎片命名
+- cpp\-basic\-stl\-01\.c
 
-引用格式：采用 Hexo include\_code 插件语法引入代码文件
+- cpp\-basic\-class\-01\.c
 
-#### download/code/go 示例
+引入示例：`{% include_code downloads/code/tech/cpp/basic/cpp-basic-stl-01.c lang:c %}`
 
-- hair\-01\.go
-
-- body\-word\-01\.go
-
-引入示例：`{% include_code hair-01.go lang:go %}`
-
-#### download/code/python 示例
+#### 英语代码示例（downloads/code/study）
 
 - daily\-idiom\-01\.py
 
-引入示例：`{% include_code daily-idiom-01.py lang:python %}`
+引入示例：`{% include_code downloads/code/study/daily-idiom-01.py lang:python %}`
 
-### 交叉内容规范
+### 代码目录镜像强制规则
 
-物理目录归属核心大类，前台标签做跨领域关联，不重复建文件、不交叉归类。
+- 镜像原则：严格跟随 `_posts` 目录结构，有则镜像、无则不建
+
+- 镜像范围：全额镜像
+
+- 文件命名：笔记配套代码统一 `笔记名-序号.后缀`
+
+- 镜像原则：**完全跟随 \_posts 真实目录结构**，有则镜像、无则不建，1:1 复刻
+
+- 适配范围：tech 下 cpp 全部三级业务目录、study 全部二级子目录，全额镜像
+
+- 冗余规避：无三级子目录的领域（io/process/thread/linux等），不强行新建空目录，保持简洁
+
+- 命名规则不变：所有笔记配套代码统一`笔记名-序号.后缀`，多碎片有序区分，精准归属对应镜像目录
 
 ## 全局强制规则
 
-- 所有文件夹、子目录统一使用单数命名，禁止复数
+- Markdown 文件：合集采用 `分类-主题.md`，单内容使用原生名称
 
-- Markdown合集笔记采用 `分类-主题.md` 格式，单个内容笔记使用原生名称
+- 图片、笔记配套代码统一 `笔记名-序号.后缀`；仅独立工程代码可语义命名
 
-- 图片资源、所有笔记配套代码资源（技术\+英语）统一采用 `笔记名-序号.后缀`；仅 project 目录下独立工程代码可自定义语义命名
+## Tags 标签规范
+
+全站标签统一规范，禁止随意自定义、重复、同义异构。
+
+### 基础规则
+
+- 格式：全小写、英文连字符 `-`，禁止中文、大写、下划线、空格
+
+- 数量：单篇 2～5 个，不堆砌、不空缺
+
+- 语义：仅标注精准领域、知识点标签，杜绝泛化无效标签
+
+- 复用：严格使用统一词库，禁止新建同义标签
+
+### 领域固定标签词库
+
+#### tech 技术类
+
+- cpp、compile\-link、cmake、assembly、debug、performance\-optimize
+
+- process、signal、ipc、thread、concurrent、cpu\-cache、memory\-barrier
+
+- io、epoll、socket、tcp、network
+
+- algorithm、data\-structure
+
+- linux、shell
+
+- ic、eda、tcl
+
+- project、practice
+
+#### site 建站类
+
+- hexo、blog\-build、blog\-config、deploy、theme、plugin
+
+#### study 英语类
+
+- english、idiom、vocabulary、movie\-line
+
+### 标签搭配规则
+
+- 主标签：固定归属领域标签（唯一）
+
+- 副标签：细分知识点、技术点标签（1～4 个）
+
+### 标签示例
+
+- Hexo 部署笔记：`tags: [hexo, deploy]`
+
+- C\+\+ 编译笔记：`tags: [cpp, compile-link]`
+
+- IO 多路复用笔记：`tags: [io, epoll, network]`
+
+- Linux 运维笔记：`tags: [linux, shell]`
+
+- 英语习语笔记：`tags: [english, idiom]`
+
+- 影视台词笔记：`tags: [english, movie-line]`
 
 > （注：文档部分内容可能由 AI 生成）

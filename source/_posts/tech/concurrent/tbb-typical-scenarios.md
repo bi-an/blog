@@ -11,16 +11,16 @@ title: TBB典型场景
 
 tasks
 
-{% include_code lang:cpp tbb/pipeline/tasks.hpp %}
+{% include_code tech/concurrent/tbb-typical-scenarios-01.hpp %}
 
 方案一
 
-{% include_code lang:cpp tbb/pipeline/1_message_queue.cpp %}
+{% include_code tech/concurrent/tbb-typical-scenarios-02.cpp %}
 
 方案二
 
-{% include_code lang:cpp tbb/pipeline/2_flow_graph.cpp %}
+{% include_code tech/concurrent/tbb-typical-scenarios-03.cpp %}
 
 方案三
 
-{% include_code lang:cpp tbb/pipeline/3_pipeline.cpp %}
+{% include_code tech/concurrent/tbb-typical-scenarios-04.cpp %}

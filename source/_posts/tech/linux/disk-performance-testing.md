@@ -47,7 +47,7 @@ fio --name=mixrw --rw=randrw --rwmixread=70 --bs=4k --size=5G --numjobs=4 --iode
 <details>
   <summary>点击展开代码</summary>
   <pre>
-    {% include_code lang:bash fio_bs_test.sh %}
+    {% include_code tech/linux/disk-performance-testing-01.sh %}
   </pre>
 </details>
 
@@ -92,7 +92,7 @@ write    | 128M       | 0        | 102        | 1249.35
 <details>
   <summary>点击展开代码</summary>
   <pre>
-    {% include_code lang:bash fio_mt_test.sh %}
+    {% include_code tech/linux/disk-performance-testing-02.sh %}
   </pre>
 </details>
 
