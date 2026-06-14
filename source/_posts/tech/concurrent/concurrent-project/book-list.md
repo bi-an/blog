@@ -1,9 +1,10 @@
 ---
-categories: cpp-book
+categories:
+  - concurrent
 date: 2024-01-01 21:10:04
 tags:
-- cpp
-- book
+  - cpp
+  - book
 title: Book List
 ---
 
