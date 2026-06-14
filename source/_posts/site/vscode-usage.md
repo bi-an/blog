@@ -23,7 +23,7 @@ title: vscode 使用
   the IntelliSense engine uses to improve performance. You can limit the size of the cache by
   changing the setting value of C_Cpp.intelliSenseCacheSize. 参考
   [这里](https://github.com/microsoft/vscode-cpptools/issues/6594)：
-  ![C_Cpp.intelliSenseCacheSize](image.png)
+  ![C_Cpp.intelliSenseCacheSize](/assets/images/site/vscode-usage-01.png)
 
 ## Hot keys
 

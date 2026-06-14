@@ -18,10 +18,16 @@
 
 ```Plain Text
 source
-├── image/                  # 全局图片根目录
-│   ├── idiom/              # study/idiom 笔记配图
-│   ├── word/               # study/word 笔记配图
-│   └── movie/              # study/movie 笔记配图
+├── assets/                 # 静态资源根目录
+│   └── images/             # 全局图片根目录
+│       ├── study/          # study 笔记配图
+│       │   ├── idiom/      # study/idiom 笔记配图
+│       │   ├── word/       # study/word 笔记配图
+│       │   └── movie/      # study/movie 笔记配图
+│       └── tech/           # tech 笔记配图
+│           ├── cpp/        # tech/cpp 笔记配图（按需创建）
+│           ├── linux/      # tech/linux 笔记配图（按需创建）
+│           └── ...         # 其他技术领域（按需创建）
 │
 ├── downloads/              # 下载资源总目录
 │   └── code/               # 代码文件总目录
@@ -258,35 +264,35 @@ source
 
 - zootopia\.md
 
-### image 图片资源命名与引用规范
+### assets/images 图片资源命名与引用规范
 
 命名格式：`笔记名-序号.后缀`，目录已区分板块，不重复加前缀
 
 引用格式：Hexo 绝对路径引用
 
-#### image/idiom 示例
+#### assets/images/study/idiom 示例
 
 - daily\-idiom\-01\.png
 
 - animal\-idiom\-01\.jpg
 
-引用示例：`![配图](/image/idiom/daily-idiom-01.png)`
+引用示例：`![配图](/assets/images/study/idiom/daily-idiom-01.png)`
 
-#### image/word 示例
+#### assets/images/study/word 示例
 
 - hair\-01\.png
 
 - body\-word\-01\.png
 
-引用示例：`![配图](/image/word/hair-01.png)`
+引用示例：`![配图](/assets/images/study/word/hair-01.png)`
 
-#### image/movie 示例
+#### assets/images/study/movie 示例
 
 - forrest\-gump\-01\.jpg
 
 - titanic\-01\.png
 
-引用示例：`![配图](/image/movie/forrest-gump-01.jpg)`
+引用示例：`![配图](/assets/images/study/movie/forrest-gump-01.jpg)`
 
 ### downloads/code 代码资源命名与引用规范
 
