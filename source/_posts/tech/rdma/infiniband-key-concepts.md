@@ -1,10 +1,12 @@
 ---
 title: InfiniBand关键概念
 date: 2025-12-23 15:36:17
-categories: RDMA
+categories:
+  - RDMA
 tags:
-- network
-- high-performance
+  - network
+  - high-performance
+---
 
 ## 概述
 
