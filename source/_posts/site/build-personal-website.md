@@ -162,6 +162,30 @@ export -f browser
 browser index.html
 ```
 
+* 在 Windows 浏览器打开 ssh 连接的 Linux 的文件：
+
+使用内置的 Python 轻量级服务器（最快、最推荐）
+
+在 Linux 终端中切换到文件所在的目录：
+
+```Bash
+cd /path/to/your/folder
+```
+启动 Python 自带的 HTTP 服务：
+
+Python 3.x（推荐）：
+
+```Bash
+python3 -m http.server 8000
+```
+
+在 Windows 浏览器中访问：
+
+打开浏览器，在地址栏输入：
+
+```Plaintext
+http://<Linux服务器的IP地址>:8000
+```
 
 ## 静态站点生成器
 

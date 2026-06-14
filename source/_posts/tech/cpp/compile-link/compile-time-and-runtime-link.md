@@ -169,6 +169,11 @@ GCC 查找 glibc 的路径顺序：
 这些路径是 编译器内部写死的默认值，你可以通过以下命令查看：
 ```bash
 gcc -print-search-dirs
+# 或
+ld --verbose | grep SEARCH_DIR
+# 查看：g++ 实际链接的是哪个版本的库；库文件位于哪个目录；系统是否安装了对应库
+g++ -print-file-name=libxxx.so
+g++ -print-file-name=libyyy.a
 ```
 
 输出示例：

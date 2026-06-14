@@ -8,6 +8,22 @@ tags:
 title: VSCode Configuration
 ---
 
+## User Settings
+
+1. `Ctrl` + `Shift` + `P`
+2. 输入：`Preferences: Open User Settings (JSON)`
+3. 配置当前活动的标签页高亮：
+
+```json
+{
+    "workbench.colorCustomizations": {
+        "tab.activeBorderTop": "#6a6ce4",
+        "tab.activeBackground": "#200b6c",
+        "tab.activeBorder": "#6a6ce4"
+    },
+}
+```
+
 ## debug
 
 在当前代码根目录下创建.vscode/launch.json 文件，写入如下内容：
