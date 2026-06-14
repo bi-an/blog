@@ -3,7 +3,7 @@ categories: study
 date: 2023-11-02 09:30:29
 tags:
 - english
-- learning
+- idiom
 title: English idiom
 ---
 

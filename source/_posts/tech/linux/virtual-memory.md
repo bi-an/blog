@@ -3,7 +3,7 @@ categories: linux
 date: 2023-11-07 15:36:21
 tags:
 - linux
-- system
+- shell
 title: 虚拟内存
 ---
 

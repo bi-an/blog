@@ -3,7 +3,7 @@ categories: linux
 date: 2024-01-23 22:24:57
 tags:
 - linux
-- system
+- shell
 title: Build Linux Kernel Module
 ---
 

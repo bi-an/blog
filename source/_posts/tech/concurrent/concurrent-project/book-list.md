@@ -3,9 +3,8 @@ categories:
   - concurrent
 date: 2024-01-01 21:10:04
 tags:
-  - cpp
-  - book
-  - project
+- concurrent
+- book
 title: 并发编程推荐书籍
 ---
 

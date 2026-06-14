@@ -3,7 +3,7 @@ categories: concurrent
 date: 2025-09-16 23:04:01
 tags:
 - concurrent
-- parallel
+- lock-free
 title: 并发中的内存回收
 ---
 

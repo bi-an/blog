@@ -2,8 +2,8 @@
 categories: linux
 date: 2024-09-06 18:09:03
 tags:
-  - linux
-  - system
+- linux
+- shell
 title: File Exists
 ---
 

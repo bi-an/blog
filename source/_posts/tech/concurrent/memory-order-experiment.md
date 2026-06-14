@@ -3,7 +3,7 @@ categories: concurrent
 date: 2025-09-24 14:32:53
 tags:
 - concurrent
-- parallel
+- memory-barrier
 title: memory_order测试
 ---
 

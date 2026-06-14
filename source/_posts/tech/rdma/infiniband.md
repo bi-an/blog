@@ -2,8 +2,8 @@
 categories: rdma
 date: 2023-12-06 09:41:56
 tags:
-- rdma
 - network
+- high-performance
 title: Getting Started with InfiniBand
 ---
 

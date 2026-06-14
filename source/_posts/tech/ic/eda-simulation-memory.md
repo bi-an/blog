@@ -4,6 +4,7 @@ date: 2025-08-20 22:25:49
 tags:
 - ic
 - eda
+- tcl
 title: EDA 仿真之 Memory
 ---
 

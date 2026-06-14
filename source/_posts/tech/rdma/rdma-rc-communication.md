@@ -2,8 +2,8 @@
 categories: rdma
 date: 2025-09-23 16:30:08
 tags:
-- rdma
 - network
+- high-performance
 title: RDMA RC 通信
 ---
 

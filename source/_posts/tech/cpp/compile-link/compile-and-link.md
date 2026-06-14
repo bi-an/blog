@@ -3,8 +3,7 @@ categories: cpp
 date: 2024-01-23 21:36:08
 tags:
 - cpp
-- compile
-- link
+- compile-link
 title: 编译和链接
 ---
 

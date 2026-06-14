@@ -3,8 +3,10 @@ categories: site
 date: 2025-08-17 16:14:48
 tags:
 - hexo
-- blog
-- website
+- blog-build
+- blog-config
+- deploy
+- theme
 title: 如何创建个人主页
 ---
 

@@ -4,7 +4,6 @@ date: 2024-01-23 22:33:09
 tags:
 - cpp
 - debug
-- gdb
 title: 打印进程堆栈
 ---
 

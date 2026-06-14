@@ -3,7 +3,8 @@ title: 从共享库偏移反查符号（Linux / ELF）
 date: 2026-04-22 14:20:41
 categories:
 tags:
----
+- cpp
+- debug
 
 **变量约定：**
 

@@ -1,8 +1,10 @@
 ---
 title: InfiniBand Send/Recv与Read/Write的区别
 date: 2025-12-23 16:32:46
-categories: RDMA
-tags: InfiniBand RDMA
+categories: rdma
+tags:
+- network
+- high-performance
 ---
 
 ## 引言
@@ -179,7 +181,7 @@ struct ibv_sge {
 
 #### 接收端代码
 
-```c
+```
 // 1. 准备接收缓冲区
 char *recv_buffer = malloc(BUFFER_SIZE);
 struct ibv_mr *recv_mr = ibv_reg_mr(pd, recv_buffer, BUFFER_SIZE,
@@ -220,7 +222,7 @@ if (wc.status != IBV_WC_SUCCESS) {
 
 #### 发送端代码
 
-```c
+```
 // 1. 准备发送缓冲区
 char *send_buffer = malloc(BUFFER_SIZE);
 memcpy(send_buffer, data_to_send, data_size);
@@ -260,7 +262,7 @@ do {
 
 #### RDMA Write 操作
 
-```c
+```
 // 发起端代码
 struct ibv_send_wr write_wr, *bad_wr;
 memset(&write_wr, 0, sizeof(write_wr));
@@ -278,7 +280,7 @@ ibv_post_send(qp, &write_wr, &bad_wr);
 
 #### RDMA Read 操作
 
-```c
+```
 struct ibv_send_wr read_wr, *bad_wr;
 memset(&read_wr, 0, sizeof(read_wr));
 
@@ -295,7 +297,7 @@ ibv_post_send(qp, &read_wr, &bad_wr);
 
 #### 内存注册要求
 
-```c
+```
 // 对端注册内存（允许远程访问）
 struct ibv_mr *remote_mr = ibv_reg_mr(pd, remote_buffer, BUFFER_SIZE,
                                        IBV_ACCESS_LOCAL_WRITE |      // 本地写权限
@@ -339,7 +341,7 @@ struct ibv_mr *remote_mr = ibv_reg_mr(pd, remote_buffer, BUFFER_SIZE,
 
 **场景 1：预先批量 post recv（推荐）**
 
-```c
+```
 // 接收端：预先批量提交多个 Receive WR
 for (int i = 0; i < BATCH_SIZE; i++) {
     struct ibv_recv_wr recv_wr, *bad_wr;
@@ -354,7 +356,7 @@ ibv_post_send(qp, &send_wr, &bad_send_wr);
 
 **场景 2：RNR 错误处理**
 
-```c
+```
 // 发送端处理 RNR 错误
 struct ibv_wc wc;
 ibv_poll_cq(cq, 1, &wc);
@@ -404,7 +406,7 @@ if (wc.status == IBV_WC_RNR_RETRY_EXC_ERR) {
 
 在写入数据的同时，发送立即数据通知对端：
 
-```c
+```
 // 发起端：写入数据并通知
 struct ibv_send_wr write_wr, *bad_wr;
 memset(&write_wr, 0, sizeof(write_wr));
@@ -438,7 +440,7 @@ if (wc.opcode == IBV_WC_RECV_RDMA_WITH_IMM) {
 
 使用 `IBV_SEND_FENCE` 保证操作顺序：
 
-```c
+```
 // 场景：需要保证多个 RDMA Write 的顺序
 struct ibv_send_wr wr[3], *bad_wr;
 
@@ -470,7 +472,7 @@ ibv_post_send(qp, &wr[0], &bad_wr);
 
 使用原子操作作为同步点：
 
-```c
+```
 // 对端：准备数据后，使用原子操作设置标志
 struct ibv_send_wr atomic_wr, *bad_wr;
 memset(&atomic_wr, 0, sizeof(atomic_wr));
@@ -507,7 +509,7 @@ ibv_post_send(qp, &atomic_wr, &bad_wr);
 
 **版本号机制**：
 
-```c
+```
 // 数据结构
 struct data_with_version {
     uint64_t version;      // 版本号
@@ -540,7 +542,7 @@ do {
 
 **双缓冲机制**：
 
-```c
+```
 // 对端：使用两个缓冲区交替
 struct double_buffer {
     char buffer[2][BUFFER_SIZE];
@@ -594,7 +596,7 @@ void read_data(struct double_buffer *db) {
 
 在实际应用中，可以混合使用两种模式：
 
-```c
+```
 // 示例：使用 Send/Recv 进行控制，使用 Write 进行数据传输
 
 // 1. 通过 Send/Recv 交换元数据
@@ -630,7 +632,7 @@ send_completion_notification();
 
 **Send/Recv 性能优化代码**：
 
-```c
+```
 // 1. 批量提交 Receive WR
 for (int i = 0; i < BATCH_SIZE; i++) {
     post_recv_wr();
@@ -644,7 +646,7 @@ if (count % 64 == 0) {
 
 **Read/Write 性能优化代码**：
 
-```c
+```
 // 1. 批量操作
 struct ibv_send_wr *wr_list = build_wr_list();
 ibv_post_send(qp, wr_list, &bad_wr);

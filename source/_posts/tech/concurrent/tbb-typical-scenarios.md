@@ -3,7 +3,7 @@ categories: concurrent
 date: 2025-08-19 22:48:38
 tags:
 - concurrent
-- parallel
+- tbb
 title: TBB典型场景
 ---
 

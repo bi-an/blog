@@ -4,7 +4,6 @@ date: 2025-08-22 15:42:27
 tags:
 - cpp
 - debug
-- gdb
 title: 汇编与 gdb
 ---
 

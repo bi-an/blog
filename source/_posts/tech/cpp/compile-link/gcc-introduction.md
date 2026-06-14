@@ -3,8 +3,7 @@ categories: cpp
 date: 2024-01-23 21:44:11
 tags:
 - cpp
-- compile
-- link
+- compile-link
 title: gcc 入门
 ---
 

@@ -3,7 +3,7 @@ categories: study
 date: 2024-05-08 22:10:46
 tags:
 - english
-- learning
+- vocabulary
 title: Hair
 ---
 

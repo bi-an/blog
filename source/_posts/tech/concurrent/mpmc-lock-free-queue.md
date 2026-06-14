@@ -3,7 +3,7 @@ categories: concurrent
 date: 2025-09-14 15:05:08
 tags:
 - concurrent
-- parallel
+- lock-free
 title: 多生产者 - 多消费者 无锁队列
 ---
 

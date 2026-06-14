@@ -3,8 +3,7 @@ categories: cpp
 date: 2024-02-02 13:24:45
 tags:
 - cpp
-- compile
-- link
+- compile-link
 title: gcc 与 glibc
 ---
 

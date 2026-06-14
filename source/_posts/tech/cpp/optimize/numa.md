@@ -3,8 +3,7 @@ categories: cpp
 date: 2025-12-02 13:44:25
 tags:
 - cpp
-- optimize
-- performance
+- performance-optimize
 title: NUMA节点详解
 ---
 

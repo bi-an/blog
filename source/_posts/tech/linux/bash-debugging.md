@@ -3,7 +3,7 @@ categories: linux
 date: 2024-09-06 18:10:12
 tags:
 - linux
-- system
+- shell
 title: Bash Debugging
 ---
 

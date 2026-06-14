@@ -3,7 +3,7 @@ categories: linux
 date: 2025-08-16 13:31:26
 tags:
 - linux
-- system
+- shell
 title: 用户态和内核态
 ---
 

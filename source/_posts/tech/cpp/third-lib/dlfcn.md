@@ -3,7 +3,7 @@ categories: cpp
 date: 2025-04-16 00:20:34
 tags:
 - cpp
-- library
+- third-party
 title: dlfcn
 ---
 

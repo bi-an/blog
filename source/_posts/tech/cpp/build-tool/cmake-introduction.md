@@ -3,7 +3,6 @@ categories: cpp
 date: 2023-12-07 10:58:25
 tags:
 - cpp
-- build
 - cmake
 title: cmake 入门
 ---

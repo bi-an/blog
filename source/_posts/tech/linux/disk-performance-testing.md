@@ -3,7 +3,7 @@ categories: linux
 date: 2025-09-08 11:27:57
 tags:
 - linux
-- system
+- shell
 title: 测试磁盘性能
 ---
 

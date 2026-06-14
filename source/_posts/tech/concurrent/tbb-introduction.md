@@ -3,7 +3,7 @@ categories: concurrent
 date: 2024-02-24 14:59:52
 tags:
 - concurrent
-- parallel
+- tbb
 title: TBB 入门
 ---
 

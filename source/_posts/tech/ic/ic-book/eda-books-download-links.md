@@ -4,7 +4,7 @@ date: 2026-06-14 04:00:10+08:00
 tags:
 - ic
 - eda
-- book
+- tcl
 title: EDA书籍下载链接
 ---
 

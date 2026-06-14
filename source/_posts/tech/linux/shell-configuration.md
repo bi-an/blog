@@ -3,7 +3,7 @@ categories: linux
 date: 2023-11-13 14:27:59
 tags:
 - linux
-- system
+- shell
 title: Shell Configuration
 ---
 

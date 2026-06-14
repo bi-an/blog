@@ -4,7 +4,6 @@ date: 2025-07-23 19:26:26
 tags:
 - cpp
 - debug
-- gdb
 title: shell 误导性错误 No such file or directory
 ---
 

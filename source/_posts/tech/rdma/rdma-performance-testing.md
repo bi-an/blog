@@ -2,8 +2,8 @@
 categories: rdma
 date: 2025-09-19 12:10:57
 tags:
-- rdma
 - network
+- high-performance
 title: RDMA 性能测试
 ---
 

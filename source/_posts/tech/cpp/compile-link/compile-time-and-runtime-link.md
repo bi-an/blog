@@ -3,8 +3,7 @@ categories: cpp
 date: 2025-09-18 18:57:08
 tags:
 - cpp
-- compile
-- link
+- compile-link
 title: 编译时链接和运行时链接
 ---
 

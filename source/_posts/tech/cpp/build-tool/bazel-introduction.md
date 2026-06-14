@@ -3,7 +3,6 @@ categories: cpp
 date: 2025-08-12 20:21:42
 tags:
 - cpp
-- build
 - cmake
 title: Bazel入门
 ---

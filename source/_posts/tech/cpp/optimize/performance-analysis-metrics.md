@@ -3,8 +3,7 @@ categories: cpp
 date: 2025-11-20 15:54:29
 tags:
 - cpp
-- optimize
-- performance
+- performance-optimize
 title: 性能分析指标和概念
 ---
 

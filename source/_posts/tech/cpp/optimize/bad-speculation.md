@@ -3,8 +3,7 @@ categories: cpp
 date: 2025-11-21 15:29:24
 tags:
 - cpp
-- optimize
-- performance
+- performance-optimize
 title: Bad Speculation
 ---
 

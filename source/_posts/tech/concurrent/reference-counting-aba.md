@@ -3,7 +3,7 @@ categories: concurrent
 date: 2025-09-15 20:23:48
 tags:
 - concurrent
-- parallel
+- lock-free
 title: 基于引用计数的 ABA 消除机制
 ---
 

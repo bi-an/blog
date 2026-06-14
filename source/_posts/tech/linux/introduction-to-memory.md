@@ -3,7 +3,7 @@ categories: linux
 date: 2024-01-29 14:25:24
 tags:
 - linux
-- system
+- shell
 title: Introduction to memory
 ---
 

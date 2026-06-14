@@ -3,7 +3,7 @@ categories: concurrent
 date: 2025-08-01 19:30:53
 tags:
 - concurrent
-- parallel
+- memory-barrier
 title: 内存模型
 ---
 

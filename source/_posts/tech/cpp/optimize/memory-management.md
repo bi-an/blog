@@ -3,8 +3,7 @@ categories: cpp
 date: 2025-08-19 20:12:58
 tags:
 - cpp
-- optimize
-- performance
+- performance-optimize
 title: 内存管理
 ---
 

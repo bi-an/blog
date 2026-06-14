@@ -3,8 +3,7 @@ categories: cpp
 date: 2025-07-25 11:53:54
 tags:
 - cpp
-- compile
-- link
+- compile-link
 title: gcc属性
 ---
 

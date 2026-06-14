@@ -3,7 +3,7 @@ categories: concurrent
 date: 2024-01-15 14:11:30
 tags:
 - concurrent
-- parallel
+- debug
 title: Dead Lock
 ---
 

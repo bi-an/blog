@@ -4,8 +4,10 @@ categories: site
 date: 2024-01-03 16:41:38
 tags:
 - hexo
-- blog
-- website
+- blog-build
+- blog-config
+- deploy
+- theme
 title: 搭建个人网站
 ---
 

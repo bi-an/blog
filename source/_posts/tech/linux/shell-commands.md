@@ -3,7 +3,7 @@ categories: linux
 date: 2024-01-26 15:57:35
 tags:
 - linux
-- system
+- shell
 title: Shell Commands
 ---
 

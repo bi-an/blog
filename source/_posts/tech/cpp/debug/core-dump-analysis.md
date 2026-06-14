@@ -4,7 +4,6 @@ date: 2024-01-23 21:42:51
 tags:
 - cpp
 - debug
-- gdb
 title: core dump
 ---
 

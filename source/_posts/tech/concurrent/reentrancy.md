@@ -3,7 +3,7 @@ categories: concurrent
 date: 2024-01-14 17:44:16
 tags:
 - concurrent
-- parallel
+- thread
 title: 可重入
 ---
 

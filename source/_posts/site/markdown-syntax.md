@@ -3,8 +3,10 @@ categories: site
 date: 2024-01-03 16:40:05
 tags:
 - hexo
-- blog
-- website
+- blog-build
+- blog-config
+- deploy
+- theme
 title: Markdown Syntax
 ---
 

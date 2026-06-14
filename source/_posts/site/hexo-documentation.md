@@ -3,8 +3,10 @@ categories: site
 date: 2023-12-07 10:06:59
 tags:
 - hexo
-- blog
-- website
+- blog-build
+- blog-config
+- deploy
+- theme
 title: Hexo Documentation
 ---
 

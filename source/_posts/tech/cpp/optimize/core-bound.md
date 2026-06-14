@@ -3,8 +3,7 @@ categories: cpp
 date: 2025-11-21 14:05:58
 tags:
 - cpp
-- optimize
-- performance
+- performance-optimize
 title: Core Bound
 ---
 

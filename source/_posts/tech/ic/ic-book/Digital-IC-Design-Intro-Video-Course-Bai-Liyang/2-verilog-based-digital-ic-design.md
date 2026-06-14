@@ -4,7 +4,7 @@ date: 2025-01-17 15:37:49
 tags:
 - ic
 - eda
-- book
+- tcl
 title: 第2章 基于Verilog的数字IC设计方法
 ---
 

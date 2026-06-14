@@ -3,7 +3,7 @@ categories: linux
 date: 2024-01-25 13:22:53
 tags:
 - linux
-- system
+- shell
 title: Brackets in Bash
 ---
 

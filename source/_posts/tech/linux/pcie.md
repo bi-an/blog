@@ -3,7 +3,7 @@ categories: linux
 date: 2024-01-23 22:04:18
 tags:
 - linux
-- system
+- shell
 title: Introducation to PCIE
 ---
 

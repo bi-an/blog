@@ -3,7 +3,7 @@ categories: linux
 date: 2023-12-06 09:41:56
 tags:
 - linux
-- system
+- shell
 title: bsub用法
 ---
 

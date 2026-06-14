@@ -3,7 +3,7 @@ categories: concurrent
 date: 2025-09-15 19:48:58
 tags:
 - concurrent
-- parallel
+- lock-free
 title: CAS 的 ABA问题
 ---
 

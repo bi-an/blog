@@ -3,8 +3,10 @@ categories: site
 date: 2024-08-02 19:13:09
 tags:
 - hexo
-- blog
-- website
+- blog-build
+- blog-config
+- deploy
+- theme
 title: VSCode Configuration
 ---
 

@@ -4,7 +4,6 @@ date: 2024-01-23 21:27:05
 tags:
 - cpp
 - debug
-- gdb
 title: C++ 调试工具
 ---
 

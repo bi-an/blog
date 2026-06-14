@@ -3,7 +3,7 @@ categories: linux
 date: 2024-01-23 21:49:40
 tags:
 - linux
-- system
+- shell
 title: Environment Variables
 ---
 

@@ -4,6 +4,7 @@ date: 2025-02-24 16:03:38
 tags:
 - ic
 - eda
+- tcl
 title: TCL入门
 ---
 

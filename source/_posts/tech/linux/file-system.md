@@ -3,7 +3,7 @@ categories: linux
 date: 2024-01-23 20:01:02
 tags:
 - linux
-- system
+- shell
 title: 文件系统
 ---
 

@@ -3,7 +3,7 @@ categories: concurrent
 date: 2025-03-19 16:31:02
 tags:
 - concurrent
-- parallel
+- memory-barrier
 title: 原子变量
 ---
 

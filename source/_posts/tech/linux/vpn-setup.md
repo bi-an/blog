@@ -3,7 +3,7 @@ categories: linux
 date: 2025-01-14 20:44:40
 tags:
 - linux
-- system
+- shell
 title: VPN设置
 ---
 

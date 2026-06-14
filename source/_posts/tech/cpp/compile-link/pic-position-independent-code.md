@@ -3,8 +3,7 @@ categories: cpp
 date: 2025-08-26 13:54:18
 tags:
 - cpp
-- compile
-- link
+- compile-link
 title: 位置无关代码
 ---
 

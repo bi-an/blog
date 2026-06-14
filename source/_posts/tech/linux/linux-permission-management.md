@@ -3,7 +3,7 @@ categories: linux
 date: 2025-08-16 20:37:50
 tags:
 - linux
-- system
+- shell
 title: Linux 权限管理
 ---
 

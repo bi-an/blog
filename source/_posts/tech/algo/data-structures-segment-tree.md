@@ -2,7 +2,7 @@
 categories: algo
 date: 2024-09-28 20:57:33
 tags:
-- algo
+- algorithm
 - data-structure
 title: 线段树
 ---

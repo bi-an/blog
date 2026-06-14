@@ -3,7 +3,7 @@ categories: concurrent
 date: 2025-08-17 10:39:19
 tags:
 - concurrent
-- parallel
+- lock-free
 title: 详解RCU机制
 ---
 

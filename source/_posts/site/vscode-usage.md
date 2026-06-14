@@ -3,8 +3,10 @@ categories: site
 date: 2024-01-24 17:26:44
 tags:
 - hexo
-- blog
-- website
+- blog-build
+- blog-config
+- deploy
+- theme
 title: vscode 使用
 ---
 

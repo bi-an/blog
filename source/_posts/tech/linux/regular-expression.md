@@ -3,7 +3,7 @@ categories: linux
 date: 2024-01-25 13:13:41
 tags:
 - linux
-- system
+- shell
 title: Regular Expression
 ---
 
