@@ -219,7 +219,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 07:26:51" itemprop="dateModified" datetime="2026-06-14T07:26:51+00:00">2026-06-14</time>
+                <time title="Modified: 2026-06-14 07:45:12" itemprop="dateModified" datetime="2026-06-14T07:45:12+00:00">2026-06-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -256,16 +256,16 @@
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// thread A</span></span><br><span class="line"><span class="function">shared_ptr&lt;<span class="type">int</span>&gt; <span class="title">p2</span><span class="params">(p)</span></span>; <span class="comment">// reads p</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// thread B</span></span><br><span class="line"><span class="function">shared_ptr&lt;<span class="type">int</span>&gt; <span class="title">p3</span><span class="params">(p)</span></span>; <span class="comment">// OK, multiple reads are safe</span></span><br></pre></td></tr></table></figure>
 <p>读取同一个shared_ptr是线程安全的。<br>同时增加引用计数，安全。</p>
 <p>Code Example 5. Writing different shared_ptr instances from two threads</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// thread A</span></span><br><span class="line">p.<span class="built_in">reset</span>(<span class="keyword">new</span> <span class="built_in">int</span>(<span class="number">1912</span>)); <span class="comment">// writes p</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// thread B</span></span><br><span class="line">p<span class="number">2.</span><span class="built_in">reset</span>(); <span class="comment">// OK, writes p2</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// thread A</span></span><br><span class="line">p.<span class="built_in">reset</span>(<span class="keyword">new</span> <span class="built_in">int</span>(<span class="number">1912</span>)); <span class="comment">// writes p</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// thread B</span></span><br><span class="line">p2.<span class="built_in">reset</span>(); <span class="comment">// OK, writes p2</span></span><br></pre></td></tr></table></figure>
 <p>写不同的shared_ptr实例是线程安全的。<br>不同的实例各自更新自己的引用计数控制块指针，安全。<br>对共同掌管的资源的引用计数原子减1，安全。</p>
 <p>Code Example 6. Reading and writing a shared_ptr from two threads</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// thread A</span></span><br><span class="line">p = p3; <span class="comment">// reads p3, writes p</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// thread B</span></span><br><span class="line">p<span class="number">3.</span><span class="built_in">reset</span>(); <span class="comment">// writes p3; undefined, simultaneous read/write</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// thread A</span></span><br><span class="line">p = p3; <span class="comment">// reads p3, writes p</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// thread B</span></span><br><span class="line">p3.<span class="built_in">reset</span>(); <span class="comment">// writes p3; undefined, simultaneous read/write</span></span><br></pre></td></tr></table></figure>
 <p>同时读写同一个shared_ptr实例，是线程不安全的。<br>同时对引用计数进行增减，如果先看到减到0，那么可能资源已经被释放。</p>
 <p>Code Example 7. Reading and destroying a shared_ptr from two threads</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// thread A</span></span><br><span class="line">p3 = p2; <span class="comment">// reads p2, writes p3</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// thread B</span></span><br><span class="line"><span class="comment">// p2 goes out of scope: undefined, the destructor is considered a &quot;write access&quot;</span></span><br></pre></td></tr></table></figure>
 <p>同时读写（析构也是写）同一个shared_ptr实例，是线程不安全的。</p>
 <p>Code Example 8. Writing a shared_ptr from two threads</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// thread A</span></span><br><span class="line">p<span class="number">3.</span><span class="built_in">reset</span>(<span class="keyword">new</span> <span class="built_in">int</span>(<span class="number">1</span>));</span><br><span class="line"></span><br><span class="line"><span class="comment">// thread B</span></span><br><span class="line">p<span class="number">3.</span><span class="built_in">reset</span>(<span class="keyword">new</span> <span class="built_in">int</span>(<span class="number">2</span>)); <span class="comment">// undefined, multiple writes</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// thread A</span></span><br><span class="line">p3.<span class="built_in">reset</span>(<span class="keyword">new</span> <span class="built_in">int</span>(<span class="number">1</span>));</span><br><span class="line"></span><br><span class="line"><span class="comment">// thread B</span></span><br><span class="line">p3.<span class="built_in">reset</span>(<span class="keyword">new</span> <span class="built_in">int</span>(<span class="number">2</span>)); <span class="comment">// undefined, multiple writes</span></span><br></pre></td></tr></table></figure>
 <p>同时写同一个shared_ptr，可能对引用计数操作多次（应该只能操作一次），线程不安全。</p>
 <p><strong>测试：模拟潜在竞态条件：</strong></p>
 <p>最后一个引用即将销毁时，另一个线程试图复制</p>
@@ -404,7 +404,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 07:26:51" itemprop="dateModified" datetime="2026-06-14T07:26:51+00:00">2026-06-14</time>
+                <time title="Modified: 2026-06-14 07:45:12" itemprop="dateModified" datetime="2026-06-14T07:45:12+00:00">2026-06-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -553,7 +553,7 @@
 </ul>
 <p>但即使叫“Queue”，也不一定是严格的队列行为，而是调度窗口结构。</p>
 <h3 id="缓存行（Cache-Line）"><a href="#缓存行（Cache-Line）" class="headerlink" title="缓存行（Cache Line）"></a>缓存行（Cache Line）</h3><ul>
-<li>位置：在 CPU 的缓存（L1&#x2F;L2&#x2F;L3）中，缓存是以<strong>行（line）</strong>为单位存储的。</li>
+<li>位置：在 CPU 的缓存（L1&#x2F;L2&#x2F;L3）中，缓存是以**行（line）**为单位存储的。</li>
 <li>功能：每行通常是 64 字节，它是 CPU 和内存之间最小的同步单位。</li>
 <li>状态（MESI 协议）：<ul>
 <li>M（Modified）: 修改过，主存未同步</li>
@@ -627,7 +627,7 @@
 <p>程序顺序一致性（program-order consistency）：</p>
 <ul>
 <li>在本线程中观察到的顺序要“看起来像顺序执行”。</li>
-<li><strong>注意：</strong>多线程中可能出现乱序提交。</li>
+<li>**注意：**多线程中可能出现乱序提交。</li>
 </ul>
 <figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1.</span> <span class="keyword">Fetch</span>         &lt;<span class="comment">-- ✅ 顺序取指，从指令缓存中取出下一条指令</span></span><br><span class="line"><span class="number">2.</span> Decode        &lt;<span class="comment">-- 顺序解码，分析操作数和目的寄存器</span></span><br><span class="line"><span class="number">3.</span> <span class="keyword">Rename</span>        &lt;<span class="comment">-- 寄存器重命名</span></span><br><span class="line"><span class="number">4.</span> Dispatch      &lt;<span class="comment">-- 投递到调度窗口，等待执行条件满足</span></span><br><span class="line"><span class="number">5.</span> <span class="keyword">Execute</span>       &lt;<span class="comment">-- ✅ 乱序执行（由调度器决定），实际在执行单元上运行指令</span></span><br><span class="line"><span class="number">6.</span> Writeback     &lt;<span class="comment">-- 写结果到 ROB</span></span><br><span class="line"><span class="number">7.</span> <span class="keyword">Commit</span>        &lt;<span class="comment">-- ✅ 按程序顺序提交（retire），更新寄存器状态或进行内存写入</span></span><br></pre></td></tr></table></figure>
 
@@ -1158,7 +1158,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 07:26:51" itemprop="dateModified" datetime="2026-06-14T07:26:51+00:00">2026-06-14</time>
+                <time title="Modified: 2026-06-14 07:45:12" itemprop="dateModified" datetime="2026-06-14T07:45:12+00:00">2026-06-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1285,7 +1285,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 07:26:51" itemprop="dateModified" datetime="2026-06-14T07:26:51+00:00">2026-06-14</time>
+                <time title="Modified: 2026-06-14 07:45:12" itemprop="dateModified" datetime="2026-06-14T07:45:12+00:00">2026-06-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1336,10 +1336,10 @@
 <h3 id="计时工具：time"><a href="#计时工具：time" class="headerlink" title="计时工具：time"></a>计时工具：<code>time</code></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ /usr/bin/time -p <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
 
 <p>Or,</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="keyword">time</span> <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ time <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
 
 <p>其中（参<br>考<a target="_blank" rel="noopener" href="https://ostechnix.com/how-to-find-the-execution-time-of-a-command-or-process-in-linux/">链接</a>），</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">type</span> -a <span class="keyword">time</span></span><br><span class="line"><span class="keyword">time</span> is a shell keyword</span><br><span class="line"><span class="keyword">time</span> is /usr/bin/time</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">type</span> -a time</span><br><span class="line">time is a shell keyword</span><br><span class="line">time is /usr/bin/time</span><br></pre></td></tr></table></figure>
 
       
     </div>
@@ -1390,7 +1390,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 07:26:51" itemprop="dateModified" datetime="2026-06-14T07:26:51+00:00">2026-06-14</time>
+                <time title="Modified: 2026-06-14 07:45:12" itemprop="dateModified" datetime="2026-06-14T07:45:12+00:00">2026-06-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1581,7 +1581,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 07:26:51" itemprop="dateModified" datetime="2026-06-14T07:26:51+00:00">2026-06-14</time>
+                <time title="Modified: 2026-06-14 07:45:12" itemprop="dateModified" datetime="2026-06-14T07:45:12+00:00">2026-06-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1884,7 +1884,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 07:26:51" itemprop="dateModified" datetime="2026-06-14T07:26:51+00:00">2026-06-14</time>
+                <time title="Modified: 2026-06-14 07:45:12" itemprop="dateModified" datetime="2026-06-14T07:45:12+00:00">2026-06-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2029,7 +2029,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 07:26:51" itemprop="dateModified" datetime="2026-06-14T07:26:51+00:00">2026-06-14</time>
+                <time title="Modified: 2026-06-14 07:45:12" itemprop="dateModified" datetime="2026-06-14T07:45:12+00:00">2026-06-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2146,7 +2146,7 @@
 <li>编译成 32 bit 程序</li>
 </ol>
 <p>需要先安装 32-bit 编译支持：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">sudo</span> apt update</span><br><span class="line"><span class="built_in">sudo</span> apt install gcc-multilib</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install gcc-multilib</span><br></pre></td></tr></table></figure>
 
 <p>然后编译：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -m32 hello.c -o hello32</span><br></pre></td></tr></table></figure>
@@ -2208,7 +2208,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 07:26:51" itemprop="dateModified" datetime="2026-06-14T07:26:51+00:00">2026-06-14</time>
+                <time title="Modified: 2026-06-14 07:45:12" itemprop="dateModified" datetime="2026-06-14T07:45:12+00:00">2026-06-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2284,7 +2284,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 07:26:51" itemprop="dateModified" datetime="2026-06-14T07:26:51+00:00">2026-06-14</time>
+                <time title="Modified: 2026-06-14 07:45:12" itemprop="dateModified" datetime="2026-06-14T07:45:12+00:00">2026-06-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">

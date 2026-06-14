@@ -20,15 +20,15 @@
     var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="变量约定：  LIB：要解析的 *.so 绝对或相对路径（请换成你的文件）。 OFF：栈里 +0x... 的十六进制偏移；下文示例中 **OFF &#x3D; 0x8fa860**（与 addr2line 所用一致）。 PC：栈里 [0x...] 的进程内虚拟地址；示例 **PC &#x3D; 0x15182684b860**（会随每次运行&#x2F;ASLR 变化，仅为与下组 BASE 配套的一例）。 BASE：与">
+  <meta name="description" content="变量约定：  LIB：要解析的 *.so 绝对或相对路径（请换成你的文件）。 OFF：栈里 +0x... 的十六进制偏移；下文示例中 OFF &#x3D; 0x8fa860（与 addr2line 所用一致）。 PC：栈里 [0x...] 的进程内虚拟地址；示例 PC &#x3D; 0x15182684b860（会随每次运行&#x2F;ASLR 变化，仅为与下组 BASE 配套的一例）。 BASE：与上式满足 PC">
 <meta property="og:type" content="article">
 <meta property="og:title" content="从共享库偏移反查符号（Linux &#x2F; ELF）">
 <meta property="og:url" content="https://bi-an.github.io/blog/2026/04/22/tech/cpp/debug/reverse-lookup-symbol-from-shared-library-offset/index.html">
 <meta property="og:site_name" content="江南人物的博客">
-<meta property="og:description" content="变量约定：  LIB：要解析的 *.so 绝对或相对路径（请换成你的文件）。 OFF：栈里 +0x... 的十六进制偏移；下文示例中 **OFF &#x3D; 0x8fa860**（与 addr2line 所用一致）。 PC：栈里 [0x...] 的进程内虚拟地址；示例 **PC &#x3D; 0x15182684b860**（会随每次运行&#x2F;ASLR 变化，仅为与下组 BASE 配套的一例）。 BASE：与">
+<meta property="og:description" content="变量约定：  LIB：要解析的 *.so 绝对或相对路径（请换成你的文件）。 OFF：栈里 +0x... 的十六进制偏移；下文示例中 OFF &#x3D; 0x8fa860（与 addr2line 所用一致）。 PC：栈里 [0x...] 的进程内虚拟地址；示例 PC &#x3D; 0x15182684b860（会随每次运行&#x2F;ASLR 变化，仅为与下组 BASE 配套的一例）。 BASE：与上式满足 PC">
 <meta property="og:locale">
 <meta property="article:published_time" content="2026-04-22T14:20:41.000Z">
-<meta property="article:modified_time" content="2026-06-14T07:26:51.776Z">
+<meta property="article:modified_time" content="2026-06-14T07:45:12.909Z">
 <meta property="article:author" content="bi-an">
 <meta name="twitter:card" content="summary">
 
@@ -223,7 +223,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-06-14 07:26:51" itemprop="dateModified" datetime="2026-06-14T07:26:51+00:00">2026-06-14</time>
+                <time title="Modified: 2026-06-14 07:45:12" itemprop="dateModified" datetime="2026-06-14T07:45:12+00:00">2026-06-14</time>
               </span>
 
           
@@ -240,9 +240,9 @@
         <p><strong>变量约定：</strong></p>
 <ul>
 <li><code>LIB</code>：要解析的 <code>*.so</code> 绝对或相对路径（请换成你的文件）。</li>
-<li><code>OFF</code>：栈里 <code>+0x...</code> 的十六进制偏移；下文示例中 **<code>OFF = 0x8fa860</code>**（与 <code>addr2line</code> 所用一致）。</li>
-<li><code>PC</code>：栈里 <code>[0x...]</code> 的<strong>进程内</strong>虚拟地址；示例 **<code>PC = 0x15182684b860</code>**（会随每次运行&#x2F;ASLR 变化<br>，仅为与下组 <code>BASE</code> 配套的一例）。</li>
-<li><code>BASE</code>：与上式满足 <strong><code>PC - BASE = OFF</code></strong> 的映射基址；示例 **<code>BASE = 0x151825f51000</code>**。具体取<br><code>maps</code> 中哪一段以实际进程为准。</li>
+<li><code>OFF</code>：栈里 <code>+0x...</code> 的十六进制偏移；下文示例中 <strong><code>OFF = 0x8fa860</code></strong>（与 <code>addr2line</code> 所用一致）。</li>
+<li><code>PC</code>：栈里 <code>[0x...]</code> 的<strong>进程内</strong>虚拟地址；示例 <strong><code>PC = 0x15182684b860</code></strong>（会随每次运行&#x2F;ASLR 变化<br>，仅为与下组 <code>BASE</code> 配套的一例）。</li>
+<li><code>BASE</code>：与上式满足 <strong><code>PC - BASE = OFF</code></strong> 的映射基址；示例 <strong><code>BASE = 0x151825f51000</code></strong>。具体取<br><code>maps</code> 中哪一段以实际进程为准。</li>
 </ul>
 <hr>
 <h2 id="场景"><a href="#场景" class="headerlink" title="场景"></a>场景</h2><p>栈回溯里常见这种形式：</p>
@@ -250,9 +250,9 @@
 
 <p>含义：</p>
 <ul>
-<li>**<code>libapp.so</code>**：出问题的共享库（例名，请替换为实际名）。</li>
-<li><strong><code>+0x8fa860</code><strong>：相对该次映射</strong>基址</strong>的偏移（**示例中固定为上述 <code>OFF</code>**）。</li>
-<li><strong><code>[0x15182684b860]</code><strong>：当时的绝对虚拟地址（</strong>示例</strong>；单独用时需配合 <code>maps</code> 中的 <code>BASE</code>）。</li>
+<li><strong><code>libapp.so</code></strong>：出问题的共享库（例名，请替换为实际名）。</li>
+<li><strong><code>+0x8fa860</code></strong>：相对该次映射<strong>基址</strong>的偏移（<strong>示例中固定为上述 <code>OFF</code></strong>）。</li>
+<li><strong><code>[0x15182684b860]</code></strong>：当时的绝对虚拟地址（<strong>示例</strong>；单独用时需配合 <code>maps</code> 中的 <code>BASE</code>）。</li>
 </ul>
 <p>调试时通常先用 <strong><code>+0x...</code> 偏移</strong> 对 <strong>磁盘上的 <code>.so</code> 文件</strong> 做解析。</p>
 <hr>
@@ -283,7 +283,7 @@
 <td>Demangle C++ 符号</td>
 </tr>
 </tbody></table>
-<h3 id="从「PC-映射基址」反算并调用（注意-64-位运算）"><a href="#从「PC-映射基址」反算并调用（注意-64-位运算）" class="headerlink" title="从「PC + 映射基址」反算并调用（注意 64 位运算）"></a>从「PC + 映射基址」反算并调用（注意 64 位运算）</h3><p><code>addr2line</code> 需要的是<strong>相对</strong>该 ELF <strong>文件布局</strong>的偏移，通常就是栈上 <code>+0x...</code>，此处即<br>**<code>0x8fa860</code>**。若你只有 <code>PC</code> 和 <code>BASE</code>，应得到 <code>OFF = PC - BASE</code>（在 64 位下计算）。</p>
+<h3 id="从「PC-映射基址」反算并调用（注意-64-位运算）"><a href="#从「PC-映射基址」反算并调用（注意-64-位运算）" class="headerlink" title="从「PC + 映射基址」反算并调用（注意 64 位运算）"></a>从「PC + 映射基址」反算并调用（注意 64 位运算）</h3><p><code>addr2line</code> 需要的是<strong>相对</strong>该 ELF <strong>文件布局</strong>的偏移，通常就是栈上 <code>+0x...</code>，此处即<br><strong><code>0x8fa860</code></strong>。若你只有 <code>PC</code> 和 <code>BASE</code>，应得到 <code>OFF = PC - BASE</code>（在 64 位下计算）。</p>
 <p><strong>Bash 的 <code>$(( ... ))</code> 对很大的十六进制字面量会溢出</strong>；大地址用 Python 等做减法后再喂给<br><code>addr2line</code>。</p>
 <p><strong>脚本形态（数值与上节 <code>PC</code> &#x2F; <code>OFF</code> &#x2F; <code>BASE</code> 一致）：</strong></p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">python3 &lt;&lt;<span class="string">&#x27;PY&#x27;</span></span><br><span class="line">import subprocess</span><br><span class="line">so = <span class="string">&quot;/path/to/libapp.so&quot;</span>  <span class="comment"># 换成你的 LIB</span></span><br><span class="line">pc = 0x15182684b860</span><br><span class="line">off = 0x8fa860             <span class="comment"># 与栈中 +0x8fa860 相同</span></span><br><span class="line">base = pc - off</span><br><span class="line"><span class="built_in">print</span>(f<span class="string">&quot;BASE = 0x&#123;pc:x&#125; - 0x&#123;off:x&#125; = 0x&#123;base:x&#125;&quot;</span>)</span><br><span class="line">subprocess.run([<span class="string">&quot;addr2line&quot;</span>, <span class="string">&quot;-e&quot;</span>, so, <span class="string">&quot;-f&quot;</span>, <span class="string">&quot;-C&quot;</span>, hex(pc - base)], check=False)</span><br><span class="line">PY</span><br></pre></td></tr></table></figure>
@@ -313,7 +313,7 @@
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">00000000008fa71a l     F .text	0000000000000abc              _ZN5myapp15CommandHandlerEiPPKclS1_</span><br></pre></td></tr></table></figure>
 
 <p>行首 <code>0x8fa71a</code> 为该符号的<strong>起点</strong>，大小 <code>0xabc</code>；<code>0x8fa860</code> 落在区间 <code>[0x8fa71a, 0x8fa71a+0xabc)</code><br>内。精确行号仍以 <code>addr2line</code> 为准。</p>
-<h3 id="readelf：查看-LOAD-段"><a href="#readelf：查看-LOAD-段" class="headerlink" title="readelf：查看 LOAD 段"></a><code>readelf</code>：查看 LOAD 段</h3><p>下面来自与上述 <strong><code>0x8fa860</code></strong> 同一 ELF 样例的 <strong><code>readelf -l | head -20</code><strong>（段尺寸因库而异，此组与示<br>例偏移</strong>同时出现</strong>时便于对照；若你换库则整段以本机为准）：</p>
+<h3 id="readelf：查看-LOAD-段"><a href="#readelf：查看-LOAD-段" class="headerlink" title="readelf：查看 LOAD 段"></a><code>readelf</code>：查看 LOAD 段</h3><p>下面来自与上述 <strong><code>0x8fa860</code></strong> 同一 ELF 样例的 <strong><code>readelf -l | head -20</code></strong>（段尺寸因库而异，此组与示<br>例偏移<strong>同时出现</strong>时便于对照；若你换库则整段以本机为准）：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">readelf -l /path/to/libapp.so | <span class="built_in">head</span> -20</span><br></pre></td></tr></table></figure>
 
 <p><strong>配套示例输出：</strong></p>
