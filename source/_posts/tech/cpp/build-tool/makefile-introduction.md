@@ -3,7 +3,7 @@ categories: cpp
 date: 2023-11-17 14:19:35
 tags:
 - cpp
-- cmake
+- make
 title: Makefile入门
 ---
 

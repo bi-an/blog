@@ -3,7 +3,7 @@ categories: cpp
 date: 2025-08-12 20:21:42
 tags:
 - cpp
-- cmake
+- bazel
 title: Bazel入门
 ---
 
@@ -94,17 +94,17 @@ hello_test.cpp
 
 ### 写一个简单 BUILD 文件
 
-{% include_code tech/cpp/make-cmake/bazel-introduction-01.BUILD %}
+{% include_code lang:bazel tech/cpp/make-cmake/bazel-introduction-01.BUILD %}
 
 ### 简单源码示例
 
-{% include_code tech/cpp/make-cmake/bazel-introduction-02.h %}
+{% include_code lang:cpp tech/cpp/make-cmake/bazel-introduction-02.h %}
 
-{% include_code tech/cpp/make-cmake/bazel-introduction-03.cpp %}
+{% include_code lang:cpp tech/cpp/make-cmake/bazel-introduction-03.cpp %}
 
-{% include_code tech/cpp/make-cmake/bazel-introduction-04.cpp %}
+{% include_code lang:cpp tech/cpp/make-cmake/bazel-introduction-04.cpp %}
 
-{% include_code tech/cpp/make-cmake/bazel-introduction-05.cpp %}
+{% include_code lang:cpp tech/cpp/make-cmake/bazel-introduction-05.cpp %}
 
 ### 构建和测试
 
