@@ -520,7 +520,7 @@ $ objdump -T /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep condition_variable
 
 在源文件中指定版本
 
-{% include_code symver lang:cpp from:1 tech/cpp/compile-link/compile-and-link-01.cpp %}
+{% include_code symver lang:cpp from:1 compile-and-link-01.cpp %}
 
 编译：
 
@@ -540,4 +540,4 @@ std::condition_variable::wait(std::unique_lock<std::mutex>&)@GLIBCXX_3.4.11
 
 示例代码：
 
-{% include_code tech/cpp/compile-link/compile-and-link-02.cpp %}
+{% include_code lang:cpp compile-and-link-02.cpp %}

@@ -11,4 +11,4 @@ title: CUDA矩阵乘法
 
 <a href='https://postimg.cc/BjfXcPQ9' target='_blank'><img src='https://i.postimg.cc/dVLrFGb1/matrix-Mul.png' border='0' alt='matrix-Mul'/></a>
 
-{% include_code tech/cuda/cuda-matrix-multiplication-01.cpp %}
+{% include_code lang:cpp from:54 to:126 cuda-matrix-multiplication-01.cpp %}

@@ -11,16 +11,16 @@ title: TBB典型场景
 
 tasks
 
-{% include_code tech/concurrent/tbb-typical-scenarios-01.hpp %}
+{% include_code lang:cpp tbb-typical-scenarios-01.hpp %}
 
 方案一
 
-{% include_code tech/concurrent/tbb-typical-scenarios-02.cpp %}
+{% include_code lang:cpp tbb-typical-scenarios-02.cpp %}
 
 方案二
 
-{% include_code tech/concurrent/tbb-typical-scenarios-03.cpp %}
+{% include_code lang:cpp tbb-typical-scenarios-03.cpp %}
 
 方案三
 
-{% include_code tech/concurrent/tbb-typical-scenarios-04.cpp %}
+{% include_code lang:cpp tbb-typical-scenarios-04.cpp %}

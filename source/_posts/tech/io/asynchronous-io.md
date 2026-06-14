@@ -208,7 +208,7 @@ Linux io_uring 的设计哲学是：
 
 ### io_uring 的使用示例（C 语言）
 
-{% include_code tech/io/asynchronous-io-01.c %}
+{% include_code lang:cpp asynchronous-io-01.c %}
 
 这个例子展示了 最基本的异步文件读取：
 

@@ -59,7 +59,7 @@ NUMA（Non-Uniform Memory Access，非统一内存访问）是一种计算机内
 
 以下示例演示如何验证硬亲和性的效果。创建一个多线程程序：
 
-{% include_code tech/cpp/optimize/numa-01.c %}
+{% include_code perf/numa/affinity_test.c %}
 
 编译程序：
 ```bash
@@ -76,11 +76,11 @@ taskset -c 0 ./affinity_test
 
 **Threads View示例输出：**
 
-{% include_code tech/cpp/optimize/numa-02.txt %}
+{% include_code perf/numa/affinity_test_threads_view_cpu0.txt %}
 
 **CPU View示例输出：**
 
-{% include_code tech/cpp/optimize/numa-03.txt %}
+{% include_code perf/numa/affinity_test_cpu_view_cpu0.txt %}
 
 **观察结果：** 所有200个线程都运行在CPU 0上，CPU 0的利用率为100%，其他CPU未被使用。这证明了硬亲和性：即使创建了多个线程，它们也只能在绑定的CPU核心上运行。
 
@@ -92,11 +92,11 @@ taskset -c 0-1 ./affinity_test
 
 **Threads View示例输出：**
 
-{% include_code tech/cpp/optimize/numa-04.txt %}
+{% include_code perf/numa/affinity_test_threads_view_cpu01.txt %}
 
 **CPU View示例输出：**
 
-{% include_code tech/cpp/optimize/numa-05.txt %}
+{% include_code perf/numa/affinity_test_cpu_view_cpu01.txt %}
 
 **观察结果：** 200个线程被分配到CPU 0和CPU 1上，两个CPU的利用率都是100%，其他CPU未被使用。这证明了硬亲和性限制了线程只能在指定的CPU核心范围内运行。
 
@@ -175,11 +175,11 @@ taskset -c 0,2,4,6 ./your_program  # 绑定到CPU 0,2,4,6
 
 **C语言示例：**
 
-{% include_code tech/cpp/optimize/numa-06.c %}
+{% include_code perf/numa/sched_setaffinity.c %}
 
 **多线程示例：**
 
-{% include_code tech/cpp/optimize/numa-07.c %}
+{% include_code perf/numa/sched_setaffinity_threads.c %}
 
 编译命令：
 ```bash
@@ -489,7 +489,7 @@ numactl --cpunodebind=0 --membind=0 ./program
 
 #### 示例1：C语言中使用libnuma库
 
-{% include_code tech/cpp/optimize/numa-08.c %}
+{% include_code perf/numa/numa_basic.c %}
 
 编译命令：
 ```bash
@@ -498,7 +498,7 @@ gcc -o numa_example numa_basic.c -lnuma
 
 #### 示例2：Python中使用numa库
 
-{% include_code tech/cpp/optimize/numa-09.py %}
+{% include_code perf/numa/numa_python.py %}
 
 #### 示例3：多线程程序中的NUMA优化
 
@@ -506,7 +506,7 @@ gcc -o numa_example numa_basic.c -lnuma
 
 当不同线程需要绑定到不同NUMA节点时，需要在线程内部手动设置CPU亲和性和内存分配：
 
-{% include_code tech/cpp/optimize/numa-10.c %}
+{% include_code perf/numa/numa_threads_different_nodes.c %}
 
 **方法二：所有线程绑定到同一NUMA节点**
 
@@ -519,7 +519,7 @@ gcc -o numa_example numa_basic.c -lnuma
 
 如果所有线程都需要绑定到同一个NUMA节点，可以在主线程中使用 `numa_run_on_node()` 统一绑定：
 
-{% include_code tech/cpp/optimize/numa-11.c %}
+{% include_code perf/numa/numa_threads_same_node.c %}
 
 **numa_run_on_node的特点：**
 - ✅ **优点**：代码简单，一个函数调用完成绑定

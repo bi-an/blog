@@ -10,7 +10,7 @@
 
 - 交叉内容：物理目录归大类，标签做关联
 
-- 目录命名：`_posts`目录下的目录统一采用Golang命名规则，使用单数。
+- 目录命名：`_posts`目录下的目录统一采用Golang命名规则，如：`_posts/tech/cpp/basic/`
 
 ---
 
@@ -29,13 +29,11 @@ source
 │       │   ├── cpp/        # 完整镜像 _posts/tech/cpp 二级所有子目录
 │       │   │   ├── basic/
 │       │   │   ├── compile-link/
-│       │   │   ├── build-tool/
+│       │   │   ├── make-cmake/
 │       │   │   ├── assembly/
 │       │   │   ├── debug/
-│       │   │   ├── performance-optimize/
-│       │   │   ├── third-lib/
-│       │   │   ├── cpp-book/
-│       │   │   └── cpp-project/
+│       │   │   ├── optimize/
+│       │   │   └── third-lib/
 │       │   ├── process/
 │       │   ├── thread/
 │       │   ├── concurrent/
@@ -55,10 +53,10 @@ source
     │   ├── cpp/                    # C/C++ 完整技术栈（应用层）
     │   │   ├── basic               # 语法、STL、新特性、基础编程
     │   │   ├── compile-link        # 编译流程、汇编阶段、链接原理、静态/动态库
-    │   │   ├── build-tool          # Makefile / CMake 工程构建
+    │   │   ├── make-cmake          # Makefile / CMake 工程构建
     │   │   ├── assembly            # 纯汇编指令、反汇编、内联汇编
     │   │   ├── debug               # GDB调试、内存排查、崩溃分析、问题定位
-    │   │   ├── performance-optimize            # 代码性能优化、内存优化、调优方法论
+    │   │   ├── optimize            # 代码性能优化、内存优化、调优方法论
     │   │   ├── third-lib           # 第三方库实操、使用教程（libtirpc等）
     │   │   ├── cpp-book            # C/C++ 相关书籍笔记
     │   │   └── cpp-project         # C/C++ 落地实战项目
@@ -116,7 +114,7 @@ source
 
 - **compile\-link**：编译流程、链接机制、静态/动态库、符号解析
 
-- **build\-tool**：Makefile、CMake、Bazel等构建工具与脚本
+- **make\-cmake**：Makefile、CMake工程构建与脚本
 
 - **assembly**：汇编指令、反汇编、内联汇编
 

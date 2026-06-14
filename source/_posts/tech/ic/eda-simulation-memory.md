@@ -40,7 +40,7 @@ Memory = 存储 + 访问逻辑
 - 随机 bit flip / SEU：1% 概率错误注入
 - 统计与功耗估算基础：记录读写次数、命中数、平均延迟
 
-{% include_code tech/ic/eda-simulation-memory-01.cpp %}
+{% include_code lang:cpp eda-simulation-memory-01.cpp %}
 
 输出的 memory_power.csv 文件内容示例：
 
@@ -68,7 +68,7 @@ Cycle,DynamicPower,StaticPower,TotalPower
 
 功耗分析
 
-{% include_code tech/ic/eda-simulation-memory-02.py %}
+{% include_code lang:python eda-simulation-memory-02.py %}
 
 ### burst/multi-port 总线冲突
 
@@ -131,11 +131,11 @@ Cache Tag 仿真代码
 
 > FIXME: 该代码会 coredump 。
 
-{% include_code tech/ic/eda-simulation-memory-03.h %}
+{% include_code lang:cpp eda-simulation-memory-03.h %}
 
-{% include_code tech/ic/eda-simulation-memory-04.cpp %}
+{% include_code lang:cpp eda-simulation-memory-04.cpp %}
 
-{% include_code tech/ic/eda-simulation-memory-05.cpp %}
+{% include_code lang:cpp eda-simulation-memory-05.cpp %}
 
-{% include_code tech/ic/eda-simulation-memory-06.Makefile %}
+{% include_code lang:cpp eda-simulation-memory-06.Makefile %}
 
