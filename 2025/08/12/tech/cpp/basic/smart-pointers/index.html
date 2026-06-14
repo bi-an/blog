@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.2">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="shared_ptr是线程安全的吗？Boost官网：shared_ptr_thread_safety shared_ptr与内建类型（比如int, char；std::string不是内建类型）具有相同的线程安全等级：  同一个shared_ptr可以被并发读； 不同的shared_ptr可以被并发写（析构也是写）。 其他并发访问是未定义的。  Examples: 1shared_ptr&lt;i">
+<meta property="og:type" content="article">
+<meta property="og:title" content="智能指针">
+<meta property="og:url" content="https://bi-an.github.io/blog/2025/08/12/tech/cpp/basic/smart-pointers/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="shared_ptr是线程安全的吗？Boost官网：shared_ptr_thread_safety shared_ptr与内建类型（比如int, char；std::string不是内建类型）具有相同的线程安全等级：  同一个shared_ptr可以被并发读； 不同的shared_ptr可以被并发写（析构也是写）。 其他并发访问是未定义的。  Examples: 1shared_ptr&lt;i">
+<meta property="og:locale">
+<meta property="article:published_time" content="2025-08-12T10:16:44.000Z">
+<meta property="article:modified_time" content="2026-06-14T03:24:30.838Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="basic">
+<meta property="article:tag" content="cpp">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2025/08/12/tech/cpp/basic/smart-pointers/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>智能指针 | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/12/tech/cpp/basic/smart-pointers/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          智能指针
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-08-12 10:16:44" itemprop="dateCreated datePublished" datetime="2025-08-12T10:16:44+00:00">2025-08-12</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-06-14 03:24:30" itemprop="dateModified" datetime="2026-06-14T03:24:30+00:00">2026-06-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="shared-ptr是线程安全的吗？"><a href="#shared-ptr是线程安全的吗？" class="headerlink" title="shared_ptr是线程安全的吗？"></a>shared_ptr是线程安全的吗？</h2><p><a target="_blank" rel="noopener" href="https://www.boost.org/doc/libs/1_82_0/libs/smart_ptr/doc/html/smart_ptr.html#shared_ptr_thread_safety">Boost官网：shared_ptr_thread_safety</a></p>
+<p>shared_ptr与内建类型（比如int, char；std::string不是内建类型）具有相同的线程安全等级：</p>
+<ul>
+<li>同一个shared_ptr可以被并发读；</li>
+<li>不同的shared_ptr可以被并发写（析构也是写）。</li>
+<li>其他并发访问是未定义的。</li>
+</ul>
+<p>Examples:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">shared_ptr&lt;<span class="type">int</span>&gt; <span class="title">p</span><span class="params">(<span class="keyword">new</span> <span class="type">int</span>(<span class="number">42</span>))</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>Code Example 4. Reading a shared_ptr from two threads</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// thread A</span></span><br><span class="line"><span class="function">shared_ptr&lt;<span class="type">int</span>&gt; <span class="title">p2</span><span class="params">(p)</span></span>; <span class="comment">// reads p</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// thread B</span></span><br><span class="line"><span class="function">shared_ptr&lt;<span class="type">int</span>&gt; <span class="title">p3</span><span class="params">(p)</span></span>; <span class="comment">// OK, multiple reads are safe</span></span><br></pre></td></tr></table></figure>
+<p>读取同一个shared_ptr是线程安全的。<br>同时增加引用计数，安全。</p>
+<p>Code Example 5. Writing different shared_ptr instances from two threads</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// thread A</span></span><br><span class="line">p.<span class="built_in">reset</span>(<span class="keyword">new</span> <span class="built_in">int</span>(<span class="number">1912</span>)); <span class="comment">// writes p</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// thread B</span></span><br><span class="line">p<span class="number">2.</span><span class="built_in">reset</span>(); <span class="comment">// OK, writes p2</span></span><br></pre></td></tr></table></figure>
+<p>写不同的shared_ptr实例是线程安全的。<br>不同的实例各自更新自己的引用计数控制块指针，安全。<br>对共同掌管的资源的引用计数原子减1，安全。</p>
+<p>Code Example 6. Reading and writing a shared_ptr from two threads</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// thread A</span></span><br><span class="line">p = p3; <span class="comment">// reads p3, writes p</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// thread B</span></span><br><span class="line">p<span class="number">3.</span><span class="built_in">reset</span>(); <span class="comment">// writes p3; undefined, simultaneous read/write</span></span><br></pre></td></tr></table></figure>
+<p>同时读写同一个shared_ptr实例，是线程不安全的。<br>同时对引用计数进行增减，如果先看到减到0，那么可能资源已经被释放。</p>
+<p>Code Example 7. Reading and destroying a shared_ptr from two threads</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// thread A</span></span><br><span class="line">p3 = p2; <span class="comment">// reads p2, writes p3</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// thread B</span></span><br><span class="line"><span class="comment">// p2 goes out of scope: undefined, the destructor is considered a &quot;write access&quot;</span></span><br></pre></td></tr></table></figure>
+<p>同时读写（析构也是写）同一个shared_ptr实例，是线程不安全的。</p>
+<p>Code Example 8. Writing a shared_ptr from two threads</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// thread A</span></span><br><span class="line">p<span class="number">3.</span><span class="built_in">reset</span>(<span class="keyword">new</span> <span class="built_in">int</span>(<span class="number">1</span>));</span><br><span class="line"></span><br><span class="line"><span class="comment">// thread B</span></span><br><span class="line">p<span class="number">3.</span><span class="built_in">reset</span>(<span class="keyword">new</span> <span class="built_in">int</span>(<span class="number">2</span>)); <span class="comment">// undefined, multiple writes</span></span><br></pre></td></tr></table></figure>
+<p>同时写同一个shared_ptr，可能对引用计数操作多次（应该只能操作一次），线程不安全.</p>
+<p><strong>测试：模拟潜在竞态条件：</strong></p>
+<p>最后一个引用即将销毁时，另一个线程试图复制</p>
+<details>
+<summary>示例1：复制构造和reset()竞争</summary>
+
+
+
+</details>
+
+<p>总结： <code>reset()</code> 与复制构造需要加锁保护。</p>
+<details>
+<summary>示例2：复制构造和析构竞争</summary>
+
+
+
+</details>
+
+
+<p><strong>总结：</strong></p>
+<ul>
+<li>不能以左值引用来复制构造shared_ptr，否则会存在竞争。</li>
+<li>可以使用const引用，因为可以延续shared_ptr的生命期，析构被推迟，间接消除了竞态。</li>
+<li>程序中shared_ptr读写操作同时存在时，需要加锁。</li>
+<li>要防止shared_ptr析构：在shared_ptr副本的整个作用域内加锁同样可以保护这种情况。</li>
+<li>C++20 开始支持 <code>atomic&lt;shared_ptr&lt;T&gt;&gt;</code>，可以安全地在多个线程之间共享和更新 shared_ptr。</li>
+<li>如果 thread A 只是想观察 p2 是否还存在，可以使用 std::weak_ptr 来观察。</li>
+</ul>
+<h2 id="shared-ptr为什么要隐式自持一个weak-count？"><a href="#shared-ptr为什么要隐式自持一个weak-count？" class="headerlink" title="shared_ptr为什么要隐式自持一个weak count？"></a>shared_ptr为什么要隐式自持一个weak count？</h2><p>每个 shared_ptr 和 weak_ptr 都指向一个 控制块（control block），这个控制块通常包含：</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>strong count</td>
+<td>当前活跃的 shared_ptr 数量</td>
+</tr>
+<tr>
+<td>weak count</td>
+<td>当前活跃的 weak_ptr 数量 + 当前活跃的 shared_ptr 数量</td>
+</tr>
+<tr>
+<td>指向对象的指针</td>
+<td>被管理的资源</td>
+</tr>
+</tbody></table>
+<p>控制块的生命周期由 weak count 决定，只要还有 weak_ptr 或 shared_ptr 存在，控制块就不能被销毁。</p>
+<ul>
+<li>weak_ptr和shared_ptr可能存在只有两者之一的情况，所以他们都必须要维护控制块的生命周期。</li>
+<li>如果只有weak_ptr对weak count进行计数，那么可能出现shared_ptr和weak_ptr共同看到weak count为0的情况：<ul>
+<li>weak_ptr析构将weak count降低为0，准备释放控制块；</li>
+<li>shared_ptr析构或reset，检测到weak count为0，准备释放控制块；</li>
+<li>这样就释放了两次，因为他们都持有指针，且没有设置相互通知的机制。</li>
+</ul>
+</li>
+<li>但是，如果weak_ptr和shared_ptr都对weak count进行计数，那么就不可能同时观察到weak count为0的情况。</li>
+</ul>
+<h2 id="动手实现一个shared-ptr"><a href="#动手实现一个shared-ptr" class="headerlink" title="动手实现一个shared_ptr"></a>动手实现一个shared_ptr</h2><details>
+<summary>SimpleSharedPtr</summary>
+
+
+
+</details>
+
+<h2 id="附录：shared-ptr源码"><a href="#附录：shared-ptr源码" class="headerlink" title="附录：shared_ptr源码"></a>附录：shared_ptr源码</h2><p><a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/libstdc++/latest-doxygen/index.html">https://gcc.gnu.org/onlinedocs/libstdc++/latest-doxygen/index.html</a></p>
+<ul>
+<li><code>/usr/include/c++/11/bits/shared_ptr.h</code></li>
+<li><code>/usr/include/c++/11/bits/shared_ptr_base.h</code></li>
+<li><code>/usr/include/c++/11/bits/shared_ptr_atomic.h</code></li>
+</ul>
+<details>
+<summary>shared_ptr.h</summary>
+
+</details>
+
+<details>
+<summary>shared_ptr_base.h</summary>
+
+</details>
+
+<details>
+<summary>shared_ptr_atomic.h</summary>
+
+</details>
+
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/cpp/" rel="tag"># cpp</a>
+              <a href="/blog/tags/basic/" rel="tag"># basic</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2025/08/01/tech/concurrent/memory-model/" rel="prev" title="内存模型">
+      <i class="fa fa-chevron-left"></i> 内存模型
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2025/08/12/tech/cpp/build-tool/bazel-introduction/" rel="next" title="Bazel入门">
+      Bazel入门 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#shared-ptr%E6%98%AF%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E7%9A%84%E5%90%97%EF%BC%9F"><span class="nav-text">shared_ptr是线程安全的吗？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#shared-ptr%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E9%9A%90%E5%BC%8F%E8%87%AA%E6%8C%81%E4%B8%80%E4%B8%AAweak-count%EF%BC%9F"><span class="nav-text">shared_ptr为什么要隐式自持一个weak count？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%A8%E6%89%8B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AAshared-ptr"><span class="nav-text">动手实现一个shared_ptr</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%99%84%E5%BD%95%EF%BC%9Ashared-ptr%E6%BA%90%E7%A0%81"><span class="nav-text">附录：shared_ptr源码</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">123</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">39</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://cuda-doc.readthedocs.io/" title="https:&#x2F;&#x2F;cuda-doc.readthedocs.io" rel="noopener" target="_blank">CUDA中文手册</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://infiniband-doc.readthedocs.io/" title="https:&#x2F;&#x2F;infiniband-doc.readthedocs.io&#x2F;" rel="noopener" target="_blank">InfiniBand中文手册</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+</body>
+</html>

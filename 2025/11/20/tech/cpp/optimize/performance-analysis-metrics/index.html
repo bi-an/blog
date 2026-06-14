@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 8.1.2">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="CPU 硬件层次概念 Package → 整个处理器封装，包含一个或多个 die。 Socket (S) → 主板上的物理 CPU 插槽 Die (D) → 封装里的裸片（可能有多个 chiplet&#x2F;die） Core (C) → die 上的计算核心 Thread (T) → 核心里的硬件线程（SMT&#x2F;超线程），即逻辑处理器  假设一台双路服务器，每个 socket 上的 C">
+<meta property="og:type" content="article">
+<meta property="og:title" content="性能分析指标和概念">
+<meta property="og:url" content="https://bi-an.github.io/blog/2025/11/20/tech/cpp/optimize/performance-analysis-metrics/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="CPU 硬件层次概念 Package → 整个处理器封装，包含一个或多个 die。 Socket (S) → 主板上的物理 CPU 插槽 Die (D) → 封装里的裸片（可能有多个 chiplet&#x2F;die） Core (C) → die 上的计算核心 Thread (T) → 核心里的硬件线程（SMT&#x2F;超线程），即逻辑处理器  假设一台双路服务器，每个 socket 上的 C">
+<meta property="og:locale">
+<meta property="article:published_time" content="2025-11-20T15:54:29.000Z">
+<meta property="article:modified_time" content="2026-06-14T03:24:30.840Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="cpp">
+<meta property="article:tag" content="optimize">
+<meta property="article:tag" content="performance">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2025/11/20/tech/cpp/optimize/performance-analysis-metrics/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>性能分析指标和概念 | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/11/20/tech/cpp/optimize/performance-analysis-metrics/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          性能分析指标和概念
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-11-20 15:54:29" itemprop="dateCreated datePublished" datetime="2025-11-20T15:54:29+00:00">2025-11-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-06-14 03:24:30" itemprop="dateModified" datetime="2026-06-14T03:24:30+00:00">2026-06-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="CPU-硬件层次概念"><a href="#CPU-硬件层次概念" class="headerlink" title="CPU 硬件层次概念"></a>CPU 硬件层次概念</h2><ul>
+<li>Package → 整个处理器封装，包含一个或多个 die。</li>
+<li>Socket (S) → 主板上的物理 CPU 插槽</li>
+<li>Die (D) → 封装里的裸片（可能有多个 chiplet&#x2F;die）</li>
+<li>Core (C) → die 上的计算核心</li>
+<li>Thread (T) → 核心里的硬件线程（SMT&#x2F;超线程），即逻辑处理器</li>
+</ul>
+<p>假设一台双路服务器，每个 socket 上的 CPU 封装里有两个 die，每个 die 有 8 个核心：</p>
+<ul>
+<li><code>S0-D0-C0</code> → Socket 0 上 Die 0 的 Core 0</li>
+<li><code>S0-D1-C3</code> → Socket 0 上 Die 1 的 Core 3</li>
+<li><code>S1-D0-C7</code> → Socket 1 上 Die 0 的 Core 7</li>
+</ul>
+<p>如果开启超线程，还可能进一步细分为：</p>
+<ul>
+<li><code>S0-D0-C0-T0</code> → Socket 0, Die 0, Core 0, Thread 0</li>
+<li><code>S0-D0-C0-T1</code> → Socket 0, Die 0, Core 0, Thread 1</li>
+</ul>
+<p>可以用命令 <code>lscpu</code> 或 <code>cat /proc/cpuinfo</code> 来查看逻辑 CPU ID 与 Socket&#x2F;Core&#x2F;Thread 的对应关系。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ lscpu</span><br><span class="line">...</span><br><span class="line">    Thread(s) per core:  2</span><br><span class="line">    Core(s) per socket:  4</span><br><span class="line">    Socket(s):           1</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">总逻辑 CPU 数量 = 1 × 4 × 2 = 8</span><br></pre></td></tr></table></figure>
+
+<p>nproc 输出的是 逻辑 CPU 数</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">nproc</span></span><br><span class="line">8</span><br></pre></td></tr></table></figure>
+
+<h2 id="CPU-微架构概念"><a href="#CPU-微架构概念" class="headerlink" title="CPU 微架构概念"></a>CPU 微架构概念</h2><ul>
+<li>Pipeline：指令执行的分阶段过程（取指、解码、执行、写回）。</li>
+<li>Width：每周期最多能发射多少条 uops（如 4‑wide）。</li>
+<li>Slot：每周期的发射机会，宽度决定 slot 数。</li>
+<li>ROB (Reorder Buffer)：乱序执行的关键结构，保证指令按程序顺序退休。</li>
+<li>Scheduler：调度器，决定哪些 uops 在某周期进入执行端口。</li>
+<li>Execution Ports：后端的执行单元入口，比如整数 ALU、浮点 FPU、Load&#x2F;Store。</li>
+<li>Branch Predictor：预测分支走向，减少流水线停顿。</li>
+</ul>
+<h2 id="存储与层次结构"><a href="#存储与层次结构" class="headerlink" title="存储与层次结构"></a>存储与层次结构</h2><ul>
+<li>Registers：CPU 内部的寄存器，最快的存储。</li>
+<li>Cache：分层缓存（L1、L2、L3），用于减少访存延迟。</li>
+<li>LLC (Last Level Cache)：最后一级缓存，通常是 L3，多个核心共享。</li>
+<li>Memory Controller：负责和 DRAM 通信。</li>
+<li>NUMA (Non-Uniform Memory Access)：多 socket 系统里，内存访问延迟因位置不同而不同。</li>
+</ul>
+<h2 id="性能分析相关"><a href="#性能分析相关" class="headerlink" title="性能分析相关"></a>性能分析相关</h2><ul>
+<li>IPC (Instructions Per Cycle)：每周期平均执行的指令数。</li>
+<li>ILP (Instruction-Level Parallelism)：指令级并行度，程序能提供多少独立指令。</li>
+<li>Topdown Metrics：Retiring、Bad Speculation、Frontend Bound、Backend Bound。</li>
+<li>BE&#x2F;Core vs BE&#x2F;Mem：后端瓶颈是算力不足还是访存延迟。</li>
+<li>CPI (Cycles Per Instruction)：每条指令平均耗费的周期数。</li>
+</ul>
+<h2 id="Top-Down-Microarchitecture-Analysis-TMA"><a href="#Top-Down-Microarchitecture-Analysis-TMA" class="headerlink" title="Top-Down Microarchitecture Analysis (TMA)"></a>Top-Down Microarchitecture Analysis (TMA)</h2><p>这是 Intel 提出的一个 CPU 性能瓶颈分析框架。它的核心思想是：把 CPU 每个周期的 发射机会（slot） 分门<br>别类，逐层细分，最终定位到性能瓶颈的根源。</p>
+<p>Topdown 是分层树状结构：</p>
+<ul>
+<li>Level 1：Retiring &#x2F; Bad Speculation &#x2F; Frontend Bound &#x2F; Backend Bound</li>
+<li>Level 2：Backend Bound → BE&#x2F;Core、BE&#x2F;Mem</li>
+<li>Level 3：BE&#x2F;Mem → L1 Bound、L2 Bound、DRAM Bound</li>
+</ul>
+<ol>
+<li>Level 1: 顶层四大分类</li>
+</ol>
+<p>在每个周期的 slot 中，CPU 的工作被划分为四类：</p>
+<ul>
+<li><p>Retiring</p>
+<ul>
+<li>指令成功退休（完成执行并写回结果）。</li>
+<li>这是“有用工作”，比例越高说明 CPU 利用率越好。</li>
+</ul>
+</li>
+<li><p>Bad Speculation</p>
+<ul>
+<li>由于错误预测（如分支预测失败、错误路径执行）导致的浪费。</li>
+<li>这些 slot 最终没有产生有效结果。</li>
+</ul>
+</li>
+<li><p>Frontend Bound (FE)</p>
+<ul>
+<li>前端受限：取指、解码、指令缓存不足。</li>
+<li>CPU 等待指令进入流水线。</li>
+</ul>
+</li>
+<li><p>Backend Bound (BE)</p>
+<ul>
+<li>后端受限：执行单元或数据不可用。</li>
+<li>CPU 等待算力资源或内存数据。</li>
+</ul>
+</li>
+</ul>
+<p>这四类加起来 ≈ 100%，覆盖了所有 slot 的去向。</p>
+<ol start="2">
+<li>Level 2: Backend 的进一步细分</li>
+</ol>
+<ul>
+<li>BE&#x2F;Core<ul>
+<li>后端瓶颈主要来自核心执行资源不足（算术逻辑单元、浮点单元、端口冲突）。</li>
+<li>程序算力密集。</li>
+</ul>
+</li>
+<li>BE&#x2F;Mem<ul>
+<li>后端瓶颈主要来自访存延迟（缓存未命中、DRAM 访问慢）。</li>
+<li>程序内存密集。</li>
+</ul>
+</li>
+</ul>
+<ol start="3">
+<li>Level 3: BE&#x2F;Mem 的进一步细分</li>
+</ol>
+<ul>
+<li>L1 Bound</li>
+<li>L2 Bound</li>
+<li>L3 Bound</li>
+<li>DRAM Bound</li>
+</ul>
+<h3 id="Roofline"><a href="#Roofline" class="headerlink" title="Roofline"></a>Roofline</h3><h2 id="性能分析工具"><a href="#性能分析工具" class="headerlink" title="性能分析工具"></a>性能分析工具</h2><ol>
+<li>perf (Linux)</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/andikleen/pmu-tools">Intel® pmu-tools</a> ：对 perf 的封装</li>
+<li><a target="_blank" rel="noopener" href="https://www.intel.com/content/www/us/en/developer/tools/oneapi/advisor-download.html">Intel Advisor</a></li>
+</ol>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
+<li>perf-ninja: <a target="_blank" rel="noopener" href="https://github.com/dendibakh/perf-ninja">代码</a> +<br><a target="_blank" rel="noopener" href="https://www.youtube.com/playlist?list=PLRWO2AL1QAV6bJAU2kgB4xfodGID43Y5d">视频</a></li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/cpp/" rel="tag"># cpp</a>
+              <a href="/blog/tags/optimize/" rel="tag"># optimize</a>
+              <a href="/blog/tags/performance/" rel="tag"># performance</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2025/09/24/tech/concurrent/memory-order-experiment/" rel="prev" title="memory_order测试">
+      <i class="fa fa-chevron-left"></i> memory_order测试
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2025/11/21/tech/cpp/optimize/core-bound/" rel="next" title="Core Bound">
+      Core Bound <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#CPU-%E7%A1%AC%E4%BB%B6%E5%B1%82%E6%AC%A1%E6%A6%82%E5%BF%B5"><span class="nav-text">CPU 硬件层次概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CPU-%E5%BE%AE%E6%9E%B6%E6%9E%84%E6%A6%82%E5%BF%B5"><span class="nav-text">CPU 微架构概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AD%98%E5%82%A8%E4%B8%8E%E5%B1%82%E6%AC%A1%E7%BB%93%E6%9E%84"><span class="nav-text">存储与层次结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E7%9B%B8%E5%85%B3"><span class="nav-text">性能分析相关</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Top-Down-Microarchitecture-Analysis-TMA"><span class="nav-text">Top-Down Microarchitecture Analysis (TMA)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Roofline"><span class="nav-text">Roofline</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7"><span class="nav-text">性能分析工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">123</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">39</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://cuda-doc.readthedocs.io/" title="https:&#x2F;&#x2F;cuda-doc.readthedocs.io" rel="noopener" target="_blank">CUDA中文手册</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://infiniband-doc.readthedocs.io/" title="https:&#x2F;&#x2F;infiniband-doc.readthedocs.io&#x2F;" rel="noopener" target="_blank">InfiniBand中文手册</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+</body>
+</html>
