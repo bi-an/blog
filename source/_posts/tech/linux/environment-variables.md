@@ -1,11 +1,12 @@
 ---
-categories: linux
-date: 2024-01-23 21:49:40
-tags:
-- linux
-- shell
 title: Environment Variables
+date: 2024-01-23 21:49:40
+categories: linux
+tags:
+ - linux
+ - shell
 ---
+
 
 ## 环境变量
 

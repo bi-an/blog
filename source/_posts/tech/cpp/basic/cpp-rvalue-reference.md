@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2025-08-16 10:54:08
-tags:
-- cpp
-- basic
 title: C++右值引用
+date: 2025-08-16 10:54:08
+categories: cpp
+tags:
+ - cpp
+ - basic
 ---
+
 
 
 ## 1. 左值、将亡值、纯右值

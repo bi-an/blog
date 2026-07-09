@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2025-12-02 13:44:25
-tags:
-- cpp
-- performance-optimize
 title: NUMA节点详解
+date: 2025-12-02 13:44:25
+categories: cpp
+tags:
+ - cpp
+ - performance-optimize
 ---
+
 
 ## 1. NUMA概念
 

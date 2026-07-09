@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2024-01-29 11:10:46
-tags:
-- cpp
-- basic
 title: UML
+date: 2024-01-29 11:10:46
+categories: cpp
+tags:
+ - cpp
+ - basic
 ---
+
 
 ## Reference
 

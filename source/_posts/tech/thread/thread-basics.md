@@ -1,11 +1,12 @@
 ---
-categories: thread
-date: 2024-01-23 21:46:41
-tags:
-- thread
-- concurrent
 title: Thread
+date: 2024-01-23 21:46:41
+categories: thread
+tags:
+ - thread
+ - concurrent
 ---
+
 
 ## `sched_setaffinity`
 

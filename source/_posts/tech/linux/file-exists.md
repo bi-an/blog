@@ -1,11 +1,12 @@
 ---
-categories: linux
-date: 2024-09-06 18:09:03
-tags:
-- linux
-- shell
 title: File Exists
+date: 2024-09-06 18:09:03
+categories: linux
+tags:
+ - linux
+ - shell
 ---
+
 
 # 判断文件是否存在的方法
 

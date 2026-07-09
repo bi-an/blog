@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2025-08-19 20:12:58
-tags:
-- cpp
-- performance-optimize
 title: 内存管理
+date: 2025-08-19 20:12:58
+categories: cpp
+tags:
+ - cpp
+ - performance-optimize
 ---
+
 
 ## 线程安全性
 

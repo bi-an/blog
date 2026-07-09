@@ -1,14 +1,15 @@
 ---
-categories: site
-date: 2023-12-07 10:06:59
-tags:
-- hexo
-- blog-build
-- blog-config
-- deploy
-- theme
 title: Hexo Documentation
+date: 2023-12-07 10:06:59
+categories: site
+tags:
+ - hexo
+ - blog-build
+ - blog-config
+ - deploy
+ - theme
 ---
+
 
 
 ## hexo修改默认端口号

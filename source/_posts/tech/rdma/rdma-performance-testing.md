@@ -1,11 +1,12 @@
 ---
-categories: rdma
-date: 2025-09-19 12:10:57
-tags:
-- network
-- high-performance
 title: RDMA 性能测试
+date: 2025-09-19 12:10:57
+categories: rdma
+tags:
+ - network
+ - high-performance
 ---
+
 
 ## 命令速查表
 

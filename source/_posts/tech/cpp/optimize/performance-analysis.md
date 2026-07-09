@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2025-07-31 15:43:15
-tags:
-- cpp
-- performance-optimize
 title: 性能分析
+date: 2025-07-31 15:43:15
+categories: cpp
+tags:
+ - cpp
+ - performance-optimize
 ---
+
 
 ## 性能指标
 

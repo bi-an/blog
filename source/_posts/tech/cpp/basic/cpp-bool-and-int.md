@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2024-09-17 21:19:50
-tags:
-- cpp
-- basic
 title: C++ 的 bool 和 int
+date: 2024-09-17 21:19:50
+categories: cpp
+tags:
+ - cpp
+ - basic
 ---
+
 
 在测试leetcode的 [815.公交路线](https://leetcode.cn/problems/bus-routes/description/) 一题时，发现一个现象，当我使用`vector<vector<bool>>`作为图的邻接矩阵的类型时，运行速度比使用`vector<vector<int>>`慢了近1倍。使用`bool`运行速度为600ms左右，使用`int`时运行速度为300ms左右。
 

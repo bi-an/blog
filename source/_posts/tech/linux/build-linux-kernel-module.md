@@ -1,11 +1,12 @@
 ---
-categories: linux
-date: 2024-01-23 22:24:57
-tags:
-- linux
-- shell
 title: Build Linux Kernel Module
+date: 2024-01-23 22:24:57
+categories: linux
+tags:
+ - linux
+ - shell
 ---
+
 
 ## 内核编译
 

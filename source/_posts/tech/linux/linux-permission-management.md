@@ -1,11 +1,12 @@
 ---
-categories: linux
-date: 2025-08-16 20:37:50
-tags:
-- linux
-- shell
 title: Linux 权限管理
+date: 2025-08-16 20:37:50
+categories: linux
+tags:
+ - linux
+ - shell
 ---
+
 
 Unix 权限涉及三个部分：** 用户 **、** 进程 **、** 文件 **。
 权限分为常用权限、SELinux 权限。

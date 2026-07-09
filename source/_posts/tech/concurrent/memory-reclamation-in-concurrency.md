@@ -1,11 +1,12 @@
 ---
-categories: concurrent
-date: 2025-09-16 23:04:01
-tags:
-- concurrent
-- lock-free
 title: 并发中的内存回收
+date: 2025-09-16 23:04:01
+categories: concurrent
+tags:
+ - concurrent
+ - lock-free
 ---
+
 
 ## Hazard Pointers（危险指针）
 

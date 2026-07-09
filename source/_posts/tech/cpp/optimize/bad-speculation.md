@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2025-11-21 15:29:24
-tags:
-- cpp
-- performance-optimize
 title: Bad Speculation
+date: 2025-11-21 15:29:24
+categories: cpp
+tags:
+ - cpp
+ - performance-optimize
 ---
+
 
 ## 概念
 

@@ -1,11 +1,12 @@
 ---
-categories: concurrent
-date: 2025-09-15 19:48:58
-tags:
-- concurrent
-- lock-free
 title: CAS 的 ABA问题
+date: 2025-09-15 19:48:58
+categories: concurrent
+tags:
+ - concurrent
+ - lock-free
 ---
+
 
 ## ABA 问题
 

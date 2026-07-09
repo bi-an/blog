@@ -1,11 +1,12 @@
 ---
-categories: linux
-date: 2023-11-13 14:27:59
-tags:
-- linux
-- shell
 title: Shell Configuration
+date: 2023-11-13 14:27:59
+categories: linux
+tags:
+ - linux
+ - shell
 ---
+
 
 ## Color Scheme
 

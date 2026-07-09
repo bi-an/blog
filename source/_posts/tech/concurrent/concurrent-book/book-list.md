@@ -1,12 +1,13 @@
 ---
-categories:
-  - concurrent
-date: 2024-01-01 21:10:04
-tags:
-- concurrent
-- book
 title: 并发编程推荐书籍
+date: 2024-01-01 21:10:04
+categories:
+ - concurrent
+tags:
+ - concurrent
+ - book
 ---
+
 
 
 1. 多人在线游戏架构实战：基于C++的分布式游戏编程. 彭放编著. 北京：机械工业出版社，2020.11 （ISBN 978-7-111-66792-6）

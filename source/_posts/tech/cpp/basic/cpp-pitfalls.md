@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2024-01-23 21:33:51
-tags:
-- cpp
-- basic
 title: C++ 缺陷
+date: 2024-01-23 21:33:51
+categories: cpp
+tags:
+ - cpp
+ - basic
 ---
+
 
 ## basic_string::_M_construct null not valid
 

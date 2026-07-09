@@ -1,11 +1,12 @@
 ---
-categories: concurrent
-date: 2025-08-19 22:48:38
-tags:
-- concurrent
-- tbb
 title: TBB典型场景
+date: 2025-08-19 22:48:38
+categories: concurrent
+tags:
+ - concurrent
+ - tbb
 ---
+
 
 ## IO + CPU 密集 + IO
 

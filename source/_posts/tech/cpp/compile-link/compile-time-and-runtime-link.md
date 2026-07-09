@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2025-09-18 18:57:08
-tags:
-- cpp
-- compile-link
 title: 编译时链接和运行时链接
+date: 2025-09-18 18:57:08
+categories: cpp
+tags:
+ - cpp
+ - compile-link
 ---
+
 
 令所有 C/C++ 程序员头疼的事，莫过于环境的搭建和兼容。这往往发生在链接阶段，分为两种：
 

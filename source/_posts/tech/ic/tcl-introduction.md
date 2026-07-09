@@ -1,12 +1,13 @@
 ---
-categories: ic
-date: 2025-02-24 16:03:38
-tags:
-- ic
-- eda
-- tcl
 title: TCL入门
+date: 2025-02-24 16:03:38
+categories: ic
+tags:
+ - ic
+ - eda
+ - tcl
 ---
+
 
 ## TCL_Main
 

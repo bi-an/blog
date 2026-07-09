@@ -1,11 +1,12 @@
 ---
-categories: concurrent
-date: 2025-09-15 20:23:48
-tags:
-- concurrent
-- lock-free
 title: 基于引用计数的 ABA 消除机制
+date: 2025-09-15 20:23:48
+categories: concurrent
+tags:
+ - concurrent
+ - lock-free
 ---
+
 
 # 前言
 

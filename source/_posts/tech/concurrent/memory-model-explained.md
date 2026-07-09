@@ -1,11 +1,12 @@
 ---
-categories: concurrent
-date: 2025-09-02 11:10:13
-tags:
-- concurrent
-- memory-barrier
 title: 人人都看得懂的内存模型
+date: 2025-09-02 11:10:13
+categories: concurrent
+tags:
+ - concurrent
+ - memory-barrier
 ---
+
 
 ## 术语
 

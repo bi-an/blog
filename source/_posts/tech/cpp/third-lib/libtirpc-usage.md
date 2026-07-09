@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2024-07-08 14:57:11
-tags:
-- cpp
-- third-party
 title: libtirpc Usage
+date: 2024-07-08 14:57:11
+categories: cpp
+tags:
+ - cpp
+ - third-party
 ---
+
 
 ## Links
 

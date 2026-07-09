@@ -1,11 +1,12 @@
 ---
-categories: linux
-date: 2024-01-23 21:57:59
-tags:
-- linux
-- shell
 title: LDAP
+date: 2024-01-23 21:57:59
+categories: linux
+tags:
+ - linux
+ - shell
 ---
+
 
 ## 简介
 

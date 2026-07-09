@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2024-01-23 21:45:31
-tags:
-- cpp
-- basic
 title: GNU Introducation
+date: 2024-01-23 21:45:31
+categories: cpp
+tags:
+ - cpp
+ - basic
 ---
+
 
 * [GNU](https://www.gnu.org/)
 * [GNU Software](https://www.gnu.org/software/)

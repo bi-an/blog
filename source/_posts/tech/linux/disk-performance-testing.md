@@ -1,11 +1,12 @@
 ---
-categories: linux
-date: 2025-09-08 11:27:57
-tags:
-- linux
-- shell
 title: 测试磁盘性能
+date: 2025-09-08 11:27:57
+categories: linux
+tags:
+ - linux
+ - shell
 ---
+
 
 ## 查看磁盘类型
 

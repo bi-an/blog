@@ -1,11 +1,12 @@
 ---
-categories: linux
-date: 2024-01-23 22:04:18
-tags:
-- linux
-- shell
 title: Introducation to PCIE
+date: 2024-01-23 22:04:18
+categories: linux
+tags:
+ - linux
+ - shell
 ---
+
 
 # 词汇表（Glossary）
 

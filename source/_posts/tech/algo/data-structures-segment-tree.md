@@ -1,11 +1,12 @@
 ---
-categories: algo
-date: 2024-09-28 20:57:33
-tags:
-- algorithm
-- data-structure
 title: 线段树
+date: 2024-09-28 20:57:33
+categories: algo
+tags:
+ - algorithm
+ - data-structure
 ---
+
 
 线段树（Segment Tree）是一种将数组区间存储为树的数据结构 [^1]。
 

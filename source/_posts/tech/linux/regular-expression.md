@@ -1,11 +1,12 @@
 ---
-categories: linux
-date: 2024-01-25 13:13:41
-tags:
-- linux
-- shell
 title: Regular Expression
+date: 2024-01-25 13:13:41
+categories: linux
+tags:
+ - linux
+ - shell
 ---
+
 
 ## regexp
 

@@ -1,14 +1,15 @@
 ---
-categories: site
-date: 2024-01-23 21:52:17
-tags:
-- hexo
-- blog-build
-- blog-config
-- deploy
-- theme
 title: git Usage
+date: 2024-01-23 21:52:17
+categories: site
+tags:
+ - hexo
+ - blog-build
+ - blog-config
+ - deploy
+ - theme
 ---
+
 
 ## gitignore不生效
 

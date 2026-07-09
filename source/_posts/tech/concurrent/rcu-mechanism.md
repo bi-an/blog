@@ -1,11 +1,12 @@
 ---
-categories: concurrent
-date: 2025-08-17 10:39:19
-tags:
-- concurrent
-- lock-free
 title: 详解RCU机制
+date: 2025-08-17 10:39:19
+categories: concurrent
+tags:
+ - concurrent
+ - lock-free
 ---
+
 
 ## RCU (读-复制-更新)
 

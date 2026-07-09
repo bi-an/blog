@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2025-11-21 14:05:58
-tags:
-- cpp
-- performance-optimize
 title: Core Bound
+date: 2025-11-21 14:05:58
+categories: cpp
+tags:
+ - cpp
+ - performance-optimize
 ---
+
 
 ## 概念
 

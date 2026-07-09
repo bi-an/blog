@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2024-01-26 10:31:32
-tags:
-- cpp
-- basic
 title: C++ 初始化列表
+date: 2024-01-26 10:31:32
+categories: cpp
+tags:
+ - cpp
+ - basic
 ---
+
 
 ## 列表初始化
 

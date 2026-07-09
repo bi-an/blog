@@ -1,11 +1,12 @@
 ---
-categories: thread
-date: 2025-08-01 12:18:07
-tags:
-- thread
-- concurrent
 title: 线程状态转换
+date: 2025-08-01 12:18:07
+categories: thread
+tags:
+ - thread
+ - concurrent
 ---
+
 
 ## 线程状态
 

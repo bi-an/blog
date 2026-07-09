@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2024-02-02 13:24:45
-tags:
-- cpp
-- compile-link
 title: gcc 与 glibc
+date: 2024-02-02 13:24:45
+categories: cpp
+tags:
+ - cpp
+ - compile-link
 ---
+
 
 ## gcc
 

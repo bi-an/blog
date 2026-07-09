@@ -1,11 +1,12 @@
 ---
-categories: concurrent
-date: 2025-03-19 16:31:02
-tags:
-- concurrent
-- memory-barrier
 title: 原子变量
+date: 2025-03-19 16:31:02
+categories: concurrent
+tags:
+ - concurrent
+ - memory-barrier
 ---
+
 
 ## 定义
 

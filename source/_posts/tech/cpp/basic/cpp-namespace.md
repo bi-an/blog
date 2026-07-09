@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2023-11-02 09:53:52
-tags:
-- cpp
-- basic
 title: C++ 命名空间
+date: 2023-11-02 09:53:52
+categories: cpp
+tags:
+ - cpp
+ - basic
 ---
+
 
 
 ## inline namespace

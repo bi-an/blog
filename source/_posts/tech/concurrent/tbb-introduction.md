@@ -1,11 +1,12 @@
 ---
-categories: concurrent
-date: 2024-02-24 14:59:52
-tags:
-- concurrent
-- tbb
 title: TBB 入门
+date: 2024-02-24 14:59:52
+categories: concurrent
+tags:
+ - concurrent
+ - tbb
 ---
+
 
 ## 安装
 

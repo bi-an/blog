@@ -1,14 +1,15 @@
 ---
-categories: site
-date: 2023-12-29 11:01:11
-tags:
-- hexo
-- blog-build
-- blog-config
-- deploy
-- theme
 title: npm
+date: 2023-12-29 11:01:11
+categories: site
+tags:
+ - hexo
+ - blog-build
+ - blog-config
+ - deploy
+ - theme
 ---
+
 
 ## Options
 

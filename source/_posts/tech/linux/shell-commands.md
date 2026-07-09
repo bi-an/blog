@@ -1,11 +1,12 @@
 ---
-categories: linux
-date: 2024-01-26 15:57:35
-tags:
-- linux
-- shell
 title: Shell Commands
+date: 2024-01-26 15:57:35
+categories: linux
+tags:
+ - linux
+ - shell
 ---
+
 
 
 ## shuf

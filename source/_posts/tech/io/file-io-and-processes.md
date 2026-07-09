@@ -1,11 +1,12 @@
 ---
-categories: io
-date: 2025-08-16 20:50:37
-tags:
-- io
-- network
 title: 文件IO与进程
+date: 2025-08-16 20:50:37
+categories: io
+tags:
+ - io
+ - network
 ---
+
 
 
 ## 进程打开文件

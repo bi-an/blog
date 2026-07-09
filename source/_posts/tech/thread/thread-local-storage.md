@@ -1,11 +1,12 @@
 ---
-categories: thread
-date: 2025-08-19 19:41:37
-tags:
-- thread
-- concurrent
 title: thread_local的实现
+date: 2025-08-19 19:41:37
+categories: thread
+tags:
+ - thread
+ - concurrent
 ---
+
 
 
 1. thread_local 的基本语义

@@ -1,11 +1,12 @@
 ---
-categories: concurrent
-date: 2025-09-24 14:32:53
-tags:
-- concurrent
-- memory-barrier
 title: memory_order测试
+date: 2025-09-24 14:32:53
+categories: concurrent
+tags:
+ - concurrent
+ - memory-barrier
 ---
+
 
 ## relaxed
 

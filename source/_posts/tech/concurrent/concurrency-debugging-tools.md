@@ -1,11 +1,12 @@
 ---
-categories: concurrent
-date: 2025-11-26 10:32:15
-tags:
-- concurrent
-- debug
 title: 并发调试工具
+date: 2025-11-26 10:32:15
+categories: concurrent
+tags:
+ - concurrent
+ - debug
 ---
+
 
 ## 常用 C++ 并发调试工具 ThreadSanitizer (TSan)
 

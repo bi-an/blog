@@ -1,14 +1,15 @@
 ---
-categories: site
-date: 2024-01-24 17:26:44
-tags:
-- hexo
-- blog-build
-- blog-config
-- deploy
-- theme
 title: vscode 使用
+date: 2024-01-24 17:26:44
+categories: site
+tags:
+ - hexo
+ - blog-build
+ - blog-config
+ - deploy
+ - theme
 ---
+
 
 ## Reduce the disk usage of VSCode
 

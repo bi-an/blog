@@ -1,11 +1,12 @@
 ---
-categories: linux
-date: 2024-01-25 13:22:53
-tags:
-- linux
-- shell
 title: Brackets in Bash
+date: 2024-01-25 13:22:53
+categories: linux
+tags:
+ - linux
+ - shell
 ---
+
 
 ## 中括号
 

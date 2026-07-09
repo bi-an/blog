@@ -1,14 +1,15 @@
 ---
-categories: site
-date: 2024-01-23 21:13:02
-tags:
-- hexo
-- blog-build
-- blog-config
-- deploy
-- theme
 title: Mkdocs Configuration
+date: 2024-01-23 21:13:02
+categories: site
+tags:
+ - hexo
+ - blog-build
+ - blog-config
+ - deploy
+ - theme
 ---
+
 
 ## Configuration
 

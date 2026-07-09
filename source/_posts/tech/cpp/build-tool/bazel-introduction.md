@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2025-08-12 20:21:42
-tags:
-- cpp
-- bazel
 title: Bazel入门
+date: 2025-08-12 20:21:42
+categories: cpp
+tags:
+ - cpp
+ - bazel
 ---
+
 
 ## Bazel简介
 

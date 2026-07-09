@@ -1,11 +1,12 @@
 ---
-categories: rdma
-date: 2025-09-23 16:30:08
-tags:
-- network
-- high-performance
 title: RDMA RC 通信
+date: 2025-09-23 16:30:08
+categories: rdma
+tags:
+ - network
+ - high-performance
 ---
+
 
 ## RDMA vs TCP/IP 连接标识字段
 

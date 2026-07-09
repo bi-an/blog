@@ -1,11 +1,12 @@
 ---
-categories: study
-date: 2024-01-24 17:39:03
-tags:
-- english
-- movie-line
 title: The Killings at Badger's Drift
+date: 2024-01-24 17:39:03
+categories: study
+tags:
+ - english
+ - movie-line
 ---
+
 
 ## Video
 

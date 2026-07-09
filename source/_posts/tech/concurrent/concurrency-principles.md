@@ -1,11 +1,12 @@
 ---
-categories: concurrent
-date: 2025-09-14 16:10:01
-tags:
-- concurrent
-- tbb
 title: 并发编程法则
+date: 2025-09-14 16:10:01
+categories: concurrent
+tags:
+ - concurrent
+ - tbb
 ---
+
 
 # TBB 的特殊性
 

@@ -3,9 +3,10 @@ title: InfiniBand Send/Recv与Read/Write的区别
 date: 2025-12-23 16:32:46
 categories: rdma
 tags:
-- network
-- high-performance
+ - network
+ - high-performance
 ---
+
 
 ## 引言
 

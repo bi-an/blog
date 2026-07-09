@@ -1,11 +1,12 @@
 ---
-categories: concurrent
-date: 2025-09-13 17:09:37
-tags:
-- concurrent
-- lock-free
 title: 单生产者 - 单消费者 无锁队列
+date: 2025-09-13 17:09:37
+categories: concurrent
+tags:
+ - concurrent
+ - lock-free
 ---
+
 
 # 前言
 

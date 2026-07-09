@@ -1,11 +1,12 @@
 ---
-categories: linux
-date: 2024-09-06 18:10:12
-tags:
-- linux
-- shell
 title: Bash Debugging
+date: 2024-09-06 18:10:12
+categories: linux
+tags:
+ - linux
+ - shell
 ---
+
 
 ## 启用调试模式
 

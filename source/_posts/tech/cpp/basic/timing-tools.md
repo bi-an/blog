@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2024-01-30 11:07:39
-tags:
-- cpp
-- basic
 title: 计时工具
+date: 2024-01-30 11:07:39
+categories: cpp
+tags:
+ - cpp
+ - basic
 ---
+
 
 ## times
 

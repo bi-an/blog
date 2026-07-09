@@ -1,11 +1,12 @@
 ---
-categories: io
-date: 2025-08-16 23:40:06
-tags:
-- io
-- network
 title: 高效 IO
+date: 2025-08-16 23:40:06
+categories: io
+tags:
+ - io
+ - network
 ---
+
 
 ## 高效的 IO 函数
 

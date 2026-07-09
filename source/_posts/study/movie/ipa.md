@@ -3,8 +3,8 @@ title: IPA
 date: 2026-02-12 23:47:36
 categories: English
 tags:
-- english
-- movie-line
+ - english
+ - movie-line
 
 # 美式英语 44 音素（IPA）表
 
@@ -37,8 +37,8 @@ tags:
 | /ɔɪ/ | choice |
 | /oʊ/ | go     |
 | /eɪ/ | face   |
-
 ---
+
 
 ## 二、辅音 Consonants
 

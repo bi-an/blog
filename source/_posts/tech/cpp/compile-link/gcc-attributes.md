@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2025-07-25 11:53:54
-tags:
-- cpp
-- compile-link
 title: gcc属性
+date: 2025-07-25 11:53:54
+categories: cpp
+tags:
+ - cpp
+ - compile-link
 ---
+
 
 
 ## `__attribute__((__visibility__("default")))`

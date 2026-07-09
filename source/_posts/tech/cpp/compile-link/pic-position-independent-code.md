@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2025-08-26 13:54:18
-tags:
-- cpp
-- compile-link
 title: 位置无关代码
+date: 2025-08-26 13:54:18
+categories: cpp
+tags:
+ - cpp
+ - compile-link
 ---
+
 
 ## 位置无关代码（PIC）
 

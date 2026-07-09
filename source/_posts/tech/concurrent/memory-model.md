@@ -1,11 +1,12 @@
 ---
-categories: concurrent
-date: 2025-08-01 19:30:53
-tags:
-- concurrent
-- memory-barrier
 title: 内存模型
+date: 2025-08-01 19:30:53
+categories: concurrent
+tags:
+ - concurrent
+ - memory-barrier
 ---
+
 
 ## 内存模型的定义
 

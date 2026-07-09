@@ -1,11 +1,12 @@
 ---
-categories: io
-date: 2024-01-09 16:15:17
-tags:
-- io
-- network
 title: Network discovery
+date: 2024-01-09 16:15:17
+categories: io
+tags:
+ - io
+ - network
 ---
+
 
 ## Get IP from the host name
 

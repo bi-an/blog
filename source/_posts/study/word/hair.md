@@ -1,11 +1,12 @@
 ---
-categories: study
-date: 2024-05-08 22:10:46
-tags:
-- english
-- vocabulary
 title: Hair
+date: 2024-05-08 22:10:46
+categories: study
+tags:
+ - english
+ - vocabulary
 ---
+
 
 ## Link
 

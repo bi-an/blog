@@ -1,11 +1,12 @@
 ---
-categories: concurrent
-date: 2024-01-15 14:11:30
-tags:
-- concurrent
-- debug
 title: Dead Lock
+date: 2024-01-15 14:11:30
+categories: concurrent
+tags:
+ - concurrent
+ - debug
 ---
+
 
 ## Reference
 

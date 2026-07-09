@@ -1,15 +1,16 @@
 ---
-categores: Tools
-categories: site
-date: 2024-01-03 16:41:38
-tags:
-- hexo
-- blog-build
-- blog-config
-- deploy
-- theme
 title: 搭建个人网站
+date: 2024-01-03 16:41:38
+categories: site
+tags:
+ - hexo
+ - blog-build
+ - blog-config
+ - deploy
+ - theme
+categores: Tools
 ---
+
 
 ## Host site
 

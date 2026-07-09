@@ -1,11 +1,12 @@
 ---
-categories: rdma
-date: 2023-12-06 09:41:56
-tags:
-- network
-- high-performance
 title: Getting Started with InfiniBand
+date: 2023-12-06 09:41:56
+categories: rdma
+tags:
+ - network
+ - high-performance
 ---
+
 
 ## 函数
 

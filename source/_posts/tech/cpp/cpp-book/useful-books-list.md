@@ -1,11 +1,12 @@
 ---
-categories: cpp-book
-date: 2025-08-18 21:25:16
-tags:
-- cpp
-- book
 title: 实用书籍列表
+date: 2025-08-18 21:25:16
+categories: cpp-book
+tags:
+ - cpp
+ - book
 ---
+
 
 列表：
 

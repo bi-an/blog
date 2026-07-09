@@ -1,11 +1,12 @@
 ---
-categories: linux
-date: 2023-12-06 09:41:56
-tags:
-- linux
-- shell
 title: bsub用法
+date: 2023-12-06 09:41:56
+categories: linux
+tags:
+ - linux
+ - shell
 ---
+
 
 ## find_host_queue.sh
 

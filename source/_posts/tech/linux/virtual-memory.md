@@ -1,11 +1,12 @@
 ---
-categories: linux
-date: 2023-11-07 15:36:21
-tags:
-- linux
-- shell
 title: 虚拟内存
+date: 2023-11-07 15:36:21
+categories: linux
+tags:
+ - linux
+ - shell
 ---
+
 
 ## 1. 术语
 

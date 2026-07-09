@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2025-07-23 19:26:26
-tags:
-- cpp
-- debug
 title: shell 误导性错误 No such file or directory
+date: 2025-07-23 19:26:26
+categories: cpp
+tags:
+ - cpp
+ - debug
 ---
+
 
 ## 📝 现象描述
 

@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2025-08-22 15:42:27
-tags:
-- cpp
-- debug
 title: 汇编与 gdb
+date: 2025-08-22 15:42:27
+categories: cpp
+tags:
+ - cpp
+ - debug
 ---
+
 
 ## 1. 前言
 

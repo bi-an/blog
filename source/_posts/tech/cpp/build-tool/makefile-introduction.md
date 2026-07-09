@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2023-11-17 14:19:35
-tags:
-- cpp
-- make
 title: Makefile入门
+date: 2023-11-17 14:19:35
+categories: cpp
+tags:
+ - cpp
+ - make
 ---
+
 
 ## Makefile默认shell
 

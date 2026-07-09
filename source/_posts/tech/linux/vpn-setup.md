@@ -1,11 +1,12 @@
 ---
-categories: linux
-date: 2025-01-14 20:44:40
-tags:
-- linux
-- shell
 title: VPN设置
+date: 2025-01-14 20:44:40
+categories: linux
+tags:
+ - linux
+ - shell
 ---
+
 
 ## Linux 配置 clash 代理
 

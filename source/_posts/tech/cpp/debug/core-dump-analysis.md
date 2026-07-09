@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2024-01-23 21:42:51
-tags:
-- cpp
-- debug
 title: core dump
+date: 2024-01-23 21:42:51
+categories: cpp
+tags:
+ - cpp
+ - debug
 ---
+
 
 ## `ulimit`
 

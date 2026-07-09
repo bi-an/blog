@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2023-11-03 18:52:32
-tags:
-- cpp
-- basic
 title: 变参函数
+date: 2023-11-03 18:52:32
+categories: cpp
+tags:
+ - cpp
+ - basic
 ---
+
 
 
 ## Variadic function in C

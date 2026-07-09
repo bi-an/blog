@@ -1,12 +1,13 @@
 ---
-categories: process
-date: 2025-08-19 20:08:39
-tags:
-- process
-- signal
-- ipc
 title: 信号
+date: 2025-08-19 20:08:39
+categories: process
+tags:
+ - process
+ - signal
+ - ipc
 ---
+
 
 ## 异步信号
 

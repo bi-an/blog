@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2023-11-27 14:45:21
-tags:
-- cpp
-- basic
 title: printf
+date: 2023-11-27 14:45:21
+categories: cpp
+tags:
+ - cpp
+ - basic
 ---
+
 
 ## Functions
 

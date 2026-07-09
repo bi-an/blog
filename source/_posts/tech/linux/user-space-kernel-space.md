@@ -1,11 +1,12 @@
 ---
-categories: linux
-date: 2025-08-16 13:31:26
-tags:
-- linux
-- shell
 title: 用户态和内核态
+date: 2025-08-16 13:31:26
+categories: linux
+tags:
+ - linux
+ - shell
 ---
+
 
 ## 用户空间和内核空间是隔离的
 

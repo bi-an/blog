@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2023-11-07 15:26:48
-tags:
-- cpp
-- basic
 title: KiB vs KB vs kB
+date: 2023-11-07 15:26:48
+categories: cpp
+tags:
+ - cpp
+ - basic
 ---
+
 
 
 See the article: [Prefixes for binary multiples](https://physics.nist.gov/cuu/Units/binary.html)

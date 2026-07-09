@@ -1,11 +1,12 @@
 ---
-categories: linux
-date: 2024-01-23 21:56:44
-tags:
-- linux
-- shell
 title: Drive
+date: 2024-01-23 21:56:44
+categories: linux
+tags:
+ - linux
+ - shell
 ---
+
 
 # 驱动
 

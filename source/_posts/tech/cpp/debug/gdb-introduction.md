@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2024-01-23 21:44:37
-tags:
-- cpp
-- debug
 title: gdb 入门
+date: 2024-01-23 21:44:37
+categories: cpp
+tags:
+ - cpp
+ - debug
 ---
+
 
 ## gdb 实现原理
 

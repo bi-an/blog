@@ -1,11 +1,12 @@
 ---
-categories: linux
-date: 2024-01-29 14:25:24
-tags:
-- linux
-- shell
 title: Introduction to memory
+date: 2024-01-29 14:25:24
+categories: linux
+tags:
+ - linux
+ - shell
 ---
+
 
 ## malloc/free
 

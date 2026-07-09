@@ -1,11 +1,12 @@
 ---
-categories: cuda
-date: 2025-09-03 09:23:17
-tags:
-- cuda
-- gpu
 title: CUDA矩阵乘法
+date: 2025-09-03 09:23:17
+categories: cuda
+tags:
+ - cuda
+ - gpu
 ---
+
 
 ## 使用共享内存优化
 

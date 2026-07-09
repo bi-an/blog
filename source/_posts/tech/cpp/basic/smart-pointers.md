@@ -1,11 +1,12 @@
 ---
-categories: cpp
-date: 2025-08-12 10:16:44
-tags:
-- cpp
-- basic
 title: 智能指针
+date: 2025-08-12 10:16:44
+categories: cpp
+tags:
+ - cpp
+ - basic
 ---
+
 
 ## shared_ptr是线程安全的吗？
 
