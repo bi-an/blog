@@ -186,23 +186,22 @@ App (myprog)
 - Level 1 + 2: `myprog -add -file path/to/file.txt -recursive -del -force`
 - Level 1 + 2 + 3: `myprog -add -file path/to/file.txt -encoding utf8 -overwrite -del -force`
 
-### 文件说明
+### 源文件说明
 
-#### suboption_example.cpp - 示例程序
+#### cli11-usage-01.cpp - 示例程序
 
-`suboption_example.cpp` 是一个可执行的示例程序，用于演示子选项功能。可以直接运行并测试功能。
+`cli11-usage-01.cpp` 是一个可执行的示例程序，用于演示子选项功能。可以直接运行并测试功能。
 
- {% include_code tech/cpp/third-lib/cli11-usage-01.cpp %}
+{% include_code lang:cpp tech/cpp/third-lib/cli11-usage-01.cpp %}
 
 ##### 构建和运行示例程序
 
-```
-cd /home/zhigaoz/code/CLI11/build
-cmake --build . --target suboption_example
+```bash
+g++ -std=c++11 cli11-usage-01.cpp -I/path/to/CLI11/include -o cli11-usage-01
 # Run examples
-./tests/suboption_test/suboption_example --help
-./tests/suboption_test/suboption_example -add
-./tests/suboption_test/suboption_example -add -file path/to/file.txt -encoding utf8 -overwrite -del -force
+./cli11-usage-01 --help
+./cli11-usage-01 -add
+./cli11-usage-01 -add -file path/to/file.txt -encoding utf8 -overwrite -del -force
 ```
 
 ### 实现细节
