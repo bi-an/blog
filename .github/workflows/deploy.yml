@@ -18,21 +18,42 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18.x
+          node-version: 24.x            # change to the Node version you choose (24.x recommended)
           cache: 'npm'
+          # optionally: cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
+      - name: Debug: Node & environment
         run: |
-          npm install
-          cd themes/next && npm install && cd ../..
+          echo "USER: $(whoami)"
+          echo "PWD: $(pwd)"
+          node -v
+          npm -v
+          echo "Root files:"
+          ls -la
+          echo "themes/next files:"
+          ls -la themes/next || true
 
-      - name: Generate static files
-        run: npm run build
+      - name: Install root dependencies (reproducible)
+        run: npm ci --prefer-offline --no-audit --progress=false
+
+      - name: Install themes/next dependencies (if present)
+        run: |
+          if [ -f themes/next/package.json ]; then
+            cd themes/next
+            npm ci --prefer-offline --no-audit --progress=false
+          else
+            echo "themes/next/package.json not found - skipping"
+          fi
+
+      - name: Generate static files (build)
+        run: |
+          npm run build --if-present
+        # Consider adding --loglevel=verbose to your build command if it still fails.
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages  # 或你的部署分支
+          publish_branch: gh-pages
           publish_dir: ./public
           clean: true
