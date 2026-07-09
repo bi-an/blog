@@ -188,286 +188,6 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/01/14/tech/linux/vpn-setup/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/01/14/tech/linux/vpn-setup/" class="post-title-link" itemprop="url">VPN设置</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-01-14 20:44:40" itemprop="dateCreated datePublished" datetime="2025-01-14T20:44:40+00:00">2025-01-14</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 06:57:03" itemprop="dateModified" datetime="2026-07-09T06:57:03+00:00">2026-07-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Linux-配置-clash-代理"><a href="#Linux-配置-clash-代理" class="headerlink" title="Linux 配置 clash 代理"></a>Linux 配置 clash 代理</h2><h3 id="创建并配置服务文件‌"><a href="#创建并配置服务文件‌" class="headerlink" title="创建并配置服务文件‌"></a>创建并配置服务文件‌</h3><p>编辑 &#x2F;etc&#x2F;systemd&#x2F;system&#x2F;clash_meta.service，内容示例如下（需根据实际路径调整）：</p>
-<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[Unit]</span></span><br><span class="line"><span class="attr">Description</span>=Clash Meta Service</span><br><span class="line"><span class="attr">After</span>=network.target</span><br><span class="line"></span><br><span class="line"><span class="section">[Service]</span></span><br><span class="line"><span class="attr">Type</span>=simple</span><br><span class="line"><span class="attr">ExecStart</span>=/usr/local/bin/clash_meta -f /path/to/config</span><br><span class="line"><span class="attr">Restart</span>=always</span><br><span class="line"><span class="attr">User</span>=root</span><br><span class="line"></span><br><span class="line"><span class="section">[Install]</span></span><br><span class="line"><span class="attr">WantedBy</span>=multi-user.target</span><br></pre></td></tr></table></figure>
-
-<p>关键参数说明：</p>
-<ul>
-<li>ExecStart：指定 clash_meta 的启动命令和配置目录。</li>
-<li>Restart&#x3D;always：确保服务崩溃后自动重启‌</li>
-</ul>
-<h3 id="启用开机自启‌"><a href="#启用开机自启‌" class="headerlink" title="启用开机自启‌"></a>启用开机自启‌</h3><p>执行以下命令使配置生效：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl daemon-reload  <span class="comment"># 重新加载配置</span></span><br><span class="line">sudo systemctl <span class="built_in">enable</span> clash_meta  <span class="comment"># 设置开机自启</span></span><br><span class="line">sudo systemctl start clash_meta   <span class="comment"># 立即启动服务</span></span><br></pre></td></tr></table></figure>
-
-<p>命令的作用分析‌</p>
-<ul>
-<li>sudo systemctl daemon-reload‌</li>
-</ul>
-<p>重新加载 systemd 的配置文件（如 .service 文件），仅对本次修改生效，‌不影响开机自启‌。<br>（例如：修改了 &#x2F;etc&#x2F;systemd&#x2F;system&#x2F;clash_meta.service 后需执行此命令使配置生效）</p>
-<ul>
-<li>‌sudo systemctl enable clash_meta‌</li>
-</ul>
-<p>‌关键命令‌：将 clash_meta 服务添加到开机自启列表，‌下次开机会自动启动‌。<br>（实际效果：在 &#x2F;etc&#x2F;systemd&#x2F;system&#x2F;multi-user.target.wants&#x2F; 下创建服务符号链接）</p>
-<ul>
-<li>‌sudo systemctl start clash_meta‌<br>立即启动服务，但仅对当前会话有效，‌不直接影响开机行为‌。</li>
-</ul>
-<p>验证是否成功：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">systemctl is-enabled clash_meta  <span class="comment"># 输出应为 &quot;enabled&quot;</span></span><br><span class="line">systemctl status clash_meta      <span class="comment"># 检查服务状态</span></span><br></pre></td></tr></table></figure>
-
-<h3 id="验证自启动机制‌"><a href="#验证自启动机制‌" class="headerlink" title="验证自启动机制‌"></a>验证自启动机制‌</h3><p>‌检查服务状态‌：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">systemctl list-unit-files | grep clash_meta  <span class="comment"># 确认状态为 &quot;enabled&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>‌查看日志‌：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">journalctl -u clash_meta -f  <span class="comment"># 实时跟踪日志</span></span><br></pre></td></tr></table></figure>
-
-<p>‌常见问题‌</p>
-<ul>
-<li>‌路径错误‌：确保 ExecStart 中的路径正确（如 &#x2F;usr&#x2F;local&#x2F;bin&#x2F;clash_meta 是否存在）‌</li>
-<li>‌权限不足‌：服务文件需以 root 权限创建，或通过 User&#x3D; 指定运行用户‌</li>
-<li>‌依赖未满足‌：若依赖网络，需在 [Unit] 中添加 After&#x3D;network.target</li>
-</ul>
-<h3 id="bash-的配置"><a href="#bash-的配置" class="headerlink" title="bash 的配置"></a>bash 的配置</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Clash 代理端口</span></span><br><span class="line">PROXY_PORT=7890</span><br><span class="line">SOCKS5_PORT=7891</span><br><span class="line"></span><br><span class="line"><span class="comment"># 判断 clash-meta 是否正在运行</span></span><br><span class="line"><span class="keyword">if</span> pgrep -x <span class="string">&quot;clash_meta&quot;</span> &gt; /dev/null; <span class="keyword">then</span></span><br><span class="line">    <span class="built_in">export</span> http_proxy=<span class="string">&quot;http://127.0.0.1:<span class="variable">$PROXY_PORT</span>&quot;</span></span><br><span class="line">    <span class="built_in">export</span> https_proxy=<span class="string">&quot;http://127.0.0.1:<span class="variable">$PROXY_PORT</span>&quot;</span></span><br><span class="line">    <span class="built_in">export</span> all_proxy=<span class="string">&quot;socks5://127.0.0.1:<span class="variable">$SOCKS5_PORT</span>&quot;</span></span><br><span class="line">    <span class="built_in">export</span> GIT_SSH_COMMAND=<span class="string">&quot;ssh -o ProxyCommand=&#x27;nc -x 127.0.0.1:<span class="variable">$SOCKS5_PORT</span> %h %p&#x27;&quot;</span></span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    <span class="built_in">unset</span> http_proxy</span><br><span class="line">    <span class="built_in">unset</span> https_proxy</span><br><span class="line">    <span class="built_in">unset</span> all_proxy</span><br><span class="line">    <span class="built_in">unset</span> GIT_SSH_COMMAND</span><br><span class="line"><span class="keyword">fi</span></span><br></pre></td></tr></table></figure>
-
-
-<h2 id="VMWare-的-Linux-虚拟机共享-Windows-主机的-VPN"><a href="#VMWare-的-Linux-虚拟机共享-Windows-主机的-VPN" class="headerlink" title="VMWare 的 Linux 虚拟机共享 Windows 主机的 VPN"></a>VMWare 的 Linux 虚拟机共享 Windows 主机的 VPN</h2><p>方案 2：NAT 模式 + Windows 网络共享<br>另一种方式是保持 VMware 使用 NAT 模式，并通过 Windows 主机的网络共享功能，将 VPN 流量共享给虚拟机。</p>
-<p>步骤：<br>在 Windows 上启用网络共享：</p>
-<p>确保 Clash 在 Windows 主机上运行，并已连接到 VPN。<br>打开 控制面板 &gt; 网络和共享中心 &gt; 更改适配器设置。<br>右键点击你的 VPN 连接（通常是一个以 Ethernet 开头的适配器），选择 属性。<br>在 共享 标签页，勾选 允许其他网络用户通过此计算机的 Internet 连接连接。<br>选择虚拟机使用的网络适配器（例如 VMware 的 VMnet8 适配器），然后点击确定。<br>配置虚拟机网络为 NAT：</p>
-<p>在 VMware 中，确保虚拟机的网络适配器设置为 NAT（这通常是默认设置）。<br>在 NAT 模式下，虚拟机会通过 Windows 主机访问网络，但流量会被路由到共享的网络适配器。<br>验证虚拟机是否可以通过 VPN 访问网络：</p>
-<p>启动虚拟机，测试网络连接。<br>如果虚拟机连接成功并通过 VPN 访问互联网，那么配置就完成了。</p>
-<h2 id="WSL1-通过主机的-clash-客户端访问网络"><a href="#WSL1-通过主机的-clash-客户端访问网络" class="headerlink" title="WSL1 通过主机的 clash 客户端访问网络"></a>WSL1 通过主机的 clash 客户端访问网络</h2><h3 id="方法一：配置环境变量（适用于普通网络请求）"><a href="#方法一：配置环境变量（适用于普通网络请求）" class="headerlink" title="方法一：配置环境变量（适用于普通网络请求）"></a>方法一：配置环境变量（适用于普通网络请求）</h3><p>适合 curl、wget、apt、pip、git 等命令行工具走代理。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;export http_proxy=http://127.0.0.1:7890&#x27;</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;export https_proxy=http://127.0.0.1:7890&#x27;</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;export all_proxy=socks5://127.0.0.1:7890&#x27;</span> &gt;&gt; ~/.bashrc</span><br><span class="line"><span class="built_in">source</span> ~/.bashrc</span><br></pre></td></tr></table></figure>
-
-<p>验证代理是否有效：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl cip.cc</span><br></pre></td></tr></table></figure>
-
-<p>这个网站会返回你的公网 IP。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl https://www.google.com</span><br></pre></td></tr></table></figure>
-
-<p>应该会返回网页。</p>
-<p><strong>临时开启：</strong></p>
-<p>如果你只想暂时走代理一次，不想改 .bashrc，你可以直接这样运行：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 方法1</span></span><br><span class="line">http_proxy=http://127.0.0.1:7890 https_proxy=http://127.0.0.1:7890 curl https://www.google.com</span><br><span class="line"><span class="comment"># 方法2</span></span><br><span class="line">curl -I https://www.google.com -x http://127.0.0.1:7890</span><br><span class="line"><span class="comment"># 方法3：走socks5代理</span></span><br><span class="line">curl -I --socks5 127.0.0.1:7890 https://www.google.com</span><br></pre></td></tr></table></figure>
-
-
-<h3 id="方法二：使用-proxychains-全局转发（适用于所有程序，包括二进制）"><a href="#方法二：使用-proxychains-全局转发（适用于所有程序，包括二进制）" class="headerlink" title="方法二：使用 proxychains 全局转发（适用于所有程序，包括二进制）"></a>方法二：使用 proxychains 全局转发（适用于所有程序，包括二进制）</h3><p>安装 proxychains，让任意程序走 Clash 的代理。</p>
-<ol>
-<li>安装 proxychains</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt install proxychains -y</span><br></pre></td></tr></table></figure>
-
-<ol start="2">
-<li>编辑配置 &#x2F;etc&#x2F;proxychains.conf</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /etc/proxychains.conf</span><br></pre></td></tr></table></figure>
-
-<p>在文件末尾加一行或修改为：</p>
-<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">socks5</span>  <span class="number">127.0.0.1</span> <span class="number">7890</span></span><br></pre></td></tr></table></figure>
-
-<p>注意：不要改成 http，要用 socks5。</p>
-<p>使用 proxychains（只代理你想代理的程序）：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains curl https://www.google.com</span><br></pre></td></tr></table></figure>
-
-<p>优点：</p>
-<ul>
-<li>精准控制哪些程序走代理。</li>
-<li>不影响系统其他设置。</li>
-</ul>
-<p>缺点：</p>
-<ul>
-<li>每次都要手动加 proxychains。</li>
-</ul>
-<h3 id="方法三：为单独的程序配置代理"><a href="#方法三：为单独的程序配置代理" class="headerlink" title="方法三：为单独的程序配置代理"></a>方法三：为单独的程序配置代理</h3><ol>
-<li>配置 git 使用代理</li>
-</ol>
-<p>执行以下命令设置全局代理（只设置一次即可）：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git config --global http.proxy http://127.0.0.1:7890</span><br><span class="line">git config --global https.proxy http://127.0.0.1:7890</span><br></pre></td></tr></table></figure>
-
-<p>若你之后想关闭 git 代理，可运行：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git config --global --<span class="built_in">unset</span> http.proxy</span><br><span class="line">git config --global --<span class="built_in">unset</span> https.proxy</span><br></pre></td></tr></table></figure>
-
-<ol start="2">
-<li>配置 pip 使用代理</li>
-</ol>
-<p>在主目录创建 pip 配置文件：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> -p ~/.config/pip</span><br><span class="line">vim ~/.config/pip/pip.conf</span><br></pre></td></tr></table></figure>
-
-<p>添加内容：</p>
-<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[global]</span></span><br><span class="line"><span class="attr">proxy</span> = http://<span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">7890</span></span><br></pre></td></tr></table></figure>
-
-<ol start="3">
-<li>配置 apt 使用代理</li>
-</ol>
-<p>编辑 apt 的配置文件：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo <span class="built_in">mkdir</span> -p /etc/apt/apt.conf.d</span><br><span class="line">sudo nano /etc/apt/apt.conf.d/99proxy</span><br></pre></td></tr></table></figure>
-
-<p>粘贴以下内容（假设 HTTP 代理端口是 7890）：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Acquire::http::Proxy <span class="string">&quot;http://127.0.0.1:7890&quot;</span>;</span><br><span class="line">Acquire::https::Proxy <span class="string">&quot;http://127.0.0.1:7890&quot;</span>;</span><br></pre></td></tr></table></figure>
-
-
-<h3 id="方法四：配置-iptables-redsocks（实现真正的全局转发）"><a href="#方法四：配置-iptables-redsocks（实现真正的全局转发）" class="headerlink" title="方法四：配置 iptables + redsocks（实现真正的全局转发）"></a>方法四：配置 iptables + redsocks（实现真正的全局转发）</h3><p>适合高级用户，WSL2 使用 TUN 模式实现系统级全局代理。这比较复杂，建议在需要所有流量强制走代理时使用。TODO</p>
-<h2 id="mihomo（clash-meta内核）"><a href="#mihomo（clash-meta内核）" class="headerlink" title="mihomo（clash meta内核）"></a>mihomo（clash meta内核）</h2><p>下载地址： <a target="_blank" rel="noopener" href="https://github.com/MetaCubeX/mihomo/releases">https://github.com/MetaCubeX/mihomo/releases</a> （clash meta内核）</p>
-<p>架构示意图：</p>
-<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">你的浏览器（客户端） → localhost:7890 (Clash监听) → 外网代理服务器 → 目标网站</span><br><span class="line">    ↑                      ↑                          ↑           ↑</span><br><span class="line"> (终极客户端)          (代理客户端)                (中间服务器)   (目标服务器)</span><br></pre></td></tr></table></figure>
-
-<ol>
-<li>启动：</li>
-</ol>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">INFO[2025-11-28T11:21:31.004426816+08:00] RESTful API listening at: [::]:9090          </span><br><span class="line">INFO[2025-11-28T11:21:31.013225892+08:00] Sniffer is closed                            </span><br><span class="line">INFO[2025-11-28T11:21:31.013530808+08:00] HTTP proxy listening at: [::]:7890           </span><br><span class="line">INFO[2025-11-28T11:21:31.013646756+08:00] SOCKS proxy listening at: [::]:7891</span><br></pre></td></tr></table></figure>
-
-<p>可以看到clash创建了前置代理，http代理端口为：7890 ，socks5代理端口为：7891 ，RESTful API的端口是9090 (这些端口不同版本可能不一样，实际以终端输入的为准)</p>
-<p>说明：</p>
-<ul>
-<li>通过访问 http 代理和 socks5 代理都可以让流量经过代理。</li>
-<li>RESTful API 可以用于控制 VPN 的配置方式。</li>
-<li><strong>命令行版 mihomo 默认不会自动设置系统代理。</strong></li>
-</ul>
-<ol start="2">
-<li>设置系统代理或浏览器代理。</li>
-</ol>
-<p>方法一：手动设置系统代理（推荐）</p>
-<p>在 Windows 系统中：</p>
-<pre><code>打开 设置 → 网络和 Internet → 代理
-
-在 手动设置代理 部分，打开开关
-
-填写以下信息：
-
-    地址: 127.0.0.1
-
-    端口: 7890 (这是 mihomo 的默认 HTTP 代理端口)
-
-点击 保存
-</code></pre>
-<p>在 macOS 系统中：</p>
-<pre><code>打开 系统设置 → 网络 → 选择当前网络连接 → 详细信息 → 代理
-
-勾选 网页代理（HTTP） 和 安全网页代理（HTTPS）
-
-服务器填写 127.0.0.1，端口填写 7890
-
-点击 好 应用设置
-</code></pre>
-<p>在 Linux 系统中（GNOME）：</p>
-<pre><code>打开 设置 → 网络 → 网络代理
-
-选择 手动
-
-在 HTTP 和 HTTPS 代理中填写：
-
-    服务器: 127.0.0.1
-
-    端口: 7890
-
-点击 应用
-</code></pre>
-<p>完成设置后，Chrome 应该立即就能通过代理访问外网了。</p>
-<p>方法二：使用命令行工具设置代理（临时方案）</p>
-<p>如果您不想修改系统设置，可以临时设置环境变量：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在启动 Chrome 前设置环境变量（Linux/macOS）</span></span><br><span class="line"><span class="built_in">export</span> http_proxy=http://127.0.0.1:7890</span><br><span class="line"><span class="built_in">export</span> https_proxy=http://127.0.0.1:7890</span><br><span class="line"></span><br><span class="line"><span class="comment"># 然后启动 Chrome</span></span><br><span class="line">google-chrome &amp;</span><br></pre></td></tr></table></figure>
-
-<p>或者在启动命令中直接指定代理：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">google-chrome --proxy-server=<span class="string">&quot;http://127.0.0.1:7890&quot;</span> &amp;</span><br><span class="line"><span class="comment"># 或</span></span><br><span class="line">google-chrome --proxy-server=<span class="string">&quot;socks5://127.0.0.1:7891&quot;</span> &amp;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 或以下方式</span></span><br><span class="line">curl -x http://127.0.0.1:7890 https://www.google.com</span><br><span class="line">curl -x socks5://127.0.0.1:7891 https://www.google.com</span><br><span class="line">curl --socks5 127.0.0.1:7891 https://www.google.com</span><br></pre></td></tr></table></figure>
-
-<p>方法三：在chrome浏览器或者firefox浏览器的SwitchyOmega或者Zero Omega插件里配置代理</p>
-<p>注：浏览器代理只针对当前浏览器，其他应用的流量不会通过代理。</p>
-<ol>
-<li>RESTful 控制台</li>
-</ol>
-<p>可以通过web控制面板RESTful API切换节点和模式，可用下面两个来控制。</p>
-<p><a target="_blank" rel="noopener" href="https://d.metacubex.one/">https://d.metacubex.one/</a> 或者 <a target="_blank" rel="noopener" href="https://yacd.metacubex.one/">https://yacd.metacubex.one/</a></p>
-<p>注：原理说明</p>
-<p>步骤 1：用户访问 Yacd 网站</p>
-<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">用户浏览器 → https://yacd.metacubex.one</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>浏览器加载 Yacd 的静态资源（HTML、JS、CSS）</li>
-<li>所有代码在浏览器沙箱环境中运行</li>
-</ul>
-<p>步骤 2：Yacd 尝试连接本地 API</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Yacd 代码中的连接逻辑</span></span><br><span class="line"><span class="keyword">const</span> apiUrl = <span class="string">&#x27;http://127.0.0.1:9090&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 发送预检请求 (Preflight Request)</span></span><br><span class="line"><span class="title function_">fetch</span>(apiUrl + <span class="string">&#x27;/configs&#x27;</span>, &#123;</span><br><span class="line">  <span class="attr">method</span>: <span class="string">&#x27;GET&#x27;</span>,</span><br><span class="line">  <span class="attr">headers</span>: &#123;</span><br><span class="line">    <span class="string">&#x27;Content-Type&#x27;</span>: <span class="string">&#x27;application/json&#x27;</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-
-<p>步骤 3：浏览器执行 CORS 检查</p>
-<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">浏览器发送 OPTIONS 预检请求到 127.0.0.1:9090</span><br><span class="line">    ↓</span><br><span class="line">mihomo 返回允许的 CORS 头部</span><br><span class="line">    ↓</span><br><span class="line">浏览器确认安全，发送实际请求</span><br></pre></td></tr></table></figure>
-
-<p>步骤 4：建立双向通信</p>
-<ul>
-<li>配置操作：通过 HTTP PATCH&#x2F;PUT 请求</li>
-<li>实时数据：通过 WebSocket 或 Server-Sent Events (SSE)</li>
-<li>流量监控：持续的 HTTP 流或 WebSocket 连接</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/28/tech/algo/data-structures-segment-tree/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -499,7 +219,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 06:57:03" itemprop="dateModified" datetime="2026-07-09T06:57:03+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-09 07:27:32" itemprop="dateModified" datetime="2026-07-09T07:27:32+00:00">2026-07-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -576,7 +296,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 06:57:03" itemprop="dateModified" datetime="2026-07-09T06:57:03+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-09 07:27:32" itemprop="dateModified" datetime="2026-07-09T07:27:32+00:00">2026-07-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -659,7 +379,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 06:57:03" itemprop="dateModified" datetime="2026-07-09T06:57:03+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-09 07:27:32" itemprop="dateModified" datetime="2026-07-09T07:27:32+00:00">2026-07-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -792,7 +512,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 06:57:03" itemprop="dateModified" datetime="2026-07-09T06:57:03+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-09 07:27:32" itemprop="dateModified" datetime="2026-07-09T07:27:32+00:00">2026-07-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -909,7 +629,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 06:57:03" itemprop="dateModified" datetime="2026-07-09T06:57:03+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-09 07:27:32" itemprop="dateModified" datetime="2026-07-09T07:27:32+00:00">2026-07-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1013,7 +733,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 06:57:03" itemprop="dateModified" datetime="2026-07-09T06:57:03+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-09 07:27:32" itemprop="dateModified" datetime="2026-07-09T07:27:32+00:00">2026-07-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1104,7 +824,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 06:57:03" itemprop="dateModified" datetime="2026-07-09T06:57:03+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-09 07:27:32" itemprop="dateModified" datetime="2026-07-09T07:27:32+00:00">2026-07-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1179,7 +899,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 06:57:03" itemprop="dateModified" datetime="2026-07-09T06:57:03+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-09 07:27:32" itemprop="dateModified" datetime="2026-07-09T07:27:32+00:00">2026-07-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1260,7 +980,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 06:57:03" itemprop="dateModified" datetime="2026-07-09T06:57:03+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-09 07:27:32" itemprop="dateModified" datetime="2026-07-09T07:27:32+00:00">2026-07-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1718,6 +1438,177 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
   
   
 
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/02/02/tech/cpp/compile-link/gcc-and-glibc/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/02/02/tech/cpp/compile-link/gcc-and-glibc/" class="post-title-link" itemprop="url">gcc 与 glibc</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-02-02 13:24:45" itemprop="dateCreated datePublished" datetime="2024-02-02T13:24:45+00:00">2024-02-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-07-09 07:27:32" itemprop="dateModified" datetime="2026-07-09T07:27:32+00:00">2026-07-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="gcc"><a href="#gcc" class="headerlink" title="gcc"></a>gcc</h2><p>gcc是一个编译套件，包含c、c++、Fortran语言的编译器。</p>
+<h2 id="glibc"><a href="#glibc" class="headerlink" title="glibc"></a>glibc</h2><p>glibc是一个library，为C程序提供基础公共功能，包括系统调用、数学函数和其他核心组件。<br>Linux平台和vscode似乎都依赖glibc，如果擅自将<code>LD_LIBRARY_PATH</code>更改为其他版本的glibc路径，则bash会直接crash。</p>
+<h3 id="glibc包含以下bin和lib："><a href="#glibc包含以下bin和lib：" class="headerlink" title="glibc包含以下bin和lib："></a>glibc包含以下bin和lib：</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cd</span> glibc-v2.34/Linux/RHEL7.0-2017-x86_64/bin &amp;&amp; <span class="built_in">ls</span></span><br><span class="line">catchsegv  getconf  iconv  locale     makedb  pcprofiledump  sotruss  tzselect  zdump</span><br><span class="line">gencat     getent   ldd    localedef  mtrace  pldd           sprof    xtrace</span><br><span class="line"></span><br><span class="line"><span class="comment"># 进入其他版本的glibc/lib目录执行ls命令会报错，大概原因可能是因为当前路径的glibc的lib和系统的lib冲突。</span></span><br><span class="line">$ <span class="built_in">cd</span> ../lib &amp;&amp; <span class="built_in">ls</span></span><br><span class="line"><span class="built_in">ls</span>: relocation error: ./libc.so.6: symbol __tunable_get_val, version GLIBC_PRIVATE not defined <span class="keyword">in</span> file ld-linux-x86-64.so.2 with <span class="built_in">link</span> time reference</span><br><span class="line"></span><br><span class="line">$ <span class="built_in">cd</span> .. &amp;&amp; <span class="built_in">ls</span> lib</span><br><span class="line">Mcrt1.o               libanl.so.1             libm.so             libnss_hesiod.so.2</span><br><span class="line">Scrt1.o               libc.a                  libm.so.6           libpcprofile.so</span><br><span class="line">audit                 libc.so                 libmcheck.a         libpthread.a</span><br><span class="line">crt1.o                libc.so.6               libmemusage.so      libpthread.so.0</span><br><span class="line">crti.o                libc_malloc_debug.so    libmvec.a           libresolv.a</span><br><span class="line">crtn.o                libc_malloc_debug.so.0  libmvec.so          libresolv.so</span><br><span class="line">gconv                 libc_nonshared.a        libmvec.so.1        libresolv.so.2</span><br><span class="line">gcrt1.o               libcrypt.a              libnsl.so.1         librt.a</span><br><span class="line">ld-linux-x86-64.so.2  libcrypt.so             libnss_compat.so    librt.so.1</span><br><span class="line">libBrokenLocale.a     libcrypt.so.1           libnss_compat.so.2  libthread_db.so</span><br><span class="line">libBrokenLocale.so    libdl.a                 libnss_db.so        libthread_db.so.1</span><br><span class="line">libBrokenLocale.so.1  libdl.so.2              libnss_db.so.2      libutil.a</span><br><span class="line">libSegFault.so        libg.a                  libnss_dns.so.2     libutil.so.1</span><br><span class="line">libanl.a              libm-2.34.a             libnss_files.so.2</span><br><span class="line">libanl.so             libm.a                  libnss_hesiod.so</span><br></pre></td></tr></table></figure>
+
+<h3 id="查看glibc的版本："><a href="#查看glibc的版本：" class="headerlink" title="查看glibc的版本："></a>查看glibc的版本：</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 从上可知，ldd是glibc的核心组件之一</span></span><br><span class="line">$ ldd --version</span><br></pre></td></tr></table></figure>
+
+<h3 id="寻找libc-so的路径："><a href="#寻找libc-so的路径：" class="headerlink" title="寻找libc.so的路径："></a>寻找libc.so的路径：</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ locate libc.so</span><br><span class="line">/usr/lib/x86_64-linux-gnu/libc.so</span><br><span class="line">/usr/lib/x86_64-linux-gnu/libc.so.6</span><br><span class="line">$ locate libstdc++.so</span><br><span class="line">/usr/lib/gcc/x86_64-linux-gnu/11/libstdc++.so</span><br><span class="line">/usr/lib/x86_64-linux-gnu/libstdc++.so.6</span><br><span class="line">/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30</span><br><span class="line">/usr/share/gdb/auto-load/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30-gdb.py</span><br></pre></td></tr></table></figure>
+
+<h3 id="安装glibc："><a href="#安装glibc：" class="headerlink" title="安装glibc："></a>安装glibc：</h3><p>Ubuntu平台</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install lib6</span><br></pre></td></tr></table></figure>
+
+<p>RedHat平台</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo yum install glibc</span><br></pre></td></tr></table></figure>
+
+<h3 id="检查GNC-C-Library-libstdc-的版本："><a href="#检查GNC-C-Library-libstdc-的版本：" class="headerlink" title="检查GNC C++ Library (libstdc++)的版本："></a>检查GNC C++ Library (libstdc++)的版本：</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">$ strings /usr/lib/libstdc++.so.* | grep LIBCXX</span><br><span class="line">[sjcvl-zhigaoz ] /lan/cva_rel/vxe_main/24.02.650.d000/tools.lnx86/lib/64bit % strings /usr/lib/libstdc++.so.* | grep LIBCXX</span><br><span class="line">GLIBCXX_3.4</span><br><span class="line">GLIBCXX_3.4.1</span><br><span class="line">GLIBCXX_3.4.2</span><br><span class="line">...</span><br><span class="line">GLIBCXX_3.4.19</span><br><span class="line">GLIBCXX_DEBUG_MESSAGE_LENGTH</span><br><span class="line"></span><br><span class="line">$ strings /usr/lib/libc.so.* | grep GLIBC</span><br><span class="line">GLIBC_2.0</span><br><span class="line">GLIBC_2.1</span><br><span class="line">GLIBC_2.1.1</span><br><span class="line">...</span><br><span class="line">GLIBC_2.17</span><br><span class="line">GLIBC_PRIVATE</span><br></pre></td></tr></table></figure>
+
+<p>如果你有一个使用了libstdc++的特定的binary或application，可以用下面的命令来检查其版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ldd &lt;your_binary_or_application&gt; | grep libstdc++</span><br></pre></td></tr></table></figure>
+
+<p>使用vscode的“Remote SSH”工具试图连接到Linux时，可能会报错如下：</p>
+<blockquote>
+<p>Warning: Missing GLIBCXX &gt;&#x3D; 3.4.25! from &#x2F;usr&#x2F;lib64&#x2F;libstdc++.so.6.0.19<br>Warning: Missing GLIBC &gt;&#x3D; 2.28! from &#x2F;usr&#x2F;lib64&#x2F;libc-2.17.so<br>Error: Missing required dependencies. Please refer to our FAQ <a target="_blank" rel="noopener" href="https://aka.ms/vscode-remote/faq/old-linux">https://aka.ms/vscode-remote/faq/old-linux</a> for additional information.</p>
+</blockquote>
+<p>这是因为Linux系统上的glibc版本中不包含GLIBCXX_3.4.25及以上的版本。此时需要降级vscode（建议做法）或升级glibc（似乎很难）。</p>
+<h3 id="让某些程序默认使用你本地安装的-glibc"><a href="#让某些程序默认使用你本地安装的-glibc" class="headerlink" title="让某些程序默认使用你本地安装的 glibc"></a>让某些程序默认使用你本地安装的 glibc</h3><p>你可以让某些程序默认使用你本地安装的 glibc（比如 ~&#x2F;local&#x2F;glibc-2.42），但不能全局替换系统默认 glibc，否则会导致系统崩溃。下面是几种安全又实用的方法，让你的程序“默认”使用本地 glibc：</p>
+<p>✅ 方法一：使用 LD_LIBRARY_PATH 环境变量（推荐）<br>这是最简单的方式，让你运行的程序优先使用你指定的 glibc：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> LD_LIBRARY_PATH=<span class="variable">$HOME</span>/local/glibc-2.42/lib:<span class="variable">$LD_LIBRARY_PATH</span></span><br></pre></td></tr></table></figure>
+
+<p>你可以把这行加到 ~&#x2F;.bashrc 或 ~&#x2F;.profile 中，这样每次登录都会自动生效。</p>
+<p>📌 注意：这只影响你当前用户的 shell 环境，不会影响系统服务或其他用户。</p>
+<p>✅ 方法二：使用 ld.so.preload（⚠️危险，不推荐）<br>你可以将本地 glibc 的路径写入 &#x2F;etc&#x2F;ld.so.preload，让系统优先加载它。但这会影响所有程序，包括 ls、bash、sudo 等，一旦路径错误，系统可能无法启动。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$HOME</span>/local/glibc-2.42/lib/libc.so.6&quot;</span> | sudo <span class="built_in">tee</span> /etc/ld.so.preload</span><br></pre></td></tr></table></figure>
+<p>⚠️ 强烈不建议使用此方法，除非你在容器或 chroot 环境中测试。</p>
+<p>✅ 方法三：使用 patchelf 修改程序的动态链接器<br>你可以用 patchelf 工具修改 ELF 程序的运行时 glibc 路径：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">patchelf --set-interpreter <span class="variable">$HOME</span>/local/glibc-2.42/lib/ld-2.42.so \</span><br><span class="line">         --set-rpath <span class="variable">$HOME</span>/local/glibc-2.42/lib \</span><br><span class="line">         ./your_program</span><br></pre></td></tr></table></figure>
+
+<p>这样修改后的程序会自动使用你指定的 glibc，无需额外设置。</p>
+<p>✅ 方法四：编译时指定 glibc 路径（适用于 CMake&#x2F;GCC）<br>如果你自己编译程序，可以在编译时指定 glibc 的头文件和库路径：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">gcc -I<span class="variable">$HOME</span>/local/glibc-2.42/include \</span><br><span class="line">    -L<span class="variable">$HOME</span>/local/glibc-2.42/lib \</span><br><span class="line">    -Wl,--rpath=<span class="variable">$HOME</span>/local/glibc-2.42/lib \</span><br><span class="line">    your_code.c -o your_program</span><br></pre></td></tr></table></figure>
+
+<p>或者在 CMake 中设置：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span>(CMAKE_C_FLAGS <span class="string">&quot;$&#123;CMAKE_C_FLAGS&#125; -Wl,-rpath=$HOME/local/glibc-2.42/lib&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>🧠 总结：推荐做法</p>
+<table>
+<thead>
+<tr>
+<th align="center">方法</th>
+<th>是否推荐</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">LD_LIBRARY_PATH</td>
+<td>✅ 推荐</td>
+<td>简单、安全、可控</td>
+</tr>
+<tr>
+<td align="center">patchelf</td>
+<td>✅ 推荐</td>
+<td>精确控制某个程序</td>
+</tr>
+<tr>
+<td align="center">编译时指定路径</td>
+<td>✅ 推荐</td>
+<td>适合开发者</td>
+</tr>
+<tr>
+<td align="center">修改 &#x2F;etc&#x2F;ld.so.preload</td>
+<td>❌ 危险</td>
+<td>可能导致系统崩溃</td>
+</tr>
+</tbody></table>
+<h3 id="🔍-编译器如何找到-glibc"><a href="#🔍-编译器如何找到-glibc" class="headerlink" title="🔍 编译器如何找到 glibc"></a>🔍 编译器如何找到 glibc</h3><ol>
+<li>默认系统路径<br>GCC 默认会在系统的标准库路径中查找 glibc，例如：</li>
+</ol>
+<p>&#x2F;lib<br>&#x2F;lib64<br>&#x2F;usr&#x2F;lib<br>&#x2F;usr&#x2F;lib64<br>&#x2F;usr&#x2F;include（头文件）</p>
+<p>这些路径通常由系统预设，glibc 安装时会自动放置在这些位置。</p>
+<ol start="2">
+<li>头文件与动态库<br>编译阶段：GCC 会使用 &#x2F;usr&#x2F;include 下的 glibc 头文件（如 stdio.h, stdlib.h）来进行语法检查和类型推导。</li>
+</ol>
+<p>链接阶段：GCC 会调用链接器（ld），查找 libc.so.6 或 libc.a 来完成符号解析。</p>
+<ol start="3">
+<li>环境变量控制<br>你可以通过环境变量来影响 GCC 查找 glibc 的位置：</li>
+</ol>
+<p>C_INCLUDE_PATH：指定头文件搜索路径</p>
+<p>LIBRARY_PATH：指定库文件搜索路径</p>
+<p>LD_LIBRARY_PATH：运行时动态库搜索路径</p>
+<p>例如：</p>
+<p>bash<br>export C_INCLUDE_PATH&#x3D;&#x2F;opt&#x2F;glibc&#x2F;include<br>export LIBRARY_PATH&#x3D;&#x2F;opt&#x2F;glibc&#x2F;lib<br>4. 链接器参数<br>你也可以通过 GCC 的 -Wl 参数直接告诉链接器使用哪个 glibc：</p>
+<p>bash<br>gcc hello.c -o hello <br>  -Wl,–dynamic-linker&#x3D;&#x2F;opt&#x2F;glibc&#x2F;lib&#x2F;ld-2.34.so <br>  -L&#x2F;opt&#x2F;glibc&#x2F;lib<br>这会指定使用 &#x2F;opt&#x2F;glibc&#x2F;lib&#x2F;libc.so.6 和对应的动态链接器。</p>
+<ol start="5">
+<li>使用 patchelf 工具修改依赖<br>如果你已经编译好了程序，但想修改它使用的 glibc，可以用 patchelf：</li>
+</ol>
+<p>bash<br>patchelf –set-interpreter &#x2F;opt&#x2F;glibc&#x2F;lib&#x2F;ld-2.34.so hello<br>patchelf –replace-needed libc.so.6 &#x2F;opt&#x2F;glibc&#x2F;lib&#x2F;libc.so.6 hello<br>这在部署多版本 glibc 时非常有用。</p>
+<p>🧪 如何验证 glibc 的使用情况<br>查看程序依赖的 glibc：</p>
+<p>bash<br>ldd .&#x2F;hello<br>查看系统 glibc 版本：</p>
+<p>bash<br>ldd</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
 
   
   <nav class="pagination">
@@ -1789,7 +1680,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">122</span>
+          <span class="site-state-item-count">121</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

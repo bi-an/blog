@@ -188,115 +188,6 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/15/tech/concurrent/aba-problem/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/09/15/tech/concurrent/aba-problem/" class="post-title-link" itemprop="url">CAS 的 ABA问题</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-09-15 19:48:58" itemprop="dateCreated datePublished" datetime="2025-09-15T19:48:58+00:00">2025-09-15</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 06:57:03" itemprop="dateModified" datetime="2026-07-09T06:57:03+00:00">2026-07-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/concurrent/" itemprop="url" rel="index"><span itemprop="name">concurrent</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="ABA-问题"><a href="#ABA-问题" class="headerlink" title="ABA 问题"></a>ABA 问题</h2><p>在典型的无锁栈&#x2F;队列里，指针会被反复复用（比如 pop 出再 push 回去）。如果只用 compare_exchange 比较指<br>针，那么：</p>
-<ul>
-<li>T1 读到 A</li>
-<li>T2 把 A → B → A 改一圈</li>
-<li>T1 CAS 时看到还是 A，以为结构没变，但其实已经发生变化</li>
-</ul>
-<p>这就是 ABA 问题。</p>
-<h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><h3 id="版本标记指针方案"><a href="#版本标记指针方案" class="headerlink" title="版本标记指针方案"></a>版本标记指针方案</h3><p>‌ 核心思想 ‌：为每个指针附加一个版本号标记，每次修改时递增版本号。</p>
-<p>‌ 实现要点 ‌：</p>
-<ul>
-<li>需要双字 CAS(DCAS)硬件支持</li>
-<li>每次修改头指针时递增标记值</li>
-<li>即使指针地址相同，标记值不同也会使 CAS 失败</li>
-<li>适用于支持 DCAS 的平台(如某些 ARM 架构)</li>
-<li>在非 DCAS 平台也可用，前提是将 data + version 放入一个机器字中，以维持操作的原子性</li>
-</ul>
-<p>‌ 限制 ‌：</p>
-<ul>
-<li>在某些机器上需要双字宽度（两个 word）CAS；</li>
-<li>如果硬件／编译器／平台不支持就只能模拟／锁住；或者要压缩 pointer 或 tag 大小，可能限制可管理的节点数量／地址空间。</li>
-</ul>
-<h3 id="引用计数方案"><a href="#引用计数方案" class="headerlink" title="引用计数方案"></a>引用计数方案</h3><p>‌ 核心思想 ‌：为每个节点维护引用计数，防止节点在被使用时被重新添加到列表。</p>
-<p>‌ 关键实现细节 ‌：</p>
-<p>每个节点包含 freeListRefs(引用计数)和 freeListNext(下一节点指针) 引用计数高位用作 “应返回自由列表”<br>标志位 try_get()操作前确保引用计数不为零 add()操作使用原子操作管理引用计数和标志位 ‌ 优势 ‌：</p>
-<p>完全通用的解决方案，不依赖特定硬件特性保持真正的锁无关性质正确处理并发场景下的各种竞争条件</p>
-<h3 id="Hazard-Pointer（危险指针）"><a href="#Hazard-Pointer（危险指针）" class="headerlink" title="Hazard Pointer（危险指针）"></a>Hazard Pointer（危险指针）</h3><p>思路：每个线程在访问共享指针之前，把自己正在访问的指针写到一个全局可见的“hazard pointer”里。</p>
-<p>作用：其他线程在想要回收这个节点内存时，必须检查所有线程的 hazard pointers，如果发现有人还在用这个节<br>点，就不能释放。</p>
-<p>优点：简单直接，内存可以安全回收。</p>
-<p>缺点：维护 hazard pointers 有一定开销，每次回收都要检查所有线程。</p>
-<h3 id="Epoch-Based-Reclamation（基于世代的回收，简称-Epoch-GC）"><a href="#Epoch-Based-Reclamation（基于世代的回收，简称-Epoch-GC）" class="headerlink" title="Epoch-Based Reclamation（基于世代的回收，简称 Epoch GC）"></a>Epoch-Based Reclamation（基于世代的回收，简称 Epoch GC）</h3><p>思路：把时间切分成 epoch（世代）。线程进入临界区时声明自己在某个 epoch。当一个节点被删除后，先放到一<br>个“延迟回收队列”，等到所有线程都离开这个 epoch 之后，才能真正释放这些节点。</p>
-<p>作用：保证没有线程会在旧 epoch 中访问到已经释放的节点。</p>
-<p>优点：比 hazard pointer 更高效（不用逐个检查指针）。</p>
-<p>缺点：需要所有线程都周期性地报告自己活跃的 epoch，否则内存可能迟迟回收不了。</p>
-<p>🚩 为什么会和 ABA 有关？</p>
-<p>像 Michael-Scott 队列这种链表结构，节点被 pop 出队后地址可能被重用。如果没有安全的内存回收，另一个线<br>程可能 CAS 成功指向了一个“已经被释放并重用的地址”，这就是 ABA 的根源。所以 hazard pointer 或 epoch<br>GC 是在链表队列里用来避免这种 悬空引用 + ABA 的。</p>
-<p>而 moodycamel:: ConcurrentQueue 因为用的是 环形 buffer + sequence number，节点不会反复 malloc&#x2F;free，<br>所以根本就不需要 hazard pointer 或 epoch GC。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/14/tech/concurrent/concurrency-principles/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -328,7 +219,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 06:57:03" itemprop="dateModified" datetime="2026-07-09T06:57:03+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-09 07:27:32" itemprop="dateModified" datetime="2026-07-09T07:27:32+00:00">2026-07-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -414,7 +305,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 06:57:03" itemprop="dateModified" datetime="2026-07-09T06:57:03+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-09 07:27:32" itemprop="dateModified" datetime="2026-07-09T07:27:32+00:00">2026-07-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -516,7 +407,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 06:57:03" itemprop="dateModified" datetime="2026-07-09T06:57:03+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-09 07:27:32" itemprop="dateModified" datetime="2026-07-09T07:27:32+00:00">2026-07-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -632,7 +523,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 06:57:03" itemprop="dateModified" datetime="2026-07-09T06:57:03+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-09 07:27:32" itemprop="dateModified" datetime="2026-07-09T07:27:32+00:00">2026-07-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1022,7 +913,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 06:57:03" itemprop="dateModified" datetime="2026-07-09T06:57:03+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-09 07:27:32" itemprop="dateModified" datetime="2026-07-09T07:27:32+00:00">2026-07-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1097,7 +988,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 06:57:03" itemprop="dateModified" datetime="2026-07-09T06:57:03+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-09 07:27:32" itemprop="dateModified" datetime="2026-07-09T07:27:32+00:00">2026-07-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1259,7 +1150,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 06:57:03" itemprop="dateModified" datetime="2026-07-09T06:57:03+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-09 07:27:32" itemprop="dateModified" datetime="2026-07-09T07:27:32+00:00">2026-07-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1559,7 +1450,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 06:57:03" itemprop="dateModified" datetime="2026-07-09T06:57:03+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-09 07:27:32" itemprop="dateModified" datetime="2026-07-09T07:27:32+00:00">2026-07-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2206,7 +2097,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 06:57:03" itemprop="dateModified" datetime="2026-07-09T06:57:03+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-09 07:27:32" itemprop="dateModified" datetime="2026-07-09T07:27:32+00:00">2026-07-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2338,6 +2229,169 @@
   
   
 
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/20/tech/ic/eda-simulation-memory/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/20/tech/ic/eda-simulation-memory/" class="post-title-link" itemprop="url">EDA 仿真之 Memory</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-08-20 22:25:49" itemprop="dateCreated datePublished" datetime="2025-08-20T22:25:49+00:00">2025-08-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-07-09 07:27:32" itemprop="dateModified" datetime="2026-07-09T07:27:32+00:00">2026-07-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/ic/" itemprop="url" rel="index"><span itemprop="name">ic</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Memory"><a href="#Memory" class="headerlink" title="Memory"></a>Memory</h2><p>Memory &#x3D; 存储 + 访问逻辑</p>
+<p>存储</p>
+<ul>
+<li>在仿真里，memory 本质上就是一个数组（Array）或者向量（Vector），每个元素对应一个存储单元（bit&#x2F;byte&#x2F;word）。</li>
+<li>例：一个 8 位 × 1024 深度的 RAM，可以在仿真里用 <code>uint8_t mem[1024];</code> 表示。</li>
+</ul>
+<p>访问逻辑</p>
+<ul>
+<li>读（Read）：根据地址返回对应的数据。</li>
+<li>写（Write）：根据地址和写使能信号，将数据写入存储单元。</li>
+<li>可能涉及 时序：同步（clock 边沿写入）或异步（立即生效）。</li>
+</ul>
+<p>时序和延迟</p>
+<ul>
+<li>在硬件里，memory 访问不是瞬间的：存在 读延迟、写延迟。</li>
+<li>仿真时，可以用 延时事件 或 clock 边沿触发 来模拟。</li>
+</ul>
+<h2 id="仿真代码"><a href="#仿真代码" class="headerlink" title="仿真代码"></a>仿真代码</h2><p>功能说明</p>
+<ul>
+<li>多端口读写：支持同时多个端口访问 memory</li>
+<li>写冲突仲裁：写优先策略或延迟写，可扩展读优先 &#x2F; 轮询</li>
+<li>读延迟 pipeline：延迟由 read_delay 控制</li>
+<li>Burst &#x2F; wrap-around：访问超出末尾自动回绕</li>
+<li>简单 Cache&#x2F;Tag：模拟命中 &#x2F; 未命中</li>
+<li>异步端口：不同端口调用 read&#x2F;write 可在不同 tick，模拟异步时钟</li>
+<li>随机 bit flip &#x2F; SEU：1% 概率错误注入</li>
+<li>统计与功耗估算基础：记录读写次数、命中数、平均延迟</li>
+</ul>
+
+
+<p>输出的 memory_power.csv 文件内容示例：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Cycle,DynamicPower,StaticPower,TotalPower</span><br><span class="line">1,3,128,131</span><br><span class="line">2,0,128,128</span><br><span class="line">3,5,128,133</span><br><span class="line">4,2,128,130</span><br><span class="line">5,7,128,135</span><br><span class="line">6,1,128,129</span><br><span class="line">7,4,128,132</span><br><span class="line">8,0,128,128</span><br><span class="line">9,2,128,130</span><br><span class="line">10,3,128,131</span><br></pre></td></tr></table></figure>
+
+<p>每列含义：</p>
+<ul>
+<li>Cycle：周期号</li>
+<li>DynamicPower：每周期动态功耗单位</li>
+<li>StaticPower：静态功耗单位（固定）</li>
+<li>TotalPower：总功耗单位</li>
+</ul>
+<p>功耗分析</p>
+
+
+<h3 id="burst-multi-port-总线冲突"><a href="#burst-multi-port-总线冲突" class="headerlink" title="burst&#x2F;multi-port 总线冲突"></a>burst&#x2F;multi-port 总线冲突</h3><p>在多端口系统中，尤其是在使用总线结构的系统中，总线冲突（Bus contention）是一个常见的问题。总线冲突通常发生在多个设备尝试同时访问总线上的同一资源时。这种情况可能会导致数据损坏、系统性能下降或甚至系统崩溃。下面是一些解决和缓解总线冲突的策略：</p>
+<ol>
+<li>仲裁机制<br>仲裁是解决总线冲突的一种常用方法。它通过一个仲裁器（Arbiter）来决定哪个设备可以访问总线。常见的仲裁策略有：</li>
+</ol>
+<p>优先级仲裁：根据预先设定的优先级顺序决定哪个设备可以访问总线。</p>
+<p>轮询仲裁：轮流让每个设备访问总线。</p>
+<p>基于请求的仲裁（如请求共享（Request-for-Shared, RFS）和请求独占（Request-for-Exclusive, RFE））：设备首先请求对资源的访问，然后根据请求的类型（共享或独占）来决定访问权限。</p>
+<ol start="2">
+<li><p>分时复用<br>通过时间分割（Time Division Multiplexing, TDM）或频率分割（Frequency Division Multiplexing, FDM），可以允许多个设备在不同的时间或频率上使用总线，从而减少冲突。例如，可以使用时分多路复用将总线的不同时间段分配给不同的设备。</p>
+</li>
+<li><p>编码和解码技术<br>使用特殊的编码和解码技术，如霍纳编码（Hornar code）或格雷码（Gray code），可以减少在总线上传输数据时的错误，并帮助检测和纠正数据冲突。</p>
+</li>
+<li><p>总线锁定<br>在访问总线期间，通过总线锁定机制确保没有其他设备可以访问总线。这可以通过在总线上设置一个锁定信号来实现，该信号在访问期间保持激活状态。</p>
+</li>
+<li><p>缓存和缓冲<br>为每个设备提供局部缓存或缓冲机制，可以减少对总线的直接访问次数，从而降低冲突的可能性。当一个设备需要与总线上的另一个设备通信时，它可以先将数据写入自己的缓存，然后再由缓存同步到总线上。</p>
+</li>
+<li><p>使用更宽的总线<br>增加总线的宽度可以允许在同一时间内传输更多的数据，从而减少对总线的需求，降低冲突的可能性。</p>
+</li>
+</ol>
+<p>实施步骤<br>评估系统需求：确定哪些类型的设备将使用总线，以及它们对带宽的需求。</p>
+<p>选择仲裁策略：根据设备的优先级和带宽需求选择合适的仲裁策略。</p>
+<p>设计硬件：根据选定的策略设计硬件，包括添加仲裁器、缓存和适当的控制逻辑。</p>
+<p>测试和优化：实施后进行系统测试，根据测试结果调整策略或硬件设计。</p>
+<p>通过上述方法，可以有效管理和减少多端口系统中的总线冲突问题，提高系统的稳定性和性能。</p>
+<h3 id="Cache-Tag（缓存标记）"><a href="#Cache-Tag（缓存标记）" class="headerlink" title="Cache Tag（缓存标记）"></a>Cache Tag（缓存标记）</h3><p>Cache Tag（缓存标记）是高速缓存（Cache）中的关键组成部分，用于存储数据在主存中的地址信息，以便快速定位数据位置。 ‌</p>
+<p>核心功能<br>Tag字段存储了主存中数据的地址信息，当CPU访问主存时，首先通过Tag字段判断数据是否存在于Cache中。若存在，则直接从Cache读取；若不存在，则访问主存。 ‌</p>
+<p>结构组成</p>
+<ul>
+<li>‌Tag‌：记录数据在主存的地址信息。</li>
+<li>‌Data‌：存储实际数据。</li>
+<li>‌Valid Bit‌：标记数据是否有效。</li>
+<li>‌Dir‌：目录信息，用于区分不同数据块。 ‌</li>
+</ul>
+<p>应用场景</p>
+<p>现代处理器通常采用多级Cache结构（如L1、L2、L3），其中Tag与Data共同构成Cache Line，用于快速访问和存储数据。例如，ARMv8-A架构的处理器包含独立的I-Cache和D-Cache，分别存储指令和数据。</p>
+<p>Cache Tag 仿真代码</p>
+<blockquote>
+<p>FIXME: 该代码会 coredump 。</p>
+</blockquote>
+
+
+
+
+
+
+
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
 
   
   <nav class="pagination">
@@ -2409,7 +2463,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">122</span>
+          <span class="site-state-item-count">121</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
