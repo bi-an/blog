@@ -188,6 +188,168 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/11/26/tech/concurrent/concurrency-debugging-tools/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/11/26/tech/concurrent/concurrency-debugging-tools/" class="post-title-link" itemprop="url">并发调试工具</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-11-26 10:32:15" itemprop="dateCreated datePublished" datetime="2025-11-26T10:32:15+00:00">2025-11-26</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/concurrent/" itemprop="url" rel="index"><span itemprop="name">concurrent</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="常用-C-并发调试工具-ThreadSanitizer-TSan">常用 C++ 并发调试工具 ThreadSanitizer (TSan)</h2>
+<ul>
+<li>LLVM/Clang 提供的运行时检测工具
+<ul>
+<li>能精准捕获 数据竞争，输出冲突内存地址、访问栈回溯和涉及线程</li>
+</ul>
+</li>
+<li>Helgrind (Valgrind 工具集)
+<ul>
+<li>专门用于检测 死锁 和 锁误用</li>
+<li>通过监视线程对共享内存的访问来发现潜在冲突</li>
+</ul>
+</li>
+<li>rr (Record and Replay Debugger)
+<ul>
+<li>可以记录程序执行过程并重放</li>
+<li>适合调试 难以复现的并发 bug，如竞态条件和原子性问题</li>
+</ul>
+</li>
+<li>Clang Static Analyzer
+<ul>
+<li>静态分析工具，在编译阶段发现潜在的并发问题</li>
+<li>可检测未加锁访问共享变量、内存序错误等</li>
+</ul>
+</li>
+<li>PVS-Studio
+<ul>
+<li>商业静态分析工具</li>
+<li>能在 CI 流程中提前发现并发安全隐患</li>
+</ul>
+</li>
+</ul>
+<p>适用场景</p>
+<ul>
+<li>数据竞争 (Data Race) → 使用 ThreadSanitizer</li>
+<li>死锁 (Deadlock) → 使用 Helgrind</li>
+<li>难复现的竞态条件 → 使用 rr</li>
+</ul>
+<p>编译阶段预防 → 使用 Clang Static Analyzer / PVS-Studio</p>
+<p>这些工具往往需要结合使用：例如 TSan + Helgrind + rr 的组合拳，可以覆盖运行时检测、死锁分析和重放调试<br>
+，从而大幅提升并发问题定位效率</p>
+<table>
+<thead>
+<tr>
+<th>工具</th>
+<th>语言/平台</th>
+<th>主要功能</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ThreadSanitizer</td>
+<td>C/C++ (Clang/LLVM)</td>
+<td>数据竞争检测</td>
+<td>运行时发现共享变量冲突</td>
+</tr>
+<tr>
+<td>Helgrind</td>
+<td>C/C++ (Valgrind)</td>
+<td>死锁检测、锁误用</td>
+<td>多线程同步问题</td>
+</tr>
+<tr>
+<td>rr</td>
+<td>C/C++ (Linux)</td>
+<td>执行记录与重放</td>
+<td>难复现的竞态条件</td>
+</tr>
+<tr>
+<td>Clang Static Analyzer</td>
+<td>C/C++</td>
+<td>静态分析并发隐患</td>
+<td>编译阶段预防</td>
+</tr>
+<tr>
+<td>PVS-Studio</td>
+<td>C/C++</td>
+<td>商业静态分析</td>
+<td>CI 流程集成</td>
+</tr>
+<tr>
+<td><strong>Oracle Thread Analyzer</strong></td>
+<td>Java (Oracle 工具链)</td>
+<td>线程可视化、死锁检测</td>
+<td>Java 并发调试</td>
+</tr>
+</tbody>
+</table>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/11/26/tech/cpp/optimize/performance-analysis-tools/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -219,7 +381,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -242,103 +404,106 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="性能分析工具"><a href="#性能分析工具" class="headerlink" title="性能分析工具"></a>性能分析工具</h2><table>
+          <h2 id="性能分析工具">性能分析工具</h2>
+<table>
 <thead>
 <tr>
 <th>工具</th>
-<th align="center">类型&#x2F;定位</th>
-<th align="center">attach 支持</th>
-<th align="center">分析范围</th>
-<th align="center">特点</th>
-<th align="center">与 perf 的关系</th>
-<th align="center">开源&#x2F;商业授权</th>
-<th align="center">适用人群</th>
+<th style="text-align:center">类型/定位</th>
+<th style="text-align:center">attach 支持</th>
+<th style="text-align:center">分析范围</th>
+<th style="text-align:center">特点</th>
+<th style="text-align:center">与 perf 的关系</th>
+<th style="text-align:center">开源/商业授权</th>
+<th style="text-align:center">适用人群</th>
 </tr>
 </thead>
-<tbody><tr>
+<tbody>
+<tr>
 <td>Oracle Performance Analyzer (PA)</td>
-<td align="center">企业级性能分析器，Oracle Developer Studio 套件</td>
-<td align="center">✅</td>
-<td align="center">用户态程序 (C&#x2F;C++&#x2F;Java&#x2F;Fortran&#x2F;Scala)，并行应用</td>
-<td align="center">GUI 丰富，低开销采样，函数&#x2F;源代码&#x2F;指令级分析</td>
-<td align="center">独立工具</td>
-<td align="center">商业软件 (Oracle Developer Studio)</td>
-<td align="center">企业&#x2F;科研环境下的应用开发者</td>
+<td style="text-align:center">企业级性能分析器，Oracle Developer Studio 套件</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">用户态程序 (C/C++/Java/Fortran/Scala)，并行应用</td>
+<td style="text-align:center">GUI 丰富，低开销采样，函数/源代码/指令级分析</td>
+<td style="text-align:center">独立工具</td>
+<td style="text-align:center">商业软件 (Oracle Developer Studio)</td>
+<td style="text-align:center">企业/科研环境下的应用开发者</td>
 </tr>
 <tr>
 <td>perf</td>
-<td align="center">Linux 内核自带性能分析框架</td>
-<td align="center">✅</td>
-<td align="center">用户态 + 内核态 + 硬件事件</td>
-<td align="center">功能全面，支持调用链、硬件计数器，生态丰富 (eBPF, flamegraph)</td>
-<td align="center">基础框架</td>
-<td align="center">开源 (GPL，Linux 内核自带)</td>
-<td align="center">系统工程师，底层性能调优</td>
+<td style="text-align:center">Linux 内核自带性能分析框架</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">用户态 + 内核态 + 硬件事件</td>
+<td style="text-align:center">功能全面，支持调用链、硬件计数器，生态丰富 (eBPF, flamegraph)</td>
+<td style="text-align:center">基础框架</td>
+<td style="text-align:center">开源 (GPL，Linux 内核自带)</td>
+<td style="text-align:center">系统工程师，底层性能调优</td>
 </tr>
 <tr>
 <td>gprofng</td>
-<td align="center">GNU 新一代应用性能分析器</td>
-<td align="center">✅</td>
-<td align="center">用户态程序 (C&#x2F;C++&#x2F;Java&#x2F;Scala)，跨平台</td>
-<td align="center">基于实验目录，支持 GUI，跨语言，继承 Oracle PA 思路</td>
-<td align="center">独立工具</td>
-<td align="center">开源 (GNU 工具链)</td>
-<td align="center">应用开发者，跨平台性能优化</td>
+<td style="text-align:center">GNU 新一代应用性能分析器</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">用户态程序 (C/C++/Java/Scala)，跨平台</td>
+<td style="text-align:center">基于实验目录，支持 GUI，跨语言，继承 Oracle PA 思路</td>
+<td style="text-align:center">独立工具</td>
+<td style="text-align:center">开源 (GNU 工具链)</td>
+<td style="text-align:center">应用开发者，跨平台性能优化</td>
 </tr>
 <tr>
 <td>gprof</td>
-<td align="center">经典 GNU 性能分析器 (1980s)</td>
-<td align="center">❌</td>
-<td align="center">用户态程序 (C&#x2F;C++)</td>
-<td align="center">需编译时 -pg，生成 gmon.out，功能有限，不支持多线程&#x2F;attach</td>
-<td align="center">独立工具</td>
-<td align="center">开源 (GNU 工具链)</td>
-<td align="center">学术&#x2F;教学场景，简单函数级分析</td>
+<td style="text-align:center">经典 GNU 性能分析器 (1980s)</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">用户态程序 (C/C++)</td>
+<td style="text-align:center">需编译时 -pg，生成 gmon.out，功能有限，不支持多线程/attach</td>
+<td style="text-align:center">独立工具</td>
+<td style="text-align:center">开源 (GNU 工具链)</td>
+<td style="text-align:center">学术/教学场景，简单函数级分析</td>
 </tr>
 <tr>
 <td>Intel PMU Tools</td>
-<td align="center">Intel 提供的硬件性能计数器工具集</td>
-<td align="center">✅</td>
-<td align="center">硬件事件 (CPU pipeline、cache、branch、memory)</td>
-<td align="center">基于 PMU，提供 top-down 分析，解释微架构瓶颈</td>
-<td align="center">依赖 perf 收集数据，属于 perf 的增强解释层</td>
-<td align="center">开源 (MIT&#x2F;Apache 许可，Intel GitHub 提供)</td>
-<td align="center">系统&#x2F;性能工程师，硬件级调优</td>
+<td style="text-align:center">Intel 提供的硬件性能计数器工具集</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">硬件事件 (CPU pipeline、cache、branch、memory)</td>
+<td style="text-align:center">基于 PMU，提供 top-down 分析，解释微架构瓶颈</td>
+<td style="text-align:center">依赖 perf 收集数据，属于 perf 的增强解释层</td>
+<td style="text-align:center">开源 (MIT/Apache 许可，Intel GitHub 提供)</td>
+<td style="text-align:center">系统/性能工程师，硬件级调优</td>
 </tr>
 <tr>
 <td>Intel Advisor</td>
-<td align="center">高级性能优化工具 (Intel oneAPI 套件)</td>
-<td align="center">✅</td>
-<td align="center">用户态程序，尤其是 HPC 应用</td>
-<td align="center">提供矢量化分析、内存访问优化、并行化建议，GUI 支持</td>
-<td align="center">独立工具</td>
-<td align="center">商业软件 (Intel oneAPI 套件，部分免费版)</td>
-<td align="center">HPC 开发者，科学计算优化</td>
+<td style="text-align:center">高级性能优化工具 (Intel oneAPI 套件)</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">用户态程序，尤其是 HPC 应用</td>
+<td style="text-align:center">提供矢量化分析、内存访问优化、并行化建议，GUI 支持</td>
+<td style="text-align:center">独立工具</td>
+<td style="text-align:center">商业软件 (Intel oneAPI 套件，部分免费版)</td>
+<td style="text-align:center">HPC 开发者，科学计算优化</td>
 </tr>
 <tr>
 <td>Intel VTune Profiler</td>
-<td align="center">深度性能分析器</td>
-<td align="center">✅</td>
-<td align="center">CPU&#x2F;GPU&#x2F;FPGA、内存、线程、I&#x2F;O、微架构</td>
-<td align="center">微架构级剖析，支持 cache、pipeline、分支预测，功能全面</td>
-<td align="center">独立工具，但可结合 perf 数据</td>
-<td align="center">商业软件 (Intel oneAPI 套件，提供免费社区版)</td>
-<td align="center">系统&#x2F;性能工程师，硬件与应用优化</td>
+<td style="text-align:center">深度性能分析器</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">CPU/GPU/FPGA、内存、线程、I/O、微架构</td>
+<td style="text-align:center">微架构级剖析，支持 cache、pipeline、分支预测，功能全面</td>
+<td style="text-align:center">独立工具，但可结合 perf 数据</td>
+<td style="text-align:center">商业软件 (Intel oneAPI 套件，提供免费社区版)</td>
+<td style="text-align:center">系统/性能工程师，硬件与应用优化</td>
 </tr>
 <tr>
 <td>Linaro MAP (Arm Forge MAP)</td>
-<td align="center">HPC 并行应用性能分析器</td>
-<td align="center">✅</td>
-<td align="center">MPI、OpenMP、UPC 等大规模并行应用</td>
-<td align="center">低开销采样，跨节点整体分析，源代码行级耗时展示，GUI 可视化</td>
-<td align="center">独立工具</td>
-<td align="center">商业软件 (Arm Forge 套件，需许可证)</td>
-<td align="center">HPC 开发者，超级计算机环境</td>
+<td style="text-align:center">HPC 并行应用性能分析器</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">MPI、OpenMP、UPC 等大规模并行应用</td>
+<td style="text-align:center">低开销采样，跨节点整体分析，源代码行级耗时展示，GUI 可视化</td>
+<td style="text-align:center">独立工具</td>
+<td style="text-align:center">商业软件 (Arm Forge 套件，需许可证)</td>
+<td style="text-align:center">HPC 开发者，超级计算机环境</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <p><strong>差异总结</strong></p>
 <ul>
-<li>Oracle PA &#x2F; gprofng：应用层性能分析，强调 GUI 和跨语言支持。</li>
+<li>Oracle PA / gprofng：应用层性能分析，强调 GUI 和跨语言支持。</li>
 <li>perf：系统级通用工具，是底层框架。</li>
 <li>gprof：老工具，功能有限，不支持 attach。</li>
 <li>Intel PMU Tools：基于 perf，提供 Intel CPU 微架构解释，是 perf 的增强解释层。</li>
@@ -349,41 +514,45 @@
 <p><strong>结论</strong></p>
 <ul>
 <li>应用层性能分析：Oracle PA、gprofng</li>
-<li>系统&#x2F;内核级调优：perf</li>
+<li>系统/内核级调优：perf</li>
 <li>硬件级微架构分析：Intel PMU Tools、Intel VTune Profiler</li>
 <li>智能优化建议 (HPC)：Intel Advisor</li>
 <li>大规模并行应用分析 (HPC)：Linaro MAP</li>
 </ul>
 <p>👉 可以把它们看作一个层次结构：</p>
 <ul>
-<li>gprof → gprofng&#x2F;Oracle PA → perf → Intel PMU Tools&#x2F;VTune → Advisor&#x2F;MAP</li>
+<li>gprof → gprofng/Oracle PA → perf → Intel PMU Tools/VTune → Advisor/MAP</li>
 <li>逐步从函数级分析 → 应用性能 → 系统级 → 硬件级 → HPC 并行整体优化。</li>
 </ul>
-<h3 id="Performance-Analyzer"><a href="#Performance-Analyzer" class="headerlink" title="Performance Analyzer"></a>Performance Analyzer</h3><p>Oracle Developer Studio 提供了多种工具：Performance Analyzer、Thread Analyzer。</p>
+<h3 id="Performance-Analyzer">Performance Analyzer</h3>
+<p>Oracle Developer Studio 提供了多种工具：Performance Analyzer、Thread Analyzer。</p>
 <blockquote>
 <p><a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afagg.html#OSSPAgrkam">Performance Analyzer 官方文档</a></p>
 </blockquote>
-<h4 id="收集数据"><a href="#收集数据" class="headerlink" title="收集数据"></a>收集数据</h4><p>使用 <code>collect</code> 命令收集数据<br>（<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afadn.html#scrolltoc">官方文档</a>）。</p>
+<h4 id="收集数据">收集数据</h4>
+<p>使用 <code>collect</code> 命令收集数据<br>
+（<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afadn.html#scrolltoc">官方文档</a>）。</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">collect collect-options program program-arguments</span><br></pre></td></tr></table></figure>
-
-<h4 id="开始性能分析"><a href="#开始性能分析" class="headerlink" title="开始性能分析"></a>开始性能分析</h4><p>使用 <code>analyzer</code> 命令进行性能分析<br>（<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afafs.html#scrolltoc">官方文档</a>）。</p>
+<h4 id="开始性能分析">开始性能分析</h4>
+<p>使用 <code>analyzer</code> 命令进行性能分析<br>
+（<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E77782_01/html/E77798/afafs.html#scrolltoc">官方文档</a>）。</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">analyzer [control-options] [experiment | experiment-list]</span><br></pre></td></tr></table></figure>
-
 <p>例如：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">analyzer -c test.1.er test.4.er</span><br></pre></td></tr></table></figure>
-
-<h3 id="Thread-Analyzer"><a href="#Thread-Analyzer" class="headerlink" title="Thread Analyzer"></a>Thread Analyzer</h3><blockquote>
+<h3 id="Thread-Analyzer">Thread Analyzer</h3>
+<blockquote>
 <p><a target="_blank" rel="noopener" href="https://www.oracle.com/application-development/technologies/developerstudio-features.html#thread-analyzer-tab">Thread Analyzer 官方文档</a></p>
 </blockquote>
-<h2 id="计时"><a href="#计时" class="headerlink" title="计时"></a>计时</h2><h3 id="计时工具-time"><a href="#计时工具-time" class="headerlink" title="计时工具 time"></a>计时工具 <code>time</code></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ /usr/bin/time -p <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
-
+<h2 id="计时">计时</h2>
+<h3 id="计时工具-time">计时工具 <code>time</code></h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ /usr/bin/time -p <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
 <p>Or,</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ time <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
-
-<p>其中（参<br>考<a target="_blank" rel="noopener" href="https://ostechnix.com/how-to-find-the-execution-time-of-a-command-or-process-in-linux/">链接</a>），</p>
+<p>其中（参<br>
+考<a target="_blank" rel="noopener" href="https://ostechnix.com/how-to-find-the-execution-time-of-a-command-or-process-in-linux/">链接</a>），</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">type</span> -a time</span><br><span class="line">time is a shell keyword</span><br><span class="line">time is /usr/bin/time</span><br></pre></td></tr></table></figure>
-
-<h3 id="软件和硬件定时器"><a href="#软件和硬件定时器" class="headerlink" title="软件和硬件定时器"></a>软件和硬件定时器</h3><p><a target="_blank" rel="noopener" href="https://weedge.github.io/perf-book-cn/zh/chapters/2-Measuring-Performance/2-5_SW_and_HW_Timers_cn.html">https://weedge.github.io/perf-book-cn/zh/chapters/2-Measuring-Performance/2-5_SW_and_HW_Timers_cn.html</a></p>
+<h3 id="软件和硬件定时器">软件和硬件定时器</h3>
+<p><a target="_blank" rel="noopener" href="https://weedge.github.io/perf-book-cn/zh/chapters/2-Measuring-Performance/2-5_SW_and_HW_Timers_cn.html">https://weedge.github.io/perf-book-cn/zh/chapters/2-Measuring-Performance/2-5_SW_and_HW_Timers_cn.html</a></p>
 
       
     </div>
@@ -434,7 +603,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -457,7 +626,8 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p>Bad Speculation 指不好的预测，尤其是分支预测。</p>
+          <h2 id="概念">概念</h2>
+<p>Bad Speculation 指不好的预测，尤其是分支预测。</p>
 
       
     </div>
@@ -508,7 +678,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -581,7 +751,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -604,16 +774,19 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p>Core Bound 指 CPU 核心计算能力受限。包括两种：</p>
+          <h2 id="概念">概念</h2>
+<p>Core Bound 指 CPU 核心计算能力受限。包括两种：</p>
 <ol>
 <li>硬件的计算资源不足（吞吐量受限）</li>
 </ol>
 <ul>
-<li>port 冲突：例如 Intel Skylake 架构上，除法和平方根运算都会被分配到 port 0 上，如果大量的类似耗时操<br>作排队，那么就会体现为硬件算力的限制。</li>
+<li>port 冲突：例如 Intel Skylake 架构上，除法和平方根运算都会被分配到 port 0 上，如果大量的类似耗时操<br>
+作排队，那么就会体现为硬件算力的限制。</li>
 </ul>
 <p><strong>Port 指的是 CPU 内部的 执行端口（execution ports）。</strong></p>
 <blockquote>
-<p>现代 CPU（尤其是 Intel、AMD 的 x86-64 架构）采用 超标量、乱序执行，有多个功能单元可以并行执行不同<br>类型的指令。</p>
+<p>现代 CPU（尤其是 Intel、AMD 的 x86-64 架构）采用 超标量、乱序执行，有多个功能单元可以并行执行不同<br>
+类型的指令。</p>
 <p>每个功能单元挂在一个 端口 (port) 上，负责特定类型的操作，比如：</p>
 <ul>
 <li>整数运算端口（加减、逻辑运算）</li>
@@ -625,8 +798,8 @@
 <p>如果某类端口资源不足，就会出现 port bound（端口受限），性能瓶颈来自于某个端口的拥塞。</p>
 <p>👉 举例： Intel Skylake 架构有 8 个端口：</p>
 <ul>
-<li>Port 0&#x2F;1：整数和浮点运算</li>
-<li>Port 2&#x2F;3：加载（Load）</li>
+<li>Port 0/1：整数和浮点运算</li>
+<li>Port 2/3：加载（Load）</li>
 <li>Port 4：存储地址计算</li>
 <li>Port 5：存储数据</li>
 <li>Port 6：分支预测</li>
@@ -638,8 +811,9 @@
 </ol>
 <p>例如链表的遍历，CPU 无法对其并行。</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (n) &#123;</span><br><span class="line">    n = n-&gt;next;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="优化方法"><a href="#优化方法" class="headerlink" title="优化方法"></a>优化方法</h2><p>第 1 种计算能力受限的问题，最好的办法是升级 CPU，换成具有更多除数的型号，或者将计算任务卸载到加速器<br>上。</p>
+<h2 id="优化方法">优化方法</h2>
+<p>第 1 种计算能力受限的问题，最好的办法是升级 CPU，换成具有更多除数的型号，或者将计算任务卸载到加速器<br>
+上。</p>
 <p>第 2 种数据依赖链的问题，可能需要重写算法。下面介绍一些有名的优化方法：</p>
 <ol>
 <li>向量化</li>
@@ -699,7 +873,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -722,12 +896,13 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="CPU-硬件层次概念"><a href="#CPU-硬件层次概念" class="headerlink" title="CPU 硬件层次概念"></a>CPU 硬件层次概念</h2><ul>
+          <h2 id="CPU-硬件层次概念">CPU 硬件层次概念</h2>
+<ul>
 <li>Package → 整个处理器封装，包含一个或多个 die。</li>
 <li>Socket (S) → 主板上的物理 CPU 插槽</li>
-<li>Die (D) → 封装里的裸片（可能有多个 chiplet&#x2F;die）</li>
-<li>Core (C) → die 上的计算核心</li>
-<li>Thread (T) → 核心里的硬件线程（SMT&#x2F;超线程），即逻辑处理器</li>
+<li>Die (D) → 封装里的裸片（可能有多个 chiplet/die）</li>
+<li>Core © → die 上的计算核心</li>
+<li>Thread (T) → 核心里的硬件线程（SMT/超线程），即逻辑处理器</li>
 </ul>
 <p>假设一台双路服务器，每个 socket 上的 CPU 封装里有两个 die，每个 die 有 8 个核心：</p>
 <ul>
@@ -740,68 +915,74 @@
 <li><code>S0-D0-C0-T0</code> → Socket 0, Die 0, Core 0, Thread 0</li>
 <li><code>S0-D0-C0-T1</code> → Socket 0, Die 0, Core 0, Thread 1</li>
 </ul>
-<p>可以用命令 <code>lscpu</code> 或 <code>cat /proc/cpuinfo</code> 来查看逻辑 CPU ID 与 Socket&#x2F;Core&#x2F;Thread 的对应关系。</p>
+<p>可以用命令 <code>lscpu</code> 或 <code>cat /proc/cpuinfo</code> 来查看逻辑 CPU ID 与 Socket/Core/Thread 的对应关系。</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ lscpu</span><br><span class="line">...</span><br><span class="line">    Thread(s) per core:  2</span><br><span class="line">    Core(s) per socket:  4</span><br><span class="line">    Socket(s):           1</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
-
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">总逻辑 CPU 数量 = 1 × 4 × 2 = 8</span><br></pre></td></tr></table></figure>
-
 <p>nproc 输出的是 逻辑 CPU 数</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">nproc</span></span><br><span class="line">8</span><br></pre></td></tr></table></figure>
-
-<h2 id="CPU-微架构概念"><a href="#CPU-微架构概念" class="headerlink" title="CPU 微架构概念"></a>CPU 微架构概念</h2><ul>
+<h2 id="CPU-微架构概念">CPU 微架构概念</h2>
+<ul>
 <li>Pipeline：指令执行的分阶段过程（取指、解码、执行、写回）。</li>
 <li>Width：每周期最多能发射多少条 uops（如 4‑wide）。</li>
 <li>Slot：每周期的发射机会，宽度决定 slot 数。</li>
 <li>ROB (Reorder Buffer)：乱序执行的关键结构，保证指令按程序顺序退休。</li>
 <li>Scheduler：调度器，决定哪些 uops 在某周期进入执行端口。</li>
-<li>Execution Ports：后端的执行单元入口，比如整数 ALU、浮点 FPU、Load&#x2F;Store。</li>
+<li>Execution Ports：后端的执行单元入口，比如整数 ALU、浮点 FPU、Load/Store。</li>
 <li>Branch Predictor：预测分支走向，减少流水线停顿。</li>
 </ul>
-<h2 id="存储与层次结构"><a href="#存储与层次结构" class="headerlink" title="存储与层次结构"></a>存储与层次结构</h2><ul>
+<h2 id="存储与层次结构">存储与层次结构</h2>
+<ul>
 <li>Registers：CPU 内部的寄存器，最快的存储。</li>
 <li>Cache：分层缓存（L1、L2、L3），用于减少访存延迟。</li>
 <li>LLC (Last Level Cache)：最后一级缓存，通常是 L3，多个核心共享。</li>
 <li>Memory Controller：负责和 DRAM 通信。</li>
 <li>NUMA (Non-Uniform Memory Access)：多 socket 系统里，内存访问延迟因位置不同而不同。</li>
 </ul>
-<h2 id="性能分析相关"><a href="#性能分析相关" class="headerlink" title="性能分析相关"></a>性能分析相关</h2><ul>
+<h2 id="性能分析相关">性能分析相关</h2>
+<ul>
 <li>IPC (Instructions Per Cycle)：每周期平均执行的指令数。</li>
 <li>ILP (Instruction-Level Parallelism)：指令级并行度，程序能提供多少独立指令。</li>
 <li>Topdown Metrics：Retiring、Bad Speculation、Frontend Bound、Backend Bound。</li>
-<li>BE&#x2F;Core vs BE&#x2F;Mem：后端瓶颈是算力不足还是访存延迟。</li>
+<li>BE/Core vs BE/Mem：后端瓶颈是算力不足还是访存延迟。</li>
 <li>CPI (Cycles Per Instruction)：每条指令平均耗费的周期数。</li>
 </ul>
-<h2 id="Top-Down-Microarchitecture-Analysis-TMA"><a href="#Top-Down-Microarchitecture-Analysis-TMA" class="headerlink" title="Top-Down Microarchitecture Analysis (TMA)"></a>Top-Down Microarchitecture Analysis (TMA)</h2><p>这是 Intel 提出的一个 CPU 性能瓶颈分析框架。它的核心思想是：把 CPU 每个周期的 发射机会（slot） 分门<br>别类，逐层细分，最终定位到性能瓶颈的根源。</p>
+<h2 id="Top-Down-Microarchitecture-Analysis-TMA">Top-Down Microarchitecture Analysis (TMA)</h2>
+<p>这是 Intel 提出的一个 CPU 性能瓶颈分析框架。它的核心思想是：把 CPU 每个周期的 发射机会（slot） 分门<br>
+别类，逐层细分，最终定位到性能瓶颈的根源。</p>
 <p>Topdown 是分层树状结构：</p>
 <ul>
-<li>Level 1：Retiring &#x2F; Bad Speculation &#x2F; Frontend Bound &#x2F; Backend Bound</li>
-<li>Level 2：Backend Bound → BE&#x2F;Core、BE&#x2F;Mem</li>
-<li>Level 3：BE&#x2F;Mem → L1 Bound、L2 Bound、DRAM Bound</li>
+<li>Level 1：Retiring / Bad Speculation / Frontend Bound / Backend Bound</li>
+<li>Level 2：Backend Bound → BE/Core、BE/Mem</li>
+<li>Level 3：BE/Mem → L1 Bound、L2 Bound、DRAM Bound</li>
 </ul>
 <ol>
 <li>Level 1: 顶层四大分类</li>
 </ol>
 <p>在每个周期的 slot 中，CPU 的工作被划分为四类：</p>
 <ul>
-<li><p>Retiring</p>
+<li>
+<p>Retiring</p>
 <ul>
 <li>指令成功退休（完成执行并写回结果）。</li>
 <li>这是“有用工作”，比例越高说明 CPU 利用率越好。</li>
 </ul>
 </li>
-<li><p>Bad Speculation</p>
+<li>
+<p>Bad Speculation</p>
 <ul>
 <li>由于错误预测（如分支预测失败、错误路径执行）导致的浪费。</li>
 <li>这些 slot 最终没有产生有效结果。</li>
 </ul>
 </li>
-<li><p>Frontend Bound (FE)</p>
+<li>
+<p>Frontend Bound (FE)</p>
 <ul>
 <li>前端受限：取指、解码、指令缓存不足。</li>
 <li>CPU 等待指令进入流水线。</li>
 </ul>
 </li>
-<li><p>Backend Bound (BE)</p>
+<li>
+<p>Backend Bound (BE)</p>
 <ul>
 <li>后端受限：执行单元或数据不可用。</li>
 <li>CPU 等待算力资源或内存数据。</li>
@@ -813,19 +994,21 @@
 <li>Level 2: Backend 的进一步细分</li>
 </ol>
 <ul>
-<li>BE&#x2F;Core<ul>
+<li>BE/Core
+<ul>
 <li>后端瓶颈主要来自核心执行资源不足（算术逻辑单元、浮点单元、端口冲突）。</li>
 <li>程序算力密集。</li>
 </ul>
 </li>
-<li>BE&#x2F;Mem<ul>
+<li>BE/Mem
+<ul>
 <li>后端瓶颈主要来自访存延迟（缓存未命中、DRAM 访问慢）。</li>
 <li>程序内存密集。</li>
 </ul>
 </li>
 </ul>
 <ol start="3">
-<li>Level 3: BE&#x2F;Mem 的进一步细分</li>
+<li>Level 3: BE/Mem 的进一步细分</li>
 </ol>
 <ul>
 <li>L1 Bound</li>
@@ -833,13 +1016,17 @@
 <li>L3 Bound</li>
 <li>DRAM Bound</li>
 </ul>
-<h3 id="Roofline"><a href="#Roofline" class="headerlink" title="Roofline"></a>Roofline</h3><h2 id="性能分析工具"><a href="#性能分析工具" class="headerlink" title="性能分析工具"></a>性能分析工具</h2><ol>
+<h3 id="Roofline">Roofline</h3>
+<h2 id="性能分析工具">性能分析工具</h2>
+<ol>
 <li>perf (Linux)</li>
 <li><a target="_blank" rel="noopener" href="https://github.com/andikleen/pmu-tools">Intel® pmu-tools</a> ：对 perf 的封装</li>
 <li><a target="_blank" rel="noopener" href="https://www.intel.com/content/www/us/en/developer/tools/oneapi/advisor-download.html">Intel Advisor</a></li>
 </ol>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
-<li>perf-ninja: <a target="_blank" rel="noopener" href="https://github.com/dendibakh/perf-ninja">代码</a> +<br><a target="_blank" rel="noopener" href="https://www.youtube.com/playlist?list=PLRWO2AL1QAV6bJAU2kgB4xfodGID43Y5d">视频</a></li>
+<h2 id="参考">参考</h2>
+<ol>
+<li>perf-ninja: <a target="_blank" rel="noopener" href="https://github.com/dendibakh/perf-ninja">代码</a> +<br>
+<a target="_blank" rel="noopener" href="https://www.youtube.com/playlist?list=PLRWO2AL1QAV6bJAU2kgB4xfodGID43Y5d">视频</a></li>
 </ol>
 
       
@@ -891,7 +1078,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -914,13 +1101,13 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="relaxed"><a href="#relaxed" class="headerlink" title="relaxed"></a>relaxed</h2><ul>
+          <h2 id="relaxed">relaxed</h2>
+<ul>
 <li>问：load(relaxed) 看到的是不是最新值？</li>
 <li>答：是的。</li>
 </ul>
 <p>经过多次测试（包括 TSAN），CAS(relaxed) 计数器都是正确的：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ -fsanitize=thread test_memory_order_relaxed.cpp -lpthread</span><br></pre></td></tr></table></figure>
-
 
 
       
@@ -972,7 +1159,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -995,106 +1182,116 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="RDMA-vs-TCP-IP-连接标识字段"><a href="#RDMA-vs-TCP-IP-连接标识字段" class="headerlink" title="RDMA vs TCP&#x2F;IP 连接标识字段"></a>RDMA vs TCP&#x2F;IP 连接标识字段</h2><table>
+          <h2 id="RDMA-vs-TCP-IP-连接标识字段">RDMA vs TCP/IP 连接标识字段</h2>
+<table>
 <thead>
 <tr>
-<th align="center">字段名称</th>
-<th align="center">全称</th>
-<th align="center">作用说明</th>
+<th style="text-align:center">字段名称</th>
+<th style="text-align:center">全称</th>
+<th style="text-align:center">作用说明</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">GID</td>
-<td align="center">Global Identifier</td>
-<td align="center">标识设备，类似于 IP 地址，128 位；RoCEv2 中为 IPv6 映射地址，InfiniBand 中由设备 GUID + 路由信息生成</td>
+<tbody>
+<tr>
+<td style="text-align:center">GID</td>
+<td style="text-align:center">Global Identifier</td>
+<td style="text-align:center">标识设备，类似于 IP 地址，128 位；RoCEv2 中为 IPv6 映射地址，InfiniBand 中由设备 GUID + 路由信息生成</td>
 </tr>
 <tr>
-<td align="center">QPN</td>
-<td align="center">Queue Pair Number</td>
-<td align="center">标识会话，每个 RDMA 会话使用一个 QP，QPN 是其唯一编号，类似于 TCP 的端口号</td>
+<td style="text-align:center">QPN</td>
+<td style="text-align:center">Queue Pair Number</td>
+<td style="text-align:center">标识会话，每个 RDMA 会话使用一个 QP，QPN 是其唯一编号，类似于 TCP 的端口号</td>
 </tr>
 <tr>
-<td align="center">PSN</td>
-<td align="center">Packet Sequence Number</td>
-<td align="center">初始化连接时使用，用于数据包排序和连接建立，类似于 TCP 的序列号</td>
+<td style="text-align:center">PSN</td>
+<td style="text-align:center">Packet Sequence Number</td>
+<td style="text-align:center">初始化连接时使用，用于数据包排序和连接建立，类似于 TCP 的序列号</td>
 </tr>
 <tr>
-<td align="center">LID</td>
-<td align="center">Local Identifier（可选）</td>
-<td align="center">InfiniBand fabric 中的本地路由地址，类似于交换机端口编号，仅在 InfiniBand 中使用</td>
+<td style="text-align:center">LID</td>
+<td style="text-align:center">Local Identifier（可选）</td>
+<td style="text-align:center">InfiniBand fabric 中的本地路由地址，类似于交换机端口编号，仅在 InfiniBand 中使用</td>
 </tr>
-</tbody></table>
-<h2 id="InfiniBand-的连接建立流程（RC-模式）"><a href="#InfiniBand-的连接建立流程（RC-模式）" class="headerlink" title="InfiniBand 的连接建立流程（RC 模式）"></a>InfiniBand 的连接建立流程（RC 模式）</h2><table>
+</tbody>
+</table>
+<h2 id="InfiniBand-的连接建立流程（RC-模式）">InfiniBand 的连接建立流程（RC 模式）</h2>
+<table>
 <thead>
 <tr>
-<th align="center">阶段</th>
-<th align="center">状态</th>
-<th align="center">含义</th>
-<th align="center">关键配置项</th>
+<th style="text-align:center">阶段</th>
+<th style="text-align:center">状态</th>
+<th style="text-align:center">含义</th>
+<th style="text-align:center">关键配置项</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">1️⃣ INIT</td>
-<td align="center">IBV_QPS_INIT</td>
-<td align="center">初始化 QP</td>
-<td align="center">本地端口、访问权限、P_Key 等</td>
+<tbody>
+<tr>
+<td style="text-align:center">1️⃣ INIT</td>
+<td style="text-align:center">IBV_QPS_INIT</td>
+<td style="text-align:center">初始化 QP</td>
+<td style="text-align:center">本地端口、访问权限、P_Key 等</td>
 </tr>
 <tr>
-<td align="center">2️⃣ RTR</td>
-<td align="center">IBV_QPS_RTR</td>
-<td align="center">Ready to Receive</td>
-<td align="center">远端 QPN、LID&#x2F;GID、PSN、MTU 等</td>
+<td style="text-align:center">2️⃣ RTR</td>
+<td style="text-align:center">IBV_QPS_RTR</td>
+<td style="text-align:center">Ready to Receive</td>
+<td style="text-align:center">远端 QPN、LID/GID、PSN、MTU 等</td>
 </tr>
 <tr>
-<td align="center">3️⃣ RTS</td>
-<td align="center">IBV_QPS_RTS</td>
-<td align="center">Ready to Send</td>
-<td align="center">本地 PSN、重试参数、超时设置等</td>
+<td style="text-align:center">3️⃣ RTS</td>
+<td style="text-align:center">IBV_QPS_RTS</td>
+<td style="text-align:center">Ready to Send</td>
+<td style="text-align:center">本地 PSN、重试参数、超时设置等</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <p>类比 TCP 的三次握手。</p>
 <p>为什么不像 TCP 那样自动握手？ InfiniBand 的设计目标是：</p>
 <ul>
 <li>极低延迟：避免协议协商，直接由应用控制连接建立。</li>
 <li>高吞吐：硬件直接处理数据流，减少内核干预。</li>
 <li>可预测性强：状态转换明确，调试和优化更容易。</li>
-<li>适用于受控环境：如 HPC、AI 训练、数据库加速，通常用于 HPC 或数据中心，不像 TCP 那样暴露在公网，不<br>需要防止恶意连接。（所以 QPN 一般是用户指定，且常常是顺序的；这与 TCP 的初始序列号截然不同）</li>
+<li>适用于受控环境：如 HPC、AI 训练、数据库加速，通常用于 HPC 或数据中心，不像 TCP 那样暴露在公网，不<br>
+需要防止恶意连接。（所以 QPN 一般是用户指定，且常常是顺序的；这与 TCP 的初始序列号截然不同）</li>
 </ul>
 <p>注：MTU 对比表</p>
 <table>
 <thead>
 <tr>
-<th align="center">技术类型</th>
-<th align="center">支持的 MTU 值（字节）</th>
-<th align="center">说明</th>
+<th style="text-align:center">技术类型</th>
+<th style="text-align:center">支持的 MTU 值（字节）</th>
+<th style="text-align:center">说明</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">Ethernet（标准）</td>
-<td align="center">1500</td>
-<td align="center">最常见的默认值，适用于大多数网络设备</td>
+<tbody>
+<tr>
+<td style="text-align:center">Ethernet（标准）</td>
+<td style="text-align:center">1500</td>
+<td style="text-align:center">最常见的默认值，适用于大多数网络设备</td>
 </tr>
 <tr>
-<td align="center">InfiniBand</td>
-<td align="center">256, 512, 1024, 2048, 4096</td>
-<td align="center">固定值，由硬件和驱动支持</td>
+<td style="text-align:center">InfiniBand</td>
+<td style="text-align:center">256, 512, 1024, 2048, 4096</td>
+<td style="text-align:center">固定值，由硬件和驱动支持</td>
 </tr>
 <tr>
-<td align="center">RoCE (RDMA over Converged Ethernet)</td>
-<td align="center">通常 ≤ Ethernet MTU（如 1500 或 9000）</td>
-<td align="center">实际使用值需减去 RoCE 协议头和 CRC，常见为 1024 或 4096</td>
+<td style="text-align:center">RoCE (RDMA over Converged Ethernet)</td>
+<td style="text-align:center">通常 ≤ Ethernet MTU（如 1500 或 9000）</td>
+<td style="text-align:center">实际使用值需减去 RoCE 协议头和 CRC，常见为 1024 或 4096</td>
 </tr>
 <tr>
-<td align="center">iWARP</td>
-<td align="center">受 TCP&#x2F;IP 栈限制，通常 ≤ 1500</td>
-<td align="center">依赖传统以太网 MTU，性能受限</td>
+<td style="text-align:center">iWARP</td>
+<td style="text-align:center">受 TCP/IP 栈限制，通常 ≤ 1500</td>
+<td style="text-align:center">依赖传统以太网 MTU，性能受限</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <p>InfiniBand 的 MTU 值由头文件 <code>&lt;infiniband/verbs.h&gt;</code> 定义：</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">ibv_mtu</span> &#123;</span></span><br><span class="line">	IBV_MTU_256  = <span class="number">1</span>,</span><br><span class="line">	IBV_MTU_512  = <span class="number">2</span>,</span><br><span class="line">	IBV_MTU_1024 = <span class="number">3</span>,</span><br><span class="line">	IBV_MTU_2048 = <span class="number">4</span>,</span><br><span class="line">	IBV_MTU_4096 = <span class="number">5</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<h2 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h2><p><a target="_blank" rel="noopener" href="https://infiniband-doc.readthedocs.io/zh-cn/latest/8_ibv_examples/8_2_RDMA_RC_code.html">源码</a></p>
-<h3 id="resources-create"><a href="#resources-create" class="headerlink" title="resources_create"></a>resources_create</h3><ol>
+<h2 id="步骤">步骤</h2>
+<p><a target="_blank" rel="noopener" href="https://infiniband-doc.readthedocs.io/zh-cn/latest/8_ibv_examples/8_2_RDMA_RC_code.html">源码</a></p>
+<h3 id="resources-create">resources_create</h3>
+<ol>
 <li>TCP 建立连接 → 保存到 res.sock</li>
 <li>ibv_get_device_list</li>
 <li>ibv_get_device_name → 保存到 res.dev_name</li>
@@ -1103,11 +1300,13 @@
 <li>ibv_alloc_pd → 保存到 res.pd</li>
 <li>ibv_create_cq → 保存到 res.cq</li>
 <li>malloc → 保存到 res.buf</li>
-<li>ibv_reg_mr → 保存到 res.mr</li>
+<li>ibv_reg_mr → 保存到 <a target="_blank" rel="noopener" href="http://res.mr">res.mr</a></li>
 <li>ibv_create_qp → 保存到 res.qp</li>
 </ol>
-<h3 id="connect-qp"><a href="#connect-qp" class="headerlink" title="connect_qp"></a>connect_qp</h3><ol>
-<li>如果指定 gid_idx ，则以 ib_ctx 和 ib_port 调用 ibv_query_gid 查询本地的 gid；否则用 0 初始化<br>gid。</li>
+<h3 id="connect-qp">connect_qp</h3>
+<ol>
+<li>如果指定 gid_idx ，则以 ib_ctx 和 ib_port 调用 ibv_query_gid 查询本地的 gid；否则用 0 初始化<br>
+gid。</li>
 <li>填充 cm_con_data_t 结构体：<code>addr</code>(即 <code>res.buf</code>)、<code>mr-&gt;rkey</code>、<code>qp-&gt;qp_num</code>、<code>port_attr.lid</code></li>
 <li>通过 TCP socket 交换 cm_con_data_t 的信息，将远端 cm_con_data_t 保存到 res.remote_props</li>
 <li>调用 modify_qp_to_init（使用 ibv_modify_qp 修改 QP 的状态：RESET → INIT）</li>
@@ -1115,43 +1314,45 @@
 <table>
 <thead>
 <tr>
-<th align="center">参数字段</th>
+<th style="text-align:center">参数字段</th>
 <th>作用描述</th>
 <th>是否必须设置</th>
 <th>设置原因</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">attr.qp_state &#x3D; IBV_QPS_INIT</td>
+<tbody>
+<tr>
+<td style="text-align:center">attr.qp_state = IBV_QPS_INIT</td>
 <td>设置 QP 的目标状态为 INIT</td>
 <td>是</td>
 <td>明确告诉 HCA 要将 QP 转换到 INIT 状态</td>
 </tr>
 <tr>
-<td align="center">attr.port_num &#x3D; config.ib_port</td>
+<td style="text-align:center">attr.port_num = config.ib_port</td>
 <td>指定使用的物理端口号</td>
 <td>是</td>
 <td>多端口设备必须指定端口，否则无法建立连接</td>
 </tr>
 <tr>
-<td align="center">attr.pkey_index &#x3D; 0</td>
+<td style="text-align:center">attr.pkey_index = 0</td>
 <td>设置 P_Key 索引</td>
 <td>是</td>
 <td>InfiniBand 使用 P_Key 进行分区管理，默认使用索引 0</td>
 </tr>
 <tr>
-<td align="center"><code>attr.qp_access_flags = IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE</code></td>
+<td style="text-align:center"><code>attr.qp_access_flags = IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE</code></td>
 <td>设置本地和远程访问权限</td>
 <td>是</td>
 <td>决定远程节点是否能读写你的内存，必须在 INIT 状态设置</td>
 </tr>
 <tr>
-<td align="center"><code>flags = IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_ACCESS_FLAGS</code></td>
+<td style="text-align:center"><code>flags = IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_ACCESS_FLAGS</code></td>
 <td>指定哪些字段有效并应用到 QP 属性结构体中</td>
 <td>是</td>
 <td>ibv_modify_qp 需要知道哪些字段是有效的，否则不会应用这些设置</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <p>注：InfiniBand 的分区类似以太网的 VLAN</p>
 <ul>
 <li>同一分区内的节点可以互通</li>
@@ -1159,9 +1360,11 @@
 <li>分区成员可以通过默认分区与 Subnet Manager 通信（如 IO 节点）</li>
 </ul>
 <ol start="5">
-<li>客户端调用 post_receive<ol>
-<li>准备 scatter&#x2F;gather entry：sge.addr, sge.length, seg.lkey</li>
-<li>准备 receive work request: wr_id, next（多个 receive wr 可以组成一个链表，一起提交）,<br>sge_list（sge 数组，多个不同内存区域的 sge 可一起提交）。</li>
+<li>客户端调用 post_receive
+<ol>
+<li>准备 scatter/gather entry：sge.addr, sge.length, seg.lkey</li>
+<li>准备 receive work request: wr_id, next（多个 receive wr 可以组成一个链表，一起提交）,<br>
+sge_list（sge 数组，多个不同内存区域的 sge 可一起提交）。</li>
 <li>调用 ibv_post_recv 提交 receive wr。</li>
 </ol>
 </li>
@@ -1170,192 +1373,199 @@
 <table>
 <thead>
 <tr>
-<th align="center">字段&#x2F;参数名</th>
-<th align="center">类型&#x2F;值</th>
-<th align="center">说明</th>
+<th style="text-align:center">字段/参数名</th>
+<th style="text-align:center">类型/值</th>
+<th style="text-align:center">说明</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">remote_qpn</td>
-<td align="center">uint32_t</td>
-<td align="center">远端 QP 编号，用于建立连接。</td>
+<tbody>
+<tr>
+<td style="text-align:center">remote_qpn</td>
+<td style="text-align:center">uint32_t</td>
+<td style="text-align:center">远端 QP 编号，用于建立连接。</td>
 </tr>
 <tr>
-<td align="center">dlid</td>
-<td align="center">uint16_t</td>
-<td align="center">Destination LID：远端设备的本地标识符，用于本地路由。d 表示 destination（目的地）。</td>
+<td style="text-align:center">dlid</td>
+<td style="text-align:center">uint16_t</td>
+<td style="text-align:center">Destination LID：远端设备的本地标识符，用于本地路由。d 表示 destination（目的地）。</td>
 </tr>
 <tr>
-<td align="center">dgid</td>
-<td align="center">uint8_t*</td>
-<td align="center">Destination GID：远端设备的全局标识符，用于全局寻址。d 表示 destination（目的地）。</td>
+<td style="text-align:center">dgid</td>
+<td style="text-align:center">uint8_t*</td>
+<td style="text-align:center">Destination GID：远端设备的全局标识符，用于全局寻址。d 表示 destination（目的地）。</td>
 </tr>
 <tr>
-<td align="center">attr.qp_state</td>
-<td align="center">IBV_QPS_RTR</td>
-<td align="center">设置 QP 状态为 Ready to Receive。</td>
+<td style="text-align:center">attr.qp_state</td>
+<td style="text-align:center">IBV_QPS_RTR</td>
+<td style="text-align:center">设置 QP 状态为 Ready to Receive。</td>
 </tr>
 <tr>
-<td align="center">attr.path_mtu</td>
-<td align="center">IBV_MTU_256</td>
-<td align="center">设置路径最大传输单元为 256 字节。</td>
+<td style="text-align:center">attr.path_mtu</td>
+<td style="text-align:center">IBV_MTU_256</td>
+<td style="text-align:center">设置路径最大传输单元为 256 字节。</td>
 </tr>
 <tr>
-<td align="center">attr.dest_qp_num</td>
-<td align="center">remote_qpn</td>
-<td align="center">指定远端 QP 编号。</td>
+<td style="text-align:center">attr.dest_qp_num</td>
+<td style="text-align:center">remote_qpn</td>
+<td style="text-align:center">指定远端 QP 编号。</td>
 </tr>
 <tr>
-<td align="center">attr.rq_psn</td>
-<td align="center">0</td>
-<td align="center">接收队列的初始包序号。</td>
+<td style="text-align:center">attr.rq_psn</td>
+<td style="text-align:center">0</td>
+<td style="text-align:center">接收队列的初始包序号。</td>
 </tr>
 <tr>
-<td align="center">attr.max_dest_rd_atomic</td>
-<td align="center">1</td>
-<td align="center">远端最多可处理的 RDMA Read&#x2F;Atomic 请求数。</td>
+<td style="text-align:center">attr.max_dest_rd_atomic</td>
+<td style="text-align:center">1</td>
+<td style="text-align:center">远端最多可处理的 RDMA Read/Atomic 请求数。</td>
 </tr>
 <tr>
-<td align="center">attr.min_rnr_timer</td>
-<td align="center">0x12</td>
-<td align="center">最小 RNR 重试等待时间（单位为 655.36 微秒）。</td>
+<td style="text-align:center">attr.min_rnr_timer</td>
+<td style="text-align:center">0x12</td>
+<td style="text-align:center">最小 RNR 重试等待时间（单位为 655.36 微秒）。</td>
 </tr>
 <tr>
-<td align="center">attr.ah_attr.is_global</td>
-<td align="center">0 或 1</td>
-<td align="center">是否启用全局路由（GID）。</td>
+<td style="text-align:center">attr.ah_attr.is_global</td>
+<td style="text-align:center">0 或 1</td>
+<td style="text-align:center">是否启用全局路由（GID）。</td>
 </tr>
 <tr>
-<td align="center">attr.ah_attr.dlid</td>
-<td align="center">dlid</td>
-<td align="center">设置远端 LID。</td>
+<td style="text-align:center">attr.ah_attr.dlid</td>
+<td style="text-align:center">dlid</td>
+<td style="text-align:center">设置远端 LID。</td>
 </tr>
 <tr>
-<td align="center">attr.ah_attr.sl</td>
-<td align="center">0</td>
-<td align="center">服务等级（Service Level）。</td>
+<td style="text-align:center">attr.ah_attr.sl</td>
+<td style="text-align:center">0</td>
+<td style="text-align:center">服务等级（Service Level）。</td>
 </tr>
 <tr>
-<td align="center">attr.ah_attr.src_path_bits</td>
-<td align="center">0</td>
-<td align="center">源路径位，通常为 0。</td>
+<td style="text-align:center">attr.ah_attr.src_path_bits</td>
+<td style="text-align:center">0</td>
+<td style="text-align:center">源路径位，通常为 0。</td>
 </tr>
 <tr>
-<td align="center">attr.ah_attr.port_num</td>
-<td align="center">config.ib_port</td>
-<td align="center">本地端口号。</td>
+<td style="text-align:center">attr.ah_attr.port_num</td>
+<td style="text-align:center">config.ib_port</td>
+<td style="text-align:center">本地端口号。</td>
 </tr>
 <tr>
-<td align="center">attr.ah_attr.grh.dgid</td>
-<td align="center">dgid</td>
-<td align="center">设置远端 GID（如果启用全局路由）。</td>
+<td style="text-align:center">attr.ah_attr.grh.dgid</td>
+<td style="text-align:center">dgid</td>
+<td style="text-align:center">设置远端 GID（如果启用全局路由）。</td>
 </tr>
 <tr>
-<td align="center">attr.ah_attr.grh.flow_label</td>
-<td align="center">0</td>
-<td align="center">GRH 流标签。</td>
+<td style="text-align:center">attr.ah_attr.grh.flow_label</td>
+<td style="text-align:center">0</td>
+<td style="text-align:center">GRH 流标签。</td>
 </tr>
 <tr>
-<td align="center">attr.ah_attr.grh.hop_limit</td>
-<td align="center">1</td>
-<td align="center">GRH 跳数限制。</td>
+<td style="text-align:center">attr.ah_attr.grh.hop_limit</td>
+<td style="text-align:center">1</td>
+<td style="text-align:center">GRH 跳数限制。</td>
 </tr>
 <tr>
-<td align="center">attr.ah_attr.grh.sgid_index</td>
-<td align="center">config.gid_idx</td>
-<td align="center">本地 GID 索引。</td>
+<td style="text-align:center">attr.ah_attr.grh.sgid_index</td>
+<td style="text-align:center">config.gid_idx</td>
+<td style="text-align:center">本地 GID 索引。</td>
 </tr>
 <tr>
-<td align="center">attr.ah_attr.grh.traffic_class</td>
-<td align="center">0</td>
-<td align="center">GRH 流量类别。</td>
+<td style="text-align:center">attr.ah_attr.grh.traffic_class</td>
+<td style="text-align:center">0</td>
+<td style="text-align:center">GRH 流量类别。</td>
 </tr>
 <tr>
-<td align="center">flags</td>
-<td align="center">多个宏组合</td>
-<td align="center">指定哪些属性字段有效。</td>
+<td style="text-align:center">flags</td>
+<td style="text-align:center">多个宏组合</td>
+<td style="text-align:center">指定哪些属性字段有效。</td>
 </tr>
 <tr>
-<td align="center">ibv_modify_qp()</td>
-<td align="center">函数调用</td>
-<td align="center">执行 QP 状态修改操作。</td>
+<td style="text-align:center">ibv_modify_qp()</td>
+<td style="text-align:center">函数调用</td>
+<td style="text-align:center">执行 QP 状态修改操作。</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <ol start="7">
 <li>modify_qp_to_rts</li>
 </ol>
 <table>
 <thead>
 <tr>
-<th align="center">参数字段</th>
-<th align="center">含义</th>
-<th align="center">说明</th>
+<th style="text-align:center">参数字段</th>
+<th style="text-align:center">含义</th>
+<th style="text-align:center">说明</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">attr.qp_state &#x3D; IBV_QPS_RTS</td>
-<td align="center">设置 QP 状态为 RTS</td>
-<td align="center">表示该 QP 已准备好发送数据，是连接建立的最后一步</td>
+<tbody>
+<tr>
+<td style="text-align:center">attr.qp_state = IBV_QPS_RTS</td>
+<td style="text-align:center">设置 QP 状态为 RTS</td>
+<td style="text-align:center">表示该 QP 已准备好发送数据，是连接建立的最后一步</td>
 </tr>
 <tr>
-<td align="center">attr.timeout &#x3D; 0x12</td>
-<td align="center">超时时间</td>
-<td align="center">单位为 4.096μs，表示发送请求等待 ACK 的最大时间。0x12 ≈ 75μs</td>
+<td style="text-align:center">attr.timeout = 0x12</td>
+<td style="text-align:center">超时时间</td>
+<td style="text-align:center">单位为 4.096μs，表示发送请求等待 ACK 的最大时间。0x12 ≈ 75μs</td>
 </tr>
 <tr>
-<td align="center">attr.retry_cnt &#x3D; 6</td>
-<td align="center">重试次数</td>
-<td align="center">如果未收到 ACK，最多重试 6 次</td>
+<td style="text-align:center">attr.retry_cnt = 6</td>
+<td style="text-align:center">重试次数</td>
+<td style="text-align:center">如果未收到 ACK，最多重试 6 次</td>
 </tr>
 <tr>
-<td align="center">attr.rnr_retry &#x3D; 0</td>
-<td align="center">RNR 重试次数</td>
-<td align="center">对方未准备好接收时的重试次数。0 表示不重试（通常用于 UC 类型）</td>
+<td style="text-align:center">attr.rnr_retry = 0</td>
+<td style="text-align:center">RNR 重试次数</td>
+<td style="text-align:center">对方未准备好接收时的重试次数。0 表示不重试（通常用于 UC 类型）</td>
 </tr>
 <tr>
-<td align="center">attr.sq_psn &#x3D; 0</td>
-<td align="center">Send Queue 的初始 PSN</td>
-<td align="center">PSN（Packet Sequence Number）用于包顺序控制，需与远端匹配</td>
+<td style="text-align:center">attr.sq_psn = 0</td>
+<td style="text-align:center">Send Queue 的初始 PSN</td>
+<td style="text-align:center">PSN（Packet Sequence Number）用于包顺序控制，需与远端匹配</td>
 </tr>
 <tr>
-<td align="center">attr.max_rd_atomic &#x3D; 1</td>
-<td align="center">最大 RDMA Read 请求数</td>
-<td align="center">表示本端最多允许一个未完成的 RDMA Read 请求</td>
+<td style="text-align:center">attr.max_rd_atomic = 1</td>
+<td style="text-align:center">最大 RDMA Read 请求数</td>
+<td style="text-align:center">表示本端最多允许一个未完成的 RDMA Read 请求</td>
 </tr>
 <tr>
-<td align="center">flags</td>
-<td align="center">标志位</td>
-<td align="center">指定哪些字段在 ibv_modify_qp() 中有效，必须与设置的字段匹配</td>
+<td style="text-align:center">flags</td>
+<td style="text-align:center">标志位</td>
+<td style="text-align:center">指定哪些字段在 ibv_modify_qp() 中有效，必须与设置的字段匹配</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <ol start="8">
 <li>用 TCP socket 同步交换 dummy 数据，以确保双方都进入 RTS 状态。</li>
 </ol>
-<h3 id="post-send"><a href="#post-send" class="headerlink" title="post_send"></a>post_send</h3><ol>
-<li>准备 scatter&#x2F;gather entry: addr, length, lkey</li>
+<h3 id="post-send">post_send</h3>
+<ol>
+<li>准备 scatter/gather entry: addr, length, lkey</li>
 <li>准备 send work request: remote_addr, rkey, opcode, send_flags</li>
 </ol>
 <p><code>IBV_SEND_SIGNALED</code> 的作用</p>
 <table>
 <thead>
 <tr>
-<th align="center">功能</th>
+<th style="text-align:center">功能</th>
 <th>说明</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">请求生成 CQE</td>
+<tbody>
+<tr>
+<td style="text-align:center">请求生成 CQE</td>
 <td>告诉 HCA：这个发送请求完成后，请在 CQ 中生成一个完成事件。</td>
 </tr>
 <tr>
-<td align="center">用于异步通知</td>
+<td style="text-align:center">用于异步通知</td>
 <td>应用程序可以通过轮询或事件机制检测哪些请求完成了。</td>
 </tr>
 <tr>
-<td align="center">提高可控性</td>
+<td style="text-align:center">提高可控性</td>
 <td>你可以选择只对关键请求设置该标志，减少 CQE 数量，降低开销。</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <p>性能考虑：每个 CQE 都会占用资源，频繁生成会增加 CQ 处理负担。</p>
 <ul>
 <li>周期性 Signaled WR：可以只对每 N 个请求设置 IBV_SEND_SIGNALED，比如每 64 个请求生成一个 CQE。</li>
@@ -1376,10 +1586,13 @@
 <li>收到 RNR NACK 后，发送方会根据该 NACK 中指定的 RNR 重试等待时间（RNR Timer）进行等待。</li>
 <li>等待时间结束后，发送方会尝试重新发送消息。</li>
 <li>如果接收方在重试期间发布了新的接收请求，消息将被成功接收并返回 ACK。</li>
-<li>如果多次重试后仍未成功（超过最大 RNR 重试次数），发送方会报告一个 RNR 重试错误 的工作完成状态<br>（Work Completion）。</li>
+<li>如果多次重试后仍未成功（超过最大 RNR 重试次数），发送方会报告一个 RNR 重试错误 的工作完成状态<br>
+（Work Completion）。</li>
 </ul>
-<h3 id="poll-completion"><a href="#poll-completion" class="headerlink" title="poll_completion"></a>poll_completion</h3><p>ibv_poll_cq</p>
-<h3 id="resources-destroy"><a href="#resources-destroy" class="headerlink" title="resources_destroy"></a>resources_destroy</h3><ul>
+<h3 id="poll-completion">poll_completion</h3>
+<p>ibv_poll_cq</p>
+<h3 id="resources-destroy">resources_destroy</h3>
+<ul>
 <li>ibv_destroy_qp</li>
 <li>ibv_dereg_mr</li>
 <li>ibv_destroy_cq</li>
@@ -1437,7 +1650,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1460,173 +1673,191 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="命令速查表"><a href="#命令速查表" class="headerlink" title="命令速查表"></a>命令速查表</h2><ul>
+          <h2 id="命令速查表">命令速查表</h2>
+<ul>
 <li><code>ib_</code> → <strong>Benchmark</strong>：性能测试工具</li>
 <li><code>ibv_</code> → <strong>Verbs</strong>：编程与设备信息</li>
 <li><code>ib</code> → <strong>Fabric</strong>：网络拓扑与诊断</li>
 <li><code>opensm</code> → <strong>管理器</strong>：子网控制核心</li>
 </ul>
-<h3 id="网络拓扑与状态诊断（ib-前缀）"><a href="#网络拓扑与状态诊断（ib-前缀）" class="headerlink" title="网络拓扑与状态诊断（ib 前缀）"></a>网络拓扑与状态诊断（<code>ib</code> 前缀）</h3><table>
+<h3 id="网络拓扑与状态诊断（ib-前缀）">网络拓扑与状态诊断（<code>ib</code> 前缀）</h3>
+<table>
 <thead>
 <tr>
-<th align="center">命令</th>
-<th align="center">功能说明</th>
-<th align="center">推荐场景</th>
+<th style="text-align:center">命令</th>
+<th style="text-align:center">功能说明</th>
+<th style="text-align:center">推荐场景</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">ibstat</td>
-<td align="center">查看本地 HCA 的端口状态和速率</td>
-<td align="center">快速确认端口是否 LinkUp</td>
+<tbody>
+<tr>
+<td style="text-align:center">ibstat</td>
+<td style="text-align:center">查看本地 HCA 的端口状态和速率</td>
+<td style="text-align:center">快速确认端口是否 LinkUp</td>
 </tr>
 <tr>
-<td align="center">iblinkinfo</td>
-<td align="center">显示整个网络的链路连接拓扑</td>
-<td align="center">检查交换机与节点连接情况</td>
+<td style="text-align:center">iblinkinfo</td>
+<td style="text-align:center">显示整个网络的链路连接拓扑</td>
+<td style="text-align:center">检查交换机与节点连接情况</td>
 </tr>
 <tr>
-<td align="center">ibnetdiscover</td>
-<td align="center">构建子网拓扑图（基于 SM）</td>
-<td align="center">网络可视化、拓扑分析</td>
+<td style="text-align:center">ibnetdiscover</td>
+<td style="text-align:center">构建子网拓扑图（基于 SM）</td>
+<td style="text-align:center">网络可视化、拓扑分析</td>
 </tr>
 <tr>
-<td align="center">ibdiagnet</td>
-<td align="center">深度诊断 InfiniBand 网络问题</td>
-<td align="center">性能瓶颈、错误帧分析</td>
+<td style="text-align:center">ibdiagnet</td>
+<td style="text-align:center">深度诊断 InfiniBand 网络问题</td>
+<td style="text-align:center">性能瓶颈、错误帧分析</td>
 </tr>
 <tr>
-<td align="center">ibsysstat</td>
-<td align="center">查看系统级 InfiniBand 状态</td>
-<td align="center">多节点状态汇总</td>
+<td style="text-align:center">ibsysstat</td>
+<td style="text-align:center">查看系统级 InfiniBand 状态</td>
+<td style="text-align:center">多节点状态汇总</td>
 </tr>
-</tbody></table>
-<h3 id="RDMA-编程与设备信息（ibv-前缀）"><a href="#RDMA-编程与设备信息（ibv-前缀）" class="headerlink" title="RDMA 编程与设备信息（ibv_ 前缀）"></a>RDMA 编程与设备信息（<code>ibv_</code> 前缀）</h3><table>
+</tbody>
+</table>
+<h3 id="RDMA-编程与设备信息（ibv-前缀）">RDMA 编程与设备信息（<code>ibv_</code> 前缀）</h3>
+<table>
 <thead>
 <tr>
-<th align="center">命令</th>
-<th align="center">功能说明</th>
-<th align="center">推荐场景</th>
+<th style="text-align:center">命令</th>
+<th style="text-align:center">功能说明</th>
+<th style="text-align:center">推荐场景</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">ibv_devinfo</td>
-<td align="center">查看本地 RDMA 网卡设备信息</td>
-<td align="center">网卡识别、端口状态确认</td>
+<tbody>
+<tr>
+<td style="text-align:center">ibv_devinfo</td>
+<td style="text-align:center">查看本地 RDMA 网卡设备信息</td>
+<td style="text-align:center">网卡识别、端口状态确认</td>
 </tr>
 <tr>
-<td align="center">ibv_devices</td>
-<td align="center">列出所有支持 RDMA 的设备</td>
-<td align="center">多网卡环境初始化</td>
+<td style="text-align:center">ibv_devices</td>
+<td style="text-align:center">列出所有支持 RDMA 的设备</td>
+<td style="text-align:center">多网卡环境初始化</td>
 </tr>
 <tr>
-<td align="center">ibv_rc_pingpong</td>
-<td align="center">使用 RC QP 测试点对点通信</td>
-<td align="center">RDMA 编程验证</td>
+<td style="text-align:center">ibv_rc_pingpong</td>
+<td style="text-align:center">使用 RC QP 测试点对点通信</td>
+<td style="text-align:center">RDMA 编程验证</td>
 </tr>
 <tr>
-<td align="center">ibv_srq_pingpong</td>
-<td align="center">使用共享接收队列测试通信</td>
-<td align="center">SRQ 场景验证</td>
+<td style="text-align:center">ibv_srq_pingpong</td>
+<td style="text-align:center">使用共享接收队列测试通信</td>
+<td style="text-align:center">SRQ 场景验证</td>
 </tr>
 <tr>
-<td align="center">ibv_ud_pingpong</td>
-<td align="center">使用 UD QP 测试通信</td>
-<td align="center">多播或无连接场景测试</td>
+<td style="text-align:center">ibv_ud_pingpong</td>
+<td style="text-align:center">使用 UD QP 测试通信</td>
+<td style="text-align:center">多播或无连接场景测试</td>
 </tr>
-</tbody></table>
-<h3 id="性能测试与基准评估（ib-前缀）"><a href="#性能测试与基准评估（ib-前缀）" class="headerlink" title="性能测试与基准评估（ib_ 前缀）"></a>性能测试与基准评估（<code>ib_</code> 前缀）</h3><table>
+</tbody>
+</table>
+<h3 id="性能测试与基准评估（ib-前缀）">性能测试与基准评估（<code>ib_</code> 前缀）</h3>
+<table>
 <thead>
 <tr>
-<th align="center">命令</th>
+<th style="text-align:center">命令</th>
 <th>功能说明</th>
 <th>推荐场景</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">ib_send_bw</td>
+<tbody>
+<tr>
+<td style="text-align:center">ib_send_bw</td>
 <td>测试 RDMA 发送带宽</td>
 <td>点对点性能评估</td>
 </tr>
 <tr>
-<td align="center">ib_read_bw</td>
+<td style="text-align:center">ib_read_bw</td>
 <td>测试 RDMA 读带宽</td>
 <td>存储访问场景评估</td>
 </tr>
 <tr>
-<td align="center">ib_write_bw</td>
+<td style="text-align:center">ib_write_bw</td>
 <td>测试 RDMA 写带宽</td>
 <td>写密集型应用测试</td>
 </tr>
 <tr>
-<td align="center">ib_send_lat</td>
+<td style="text-align:center">ib_send_lat</td>
 <td>测试发送延迟</td>
 <td>延迟敏感应用调优</td>
 </tr>
 <tr>
-<td align="center">ib_read_lat</td>
+<td style="text-align:center">ib_read_lat</td>
 <td>测试读延迟</td>
 <td>存储延迟分析</td>
 </tr>
 <tr>
-<td align="center">ib_write_lat</td>
+<td style="text-align:center">ib_write_lat</td>
 <td>测试写延迟</td>
 <td>写延迟分析</td>
 </tr>
 <tr>
-<td align="center">ib_pingpong</td>
+<td style="text-align:center">ib_pingpong</td>
 <td>简单点对点通信测试（旧版）</td>
 <td>快速连通性验证</td>
 </tr>
-</tbody></table>
-<h3 id="管理与配置辅助工具"><a href="#管理与配置辅助工具" class="headerlink" title="管理与配置辅助工具"></a>管理与配置辅助工具</h3><table>
+</tbody>
+</table>
+<h3 id="管理与配置辅助工具">管理与配置辅助工具</h3>
+<table>
 <thead>
 <tr>
-<th align="center">命令</th>
-<th align="center">功能说明</th>
-<th align="center">推荐场景</th>
+<th style="text-align:center">命令</th>
+<th style="text-align:center">功能说明</th>
+<th style="text-align:center">推荐场景</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">opensm</td>
-<td align="center">启动子网管理器（SM）</td>
-<td align="center">小规模集群或测试环境</td>
+<tbody>
+<tr>
+<td style="text-align:center">opensm</td>
+<td style="text-align:center">启动子网管理器（SM）</td>
+<td style="text-align:center">小规模集群或测试环境</td>
 </tr>
 <tr>
-<td align="center">perfquery</td>
-<td align="center">查询端口性能计数器</td>
-<td align="center">错误帧、丢包分析</td>
+<td style="text-align:center">perfquery</td>
+<td style="text-align:center">查询端口性能计数器</td>
+<td style="text-align:center">错误帧、丢包分析</td>
 </tr>
 <tr>
-<td align="center">saquery</td>
-<td align="center">查询子网代理信息</td>
-<td align="center">LID&#x2F;GID 映射验证</td>
+<td style="text-align:center">saquery</td>
+<td style="text-align:center">查询子网代理信息</td>
+<td style="text-align:center">LID/GID 映射验证</td>
 </tr>
 <tr>
-<td align="center">sminfo</td>
-<td align="center">查看 SM 状态信息</td>
-<td align="center">SM 健康检查</td>
+<td style="text-align:center">sminfo</td>
+<td style="text-align:center">查看 SM 状态信息</td>
+<td style="text-align:center">SM 健康检查</td>
 </tr>
-</tbody></table>
-<h2 id="物理硬件"><a href="#物理硬件" class="headerlink" title="物理硬件"></a>物理硬件</h2><ul>
+</tbody>
+</table>
+<h2 id="物理硬件">物理硬件</h2>
+<ul>
 <li>HCA 可能有多个物理端口 (port)：每个 port 有一个 LID 。</li>
 <li>每个 port 可能有多个通道 (lane) ：用 <code>1x</code>, <code>2x</code>, <code>4x</code>, <code>8x</code> 等表示。</li>
 <li>总速率：<code>总速率 = 每个 port 的 lane 数 × 每个 lane 的速率 × port 数量</code>。</li>
 <li>port 和 lane 是有物理硬件决定的。</li>
 </ul>
-<h3 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h3><ul>
-<li><p>通道是物理层的能力</p>
+<h3 id="部署">部署</h3>
+<ul>
+<li>
+<p>通道是物理层的能力</p>
 <ul>
 <li>每个 InfiniBand 或 PCIe 接口由若干个 lane 组成，每个 lane 是一对差分信号线（发送 + 接收）。</li>
-<li>比如：<ul>
+<li>比如：
+<ul>
 <li>x1 表示 1 个 lane → 最低带宽</li>
 <li>x4 表示 4 个 lane → 常见于 EDR（100G）</li>
-<li>x8 表示 8 个 lane → HDR&#x2F;NDR（200G&#x2F;400G）</li>
+<li>x8 表示 8 个 lane → HDR/NDR（200G/400G）</li>
 <li>x12 是更高端的聚合方式 → 超大带宽（如 600G）</li>
 </ul>
 </li>
 </ul>
 </li>
-<li><p>“部署”决定你能否用满这些通道</p>
+<li>
+<p>“部署”决定你能否用满这些通道</p>
 <ul>
 <li>如果你部署的是 x4 的 HCA + x4 的交换机 + x4 的线缆，你就能跑满 4 个 lane。</li>
 <li>如果你部署的是 x8 的 HCA，但只用了 x4 的线缆，你只能跑 4 个 lane，剩下的通道闲置。</li>
@@ -1638,63 +1869,70 @@
 <table>
 <thead>
 <tr>
-<th align="center">部署方式</th>
-<th align="center">通道数</th>
-<th align="center">实际带宽</th>
+<th style="text-align:center">部署方式</th>
+<th style="text-align:center">通道数</th>
+<th style="text-align:center">实际带宽</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center"><code>HCA: x4</code> + <code>Cable: x4</code> + <code>Switch: x4</code></td>
-<td align="center">4</td>
-<td align="center">200 Gbps</td>
+<tbody>
+<tr>
+<td style="text-align:center"><code>HCA: x4</code> + <code>Cable: x4</code> + <code>Switch: x4</code></td>
+<td style="text-align:center">4</td>
+<td style="text-align:center">200 Gbps</td>
 </tr>
 <tr>
-<td align="center"><code>HCA: x8</code> + <code>Cable: x4</code> + <code>Switch: x4</code></td>
-<td align="center">4</td>
-<td align="center">200 Gbps（x8 闲置一半）</td>
+<td style="text-align:center"><code>HCA: x8</code> + <code>Cable: x4</code> + <code>Switch: x4</code></td>
+<td style="text-align:center">4</td>
+<td style="text-align:center">200 Gbps（x8 闲置一半）</td>
 </tr>
 <tr>
-<td align="center"><code>HCA: x8</code> + <code>Cable: x8</code> + <code>Switch: x8</code></td>
-<td align="center">8</td>
-<td align="center">400 Gbps</td>
+<td style="text-align:center"><code>HCA: x8</code> + <code>Cable: x8</code> + <code>Switch: x8</code></td>
+<td style="text-align:center">8</td>
+<td style="text-align:center">400 Gbps</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <p>只有在部署中三者都匹配时，才能真正跑满所有通道。</p>
-<h3 id="程序员关注的层面"><a href="#程序员关注的层面" class="headerlink" title="程序员关注的层面"></a>程序员关注的层面</h3><table>
+<h3 id="程序员关注的层面">程序员关注的层面</h3>
+<table>
 <thead>
 <tr>
-<th align="center">层级</th>
-<th align="center">程序员是否需要控制</th>
+<th style="text-align:center">层级</th>
+<th style="text-align:center">程序员是否需要控制</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">Lane（物理通道）</td>
-<td align="center">❌ 不需要</td>
+<tbody>
+<tr>
+<td style="text-align:center">Lane（物理通道）</td>
+<td style="text-align:center">❌ 不需要</td>
 </tr>
 <tr>
-<td align="center">Port（物理接口）</td>
-<td align="center">✅ 可选（如多 port HCA）</td>
+<td style="text-align:center">Port（物理接口）</td>
+<td style="text-align:center">✅ 可选（如多 port HCA）</td>
 </tr>
 <tr>
-<td align="center">QP（逻辑通信通道）</td>
-<td align="center">✅ 必须管理</td>
+<td style="text-align:center">QP（逻辑通信通道）</td>
+<td style="text-align:center">✅ 必须管理</td>
 </tr>
 <tr>
-<td align="center">Memory Region（MR）</td>
-<td align="center">✅ 必须注册</td>
+<td style="text-align:center">Memory Region（MR）</td>
+<td style="text-align:center">✅ 必须注册</td>
 </tr>
 <tr>
-<td align="center">Completion Queue（CQ）</td>
-<td align="center">✅ 必须轮询或处理</td>
+<td style="text-align:center">Completion Queue（CQ）</td>
+<td style="text-align:center">✅ 必须轮询或处理</td>
 </tr>
-</tbody></table>
-<h2 id="带宽测试"><a href="#带宽测试" class="headerlink" title="带宽测试"></a>带宽测试</h2><h3 id="理论带宽"><a href="#理论带宽" class="headerlink" title="理论带宽"></a>理论带宽</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lspci | grep -i infiniband</span><br></pre></td></tr></table></figure>
-
+</tbody>
+</table>
+<h2 id="带宽测试">带宽测试</h2>
+<h3 id="理论带宽">理论带宽</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lspci | grep -i infiniband</span><br></pre></td></tr></table></figure>
 <p>然后通过阅读产品说明书，确定理论带宽。</p>
-<h3 id="协商带宽"><a href="#协商带宽" class="headerlink" title="协商带宽"></a>协商带宽</h3><p>实际部署的速率，可能与 HCA 、线缆、交换机都相关，所以实际会有一个协商速率。</p>
+<h3 id="协商带宽">协商带宽</h3>
+<p>实际部署的速率，可能与 HCA 、线缆、交换机都相关，所以实际会有一个协商速率。</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ibstat</span><br></pre></td></tr></table></figure>
-
-<h3 id="实际带宽测试"><a href="#实际带宽测试" class="headerlink" title="实际带宽测试"></a>实际带宽测试</h3><p>发送速率：</p>
+<h3 id="实际带宽测试">实际带宽测试</h3>
+<p>发送速率：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Server 端（等待连接）</span></span><br><span class="line">ib_send_bw -d mlx5_0 -a</span><br><span class="line"></span><br><span class="line"><span class="comment"># Client 端（发起连接）</span></span><br><span class="line">ib_send_bw -d mlx5_0 -a &lt;server_ip&gt;</span><br></pre></td></tr></table></figure>
 
       
@@ -1746,7 +1984,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1769,158 +2007,166 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>令所有 C&#x2F;C++ 程序员头疼的事，莫过于环境的搭建和兼容。这往往发生在链接阶段，分为两种：</p>
+          <p>令所有 C/C++ 程序员头疼的事，莫过于环境的搭建和兼容。这往往发生在链接阶段，分为两种：</p>
 <ul>
 <li>编译时链接</li>
 <li>运行时链接</li>
 </ul>
 <p>读完本文，你将能解决大部分的环境问题。</p>
-<h2 id="运行时-so-的加载顺序"><a href="#运行时-so-的加载顺序" class="headerlink" title="运行时 so 的加载顺序"></a>运行时 so 的加载顺序</h2><table>
+<h2 id="运行时-so-的加载顺序">运行时 so 的加载顺序</h2>
+<table>
 <thead>
 <tr>
-<th align="center">优先级</th>
-<th align="center">来源</th>
-<th align="center">说明</th>
+<th style="text-align:center">优先级</th>
+<th style="text-align:center">来源</th>
+<th style="text-align:center">说明</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">🔺 1</td>
-<td align="center">LD_PRELOAD 环境变量</td>
-<td align="center">强制优先加载指定库，最高优先级，可用于函数替换</td>
+<tbody>
+<tr>
+<td style="text-align:center">🔺 1</td>
+<td style="text-align:center">LD_PRELOAD 环境变量</td>
+<td style="text-align:center">强制优先加载指定库，最高优先级，可用于函数替换</td>
 </tr>
 <tr>
-<td align="center">🔺 2</td>
-<td align="center">rpath（编译时指定）</td>
-<td align="center">使用 -Wl,-rpath&#x3D;… 编译时嵌入的路径，仅作用于当前程序（已废弃：因为优先级过高，且影响间接依赖项。推荐使用 runpath，没有这两个缺点。）</td>
+<td style="text-align:center">🔺 2</td>
+<td style="text-align:center">rpath（编译时指定）</td>
+<td style="text-align:center">使用 -Wl,-rpath=… 编译时嵌入的路径，仅作用于当前程序（已废弃：因为优先级过高，且影响间接依赖项。推荐使用 runpath，没有这两个缺点。）</td>
 </tr>
 <tr>
-<td align="center">🔺 3</td>
-<td align="center">LD_LIBRARY_PATH 环境变量</td>
-<td align="center">运行时设置的库搜索路径，影响当前 shell 会话</td>
+<td style="text-align:center">🔺 3</td>
+<td style="text-align:center">LD_LIBRARY_PATH 环境变量</td>
+<td style="text-align:center">运行时设置的库搜索路径，影响当前 shell 会话</td>
 </tr>
 <tr>
-<td align="center">🔺 4</td>
-<td align="center">runpath（编译时指定）</td>
-<td align="center">使用 -Wl,-rpath 设置的路径，但优先级低于 LD_LIBRARY_PATH</td>
+<td style="text-align:center">🔺 4</td>
+<td style="text-align:center">runpath（编译时指定）</td>
+<td style="text-align:center">使用 -Wl,-rpath 设置的路径，但优先级低于 LD_LIBRARY_PATH</td>
 </tr>
 <tr>
-<td align="center">🔺 5</td>
-<td align="center">&#x2F;etc&#x2F;ld.so.cache</td>
-<td align="center">由 ldconfig 生成的缓存，包含 &#x2F;etc&#x2F;ld.so.conf 中的路径</td>
+<td style="text-align:center">🔺 5</td>
+<td style="text-align:center">/etc/ld.so.cache</td>
+<td style="text-align:center">由 ldconfig 生成的缓存，包含 /etc/ld.so.conf 中的路径</td>
 </tr>
 <tr>
-<td align="center">🔺 6</td>
-<td align="center">默认系统路径</td>
-<td align="center">&#x2F;lib, &#x2F;usr&#x2F;lib, &#x2F;lib64, &#x2F;usr&#x2F;lib64 等标准目录</td>
+<td style="text-align:center">🔺 6</td>
+<td style="text-align:center">默认系统路径</td>
+<td style="text-align:center">/lib, /usr/lib, /lib64, /usr/lib64 等标准目录</td>
 </tr>
-</tbody></table>
-<h3 id="动态链接器（Dynamic-Linker）"><a href="#动态链接器（Dynamic-Linker）" class="headerlink" title="动态链接器（Dynamic Linker）"></a>动态链接器（Dynamic Linker）</h3><p>以上的 so 的加载顺序，是由 <strong>动态链接器（Dynamic Linker）</strong> 完成的。</p>
+</tbody>
+</table>
+<h3 id="动态链接器（Dynamic-Linker）">动态链接器（Dynamic Linker）</h3>
+<p>以上的 so 的加载顺序，是由 <strong>动态链接器（Dynamic Linker）</strong> 完成的。</p>
 <p>每个 ELF 可执行文件在头部指定了它的动态链接器路径：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ readelf -l your_program | grep interpreter</span><br><span class="line">[Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]</span><br></pre></td></tr></table></figure>
-
 <p>这个链接器负责在程序启动时加载所需的动态库，包括 libc.so.6（glibc 的主库）。</p>
-<p>注意：<code>ld.so</code>（这是一个简称）和 <code>ld</code> 完全不是一个东西，<code>ld</code> 是一个可执行程序，在编译期使用，见下<br>文<a href="#%E7%BC%96%E8%AF%91%E6%97%B6%E9%93%BE%E6%8E%A5%E5%99%A8%EF%BC%88ld%EF%BC%89">编译时链接器（ld）</a>。</p>
+<p>注意：<code>ld.so</code>（这是一个简称）和 <code>ld</code> 完全不是一个东西，<code>ld</code> 是一个可执行程序，在编译期使用，见下<br>
+文<a href="#%E7%BC%96%E8%AF%91%E6%97%B6%E9%93%BE%E6%8E%A5%E5%99%A8%EF%BC%88ld%EF%BC%89">编译时链接器（ld）</a>。</p>
 <ul>
 <li><code>ld.so</code> 既是 so 也是可执行文件：</li>
 </ul>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ file /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2</span><br><span class="line">/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2: ELF 64-bit LSB shared object, x86-64, version 1 (GNU/Linux), dynamically linked, BuildID[sha1]=e4de036b19e4768e7591b596c4be9f9015f2d28a, stripped</span><br></pre></td></tr></table></figure>
-
 <p>普通程序的 ELF 文件中有一个 PT_INTERP 段，指定了这个链接器的路径。</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ file /usr/bin/ls</span><br><span class="line">/usr/bin/ls: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=36b86f957a1be53733633d184c3a3354f3fc7b12, <span class="keyword">for</span> GNU/Linux 3.2.0, stripped</span><br><span class="line"></span><br><span class="line">$ file /lib/x86_64-linux-gnu/libc.so.6</span><br><span class="line">/lib/x86_64-linux-gnu/libc.so.6: ELF 64-bit LSB shared object, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=cd410b710f0f094c6832edd95931006d883af48e, <span class="keyword">for</span> GNU/Linux 3.2.0, stripped</span><br></pre></td></tr></table></figure>
-
 <ul>
-<li>动态链接器 ld.so 本身也依赖共享库（如 libc.so.6），但它又是负责加载共享库的工具</li>
+<li>动态链接器 <a target="_blank" rel="noopener" href="http://ld.so">ld.so</a> 本身也依赖共享库（如 libc.so.6），但它又是负责加载共享库的工具</li>
 </ul>
 <p>动态链接器是一个“自举”程序：</p>
 <ul>
 <li>它是由 Linux 内核直接加载并执行，不依赖其他库来启动。</li>
 <li>它的启动代码是 静态编译的，也就是说，它的最小启动逻辑不依赖 libc.so.6。</li>
 <li>在启动后，它才会去加载 libc.so.6 和其他 .so 文件，完成符号解析和初始化。</li>
-<li>有趣的是，libc.so.6 又依赖 ld.so 来加载。</li>
+<li>有趣的是，libc.so.6 又依赖 <a target="_blank" rel="noopener" href="http://ld.so">ld.so</a> 来加载。</li>
 </ul>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">你运行 ./myapp</span><br><span class="line">↓</span><br><span class="line">内核读取 ELF → 找到 PT_INTERP 段 → 加载 ld.so</span><br><span class="line">↓</span><br><span class="line">ld.so 启动（靠自身静态代码）</span><br><span class="line">↓</span><br><span class="line">ld.so 加载 libc.so.6、libstdc++.so.6 等共享库</span><br><span class="line">↓</span><br><span class="line">ld.so 跳转到 myapp 的入口地址（main）</span><br></pre></td></tr></table></figure>
-
 <p>如果 libc.so.6 丢失怎么办？</p>
 <p>有开发者分享过真实案例，当系统误删了 libc.so.6 ，几乎所有命令都无法运行。但你仍然可以：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/lib64/ld-linux-x86-64.so.2 /bin/ln -s /lib64/libc-2.33.so /lib64/libc.so.6</span><br></pre></td></tr></table></figure>
-
-<p>这利用了 ld.so 的自举能力，手动加载 libc 并执行命令，从而恢复系统。</p>
-<h3 id="ldd-检查"><a href="#ldd-检查" class="headerlink" title="ldd 检查"></a>ldd 检查</h3><p><code>ldd</code> (List Dynamic Dependencies) 是一个 shell 脚本，用于查看一个可执行文件或共享库所依赖的动态链接<br>库的命令。</p>
+<p>这利用了 <a target="_blank" rel="noopener" href="http://ld.so">ld.so</a> 的自举能力，手动加载 libc 并执行命令，从而恢复系统。</p>
+<h3 id="ldd-检查">ldd 检查</h3>
+<p><code>ldd</code> (List Dynamic Dependencies) 是一个 shell 脚本，用于查看一个可执行文件或共享库所依赖的动态链接<br>
+库的命令。</p>
 <p>它的思路是：模拟 运行时链接器 的行为。</p>
 <ol>
-<li><p>设置环境变量来触发动态链接器 (ld-linux.so) 输出依赖信息，但是不真正执行程序。如：</p>
+<li>
+<p>设置环境变量来触发动态链接器 (<a target="_blank" rel="noopener" href="http://ld-linux.so">ld-linux.so</a>) 输出依赖信息，但是不真正执行程序。如：</p>
 <ul>
 <li><code>LD_TRACE_LOADED_OBJECTS=1</code></li>
 <li><code>LD_WARN</code>, <code>LD_BIND_NOW</code>, <code>LD_VERBOSE</code> 等</li>
 </ul>
 </li>
-<li><p>调用动态链接器查找 so .</p>
+<li>
+<p>调用动态链接器查找 so .</p>
 </li>
 </ol>
 <p>局限性：</p>
 <ul>
 <li>使用 <code>dlopen()</code> 动态加载库，<code>ldd</code> 是无法检测到的</li>
 </ul>
-<h3 id="补充工具"><a href="#补充工具" class="headerlink" title="补充工具"></a>补充工具</h3><ul>
+<h3 id="补充工具">补充工具</h3>
+<ul>
 <li><code>readelf -d binary | grep -i rpath</code>：查看 ELF 文件中的 RPATH 或 RUNPATH</li>
 <li><code>ldconfig -p</code>：查看系统缓存中有哪些库</li>
 <li><code>strace -e openat ./your_program</code>：查看运行时实际打开了哪些库文件</li>
 <li><code>LD_DEBUG=libs ./your_program</code>：调试动态库加载过程</li>
 </ul>
-<h2 id="编译时-so-的查找顺序"><a href="#编译时-so-的查找顺序" class="headerlink" title="编译时 so 的查找顺序"></a>编译时 so 的查找顺序</h2><p>GCC 查找 glibc 的路径顺序：</p>
+<h2 id="编译时-so-的查找顺序">编译时 so 的查找顺序</h2>
+<p>GCC 查找 glibc 的路径顺序：</p>
 <p>🧠 编译阶段（查找头文件）</p>
 <table>
 <thead>
 <tr>
-<th align="center">优先级</th>
-<th align="center">路径来源</th>
-<th align="center">示例路径</th>
-<th align="center">说明</th>
+<th style="text-align:center">优先级</th>
+<th style="text-align:center">路径来源</th>
+<th style="text-align:center">示例路径</th>
+<th style="text-align:center">说明</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">1️⃣</td>
-<td align="center">显式指定 -I 参数</td>
-<td align="center">gcc -I&#x2F;custom&#x2F;include</td>
-<td align="center">用户手动指定，优先级最高</td>
+<tbody>
+<tr>
+<td style="text-align:center">1️⃣</td>
+<td style="text-align:center">显式指定 -I 参数</td>
+<td style="text-align:center">gcc -I/custom/include</td>
+<td style="text-align:center">用户手动指定，优先级最高</td>
 </tr>
 <tr>
-<td align="center">2️⃣</td>
-<td align="center">-isystem 指定系统头文件路径</td>
-<td align="center">gcc -isystem &#x2F;custom&#x2F;sysinclude</td>
-<td align="center">优先级高于默认路径但低于 -I</td>
+<td style="text-align:center">2️⃣</td>
+<td style="text-align:center">-isystem 指定系统头文件路径</td>
+<td style="text-align:center">gcc -isystem /custom/sysinclude</td>
+<td style="text-align:center">优先级高于默认路径但低于 -I</td>
 </tr>
 <tr>
-<td align="center">3️⃣</td>
-<td align="center">环境变量 CPATH</td>
-<td align="center">&#x2F;opt&#x2F;common&#x2F;include</td>
-<td align="center">适用于所有语言，优先于默认路径</td>
+<td style="text-align:center">3️⃣</td>
+<td style="text-align:center">环境变量 CPATH</td>
+<td style="text-align:center">/opt/common/include</td>
+<td style="text-align:center">适用于所有语言，优先于默认路径</td>
 </tr>
 <tr>
-<td align="center">4️⃣</td>
-<td align="center">环境变量 C_INCLUDE_PATH</td>
-<td align="center">&#x2F;opt&#x2F;glibc-2.28&#x2F;include</td>
-<td align="center">仅对 C 文件有效，优先于默认路径</td>
+<td style="text-align:center">4️⃣</td>
+<td style="text-align:center">环境变量 C_INCLUDE_PATH</td>
+<td style="text-align:center">/opt/glibc-2.28/include</td>
+<td style="text-align:center">仅对 C 文件有效，优先于默认路径</td>
 </tr>
 <tr>
-<td align="center">5️⃣</td>
-<td align="center">环境变量 CPLUS_INCLUDE_PATH</td>
-<td align="center">&#x2F;opt&#x2F;cpp&#x2F;include</td>
-<td align="center">仅对 C++ 文件有效，优先于默认路径</td>
+<td style="text-align:center">5️⃣</td>
+<td style="text-align:center">环境变量 CPLUS_INCLUDE_PATH</td>
+<td style="text-align:center">/opt/cpp/include</td>
+<td style="text-align:center">仅对 C++ 文件有效，优先于默认路径</td>
 </tr>
 <tr>
-<td align="center">6️⃣</td>
-<td align="center">GCC 默认系统路径</td>
-<td align="center">&#x2F;usr&#x2F;include</td>
-<td align="center">最后兜底路径</td>
+<td style="text-align:center">6️⃣</td>
+<td style="text-align:center">GCC 默认系统路径</td>
+<td style="text-align:center">/usr/include</td>
+<td style="text-align:center">最后兜底路径</td>
 </tr>
 <tr>
-<td align="center">7️⃣</td>
-<td align="center">内核头文件路径（特殊场景）</td>
-<td align="center">&#x2F;usr&#x2F;src&#x2F;linux&#x2F;include</td>
-<td align="center">编译内核模块或驱动时使用</td>
+<td style="text-align:center">7️⃣</td>
+<td style="text-align:center">内核头文件路径（特殊场景）</td>
+<td style="text-align:center">/usr/src/linux/include</td>
+<td style="text-align:center">编译内核模块或驱动时使用</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <ul>
 <li><code>-I</code> 和 <code>-isystem</code> 都是命令行参数，但 <code>-isystem</code> 会将路径标记为“系统路径”，避免某些警告。</li>
 <li>环境变量如 <code>CPATH</code> 和 <code>C_INCLUDE_PATH</code> 是在没有显式参数时的补充手段。</li>
@@ -1930,260 +2176,167 @@
 <table>
 <thead>
 <tr>
-<th align="center">优先级</th>
-<th align="center">来源类型</th>
-<th align="center">是否可覆盖</th>
-<th align="center">说明</th>
+<th style="text-align:center">优先级</th>
+<th style="text-align:center">来源类型</th>
+<th style="text-align:center">是否可覆盖</th>
+<th style="text-align:center">说明</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">1️⃣</td>
-<td align="center">显式命令行参数 -L</td>
-<td align="center">✅</td>
-<td align="center">用户指定的库路径，最高优先级</td>
+<tbody>
+<tr>
+<td style="text-align:center">1️⃣</td>
+<td style="text-align:center">显式命令行参数 -L</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">用户指定的库路径，最高优先级</td>
 </tr>
 <tr>
-<td align="center">2️⃣</td>
-<td align="center">链接器参数 -rpath-link</td>
-<td align="center">✅</td>
-<td align="center">链接器查找间接依赖库时使用</td>
+<td style="text-align:center">2️⃣</td>
+<td style="text-align:center">链接器参数 -rpath-link</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">链接器查找间接依赖库时使用</td>
 </tr>
 <tr>
-<td align="center">3️⃣</td>
-<td align="center">环境变量 LIBRARY_PATH</td>
-<td align="center">✅</td>
-<td align="center">编译器查找库时使用，优先于默认路径</td>
+<td style="text-align:center">3️⃣</td>
+<td style="text-align:center">环境变量 LIBRARY_PATH</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">编译器查找库时使用，优先于默认路径</td>
 </tr>
 <tr>
-<td align="center">4️⃣</td>
-<td align="center">–sysroot 指定根路径</td>
-<td align="center">✅</td>
-<td align="center">用于交叉编译，影响所有路径解析</td>
+<td style="text-align:center">4️⃣</td>
+<td style="text-align:center">–sysroot 指定根路径</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">用于交叉编译，影响所有路径解析</td>
 </tr>
 <tr>
-<td align="center">5️⃣</td>
-<td align="center">GCC 安装路径默认搜索目录</td>
-<td align="center">✅</td>
-<td align="center">来自 –prefix 和 –libdir 配置</td>
+<td style="text-align:center">5️⃣</td>
+<td style="text-align:center">GCC 安装路径默认搜索目录</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">来自 --prefix 和 --libdir 配置</td>
 </tr>
 <tr>
-<td align="center">6️⃣</td>
-<td align="center">specs 文件配置</td>
-<td align="center">✅</td>
-<td align="center">GCC 内部配置，可自定义行为</td>
+<td style="text-align:center">6️⃣</td>
+<td style="text-align:center">specs 文件配置</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">GCC 内部配置，可自定义行为</td>
 </tr>
 <tr>
-<td align="center">7️⃣</td>
-<td align="center">默认系统路径 &#x2F;lib, &#x2F;usr&#x2F;lib, &#x2F;lib64</td>
-<td align="center">❌</td>
-<td align="center">最后兜底路径，系统环境提供的库</td>
+<td style="text-align:center">7️⃣</td>
+<td style="text-align:center">默认系统路径 /lib, /usr/lib, /lib64</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">最后兜底路径，系统环境提供的库</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <p>说明：</p>
 <p>在编译安装 GCC 时，通常会使用 configure 脚本来指定安装路径：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./configure --prefix=/custom/gcc --libdir=/custom/gcc/lib64</span><br></pre></td></tr></table></figure>
-
 <table>
 <thead>
 <tr>
-<th align="center">参数</th>
-<th align="center">作用说明</th>
+<th style="text-align:center">参数</th>
+<th style="text-align:center">作用说明</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">–prefix</td>
-<td align="center">指定 GCC 的安装根目录。GCC 的可执行文件、头文件、库文件等都会安装到这个目录下的子目录中。</td>
+<tbody>
+<tr>
+<td style="text-align:center">–prefix</td>
+<td style="text-align:center">指定 GCC 的安装根目录。GCC 的可执行文件、头文件、库文件等都会安装到这个目录下的子目录中。</td>
 </tr>
 <tr>
-<td align="center">–libdir</td>
-<td align="center">指定库文件的安装目录，通常是 lib 或 lib64，用于放置 .so 或 .a 文件。</td>
+<td style="text-align:center">–libdir</td>
+<td style="text-align:center">指定库文件的安装目录，通常是 lib 或 lib64，用于放置 .so 或 .a 文件。</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <p>当你使用这个 GCC 编译器时，它会自动使用这些路径来查找头文件和库文件。例如：</p>
 <ul>
-<li>查找头文件时，会优先使用 &#x2F;custom&#x2F;gcc&#x2F;include</li>
-<li>查找库文件时，会优先使用 &#x2F;custom&#x2F;gcc&#x2F;lib64</li>
+<li>查找头文件时，会优先使用 /custom/gcc/include</li>
+<li>查找库文件时，会优先使用 /custom/gcc/lib64</li>
 <li>链接器（如 ld）也会被 GCC 告知去这些路径找库</li>
 </ul>
 <p>这些路径是 编译器内部写死的默认值，你可以通过以下命令查看：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">gcc -print-search-dirs</span><br><span class="line"><span class="comment"># 或</span></span><br><span class="line">ld --verbose | grep SEARCH_DIR</span><br><span class="line"><span class="comment"># 查看：g++ 实际链接的是哪个版本的库；库文件位于哪个目录；系统是否安装了对应库</span></span><br><span class="line">g++ -print-file-name=libxxx.so</span><br><span class="line">g++ -print-file-name=libyyy.a</span><br></pre></td></tr></table></figure>
-
 <p>输出示例：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">install: /custom/gcc/lib/gcc/x86_64-linux-gnu/12.2.0/</span><br><span class="line">programs: /custom/gcc/libexec/gcc/x86_64-linux-gnu/12.2.0/:...</span><br><span class="line">libraries: /custom/gcc/lib/gcc/x86_64-linux-gnu/12.2.0/:/custom/gcc/lib64/:..</span><br></pre></td></tr></table></figure>
-
 <p><code>gcc -v</code> 会显示详细的编译和链接过程，包括实际使用了哪些路径和库文件。</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -v hello.c -o hello</span><br></pre></td></tr></table></figure>
-
-<p>使用 –sysroot 指定根路径</p>
+<p>使用 --sysroot 指定根路径</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc --sysroot=/path/to/custom/root hello.c -o hello</span><br></pre></td></tr></table></figure>
-
-<h3 id="编译时链接器（ld）"><a href="#编译时链接器（ld）" class="headerlink" title="编译时链接器（ld）"></a>编译时链接器（ld）</h3><p>编译时链接器（ld） 和 运行时动态链接器 不是同一个东西：</p>
+<h3 id="编译时链接器（ld）">编译时链接器（ld）</h3>
+<p>编译时链接器（ld） 和 运行时动态链接器 不是同一个东西：</p>
 <table>
 <thead>
 <tr>
-<th align="center">特性</th>
-<th align="center">编译时链接器 (<code>ld</code>)</th>
-<th align="center">运行时动态链接器 (<code>ld-linux.so</code>)</th>
+<th style="text-align:center">特性</th>
+<th style="text-align:center">编译时链接器 (<code>ld</code>)</th>
+<th style="text-align:center">运行时动态链接器 (<code>ld-linux.so</code>)</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">执行时机</td>
-<td align="center">编译阶段</td>
-<td align="center">程序启动时</td>
+<tbody>
+<tr>
+<td style="text-align:center">执行时机</td>
+<td style="text-align:center">编译阶段</td>
+<td style="text-align:center">程序启动时</td>
 </tr>
 <tr>
-<td align="center">作用</td>
-<td align="center">生成可执行文件</td>
-<td align="center">加载 .so 库并绑定符号</td>
+<td style="text-align:center">作用</td>
+<td style="text-align:center">生成可执行文件</td>
+<td style="text-align:center">加载 .so 库并绑定符号</td>
 </tr>
 <tr>
-<td align="center">由谁调用</td>
-<td align="center">编译器（如 gcc）</td>
-<td align="center">操作系统加载器</td>
+<td style="text-align:center">由谁调用</td>
+<td style="text-align:center">编译器（如 gcc）</td>
+<td style="text-align:center">操作系统加载器</td>
 </tr>
 <tr>
-<td align="center">是否参与运行过程</td>
-<td align="center">❌ 不参与</td>
-<td align="center">✅ 参与</td>
+<td style="text-align:center">是否参与运行过程</td>
+<td style="text-align:center">❌ 不参与</td>
+<td style="text-align:center">✅ 参与</td>
 </tr>
-</tbody></table>
-<h2 id="glibc"><a href="#glibc" class="headerlink" title="glibc"></a>glibc</h2><p>glibc 是特殊的 so ，它封装了系统调用，所以 Linux 系统本身也依赖它。</p>
+</tbody>
+</table>
+<h2 id="glibc">glibc</h2>
+<p>glibc 是特殊的 so ，它封装了系统调用，所以 Linux 系统本身也依赖它。</p>
 <p>C 语言允许编译时链接和运行时链接分开，所以常常遇到这样奇怪的问题：</p>
 <ul>
 <li>在本机编译、链接，在本机不能运行：</li>
 </ul>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./myapp: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.33&#x27; not found (required by ./myapp)</span><br></pre></td></tr></table></figure>
-
 <p>这是因为 gcc 在编译时指定的 glibc 和系统运行时的 glibc 不一样：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">$ strings /lib/x86_64-linux-gnu/libc.so.6 | grep GLIBC_</span><br><span class="line">GLIBC_2.2.5</span><br><span class="line">...</span><br><span class="line">GLIBC_2.31</span><br><span class="line"></span><br><span class="line">$ strings ./myapp | grep GLIBCXX_</span><br><span class="line">GLIBC_2.3</span><br><span class="line">...</span><br><span class="line">GLIBCXX_2.33</span><br></pre></td></tr></table></figure>
-
 <p><code>/lib/x86_64-linux-gnu/libc.so.6</code> 中确实没有 <code>GLIBC_2.33</code> 的符号。</p>
 <p>如果你的系统中有多个 glibc ，那么这种问题可以通过上面“运行时 so 的加载顺序”，使用环境变量调整。</p>
 <p>但是，这种对 glibc 的依赖可能是间接的：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">ls</span> /path/to/gcc/v14.2.0/lib64 | grep libstdc++.so</span><br><span class="line">libstdc++.so</span><br><span class="line">libstdc++.so.6</span><br><span class="line"></span><br><span class="line">$ ldd /path/to/gcc/v14.2.0/lib64/libstdc++.so.6</span><br><span class="line">        linux-vdso.so.1 (0x00007ffd965f4000)</span><br><span class="line">        libm.so.6 =&gt; /usr/lib64/libm.so.6 (0x0000147a213a9000)</span><br><span class="line">        libc.so.6 =&gt; /usr/lib64/libc.so.6 (0x0000147a20fe4000)</span><br><span class="line">        /lib64/ld-linux-x86-64.so.2 (0x0000147a219ea000)</span><br><span class="line">        libgcc_s.so.1 =&gt; /path/to/gcc/v14.2.0/lib64/libgcc_s.so.1 (0x0000147a21be4000)</span><br></pre></td></tr></table></figure>
-
-<p>此时，如果你的编译和运行的机器不是同一台（意味着运行时 &#x2F;usr&#x2F;lib64&#x2F;libc.so.6 文件和编译期不一致），这<br>时候就基本没有没有办法了。理论上，你可以下载一个与编译期相同的 libc.so.6 ，但是你无法保证系统的动态<br>链接器 <code>/lib64/ld-linux-x86-64.so.2</code> 与所下载的 libc.so.6 兼容。而 <code>/lib64/ld-linux-x86-64.so.2</code> 路<br>径是无法通过环境变量修改的，因为它是内核在程序启动时直接加载的，它的路径是硬编码在 ELF 可执行文件中<br>的。</p>
+<p>此时，如果你的编译和运行的机器不是同一台（意味着运行时 /usr/lib64/libc.so.6 文件和编译期不一致），这<br>
+时候就基本没有没有办法了。理论上，你可以下载一个与编译期相同的 libc.so.6 ，但是你无法保证系统的动态<br>
+链接器 <code>/lib64/ld-linux-x86-64.so.2</code> 与所下载的 libc.so.6 兼容。而 <code>/lib64/ld-linux-x86-64.so.2</code> 路<br>
+径是无法通过环境变量修改的，因为它是内核在程序启动时直接加载的，它的路径是硬编码在 ELF 可执行文件中<br>
+的。</p>
 <p>所以最好的方式，是在编译时就确认 GCC 的 glibc 和系统运行时一致。</p>
-<h3 id="检查当前-GCC-使用的-glibc-路径"><a href="#检查当前-GCC-使用的-glibc-路径" class="headerlink" title="检查当前 GCC 使用的 glibc 路径"></a>检查当前 GCC 使用的 glibc 路径</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ gcc --print-file-name=libc.so.6</span><br><span class="line">$ g++ --print-file-name=libstdc++.so.6</span><br><span class="line">$ gcc -print-search-dirs</span><br></pre></td></tr></table></figure>
-
+<h3 id="检查当前-GCC-使用的-glibc-路径">检查当前 GCC 使用的 glibc 路径</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ gcc --print-file-name=libc.so.6</span><br><span class="line">$ g++ --print-file-name=libstdc++.so.6</span><br><span class="line">$ gcc -print-search-dirs</span><br></pre></td></tr></table></figure>
 <p>示例：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ /path/to/gcc/v14.2.0/bin/g++ --print-file-name=libstdc++.so.6</span><br><span class="line">/path/toData/gcc-v14.2.0/x86_64/lib64/libstdc++.so.6</span><br></pre></td></tr></table></figure>
-
-<h3 id="确认当前系统的-glibc-和-libstdc-版本"><a href="#确认当前系统的-glibc-和-libstdc-版本" class="headerlink" title="确认当前系统的 glibc 和 libstdc++ 版本"></a>确认当前系统的 glibc 和 libstdc++ 版本</h3><p>✅ 查看 glibc 版本（即 libc.so）</p>
+<h3 id="确认当前系统的-glibc-和-libstdc-版本">确认当前系统的 glibc 和 libstdc++ 版本</h3>
+<p>✅ 查看 glibc 版本（即 <a target="_blank" rel="noopener" href="http://libc.so">libc.so</a>）</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ldd --version</span><br><span class="line"><span class="comment"># 或者</span></span><br><span class="line">getconf GNU_LIBC_VERSION</span><br></pre></td></tr></table></figure>
-
 <p>✅ 查看 libstdc++ 版本（C++ 标准库）</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">strings /usr/lib*/libstdc++.so.6 | grep GLIBCXX</span><br></pre></td></tr></table></figure>
-
 <p>你会看到类似：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">GLIBCXX_3.4.21</span><br><span class="line">GLIBCXX_3.4.26</span><br></pre></td></tr></table></figure>
-
 <p>这些是你系统支持的 C++ ABI 版本。</p>
-<h3 id="系统默认路径"><a href="#系统默认路径" class="headerlink" title="系统默认路径"></a>系统默认路径</h3><p>由 &#x2F;etc&#x2F;ld.so.conf 和 ldconfig 决定</p>
+<h3 id="系统默认路径">系统默认路径</h3>
+<p>由 /etc/ld.so.conf 和 ldconfig 决定</p>
 <p>通常包括：</p>
 <ul>
-<li>&#x2F;lib64&#x2F;</li>
-<li>&#x2F;usr&#x2F;lib64&#x2F;</li>
-<li>&#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;（Debian&#x2F;Ubuntu）</li>
+<li>/lib64/</li>
+<li>/usr/lib64/</li>
+<li>/lib/x86_64-linux-gnu/（Debian/Ubuntu）</li>
 </ul>
 <p>你可以运行：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ldconfig -p | grep libc.so.6</span><br></pre></td></tr></table></figure>
-
 <p>来查看系统当前可用的 libc.so.6 版本和路径。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/16/tech/concurrent/memory-reclamation-in-concurrency/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/09/16/tech/concurrent/memory-reclamation-in-concurrency/" class="post-title-link" itemprop="url">并发中的内存回收</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-09-16 23:04:01" itemprop="dateCreated datePublished" datetime="2025-09-16T23:04:01+00:00">2025-09-16</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/concurrent/" itemprop="url" rel="index"><span itemprop="name">concurrent</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Hazard-Pointers（危险指针）"><a href="#Hazard-Pointers（危险指针）" class="headerlink" title="Hazard Pointers（危险指针）"></a>Hazard Pointers（危险指针）</h2><p>✅ 作用：保护正在访问的指针，防止它被其他线程释放。</p>
-<p>每个线程维护一组“hazard slots”，用于声明当前正在使用的节点。</p>
-<p>在释放节点前，必须检查是否有线程将其标记为 hazard。如果有，就延迟释放。</p>
-<p>📌 优点：精细控制：每个指针都可以独立保护。</p>
-<p>快速释放：一旦没有线程标记该节点，就可以立即释放。</p>
-<p>⚠️ 缺点：每个线程需要维护额外的指针集合。</p>
-<p>实现复杂度较高，尤其在高并发场景下。</p>
-<h2 id="Epoch-Based-Reclamation（基于世代的回收）"><a href="#Epoch-Based-Reclamation（基于世代的回收）" class="headerlink" title="Epoch-Based Reclamation（基于世代的回收）"></a>Epoch-Based Reclamation（基于世代的回收）</h2><p>✅ 作用：将所有线程的操作划分到一个“epoch”（时间段）中。</p>
-<p>每个线程在进入临界区时记录当前 epoch，退出时清除。</p>
-<p>被删除的节点会挂到当前 epoch 的垃圾列表中，只有当所有线程都离开该 epoch，才安全释放这些节点。</p>
-<p>📌 优点：实现简单，性能好，适合高吞吐量场景。</p>
-<p>不需要每个指针都单独保护。</p>
-<p>⚠️ 缺点：回收延迟：必须等待所有线程退出当前 epoch。</p>
-<p>对长时间运行的线程敏感，可能阻止垃圾回收。</p>
-<p>🧠 为什么需要它们？</p>
-<p>在 lock-free 数据结构中，节点可能被多个线程同时访问或修改。没有互斥锁保护时，直接释放内存可能导致：</p>
-<ul>
-<li>悬挂指针：其他线程还在访问被释放的节点。</li>
-<li>ABA 问题：节点被释放后地址复用，导致逻辑错误。</li>
-</ul>
-
 
       
     </div>
@@ -2270,7 +2423,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">123</span>
+          <span class="site-state-item-count">124</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -2283,7 +2436,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">42</span>
+        <span class="site-state-item-count">43</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -2403,6 +2556,8 @@ if (document.querySelectorAll('pre.mermaid').length) {
 }
 </script>
 
+
+  
 
   
 

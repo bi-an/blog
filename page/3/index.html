@@ -188,6 +188,102 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/16/tech/concurrent/memory-reclamation-in-concurrency/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/09/16/tech/concurrent/memory-reclamation-in-concurrency/" class="post-title-link" itemprop="url">并发中的内存回收</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-09-16 23:04:01" itemprop="dateCreated datePublished" datetime="2025-09-16T23:04:01+00:00">2025-09-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/concurrent/" itemprop="url" rel="index"><span itemprop="name">concurrent</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Hazard-Pointers（危险指针）">Hazard Pointers（危险指针）</h2>
+<p>✅ 作用：保护正在访问的指针，防止它被其他线程释放。</p>
+<p>每个线程维护一组“hazard slots”，用于声明当前正在使用的节点。</p>
+<p>在释放节点前，必须检查是否有线程将其标记为 hazard。如果有，就延迟释放。</p>
+<p>📌 优点：精细控制：每个指针都可以独立保护。</p>
+<p>快速释放：一旦没有线程标记该节点，就可以立即释放。</p>
+<p>⚠️ 缺点：每个线程需要维护额外的指针集合。</p>
+<p>实现复杂度较高，尤其在高并发场景下。</p>
+<h2 id="Epoch-Based-Reclamation（基于世代的回收）">Epoch-Based Reclamation（基于世代的回收）</h2>
+<p>✅ 作用：将所有线程的操作划分到一个“epoch”（时间段）中。</p>
+<p>每个线程在进入临界区时记录当前 epoch，退出时清除。</p>
+<p>被删除的节点会挂到当前 epoch 的垃圾列表中，只有当所有线程都离开该 epoch，才安全释放这些节点。</p>
+<p>📌 优点：实现简单，性能好，适合高吞吐量场景。</p>
+<p>不需要每个指针都单独保护。</p>
+<p>⚠️ 缺点：回收延迟：必须等待所有线程退出当前 epoch。</p>
+<p>对长时间运行的线程敏感，可能阻止垃圾回收。</p>
+<p>🧠 为什么需要它们？</p>
+<p>在 lock-free 数据结构中，节点可能被多个线程同时访问或修改。没有互斥锁保护时，直接释放内存可能导致：</p>
+<ul>
+<li>悬挂指针：其他线程还在访问被释放的节点。</li>
+<li>ABA 问题：节点被释放后地址复用，导致逻辑错误。</li>
+</ul>
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/15/tech/concurrent/reference-counting-aba/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -219,7 +315,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -242,45 +338,72 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>源码：<a target="_blank" rel="noopener" href="https://github.com/cameron314/concurrentqueue">https://github.com/cameron314/concurrentqueue</a></p>
-<p>原文<br>：<a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2014/solving-the-aba-problem-for-lock-free-free-lists">Solving the ABA Problem for Lock-Free Free Lists</a></p>
-<h2 id="共识"><a href="#共识" class="headerlink" title="共识"></a>共识</h2><ul>
+          <h1>前言</h1>
+<p>源码：<a target="_blank" rel="noopener" href="https://github.com/cameron314/concurrentqueue">https://github.com/cameron314/concurrentqueue</a></p>
+<p>原文<br>
+：<a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2014/solving-the-aba-problem-for-lock-free-free-lists">Solving the ABA Problem for Lock-Free Free Lists</a></p>
+<h2 id="共识">共识</h2>
+<ul>
 <li>CAS 足以保证线程安全；</li>
 <li>我们要做的是消除 CAS 的 ABA 问题。</li>
 </ul>
-<h2 id="常见的解决方案"><a href="#常见的解决方案" class="headerlink" title="常见的解决方案"></a>常见的解决方案</h2><h3 id="Tagged-versioned-指针"><a href="#Tagged-versioned-指针" class="headerlink" title="Tagged &#x2F; versioned 指针"></a>Tagged &#x2F; versioned 指针</h3><p>每次修改 head 的同时也变更一个版本号（tag&#x2F;version），把 (pointer, version) 当作 CAS 的对象。即使指针<br>回到同一个 A，只要版本号不同，CAS 就会失败，防止 ABA。</p>
-<p>缺点包括：在某些机器上需要双字宽度（两个 word）CAS，如果 硬件 &#x2F; 编译器 &#x2F; 平台 不支持就只能 模拟 &#x2F; 锁<br>住；或者要压缩 pointer 或 tag 大小，可能限制可管理的节点数量 &#x2F; 地址空间。</p>
-<h3 id="LL-SC（Load-Linked-Store-Conditional）原语"><a href="#LL-SC（Load-Linked-Store-Conditional）原语" class="headerlink" title="LL&#x2F;SC（Load-Linked &#x2F; Store-Conditional）原语"></a>LL&#x2F;SC（Load-Linked &#x2F; Store-Conditional）原语</h3><p>在支持 LL&#x2F;SC 的架构上，它自然就可以阻止 ABA：因为 store-conditional 会检测在 load 和 store 之间地址<br>是否被“写过”，哪怕写了后来改回原来的值也不行。缺点是很多主流架构（尤其 x86）不支持或者支持有限。</p>
-<h2 id="作者的方法：以引用计数＋“should-be-on-freelist”标志（标志-引用计数）"><a href="#作者的方法：以引用计数＋“should-be-on-freelist”标志（标志-引用计数）" class="headerlink" title="作者的方法：以引用计数＋“should be on freelist”标志（标志 + 引用计数）"></a>作者的方法：以引用计数＋“should be on freelist”标志（标志 + 引用计数）</h2><p>作者提出了一个适用于 free list 的通用方法来避免 ABA，且保持 lock‐free 特性。</p>
-<p>提示：该代码应该从 <code>try_get()</code> 开始阅读，然后回到 <code>add()</code> ，这样才能理解设计引用计数的意图，否则很容<br>易迷惑。</p>
+<h2 id="常见的解决方案">常见的解决方案</h2>
+<h3 id="Tagged-versioned-指针">Tagged / versioned 指针</h3>
+<p>每次修改 head 的同时也变更一个版本号（tag/version），把 (pointer, version) 当作 CAS 的对象。即使指针<br>
+回到同一个 A，只要版本号不同，CAS 就会失败，防止 ABA。</p>
+<p>缺点包括：在某些机器上需要双字宽度（两个 word）CAS，如果 硬件 / 编译器 / 平台 不支持就只能 模拟 / 锁<br>
+住；或者要压缩 pointer 或 tag 大小，可能限制可管理的节点数量 / 地址空间。</p>
+<h3 id="LL-SC（Load-Linked-Store-Conditional）原语">LL/SC（Load-Linked / Store-Conditional）原语</h3>
+<p>在支持 LL/SC 的架构上，它自然就可以阻止 ABA：因为 store-conditional 会检测在 load 和 store 之间地址<br>
+是否被“写过”，哪怕写了后来改回原来的值也不行。缺点是很多主流架构（尤其 x86）不支持或者支持有限。</p>
+<h2 id="作者的方法：以引用计数＋“should-be-on-freelist”标志（标志-引用计数）">作者的方法：以引用计数＋“should be on freelist”标志（标志 + 引用计数）</h2>
+<p>作者提出了一个适用于 free list 的通用方法来避免 ABA，且保持 lock‐free 特性。</p>
+<p>提示：该代码应该从 <code>try_get()</code> 开始阅读，然后回到 <code>add()</code> ，这样才能理解设计引用计数的意图，否则很容<br>
+易迷惑。</p>
 <ul>
-<li>引用计数是状态标志：<ul>
+<li>引用计数是状态标志：
+<ul>
 <li>表示当前有多少线程正在操作节点；</li>
 <li><strong>空闲链表本身也持有一个对节点的引用计数</strong>。</li>
 </ul>
 </li>
-<li>任何线程尝试摘取空闲链表的节点（总是从头部开始）时（<code>try_get()</code>）：<ul>
-<li>必须先增加 head 的引用计数（不同线程可能并发地将节点的引用计数增加到某个值）；→ <code>(3)</code></li>
-<li>next &#x3D; head-&gt;next；</li>
-<li>然后 CAS 竞争，尝试将 freeListHead 调整为 next；<ul>
-<li>如果 CAS 竞争成功，则成功将 freeListHead 调整为 next，该节点被摘下；引用计数减 2（自己增加 的<br>引用计数 + 链表本身持有的引用计数），我们称该线程为<code>线程 1</code>。→ <code>(1)</code></li>
-<li>如果 CAS 竞争失败，则回退：将自己所增加的引用计数减去；用 CAS 返回的新的 head 重试（下一次获取<br>新的 head 节点），这是<code>线程 2</code>；→ <code>(2)</code></li>
-<li>注意：这两步之间以及每一步自身内，对引用计数的操作都有中间状态，但是此时引用计数必然大于 0 （<br><strong>重点！</strong> ）。</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><strong>ABA 问题</strong>：如果成功摘取节点的<code>线程 1</code>完成节点的使用，将节点又添加回空闲链表（<code>add()</code>）：<ul>
-<li>它会发现某个线程正在第 <code>(2)</code> 步的回退过程中（还没有将自身增加的引用计数减回去），所以此时引用计<br>数还是大于 0（也就是说<code>线程 1</code>使用该节点的整个过程，该节点的引用计数都是大于 0 的，但是不影响）<br>。</li>
-<li>此时它可以选择自旋地等待引用计数降为 0 （即所有之前在 <code>try_get()</code> 中 CAS 竞争失败的线程（<br>如<code>线程 2</code>）回退成功）。因为只有引用计数降为 0 了，才能说明自己是唯一一个尝试在链表上操作该节点<br>的线程。但是这从技术上说，就是一个 lock。</li>
-<li>作者设计了一个更聪明的办法：<code>add()</code> 设置一个 <code>SHOULD_BE_ON_FREELIST</code> 标志，然后直接放弃<br>（<code>add()</code>的任务已经完成了）。</li>
-<li>让处于回退中的 <code>线程 2</code>，在回退结束的时候，检查 <code>SHOULD_BE_ON_FREELIST</code> 标志，如果有该标志，并且<br>自己就是最后一个操作该节点的线程的话（即此时的引用计数已经降为 0 了），就帮助 <code>add()</code> 把该节点添<br>加到 free list。</li>
-</ul>
-</li>
-</ul>
-<h3 id="引用计数"><a href="#引用计数" class="headerlink" title="引用计数"></a>引用计数</h3><p>现在我们回过头来看引用计数的作用：</p>
+<li>任何线程尝试摘取空闲链表的节点（总是从头部开始）时（<code>try_get()</code>）：
 <ul>
-<li><p>如果 <code>refs &gt; 0</code>：</p>
+<li>必须先增加 head 的引用计数（不同线程可能并发地将节点的引用计数增加到某个值）；→ <code>(3)</code></li>
+<li>next = head-&gt;next；</li>
+<li>然后 CAS 竞争，尝试将 freeListHead 调整为 next；
+<ul>
+<li>如果 CAS 竞争成功，则成功将 freeListHead 调整为 next，该节点被摘下；引用计数减 2（自己增加 的<br>
+引用计数 + 链表本身持有的引用计数），我们称该线程为<code>线程 1</code>。→ <code>(1)</code></li>
+<li>如果 CAS 竞争失败，则回退：将自己所增加的引用计数减去；用 CAS 返回的新的 head 重试（下一次获取<br>
+新的 head 节点），这是<code>线程 2</code>；→ <code>(2)</code></li>
+<li>注意：这两步之间以及每一步自身内，对引用计数的操作都有中间状态，但是此时引用计数必然大于 0 （<br>
+<strong>重点！</strong> ）。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>ABA 问题</strong>：如果成功摘取节点的<code>线程 1</code>完成节点的使用，将节点又添加回空闲链表（<code>add()</code>）：
+<ul>
+<li>它会发现某个线程正在第 <code>(2)</code> 步的回退过程中（还没有将自身增加的引用计数减回去），所以此时引用计<br>
+数还是大于 0（也就是说<code>线程 1</code>使用该节点的整个过程，该节点的引用计数都是大于 0 的，但是不影响）<br>
+。</li>
+<li>此时它可以选择自旋地等待引用计数降为 0 （即所有之前在 <code>try_get()</code> 中 CAS 竞争失败的线程（<br>
+如<code>线程 2</code>）回退成功）。因为只有引用计数降为 0 了，才能说明自己是唯一一个尝试在链表上操作该节点<br>
+的线程。但是这从技术上说，就是一个 lock。</li>
+<li>作者设计了一个更聪明的办法：<code>add()</code> 设置一个 <code>SHOULD_BE_ON_FREELIST</code> 标志，然后直接放弃<br>
+（<code>add()</code>的任务已经完成了）。</li>
+<li>让处于回退中的 <code>线程 2</code>，在回退结束的时候，检查 <code>SHOULD_BE_ON_FREELIST</code> 标志，如果有该标志，并且<br>
+自己就是最后一个操作该节点的线程的话（即此时的引用计数已经降为 0 了），就帮助 <code>add()</code> 把该节点添<br>
+加到 free list。</li>
+</ul>
+</li>
+</ul>
+<h3 id="引用计数">引用计数</h3>
+<p>现在我们回过头来看引用计数的作用：</p>
+<ul>
+<li>
+<p>如果 <code>refs &gt; 0</code>：</p>
 <ul>
 <li>(1) 要么该节点在链表上；</li>
 <li>(2) 要么有线程正在操作该节点（准确来讲，是在 <code>try_get()</code>）；</li>
@@ -288,15 +411,19 @@
 <li>注：(1)(2) 可以只存在一种，见上面的 ABA 问题的描述。</li>
 </ul>
 </li>
-<li><p>如果 <code>refs == 0</code>：</p>
+<li>
+<p>如果 <code>refs == 0</code>：</p>
 <ul>
 <li>节点已经被从空闲链表上取下；</li>
 <li>并且其他线程都已经从 <code>try_get()</code> 成功回退了。</li>
 </ul>
 </li>
 </ul>
-<p>如果第三个线程，与<code>线程 1</code>、<code>线程 2</code>一起进入上面的 <code>try_get()</code> 竞争，但是当<code>线程 3</code>即将执行步<br>骤<code>(3)</code>时，发现 <code>refs == 0</code>，它就不能够再增加 head 的引用计数了，因为节点已经被成功取下。否则当它成<br>功增加引用计数，再去拿取 head-&gt;next 的时候，是未定义行为。</p>
-<p>正是基于此，在步骤<code>(3)</code>增加引用计数的时候，我们需要判断 <code>refs == 0 ?</code> 和使用 CAS 增加引用计数，如果<br>不符合预期，则放弃增加，进入下一轮重试。</p>
+<p>如果第三个线程，与<code>线程 1</code>、<code>线程 2</code>一起进入上面的 <code>try_get()</code> 竞争，但是当<code>线程 3</code>即将执行步<br>
+骤<code>(3)</code>时，发现 <code>refs == 0</code>，它就不能够再增加 head 的引用计数了，因为节点已经被成功取下。否则当它成<br>
+功增加引用计数，再去拿取 head-&gt;next 的时候，是未定义行为。</p>
+<p>正是基于此，在步骤<code>(3)</code>增加引用计数的时候，我们需要判断 <code>refs == 0 ?</code> 和使用 CAS 增加引用计数，如果<br>
+不符合预期，则放弃增加，进入下一轮重试。</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> ((refs &amp; REFS_MASK) == <span class="number">0</span> || !head-&gt;freeListRefs.<span class="built_in">compare_exchange_strong</span>(refs, refs + <span class="number">1</span>, std::memory_order_acquire)) &#123;</span><br><span class="line">	head = freeListHead.<span class="built_in">load</span>(std::memory_order_acquire);</span><br><span class="line">	<span class="keyword">continue</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
       
@@ -348,7 +475,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -371,14 +498,18 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="ABA-问题"><a href="#ABA-问题" class="headerlink" title="ABA 问题"></a>ABA 问题</h2><p>在典型的无锁栈&#x2F;队列里，指针会被反复复用（比如 pop 出再 push 回去）。如果只用 compare_exchange 比较指<br>针，那么：</p>
+          <h2 id="ABA-问题">ABA 问题</h2>
+<p>在典型的无锁栈/队列里，指针会被反复复用（比如 pop 出再 push 回去）。如果只用 compare_exchange 比较指<br>
+针，那么：</p>
 <ul>
 <li>T1 读到 A</li>
 <li>T2 把 A → B → A 改一圈</li>
 <li>T1 CAS 时看到还是 A，以为结构没变，但其实已经发生变化</li>
 </ul>
 <p>这就是 ABA 问题。</p>
-<h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><h3 id="版本标记指针方案"><a href="#版本标记指针方案" class="headerlink" title="版本标记指针方案"></a>版本标记指针方案</h3><p>‌ 核心思想 ‌：为每个指针附加一个版本号标记，每次修改时递增版本号。</p>
+<h2 id="解决方案">解决方案</h2>
+<h3 id="版本标记指针方案">版本标记指针方案</h3>
+<p>‌ 核心思想 ‌：为每个指针附加一个版本号标记，每次修改时递增版本号。</p>
 <p>‌ 实现要点 ‌：</p>
 <ul>
 <li>需要双字 CAS(DCAS)硬件支持</li>
@@ -392,21 +523,30 @@
 <li>在某些机器上需要双字宽度（两个 word）CAS；</li>
 <li>如果硬件／编译器／平台不支持就只能模拟／锁住；或者要压缩 pointer 或 tag 大小，可能限制可管理的节点数量／地址空间。</li>
 </ul>
-<h3 id="引用计数方案"><a href="#引用计数方案" class="headerlink" title="引用计数方案"></a>引用计数方案</h3><p>‌ 核心思想 ‌：为每个节点维护引用计数，防止节点在被使用时被重新添加到列表。</p>
+<h3 id="引用计数方案">引用计数方案</h3>
+<p>‌ 核心思想 ‌：为每个节点维护引用计数，防止节点在被使用时被重新添加到列表。</p>
 <p>‌ 关键实现细节 ‌：</p>
-<p>每个节点包含 freeListRefs(引用计数)和 freeListNext(下一节点指针) 引用计数高位用作 “应返回自由列表”<br>标志位 try_get()操作前确保引用计数不为零 add()操作使用原子操作管理引用计数和标志位 ‌ 优势 ‌：</p>
+<p>每个节点包含 freeListRefs(引用计数)和 freeListNext(下一节点指针) 引用计数高位用作 “应返回自由列表”<br>
+标志位 try_get()操作前确保引用计数不为零 add()操作使用原子操作管理引用计数和标志位 ‌ 优势 ‌：</p>
 <p>完全通用的解决方案，不依赖特定硬件特性保持真正的锁无关性质正确处理并发场景下的各种竞争条件</p>
-<h3 id="Hazard-Pointer（危险指针）"><a href="#Hazard-Pointer（危险指针）" class="headerlink" title="Hazard Pointer（危险指针）"></a>Hazard Pointer（危险指针）</h3><p>思路：每个线程在访问共享指针之前，把自己正在访问的指针写到一个全局可见的“hazard pointer”里。</p>
-<p>作用：其他线程在想要回收这个节点内存时，必须检查所有线程的 hazard pointers，如果发现有人还在用这个节<br>点，就不能释放。</p>
+<h3 id="Hazard-Pointer（危险指针）">Hazard Pointer（危险指针）</h3>
+<p>思路：每个线程在访问共享指针之前，把自己正在访问的指针写到一个全局可见的“hazard pointer”里。</p>
+<p>作用：其他线程在想要回收这个节点内存时，必须检查所有线程的 hazard pointers，如果发现有人还在用这个节<br>
+点，就不能释放。</p>
 <p>优点：简单直接，内存可以安全回收。</p>
 <p>缺点：维护 hazard pointers 有一定开销，每次回收都要检查所有线程。</p>
-<h3 id="Epoch-Based-Reclamation（基于世代的回收，简称-Epoch-GC）"><a href="#Epoch-Based-Reclamation（基于世代的回收，简称-Epoch-GC）" class="headerlink" title="Epoch-Based Reclamation（基于世代的回收，简称 Epoch GC）"></a>Epoch-Based Reclamation（基于世代的回收，简称 Epoch GC）</h3><p>思路：把时间切分成 epoch（世代）。线程进入临界区时声明自己在某个 epoch。当一个节点被删除后，先放到一<br>个“延迟回收队列”，等到所有线程都离开这个 epoch 之后，才能真正释放这些节点。</p>
+<h3 id="Epoch-Based-Reclamation（基于世代的回收，简称-Epoch-GC）">Epoch-Based Reclamation（基于世代的回收，简称 Epoch GC）</h3>
+<p>思路：把时间切分成 epoch（世代）。线程进入临界区时声明自己在某个 epoch。当一个节点被删除后，先放到一<br>
+个“延迟回收队列”，等到所有线程都离开这个 epoch 之后，才能真正释放这些节点。</p>
 <p>作用：保证没有线程会在旧 epoch 中访问到已经释放的节点。</p>
 <p>优点：比 hazard pointer 更高效（不用逐个检查指针）。</p>
 <p>缺点：需要所有线程都周期性地报告自己活跃的 epoch，否则内存可能迟迟回收不了。</p>
 <p>🚩 为什么会和 ABA 有关？</p>
-<p>像 Michael-Scott 队列这种链表结构，节点被 pop 出队后地址可能被重用。如果没有安全的内存回收，另一个线<br>程可能 CAS 成功指向了一个“已经被释放并重用的地址”，这就是 ABA 的根源。所以 hazard pointer 或 epoch<br>GC 是在链表队列里用来避免这种 悬空引用 + ABA 的。</p>
-<p>而 moodycamel:: ConcurrentQueue 因为用的是 环形 buffer + sequence number，节点不会反复 malloc&#x2F;free，<br>所以根本就不需要 hazard pointer 或 epoch GC。</p>
+<p>像 Michael-Scott 队列这种链表结构，节点被 pop 出队后地址可能被重用。如果没有安全的内存回收，另一个线<br>
+程可能 CAS 成功指向了一个“已经被释放并重用的地址”，这就是 ABA 的根源。所以 hazard pointer 或 epoch<br>
+GC 是在链表队列里用来避免这种 悬空引用 + ABA 的。</p>
+<p>而 moodycamel:: ConcurrentQueue 因为用的是 环形 buffer + sequence number，节点不会反复 malloc/free，<br>
+所以根本就不需要 hazard pointer 或 epoch GC。</p>
 
       
     </div>
@@ -457,7 +597,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -480,19 +620,26 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1 id="TBB-的特殊性"><a href="#TBB-的特殊性" class="headerlink" title="TBB 的特殊性"></a>TBB 的特殊性</h1><p><strong>本文的法则是以线程为调度单位的。</strong></p>
+          <h1>TBB 的特殊性</h1>
+<p><strong>本文的法则是以线程为调度单位的。</strong></p>
 <p>如果你使用的是 TBB ，那么请将 “线程” 对应为 “任务”，而将本文的“任务” 对应为“载荷”（ payloads）。</p>
 <p>因为 TBB 是以任务为调度单位的：</p>
 <ul>
 <li>每个 “任务” 是并发运行的最小单位，必须保证数据独立或线程安全。</li>
 <li>TBB 采用 “任务窃取” 算法来保证线程的复杂均衡，所以若干任务可能被同一线程或不同线程运行。</li>
 </ul>
-<h1 id="经验法则"><a href="#经验法则" class="headerlink" title="经验法则"></a>经验法则</h1><h2 id="以-tasksPerThread-按需分配线程"><a href="#以-tasksPerThread-按需分配线程" class="headerlink" title="以 tasksPerThread 按需分配线程"></a>以 tasksPerThread 按需分配线程</h2><ul>
+<h1>经验法则</h1>
+<h2 id="以-tasksPerThread-按需分配线程">以 tasksPerThread 按需分配线程</h2>
+<ul>
 <li>tasksPerThread：均匀性。如果每个线程分配的任务数不均匀，那么任务数最多的线程就会成为瓶颈。</li>
 <li>按需分配线程：如果任务可以很快完成，那么没有必要开启过多的线程，否则调度开销也不可小觑。</li>
 </ul>
-<h2 id="以空间换时间"><a href="#以空间换时间" class="headerlink" title="以空间换时间"></a>以空间换时间</h2><p>为了任务能并发运行，进行任务分隔时，必须尽可能减少数据共享。<br>所以不要吝惜空间，为每个任务单独开辟内存（不论是为输入还是输出目的）都是值得且必要的。</p>
-<h2 id="长临界区使用-lock-条件变量"><a href="#长临界区使用-lock-条件变量" class="headerlink" title="长临界区使用 lock + 条件变量"></a>长临界区使用 lock + 条件变量</h2><p>如果一个任务的临界区比较大，意味着该任务执行时，其他线程在短时间内无法进入临界区。<br>与其让这些线程忙等，不如释放 CPU 进入阻塞 &#x2F; 休眠。</p>
+<h2 id="以空间换时间">以空间换时间</h2>
+<p>为了任务能并发运行，进行任务分隔时，必须尽可能减少数据共享。<br>
+所以不要吝惜空间，为每个任务单独开辟内存（不论是为输入还是输出目的）都是值得且必要的。</p>
+<h2 id="长临界区使用-lock-条件变量">长临界区使用 lock + 条件变量</h2>
+<p>如果一个任务的临界区比较大，意味着该任务执行时，其他线程在短时间内无法进入临界区。<br>
+与其让这些线程忙等，不如释放 CPU 进入阻塞 / 休眠。</p>
 
       
     </div>
@@ -543,7 +690,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -566,34 +713,94 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>这是阅读 Cameron Desrochers 的<br><a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2014/a-fast-general-purpose-lock-free-queue-for-c++">A Fast General Purpose Lock-Free Queue for C++</a><br>源码的笔记。</p>
+          <h1>前言</h1>
+<p>这是阅读 Cameron Desrochers 的<br>
+<a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2014/a-fast-general-purpose-lock-free-queue-for-c++">A Fast General Purpose Lock-Free Queue for C++</a><br>
+源码的笔记。</p>
 <ul>
 <li><a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2014/detailed-design-of-a-lock-free-queue">Detailed Design of a Lock-Free Queue</a></li>
 <li><a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2014/solving-the-aba-problem-for-lock-free-free-lists">Solving the ABA Problem for Lock-Free Free Lists</a></li>
 </ul>
-<h2 id="系统概览"><a href="#系统概览" class="headerlink" title="系统概览"></a>系统概览</h2><p>MPMC 队列由一系列 SPMC 队列组成。消费者使用启发式 (heuristic) 来决定消费哪个 SPMC 队列。允许批量入列<br>和出列，只需要很小的额外开销。</p>
-<p>producer 需要一些 thread-local 数据； consumer 也可以用一些可选的 thread-local 数据来加速；这些<br>thread-local 数据可以与用户分配的 tokens 关联；如果用户没有为生产者提供 tokens ，则使用无锁哈希表（<br>以当前线程 ID 为键）来查找线程本地生产者队列：每个 SPMC 队列都使用一个预分配的 token （或隐式分配的<br>token，如果没有提供的话）来创建。由于 token 包含相当于线程特定的数据，因此它们不应该同时在多个线程中<br>使用（尽管可以将 token 的所有权转移给另一个线程；特别是，这允许在线程池任务中使用令牌，即使运行任务<br>的线程在中途发生变化）。</p>
-<p>所有生产者队列都以无锁链表的形式连接在一起。当显式生产者不再有元素被添加时（即其令牌被销毁），它会被<br>标记为与任何生产者都无关联，但它会保留在链表中，且其内存不会被释放；下一个新生产者会重用旧生产者的内<br>存（这样，无锁生产者列表就只能添加）。隐式生产者永远不会被销毁（直到高层队列本身被销毁），因为无法知<br>道给定线程是否已完成对数据结构的使用。需要注意的是，最坏情况下的出队速度取决于生产者队列的数量，即使<br>它们都为空。</p>
-<p>显式生产者队列和隐式生产者队列的生命周期存在根本区别：显式生产者队列的生产生命周期有限，与令牌的生命<br>周期绑定；而隐式生产者队列的生产生命周期不受限制，且与高级队列本身的生命周期相同。因此，为了最大化速<br>度和内存利用率，我们使用了两种略有不同的 SPMC 算法。通常，显式生产者队列设计得更快，占用的内存也更多<br>；而隐式生产者队列设计得更慢，但会将更多内存回收到高级队列的全局池中。为了获得最佳速度，请始终使用显<br>式令牌（除非您觉得它太不方便）。</p>
-<p>任何分配的内存只有在高级队列被销毁时才会释放（尽管存在一些重用机制）。内存分配可以预先完成，如果内存<br>不足，操作就会失败（而不是分配更多内存）。如果需要，用户可以覆盖各种默认大小参数（以及队列使用的内存<br>分配函数）。</p>
-<h2 id="Full-API-pseudocode"><a href="#Full-API-pseudocode" class="headerlink" title="Full API (pseudocode)"></a>Full API (pseudocode)</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Allocates more memory if necessary</span></span><br><span class="line">enqueue(item) : bool</span><br><span class="line">enqueue(prod_token, item) : bool</span><br><span class="line">enqueue_bulk(item_first, count) : bool</span><br><span class="line">enqueue_bulk(prod_token, item_first, count) : bool</span><br><span class="line"></span><br><span class="line"><span class="comment"># Fails if not enough memory to enqueue</span></span><br><span class="line">try_enqueue(item) : bool</span><br><span class="line">try_enqueue(prod_token, item) : bool</span><br><span class="line">try_enqueue_bulk(item_first, count) : bool</span><br><span class="line">try_enqueue_bulk(prod_token, item_first, count) : bool</span><br><span class="line"></span><br><span class="line"><span class="comment"># Attempts to dequeue from the queue (never allocates)</span></span><br><span class="line">try_dequeue(item&amp;) : bool</span><br><span class="line">try_dequeue(cons_token, item&amp;) : bool</span><br><span class="line">try_dequeue_bulk(item_first, max) : size_t</span><br><span class="line">try_dequeue_bulk(cons_token, item_first, max) : size_t</span><br><span class="line"></span><br><span class="line"><span class="comment"># If you happen to know which producer you want to dequeue from</span></span><br><span class="line">try_dequeue_from_producer(prod_token, item&amp;) : bool</span><br><span class="line">try_dequeue_bulk_from_producer(prod_token, item_first, max) : size_t</span><br><span class="line"></span><br><span class="line"><span class="comment"># A not-necessarily-accurate count of the total number of elements</span></span><br><span class="line">size_approx() : size_t</span><br></pre></td></tr></table></figure>
-
-<h2 id="Producer-Queue-SPMC-Design"><a href="#Producer-Queue-SPMC-Design" class="headerlink" title="Producer Queue (SPMC) Design"></a>Producer Queue (SPMC) Design</h2><h3 id="隐式和显式版本的共享设计"><a href="#隐式和显式版本的共享设计" class="headerlink" title="隐式和显式版本的共享设计"></a>隐式和显式版本的共享设计</h3><p>生产者队列由块组成（显式和隐式生产者队列使用相同的块对象，以实现更好的内存共享）。初始状态下，它没有<br>块。每个块可以容纳固定数量的元素（所有块的容量相同，均为 2 的幂）。此外，块包含一个标志，指示已填充<br>的槽位是否已被完全消耗（显式版本使用此标志来判断块何时为空），以及一个原子计数器，用于计数已完全出队<br>的元素数量（隐式版本使用此标志来判断块何时为空）。</p>
-<p>为了实现无锁操作，生产者队列可以被认为是一个抽象的无限数组。尾部索引指示生产者下一个可用的槽位；它同<br>时也是已入队元素数量的两倍（ <strong>入队计数 (enqueue count)</strong> ）。尾部索引仅由生产者写入，并且始终递增（除<br>非溢出并回绕，但就我们的目的而言，这种情况仍被视为“递增”）。由于只有一个线程在更新相关变量，因此生产<br>一个元素的过程非常简单。头索引指示下一个可以被消费的元素。头索引由消费者原子地递增，可能并发进行。为<br>了防止头索引达到&#x2F;超过感知到的尾部索引，我们使用了一个额外的原子计数器： <strong>出队计数 (dequeue count)</strong><br>。出队计数是乐观的，即当消费者推测有元素需要出队时，它会递增。如果出队计数在递增后的值小于入队计数（<br>尾部），则保证至少有一个元素要出队（即使考虑到并发性），并且可以安全地递增头部索引，因为知道之后它会<br>小于尾部索引。另一方面，如果出队计数在递增后超过（或等于）尾部，则出队操作失败，并且出队计数在逻辑上<br>会递减（以使其最终与入队计数保持一致）：这可以通过直接递减出队计数来实现，但是（为了增加并行性并使所<br>有相关变量单调递增），改为递增<strong>出队过量提交计数器 (dequeue overcommit counter)</strong>。</p>
+<h2 id="系统概览">系统概览</h2>
+<p>MPMC 队列由一系列 SPMC 队列组成。消费者使用启发式 (heuristic) 来决定消费哪个 SPMC 队列。允许批量入列<br>
+和出列，只需要很小的额外开销。</p>
+<p>producer 需要一些 thread-local 数据； consumer 也可以用一些可选的 thread-local 数据来加速；这些<br>
+thread-local 数据可以与用户分配的 tokens 关联；如果用户没有为生产者提供 tokens ，则使用无锁哈希表（<br>
+以当前线程 ID 为键）来查找线程本地生产者队列：每个 SPMC 队列都使用一个预分配的 token （或隐式分配的<br>
+token，如果没有提供的话）来创建。由于 token 包含相当于线程特定的数据，因此它们不应该同时在多个线程中<br>
+使用（尽管可以将 token 的所有权转移给另一个线程；特别是，这允许在线程池任务中使用令牌，即使运行任务<br>
+的线程在中途发生变化）。</p>
+<p>所有生产者队列都以无锁链表的形式连接在一起。当显式生产者不再有元素被添加时（即其令牌被销毁），它会被<br>
+标记为与任何生产者都无关联，但它会保留在链表中，且其内存不会被释放；下一个新生产者会重用旧生产者的内<br>
+存（这样，无锁生产者列表就只能添加）。隐式生产者永远不会被销毁（直到高层队列本身被销毁），因为无法知<br>
+道给定线程是否已完成对数据结构的使用。需要注意的是，最坏情况下的出队速度取决于生产者队列的数量，即使<br>
+它们都为空。</p>
+<p>显式生产者队列和隐式生产者队列的生命周期存在根本区别：显式生产者队列的生产生命周期有限，与令牌的生命<br>
+周期绑定；而隐式生产者队列的生产生命周期不受限制，且与高级队列本身的生命周期相同。因此，为了最大化速<br>
+度和内存利用率，我们使用了两种略有不同的 SPMC 算法。通常，显式生产者队列设计得更快，占用的内存也更多<br>
+；而隐式生产者队列设计得更慢，但会将更多内存回收到高级队列的全局池中。为了获得最佳速度，请始终使用显<br>
+式令牌（除非您觉得它太不方便）。</p>
+<p>任何分配的内存只有在高级队列被销毁时才会释放（尽管存在一些重用机制）。内存分配可以预先完成，如果内存<br>
+不足，操作就会失败（而不是分配更多内存）。如果需要，用户可以覆盖各种默认大小参数（以及队列使用的内存<br>
+分配函数）。</p>
+<h2 id="Full-API-pseudocode">Full API (pseudocode)</h2>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Allocates more memory if necessary</span></span><br><span class="line">enqueue(item) : bool</span><br><span class="line">enqueue(prod_token, item) : bool</span><br><span class="line">enqueue_bulk(item_first, count) : bool</span><br><span class="line">enqueue_bulk(prod_token, item_first, count) : bool</span><br><span class="line"></span><br><span class="line"><span class="comment"># Fails if not enough memory to enqueue</span></span><br><span class="line">try_enqueue(item) : bool</span><br><span class="line">try_enqueue(prod_token, item) : bool</span><br><span class="line">try_enqueue_bulk(item_first, count) : bool</span><br><span class="line">try_enqueue_bulk(prod_token, item_first, count) : bool</span><br><span class="line"></span><br><span class="line"><span class="comment"># Attempts to dequeue from the queue (never allocates)</span></span><br><span class="line">try_dequeue(item&amp;) : bool</span><br><span class="line">try_dequeue(cons_token, item&amp;) : bool</span><br><span class="line">try_dequeue_bulk(item_first, max) : size_t</span><br><span class="line">try_dequeue_bulk(cons_token, item_first, max) : size_t</span><br><span class="line"></span><br><span class="line"><span class="comment"># If you happen to know which producer you want to dequeue from</span></span><br><span class="line">try_dequeue_from_producer(prod_token, item&amp;) : bool</span><br><span class="line">try_dequeue_bulk_from_producer(prod_token, item_first, max) : size_t</span><br><span class="line"></span><br><span class="line"><span class="comment"># A not-necessarily-accurate count of the total number of elements</span></span><br><span class="line">size_approx() : size_t</span><br></pre></td></tr></table></figure>
+<h2 id="Producer-Queue-SPMC-Design">Producer Queue (SPMC) Design</h2>
+<h3 id="隐式和显式版本的共享设计">隐式和显式版本的共享设计</h3>
+<p>生产者队列由块组成（显式和隐式生产者队列使用相同的块对象，以实现更好的内存共享）。初始状态下，它没有<br>
+块。每个块可以容纳固定数量的元素（所有块的容量相同，均为 2 的幂）。此外，块包含一个标志，指示已填充<br>
+的槽位是否已被完全消耗（显式版本使用此标志来判断块何时为空），以及一个原子计数器，用于计数已完全出队<br>
+的元素数量（隐式版本使用此标志来判断块何时为空）。</p>
+<p>为了实现无锁操作，生产者队列可以被认为是一个抽象的无限数组。尾部索引指示生产者下一个可用的槽位；它同<br>
+时也是已入队元素数量的两倍（ <strong>入队计数 (enqueue count)</strong> ）。尾部索引仅由生产者写入，并且始终递增（除<br>
+非溢出并回绕，但就我们的目的而言，这种情况仍被视为“递增”）。由于只有一个线程在更新相关变量，因此生产<br>
+一个元素的过程非常简单。头索引指示下一个可以被消费的元素。头索引由消费者原子地递增，可能并发进行。为<br>
+了防止头索引达到/超过感知到的尾部索引，我们使用了一个额外的原子计数器： <strong>出队计数 (dequeue count)</strong><br>
+。出队计数是乐观的，即当消费者推测有元素需要出队时，它会递增。如果出队计数在递增后的值小于入队计数（<br>
+尾部），则保证至少有一个元素要出队（即使考虑到并发性），并且可以安全地递增头部索引，因为知道之后它会<br>
+小于尾部索引。另一方面，如果出队计数在递增后超过（或等于）尾部，则出队操作失败，并且出队计数在逻辑上<br>
+会递减（以使其最终与入队计数保持一致）：这可以通过直接递减出队计数来实现，但是（为了增加并行性并使所<br>
+有相关变量单调递增），改为递增<strong>出队过量提交计数器 (dequeue overcommit counter)</strong>。</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">出队计数的逻辑值 = 出队计数变量 - 出队过量提交值</span><br></pre></td></tr></table></figure>
-
-<p>在消费时，一旦如上所述确定了有效索引，仍然需要将其映射到一个块以及该块中的偏移量；为此会使用某种索引<br>数据结构（具体使用哪种结构取决于它是隐式队列还是显式队列）。最后，可以将元素移出，并更新某种状态，以<br>便最终知道该块何时完全消费。下文将分别在隐式和显式队列的各个部分中对这些机制进行完整描述。</p>
-<p>如前所述，尾部和头部的索引&#x2F;计数最终会溢出。这是预料之中的，并且已被考虑在内。因此，索引&#x2F;计数被视为存<br>在于一个与最大整数值大小相同的圆上（类似于 360 度的圆，其中 359 在 1 之前）。为了检查一个索引&#x2F;计数（<br>例如 a）是否位于另一个索引&#x2F;计数（例如 b）之前（即逻辑小于），我们必须确定 a 是否沿着圆上的顺时针圆弧<br>更接近 b。使用以下”环形小于”算法（32 位版本）：<code>a &lt; b</code> 变为 <code>a - b &gt; (1U &lt;&lt; 31U)</code>。<code>a &lt;= b</code> 变为<br><code>a - b - 1ULL &gt; (1ULL &lt;&lt; 31ULL)</code>。请注意，环形减法“仅适用于”普通无符号整数（假设为二进制补码）。需要<br>注意的是，尾部索引的增量不会超过头部索引（这会破坏队列）。请注意，尽管如此，从技术上讲仍然存在竞争条<br>件，即消费者（或生产者）看到的索引值过于陈旧，几乎比当前值落后一整圈（甚至更多！），从而导致队列的内<br>部状态损坏。但在实践中，这不是问题，因为遍历 2^31 个值（对于 32 位索引类型）需要一段时间，而其他核心<br>到那时会看到更新的值。实际上，许多无锁算法都基于相关的标签指针习语（tag-pointer idiom），其中前 16<br>位用于重复递增的标签，后 16 位用于指针值；这依赖于类似的假设，即一个核心不能将标签递增超过 2^15 次，<br>而其他核心却不知道。尽管如此，队列的默认索引类型是 64 位宽（如果 16 位看起来就足够了，那么理论上应该<br>可以避免任何潜在的竞争）。</p>
-<p>内存分配失败也会得到妥善处理，不会损坏队列（只会报告失败）。此外，队列元素本身在操作时也应确保不会抛<br>出异常。</p>
-<h3 id="Block-Pools"><a href="#Block-Pools" class="headerlink" title="Block Pools"></a>Block Pools</h3><p>有两种不同的块池可供使用：首先，有一个初始的预分配块数组。一旦使用完毕，该池将永远保持为空。这简化了<br>其无等待（wait-free）实现，只需一条 fetch-and-add 原子指令（用于获取空闲块的下一个索引）并进行检查（<br>以确保该索引在范围内）。其次，有一个无锁（但非无等待）的全局空闲列表（“全局”是指对高级队列而言是全局<br>的），其中包含已用完且可重复使用的块，该列表实现为一个无锁单链表：头指针最初指向空（null）。要将块添<br>加到空闲列表，需要将块的下一个指针设置为头指针，然后使用比较并交换 (CAS) 更新头指针，使其指向该块，<br>前提是头指针未发生更改；如果发生更改，则重复该过程（这是一个经典的无锁 CAS 循环设计模式）。要从空闲<br>列表中移除一个块，可以使用类似的算法：读取头部块的下一个指针，然后将头部设置为该下一个指针（使用<br>CAS），前提是在此期间头部块没有发生变化。为了避免 ABA 问题，每个块都有一个引用计数，在执行 CAS 移除<br>块之前会递增，之后会递减；如果在块的引用计数大于 0 的情况下尝试将其重新添加到空闲列表中，则会设置一<br>个标志，指示该块应该在空闲列表中，并且下一个线程在完成最后一个引用的持有后会检查此标志，并将该块添加<br>到列表中（这种方法有效，因为我们不关心顺序）。我<br>在<a target="_blank" rel="noopener" href="http://moodycamel.com/blog/2014/solving-the-aba-problem-for-lock-free-free-lists">另一篇博文</a>中更<br>详细地描述了这个无锁空闲列表的具体设计和实现。当生产者队列需要新块时，它首先检查初始块池，然后检查全<br>局空闲列表，只有当它在那里找不到空闲块时，它才会在堆上分配一个新块（如果不允许内存分配，则失败）。</p>
-<h2 id="基准测试"><a href="#基准测试" class="headerlink" title="基准测试"></a>基准测试</h2><h3 id="Ticket-System"><a href="#Ticket-System" class="headerlink" title="Ticket System"></a>Ticket System</h3><p>BlockQueue（只用分块）：使用分块内存布局，但不使用 ticket 分发机制。</p>
-
+<p>在消费时，一旦如上所述确定了有效索引，仍然需要将其映射到一个块以及该块中的偏移量；为此会使用某种索引<br>
+数据结构（具体使用哪种结构取决于它是隐式队列还是显式队列）。最后，可以将元素移出，并更新某种状态，以<br>
+便最终知道该块何时完全消费。下文将分别在隐式和显式队列的各个部分中对这些机制进行完整描述。</p>
+<p>如前所述，尾部和头部的索引/计数最终会溢出。这是预料之中的，并且已被考虑在内。因此，索引/计数被视为存<br>
+在于一个与最大整数值大小相同的圆上（类似于 360 度的圆，其中 359 在 1 之前）。为了检查一个索引/计数（<br>
+例如 a）是否位于另一个索引/计数（例如 b）之前（即逻辑小于），我们必须确定 a 是否沿着圆上的顺时针圆弧<br>
+更接近 b。使用以下&quot;环形小于&quot;算法（32 位版本）：<code>a &lt; b</code> 变为 <code>a - b &gt; (1U &lt;&lt; 31U)</code>。<code>a &lt;= b</code> 变为<br>
+<code>a - b - 1ULL &gt; (1ULL &lt;&lt; 31ULL)</code>。请注意，环形减法“仅适用于”普通无符号整数（假设为二进制补码）。需要<br>
+注意的是，尾部索引的增量不会超过头部索引（这会破坏队列）。请注意，尽管如此，从技术上讲仍然存在竞争条<br>
+件，即消费者（或生产者）看到的索引值过于陈旧，几乎比当前值落后一整圈（甚至更多！），从而导致队列的内<br>
+部状态损坏。但在实践中，这不是问题，因为遍历 2^31 个值（对于 32 位索引类型）需要一段时间，而其他核心<br>
+到那时会看到更新的值。实际上，许多无锁算法都基于相关的标签指针习语（tag-pointer idiom），其中前 16<br>
+位用于重复递增的标签，后 16 位用于指针值；这依赖于类似的假设，即一个核心不能将标签递增超过 2^15 次，<br>
+而其他核心却不知道。尽管如此，队列的默认索引类型是 64 位宽（如果 16 位看起来就足够了，那么理论上应该<br>
+可以避免任何潜在的竞争）。</p>
+<p>内存分配失败也会得到妥善处理，不会损坏队列（只会报告失败）。此外，队列元素本身在操作时也应确保不会抛<br>
+出异常。</p>
+<h3 id="Block-Pools">Block Pools</h3>
+<p>有两种不同的块池可供使用：首先，有一个初始的预分配块数组。一旦使用完毕，该池将永远保持为空。这简化了<br>
+其无等待（wait-free）实现，只需一条 fetch-and-add 原子指令（用于获取空闲块的下一个索引）并进行检查（<br>
+以确保该索引在范围内）。其次，有一个无锁（但非无等待）的全局空闲列表（“全局”是指对高级队列而言是全局<br>
+的），其中包含已用完且可重复使用的块，该列表实现为一个无锁单链表：头指针最初指向空（null）。要将块添<br>
+加到空闲列表，需要将块的下一个指针设置为头指针，然后使用比较并交换 (CAS) 更新头指针，使其指向该块，<br>
+前提是头指针未发生更改；如果发生更改，则重复该过程（这是一个经典的无锁 CAS 循环设计模式）。要从空闲<br>
+列表中移除一个块，可以使用类似的算法：读取头部块的下一个指针，然后将头部设置为该下一个指针（使用<br>
+CAS），前提是在此期间头部块没有发生变化。为了避免 ABA 问题，每个块都有一个引用计数，在执行 CAS 移除<br>
+块之前会递增，之后会递减；如果在块的引用计数大于 0 的情况下尝试将其重新添加到空闲列表中，则会设置一<br>
+个标志，指示该块应该在空闲列表中，并且下一个线程在完成最后一个引用的持有后会检查此标志，并将该块添加<br>
+到列表中（这种方法有效，因为我们不关心顺序）。我<br>
+在<a target="_blank" rel="noopener" href="http://moodycamel.com/blog/2014/solving-the-aba-problem-for-lock-free-free-lists">另一篇博文</a>中更<br>
+详细地描述了这个无锁空闲列表的具体设计和实现。当生产者队列需要新块时，它首先检查初始块池，然后检查全<br>
+局空闲列表，只有当它在那里找不到空闲块时，它才会在堆上分配一个新块（如果不允许内存分配，则失败）。</p>
+<h2 id="基准测试">基准测试</h2>
+<h3 id="Ticket-System">Ticket System</h3>
+<p>BlockQueue（只用分块）：使用分块内存布局，但不使用 ticket 分发机制。</p>
 
 <p>TicketQueue（分块 + ticket）：模拟 moodycamel 的 ticket 分发方式。</p>
 
-
 <p>Benchmark 代码：</p>
-
 
 
       
@@ -645,7 +852,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -668,22 +875,29 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>这是阅读 Cameron Desrochers 的 <a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2013/a-fast-lock-free-queue-for-c++">A Fast Lock-Free Queue for C++</a> 源码的笔记。</p>
+          <h1>前言</h1>
+<p>这是阅读 Cameron Desrochers 的 <a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2013/a-fast-lock-free-queue-for-c++">A Fast Lock-Free Queue for C++</a> 源码的笔记。</p>
 <p>仓库地址：<a target="_blank" rel="noopener" href="https://github.com/cameron314/readerwriterqueue">https://github.com/cameron314/readerwriterqueue</a></p>
 <p>其他参考文献：</p>
-<p><a target="_blank" rel="noopener" href="https://preshing.com/20120612/an-introduction-to-lock-free-programming/">An Introduction to Lock-Free Programming</a><br><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=A8eCGOqgvH4&list=PLjwoip0ltHwHCe0Nw7PDPtzlJP7rUouRL">C++ and Beyond 2012: Herb Sutter - atomic Weapons 1 of 2</a><br><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=KeLBd2EJLOU">C++ and Beyond 2012: Herb Sutter - atomic Weapons 2 of 2</a></p>
-<h2 id="内存屏障"><a href="#内存屏障" class="headerlink" title="内存屏障"></a>内存屏障</h2><p>约束 memory loads&#x2F;stores 的顺序。</p>
+<p><a target="_blank" rel="noopener" href="https://preshing.com/20120612/an-introduction-to-lock-free-programming/">An Introduction to Lock-Free Programming</a><br>
+<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=A8eCGOqgvH4&amp;list=PLjwoip0ltHwHCe0Nw7PDPtzlJP7rUouRL">C++ and Beyond 2012: Herb Sutter - atomic Weapons 1 of 2</a><br>
+<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=KeLBd2EJLOU">C++ and Beyond 2012: Herb Sutter - atomic Weapons 2 of 2</a></p>
+<h2 id="内存屏障">内存屏障</h2>
+<p>约束 memory loads/stores 的顺序。</p>
 <ul>
-<li>releaase 内存屏障：告诉 CPU，如果屏障之后的任何写入变得可见，那么屏障之前的任何写入都应该在其他核心中可见，前提是其他核心在读取 写屏障之后写入的数据 后执行读屏障。<br>换句话说，如果线程 B 可以看到在另一个线程 A 上的写屏障之后写入的新值，那么在执行读屏障（在线程 B 上）之后，可以保证在线程 A 上的写屏障之前发生的所有写入在线程 B 上可见。</li>
+<li>releaase 内存屏障：告诉 CPU，如果屏障之后的任何写入变得可见，那么屏障之前的任何写入都应该在其他核心中可见，前提是其他核心在读取 写屏障之后写入的数据 后执行读屏障。<br>
+换句话说，如果线程 B 可以看到在另一个线程 A 上的写屏障之后写入的新值，那么在执行读屏障（在线程 B 上）之后，可以保证在线程 A 上的写屏障之前发生的所有写入在线程 B 上可见。</li>
 </ul>
-<h2 id="实现细节"><a href="#实现细节" class="headerlink" title="实现细节"></a>实现细节</h2><ol>
+<h2 id="实现细节">实现细节</h2>
+<ol>
 <li>block: 一个连续的环形缓冲区，用来存储元素。这样可以预分配内存。</li>
 <li>块过小（这不利于无锁）时，无需将所有现有元素复制到新的块中；多个块（大小独立）以循环链表的形式链接在一起。</li>
 <li>当前插入的块称为 “尾块”，当前消费的块称为 “头块”。</li>
 <li>头索引指向下一个要读取的满槽；尾索引指向下一个要插入的空槽。如果两个索引相等，则块为空（确切地说，当队列已满时，恰好有一个插槽为空，以避免在具有相同头和尾索引的满块和空块之间产生歧义）。</li>
-<li>为了允许队列对任意线程创建 &#x2F; 析构（独立于生产 &#x2F; 消费线程），全内存屏障（memory_order_acq_cst）被用在析构函数地最后、析构函数的开头（这会强制所有的 CPU cores 同步 outstanding changes）。显然，在析构函数可以被安全地调用之前，生产者和消费者必须已经停止使用该队列。</li>
+<li>为了允许队列对任意线程创建 / 析构（独立于生产 / 消费线程），全内存屏障（memory_order_acq_cst）被用在析构函数地最后、析构函数的开头（这会强制所有的 CPU cores 同步 outstanding changes）。显然，在析构函数可以被安全地调用之前，生产者和消费者必须已经停止使用该队列。</li>
 </ol>
-<h2 id="Give-me-the-codes"><a href="#Give-me-the-codes" class="headerlink" title="Give me the codes"></a>Give me the codes</h2><ol>
+<h2 id="Give-me-the-codes">Give me the codes</h2>
+<ol>
 <li>用户不需要管理内存。</li>
 <li>预分配内存，在连续的块中。</li>
 <li><code>try_enqueue</code>: 保证不会分配内存（队列有初始容量）；</li>
@@ -691,21 +905,28 @@
 <li>没有使用 CAS loop；这意味者 enqueue 和 dequeue 是 O(1) 的（没有计入内存分配的时间）。</li>
 <li>因为在 x86 平台，内存屏障是空操作，所以 enqueue 和 dequeue 是一系列简单的 loads 和 stores (and branches) 。</li>
 </ol>
-<p>此代码仅仅适用于以原子方式处理 自然对齐的整型（aligned integer） 和 原生指针大小（native-pointer-size） 的 loads&#x2F;stores 的 CPU 上；<br>幸运的是，这包括了所有的现代处理器（包括 ARM, x86&#x2F;x86_64 和 PowerPC）。<br>它不是为在 DEC Alpha 上运行而设计的（DEC Alpha 似乎具有有史以来最弱的内存排序保证）。</p>
-<p>注：在 x86 上，memory_order_acquire&#x2F;release 通常不需要额外指令就能实现语义，但仍然能限制编译器的重排。<br>fetch_add 不是一个原子操作，而是三个：load, add, store. 所以不适用上述说的 “自然对齐的整型” 或“原生指针大小”的 load&#x2F;store.</p>
-<h2 id="性能优化点"><a href="#性能优化点" class="headerlink" title="性能优化点"></a>性能优化点</h2><ol>
+<p>此代码仅仅适用于以原子方式处理 自然对齐的整型（aligned integer） 和 原生指针大小（native-pointer-size） 的 loads/stores 的 CPU 上；<br>
+幸运的是，这包括了所有的现代处理器（包括 ARM, x86/x86_64 和 PowerPC）。<br>
+它不是为在 DEC Alpha 上运行而设计的（DEC Alpha 似乎具有有史以来最弱的内存排序保证）。</p>
+<p>注：在 x86 上，memory_order_acquire/release 通常不需要额外指令就能实现语义，但仍然能限制编译器的重排。<br>
+fetch_add 不是一个原子操作，而是三个：load, add, store. 所以不适用上述说的 “自然对齐的整型” 或“原生指针大小”的 load/store.</p>
+<h2 id="性能优化点">性能优化点</h2>
+<ol>
 <li>平凡析构：跳过析构，直接释放内存。</li>
-<li><a target="_blank" rel="noopener" href="http://www.cse.cuhk.edu.hk/~pclee/www/pubs/ancs09poster.pdf">MCRingBuffer paper</a><ol>
+<li><a target="_blank" rel="noopener" href="http://www.cse.cuhk.edu.hk/~pclee/www/pubs/ancs09poster.pdf">MCRingBuffer paper</a>
+<ol>
 <li>cache line padding</li>
-<li>local control variables<ol>
-<li>减少对全局 read&#x2F;write 指针的读取</li>
+<li>local control variables
+<ol>
+<li>减少对全局 read/write 指针的读取</li>
 </ol>
 </li>
 <li>local block</li>
 </ol>
 </li>
 </ol>
-<h2 id="正确性测试"><a href="#正确性测试" class="headerlink" title="正确性测试"></a>正确性测试</h2><ol>
+<h2 id="正确性测试">正确性测试</h2>
+<ol>
 <li>定义不可预测性延时函数，用于模拟线程调度。</li>
 <li>写线程塞入 32 M 个数据；读线程读取 32 M 次。读写线程中使用 unpredDelay() 模拟调度延迟。</li>
 <li>测试能否顺序读取，失败则打印日志，不退出。</li>
@@ -761,7 +982,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -784,20 +1005,18 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="查看磁盘类型"><a href="#查看磁盘类型" class="headerlink" title="查看磁盘类型"></a>查看磁盘类型</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ lsblk -d -o name,rota,<span class="built_in">type</span>,size,model</span><br><span class="line">NAME ROTA TYPE  SIZE MODEL</span><br><span class="line">sda     1 disk  1.8T PERC H740P Mini</span><br></pre></td></tr></table></figure>
-
+          <h2 id="查看磁盘类型">查看磁盘类型</h2>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ lsblk -d -o name,rota,<span class="built_in">type</span>,size,model</span><br><span class="line">NAME ROTA TYPE  SIZE MODEL</span><br><span class="line">sda     1 disk  1.8T PERC H740P Mini</span><br></pre></td></tr></table></figure>
 <p><code>ROTA=1</code>：这是旋转磁盘。</p>
-<h2 id="测试方法"><a href="#测试方法" class="headerlink" title="测试方法"></a>测试方法</h2><p>顺序写吞吐测试（逼近最大写入速度）</p>
+<h2 id="测试方法">测试方法</h2>
+<p>顺序写吞吐测试（逼近最大写入速度）</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fio --name=seqwrite --rw=write --bs=1M --size=5G --numjobs=4 --iodepth=32 --direct=1 --runtime=60 --group_reporting</span><br></pre></td></tr></table></figure>
-
 <p>随机读 IOPS 测试（逼近最大并发处理能力）</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fio --name=randread --rw=randread --bs=4k --size=5G --numjobs=4 --iodepth=64 --direct=1 --runtime=60 --group_reporting</span><br></pre></td></tr></table></figure>
-
 <p>混合读写测试（模拟数据库负载）</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fio --name=mixrw --rw=randrw --rwmixread=70 --bs=4k --size=5G --numjobs=4 --iodepth=32 --direct=1 --runtime=60 --group_reporting</span><br></pre></td></tr></table></figure>
-
-
-<h2 id="磁盘的测试结果"><a href="#磁盘的测试结果" class="headerlink" title="磁盘的测试结果"></a>磁盘的测试结果</h2><p>由于是旋转磁盘，iodepth 总是 1（设成其他值不会生效）</p>
+<h2 id="磁盘的测试结果">磁盘的测试结果</h2>
+<p>由于是旋转磁盘，iodepth 总是 1（设成其他值不会生效）</p>
 <p><strong>单线程读写文件：</strong></p>
 <details>
   <summary>点击展开代码</summary>
@@ -805,262 +1024,263 @@
     
   </pre>
 </details>
-
-
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">RW       | BlockSize  | IOPS     | BW(MiB/s)  | AvgLat(ms)</span><br><span class="line">-----------------------------------------------------------</span><br><span class="line">read     | 4k         | 194      | 0.76       | 5.14</span><br><span class="line">read     | 16k        | 239      | 3.74       | 4.17</span><br><span class="line">read     | 64k        | 347      | 21.7       | 2.88</span><br><span class="line">read     | 256k       | 271      | 67.9       | 3.68</span><br><span class="line">read     | 1M         | 94       | 94.9       | 10.53</span><br><span class="line">read     | 4M         | 14       | 57.2       | 69.74</span><br><span class="line">read     | 16M        | 6        | 97.6       | 163.96</span><br><span class="line">read     | 32M        | 3        | 111        | 288.99</span><br><span class="line">read     | 64M        | 1        | 112        | 573.70</span><br><span class="line">read     | 128M       | 0        | 112        | 1147.00</span><br></pre></td></tr></table></figure>
-
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">RW       | BlockSize  | IOPS     | BW(MiB/s)  | AvgLat(ms)</span><br><span class="line">-----------------------------------------------------------</span><br><span class="line">write    | 4k         | 1884     | 7.36       | 0.53</span><br><span class="line">write    | 16k        | 1452     | 22.7       | 0.69</span><br><span class="line">write    | 64k        | 793      | 49.6       | 1.26</span><br><span class="line">write    | 256k       | 307      | 76.8       | 3.24</span><br><span class="line">write    | 1M         | 100      | 100        | 9.96</span><br><span class="line">write    | 4M         | 18       | 73.7       | 53.99</span><br><span class="line">write    | 16M        | 5        | 93.8       | 169.43</span><br><span class="line">write    | 32M        | 3        | 101        | 313.24</span><br><span class="line">write    | 64M        | 1        | 107        | 594.46</span><br><span class="line">write    | 128M       | 0        | 102        | 1249.35</span><br></pre></td></tr></table></figure>
-
-
-<p>当 BlockSize&#x3D;32M 以后，写入性能基本达到顶峰（110 MiB&#x2F;s），和旋转磁盘的参数基本一致。</p>
-<p><strong>多线程读写同一个文件，BS&#x3D;64KiB：</strong></p>
+<p>当 BlockSize=32M 以后，写入性能基本达到顶峰（110 MiB/s），和旋转磁盘的参数基本一致。</p>
+<p><strong>多线程读写同一个文件，BS=64KiB：</strong></p>
 <details>
   <summary>点击展开代码</summary>
   <pre>
     
   </pre>
 </details>
-
-
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">RW       | Threads  | IOPS       | BW(MiB/s)  | AvgLat(ms)</span><br><span class="line">------------------------------------------------------------</span><br><span class="line">read     | 1        | 826        | 51.6       | 1.21</span><br><span class="line">read     | 2        | 1300       | 81.3       | 1.54</span><br><span class="line">read     | 4        | 1681       | 105        | 2.38</span><br><span class="line">read     | 8        | 1778       | 111        | 4.49</span><br><span class="line">read     | 16       | 1789       | 112        | 8.93</span><br><span class="line">read     | 32       | 1790       | 112        | 17.86</span><br><span class="line">read     | 64       | 1789       | 112        | 35.73</span><br><span class="line">read     | 72       | 1790       | 112        | 40.18</span><br><span class="line">read     | 120      | 1789       | 112        | 66.98</span><br></pre></td></tr></table></figure>
-
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">RW       | Threads  | IOPS       | BW(MiB/s)  | AvgLat(ms)</span><br><span class="line">------------------------------------------------------------</span><br><span class="line">write    | 1        | 847        | 52.9       | 1.18</span><br><span class="line">write    | 2        | 1367       | 85.5       | 1.46</span><br><span class="line">write    | 4        | 1757       | 110        | 2.27</span><br><span class="line">write    | 8        | 1786       | 112        | 4.47</span><br><span class="line">write    | 16       | 1788       | 112        | 8.92</span><br><span class="line">write    | 32       | 1788       | 112        | 17.79</span><br><span class="line">write    | 64       | 1788       | 112        | 35.09</span><br><span class="line">write    | 72       | 1788       | 112        | 39.54</span><br><span class="line">write    | 120      | 1784       | 112        | 64.50</span><br></pre></td></tr></table></figure>
-
-<p>当线程数增加，IO 性能随之提高，可能原因是 64KiB 小块数据大量提交到 I&#x2F;O 队列，操作系统能更好地完成读写路径优化。<br>但达到8线程的时候，就基本到达性能顶峰了。</p>
+<p>当线程数增加，IO 性能随之提高，可能原因是 64KiB 小块数据大量提交到 I/O 队列，操作系统能更好地完成读写路径优化。<br>
+但达到8线程的时候，就基本到达性能顶峰了。</p>
 <p>注意：fio 多线程写入同一个文件是没有加锁的，如果超过 page cache (一般是 4 KB)，那么可能乱序写入。</p>
-<h2 id="概念（以-fio-为例）"><a href="#概念（以-fio-为例）" class="headerlink" title="概念（以 fio 为例）"></a>概念（以 fio 为例）</h2><h3 id="ioengine"><a href="#ioengine" class="headerlink" title="ioengine"></a>ioengine</h3><p>ioengine（I&#x2F;O 引擎）是 fio 提供以执行读写任务的底层接口。不同的引擎代表不同的 I&#x2F;O 模型，比如同步、异步、内存映射、零拷贝等。</p>
+<h2 id="概念（以-fio-为例）">概念（以 fio 为例）</h2>
+<h3 id="ioengine">ioengine</h3>
+<p>ioengine（I/O 引擎）是 fio 提供以执行读写任务的底层接口。不同的引擎代表不同的 I/O 模型，比如同步、异步、内存映射、零拷贝等。</p>
 <table>
 <thead>
 <tr>
-<th align="center">引擎名称</th>
-<th align="center">类型</th>
-<th align="center">特点与用途</th>
+<th style="text-align:center">引擎名称</th>
+<th style="text-align:center">类型</th>
+<th style="text-align:center">特点与用途</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">sync</td>
-<td align="center">同步</td>
-<td align="center">默认方式，每次 I&#x2F;O 都等待完成，适合简单测试</td>
+<tbody>
+<tr>
+<td style="text-align:center">sync</td>
+<td style="text-align:center">同步</td>
+<td style="text-align:center">默认方式，每次 I/O 都等待完成，适合简单测试</td>
 </tr>
 <tr>
-<td align="center">psync</td>
-<td align="center">同步</td>
-<td align="center">使用 pread&#x2F;pwrite，可指定偏移，略快</td>
+<td style="text-align:center">psync</td>
+<td style="text-align:center">同步</td>
+<td style="text-align:center">使用 pread/pwrite，可指定偏移，略快</td>
 </tr>
 <tr>
-<td align="center">libaio</td>
-<td align="center">异步</td>
-<td align="center">Linux 异步 I&#x2F;O，适合高性能 SSD&#x2F;NVMe</td>
+<td style="text-align:center">libaio</td>
+<td style="text-align:center">异步</td>
+<td style="text-align:center">Linux 异步 I/O，适合高性能 SSD/NVMe</td>
 </tr>
 <tr>
-<td align="center">io_uring</td>
-<td align="center">异步</td>
-<td align="center">新一代 Linux 异步接口，低延迟、高并发</td>
+<td style="text-align:center">io_uring</td>
+<td style="text-align:center">异步</td>
+<td style="text-align:center">新一代 Linux 异步接口，低延迟、高并发</td>
 </tr>
 <tr>
-<td align="center">mmap</td>
-<td align="center">内存映射</td>
-<td align="center">将文件映射到内存，适合大文件顺序访问</td>
+<td style="text-align:center">mmap</td>
+<td style="text-align:center">内存映射</td>
+<td style="text-align:center">将文件映射到内存，适合大文件顺序访问</td>
 </tr>
 <tr>
-<td align="center">splice</td>
-<td align="center">零拷贝</td>
-<td align="center">用于高效数据传输，减少 CPU 和内存开销</td>
+<td style="text-align:center">splice</td>
+<td style="text-align:center">零拷贝</td>
+<td style="text-align:center">用于高效数据传输，减少 CPU 和内存开销</td>
 </tr>
 <tr>
-<td align="center">windowsaio</td>
-<td align="center">异步</td>
-<td align="center">Windows 原生异步 I&#x2F;O，适合多线程写入</td>
+<td style="text-align:center">windowsaio</td>
+<td style="text-align:center">异步</td>
+<td style="text-align:center">Windows 原生异步 I/O，适合多线程写入</td>
 </tr>
 <tr>
-<td align="center">net</td>
-<td align="center">网络</td>
-<td align="center">用于网络 I&#x2F;O 测试，如 socket 传输</td>
+<td style="text-align:center">net</td>
+<td style="text-align:center">网络</td>
+<td style="text-align:center">用于网络 I/O 测试，如 socket 传输</td>
 </tr>
 <tr>
-<td align="center">sg</td>
-<td align="center">SCSI</td>
-<td align="center">用于直接访问 SCSI 设备</td>
+<td style="text-align:center">sg</td>
+<td style="text-align:center">SCSI</td>
+<td style="text-align:center">用于直接访问 SCSI 设备</td>
 </tr>
-</tbody></table>
-<p>每种 ioengine 都依赖操作系统提供的底层 I&#x2F;O 接口。例如：</p>
+</tbody>
+</table>
+<p>每种 ioengine 都依赖操作系统提供的底层 I/O 接口。例如：</p>
 <table>
 <thead>
 <tr>
-<th align="center">ioengine 类型</th>
-<th align="center">操作系统要求</th>
-<th align="center">是否异步</th>
-<th align="center">说明</th>
+<th style="text-align:center">ioengine 类型</th>
+<th style="text-align:center">操作系统要求</th>
+<th style="text-align:center">是否异步</th>
+<th style="text-align:center">说明</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">sync &#x2F; psync</td>
-<td align="center">所有系统</td>
-<td align="center">❌</td>
-<td align="center">使用标准阻塞 I&#x2F;O，几乎总是可用</td>
+<tbody>
+<tr>
+<td style="text-align:center">sync / psync</td>
+<td style="text-align:center">所有系统</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">使用标准阻塞 I/O，几乎总是可用</td>
 </tr>
 <tr>
-<td align="center">libaio</td>
-<td align="center">Linux，需安装 libaio 库</td>
-<td align="center">✅</td>
-<td align="center">依赖 Linux 的异步 I&#x2F;O 接口</td>
+<td style="text-align:center">libaio</td>
+<td style="text-align:center">Linux，需安装 libaio 库</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">依赖 Linux 的异步 I/O 接口</td>
 </tr>
 <tr>
-<td align="center">io_uring</td>
-<td align="center">Linux ≥ 5.1，推荐 ≥ 5.4</td>
-<td align="center">✅</td>
-<td align="center">依赖新内核特性和 liburing 库</td>
+<td style="text-align:center">io_uring</td>
+<td style="text-align:center">Linux ≥ 5.1，推荐 ≥ 5.4</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">依赖新内核特性和 liburing 库</td>
 </tr>
 <tr>
-<td align="center">windowsaio</td>
-<td align="center">Windows</td>
-<td align="center">✅</td>
-<td align="center">使用 Windows 原生异步 I&#x2F;O</td>
+<td style="text-align:center">windowsaio</td>
+<td style="text-align:center">Windows</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">使用 Windows 原生异步 I/O</td>
 </tr>
 <tr>
-<td align="center">mmap</td>
-<td align="center">所有主流系统</td>
-<td align="center">❌</td>
-<td align="center">使用内存映射，适合顺序读写</td>
+<td style="text-align:center">mmap</td>
+<td style="text-align:center">所有主流系统</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">使用内存映射，适合顺序读写</td>
 </tr>
 <tr>
-<td align="center">posixaio</td>
-<td align="center">POSIX 兼容系统</td>
-<td align="center">✅</td>
-<td align="center">使用 aio_read &#x2F; aio_write 接口</td>
+<td style="text-align:center">posixaio</td>
+<td style="text-align:center">POSIX 兼容系统</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">使用 aio_read / aio_write 接口</td>
 </tr>
-</tbody></table>
-<p>你可以指定任意 ioengine （默认值是 sync &#x2F; psync），但它是否能运行，必须得到操作系统的支持。这包括内核版本、系统接口、库文件等。如果系统不支持，fio 会报错或自动回退。</p>
+</tbody>
+</table>
+<p>你可以指定任意 ioengine （默认值是 sync / psync），但它是否能运行，必须得到操作系统的支持。这包括内核版本、系统接口、库文件等。如果系统不支持，fio 会报错或自动回退。</p>
 <p>查看支持列表：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fio --enghelp</span><br></pre></td></tr></table></figure>
-
 <p>这会列出当前系统上可用的 ioengine，但注意：列出来 ≠ 能用，还要看运行时是否报错。</p>
 <p>实际测试：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fio --name=<span class="built_in">test</span> --ioengine=io_uring --rw=write --size=1G --bs=1M</span><br></pre></td></tr></table></figure>
-
 <p>如果不支持，会报错，例如：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fio: pid=132756, err=38/file:engines/io_uring.c:1351, func=io_queue_init, error=Function not implemented</span><br></pre></td></tr></table></figure>
-
-<h3 id="iodepth"><a href="#iodepth" class="headerlink" title="iodepth"></a>iodepth</h3><p><code>--iodepth</code> 是传递给内核的参数。</p>
-<p>如果你不显式设置 <code>--iodepth</code>，那么 fio 会根据所选的 I&#x2F;O 引擎（<code>--ioengine</code>） 来决定默认值</p>
+<h3 id="iodepth">iodepth</h3>
+<p><code>--iodepth</code> 是传递给内核的参数。</p>
+<p>如果你不显式设置 <code>--iodepth</code>，那么 fio 会根据所选的 I/O 引擎（<code>--ioengine</code>） 来决定默认值</p>
 <table>
 <thead>
 <tr>
-<th align="center">I&#x2F;O 引擎</th>
-<th align="center">默认 iodepth</th>
+<th style="text-align:center">I/O 引擎</th>
+<th style="text-align:center">默认 iodepth</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">sync &#x2F; psync &#x2F; vsync</td>
-<td align="center">1（同步 I&#x2F;O，只能一个一个处理）</td>
+<tbody>
+<tr>
+<td style="text-align:center">sync / psync / vsync</td>
+<td style="text-align:center">1（同步 I/O，只能一个一个处理）</td>
 </tr>
 <tr>
-<td align="center">libaio &#x2F; io_uring</td>
-<td align="center">1，但可以设置更高以启用异步并发</td>
+<td style="text-align:center">libaio / io_uring</td>
+<td style="text-align:center">1，但可以设置更高以启用异步并发</td>
 </tr>
 <tr>
-<td align="center">mmap &#x2F; pread &#x2F; pwrite</td>
-<td align="center">1</td>
+<td style="text-align:center">mmap / pread / pwrite</td>
+<td style="text-align:center">1</td>
 </tr>
 <tr>
-<td align="center">windowsaio（Windows）</td>
-<td align="center">1</td>
+<td style="text-align:center">windowsaio（Windows）</td>
+<td style="text-align:center">1</td>
 </tr>
 <tr>
-<td align="center">sg（SCSI generic）</td>
-<td align="center">1</td>
+<td style="text-align:center">sg（SCSI generic）</td>
+<td style="text-align:center">1</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <p>fio 并不会主动维护队列，队列是内核的特性。</p>
 <table>
 <thead>
 <tr>
-<th align="center">I&#x2F;O 引擎</th>
-<th align="center">队列位置</th>
-<th align="center">是否异步</th>
-<th align="center">说明</th>
+<th style="text-align:center">I/O 引擎</th>
+<th style="text-align:center">队列位置</th>
+<th style="text-align:center">是否异步</th>
+<th style="text-align:center">说明</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">psync &#x2F; sync</td>
-<td align="center">无队列（直接调用）</td>
-<td align="center">否</td>
-<td align="center">每次写入调用 write()，无排队机制</td>
+<tbody>
+<tr>
+<td style="text-align:center">psync / sync</td>
+<td style="text-align:center">无队列（直接调用）</td>
+<td style="text-align:center">否</td>
+<td style="text-align:center">每次写入调用 write()，无排队机制</td>
 </tr>
 <tr>
-<td align="center">libaio</td>
-<td align="center">内核空间</td>
-<td align="center">✅ 是</td>
-<td align="center">使用 Linux AIO，队列在内核中，由 io_submit() 提交</td>
+<td style="text-align:center">libaio</td>
+<td style="text-align:center">内核空间</td>
+<td style="text-align:center">✅ 是</td>
+<td style="text-align:center">使用 Linux AIO，队列在内核中，由 io_submit() 提交</td>
 </tr>
 <tr>
-<td align="center">io_uring</td>
-<td align="center">用户 + 内核共享</td>
-<td align="center">✅ 是</td>
-<td align="center">使用环形缓冲区，用户空间提交，内核空间处理</td>
+<td style="text-align:center">io_uring</td>
+<td style="text-align:center">用户 + 内核共享</td>
+<td style="text-align:center">✅ 是</td>
+<td style="text-align:center">使用环形缓冲区，用户空间提交，内核空间处理</td>
 </tr>
 <tr>
-<td align="center">mmap &#x2F; null</td>
-<td align="center">用户空间</td>
-<td align="center">❌ 否</td>
-<td align="center">模拟或跳过实际 I&#x2F;O，不涉及内核队列</td>
+<td style="text-align:center">mmap / null</td>
+<td style="text-align:center">用户空间</td>
+<td style="text-align:center">❌ 否</td>
+<td style="text-align:center">模拟或跳过实际 I/O，不涉及内核队列</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <ul>
-<li>对于支持异步 I&#x2F;O 的引擎（如 libaio 或 io_uring），你可以设置更高的 iodepth（如 32、64、128）来模拟高并发负载；</li>
+<li>对于支持异步 I/O 的引擎（如 libaio 或 io_uring），你可以设置更高的 iodepth（如 32、64、128）来模拟高并发负载；</li>
 <li>对 SSD 或 NVMe 设备，高 iodepth 能显著提升 IOPS 和吞吐量；</li>
 <li>对机械硬盘，提升有限，但仍可用于测试调度策略和队列行为。</li>
 </ul>
-<p>但如果你的 ioengine 是 sync 或 psync，这些是同步阻塞 I&#x2F;O，根本不支持高并发，所以 iodepth 实际上不会生效。</p>
+<p>但如果你的 ioengine 是 sync 或 psync，这些是同步阻塞 I/O，根本不支持高并发，所以 iodepth 实际上不会生效。</p>
 <table>
 <thead>
 <tr>
-<th align="center">参数</th>
-<th align="center">说明</th>
+<th style="text-align:center">参数</th>
+<th style="text-align:center">说明</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">–name&#x3D;seqwrite</td>
-<td align="center">定义测试任务的名称为 seqwrite，用于标识输出结果</td>
+<tbody>
+<tr>
+<td style="text-align:center">–name=seqwrite</td>
+<td style="text-align:center">定义测试任务的名称为 seqwrite，用于标识输出结果</td>
 </tr>
 <tr>
-<td align="center">–rw&#x3D;write</td>
-<td align="center">设置为顺序写入模式（sequential write），数据按顺序写入磁盘</td>
+<td style="text-align:center">–rw=write</td>
+<td style="text-align:center">设置为顺序写入模式（sequential write），数据按顺序写入磁盘</td>
 </tr>
 <tr>
-<td align="center">–bs&#x3D;1M</td>
-<td align="center">每次 I&#x2F;O 操作的块大小为 1MB，适合测试吞吐量</td>
+<td style="text-align:center">–bs=1M</td>
+<td style="text-align:center">每次 I/O 操作的块大小为 1MB，适合测试吞吐量</td>
 </tr>
 <tr>
-<td align="center">–size&#x3D;5G</td>
-<td align="center">每个线程写入的总数据量为 5GB（不是总共，是每个 job）</td>
+<td style="text-align:center">–size=5G</td>
+<td style="text-align:center">每个线程写入的总数据量为 5GB（不是总共，是每个 job）</td>
 </tr>
 <tr>
-<td align="center">–numjobs&#x3D;4</td>
-<td align="center">启动 4 个并发线程（job），模拟多线程写入场景</td>
+<td style="text-align:center">–numjobs=4</td>
+<td style="text-align:center">启动 4 个并发线程（job），模拟多线程写入场景</td>
 </tr>
 <tr>
-<td align="center">–iodepth&#x3D;32</td>
-<td align="center">每个线程的 I&#x2F;O 队列深度为 32，表示最多可同时挂起 32 个 I&#x2F;O 请求 <br> 本例中每个线程会发起 5G&#x2F;1M&#x3D;5120 个 I&#x2F;O 请求</td>
+<td style="text-align:center">–iodepth=32</td>
+<td style="text-align:center">每个线程的 I/O 队列深度为 32，表示最多可同时挂起 32 个 I/O 请求 <br> 本例中每个线程会发起 5G/1M=5120 个 I/O 请求</td>
 </tr>
 <tr>
-<td align="center">–direct&#x3D;1</td>
-<td align="center">绕过系统缓存，直接对磁盘进行读写，更真实地反映设备性能</td>
+<td style="text-align:center">–direct=1</td>
+<td style="text-align:center">绕过系统缓存，直接对磁盘进行读写，更真实地反映设备性能</td>
 </tr>
 <tr>
-<td align="center">–runtime&#x3D;60</td>
-<td align="center">测试持续时间为 60 秒，优先于 –size，<br>1. 即使数据写完也继续写更多数据直到时间结束 &lt; br&gt;2. 如果没有写完，则时间到就结束</td>
+<td style="text-align:center">–runtime=60</td>
+<td style="text-align:center">测试持续时间为 60 秒，优先于 --size，<br>1. 即使数据写完也继续写更多数据直到时间结束 &lt; br&gt;2. 如果没有写完，则时间到就结束</td>
 </tr>
 <tr>
-<td align="center">–group_reporting</td>
-<td align="center">汇总所有线程的测试结果，输出整体性能指标而不是每个线程单独显示</td>
+<td style="text-align:center">–group_reporting</td>
+<td style="text-align:center">汇总所有线程的测试结果，输出整体性能指标而不是每个线程单独显示</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <p>可能的代码实现：</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;libaio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> FILE_PATH <span class="string">&quot;testfile.bin&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> BLOCK_SIZE 4096</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> IODEPTH 4  <span class="comment">// 控制并发请求数量</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">int</span> fd = open(FILE_PATH, O_CREAT | O_WRONLY | O_DIRECT, <span class="number">0644</span>);</span><br><span class="line">    <span class="keyword">if</span> (fd &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        perror(<span class="string">&quot;open&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// io_setup 是 libaio 的函数</span></span><br><span class="line">    <span class="type">io_context_t</span> ctx = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> (io_setup(IODEPTH, &amp;ctx) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        perror(<span class="string">&quot;io_setup&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">iocb</span> *<span class="title">iocbs</span>[<span class="title">IODEPTH</span>];</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">iocb</span> <span class="title">iocb_array</span>[<span class="title">IODEPTH</span>];</span></span><br><span class="line">    <span class="type">char</span> *buffers[IODEPTH];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; IODEPTH; i++) &#123;</span><br><span class="line">        <span class="comment">// 分配对齐内存</span></span><br><span class="line">        posix_memalign((<span class="type">void</span>**)&amp;buffers[i], BLOCK_SIZE, BLOCK_SIZE);</span><br><span class="line">        <span class="built_in">memset</span>(buffers[i], <span class="string">&#x27;A&#x27;</span> + i, BLOCK_SIZE);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 初始化 iocb</span></span><br><span class="line">        io_prep_pwrite(&amp;iocb_array[i], fd, buffers[i], BLOCK_SIZE, i * BLOCK_SIZE);</span><br><span class="line">        iocbs[i] = &amp;iocb_array[i];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 提交所有请求</span></span><br><span class="line">    <span class="type">int</span> ret = io_submit(ctx, IODEPTH, iocbs);</span><br><span class="line">    <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        perror(<span class="string">&quot;io_submit&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 等待所有请求完成</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">io_event</span> <span class="title">events</span>[<span class="title">IODEPTH</span>];</span></span><br><span class="line">    io_getevents(ctx, IODEPTH, IODEPTH, events, <span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 清理</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; IODEPTH; i++) &#123;</span><br><span class="line">        <span class="built_in">free</span>(buffers[i]);</span><br><span class="line">    &#125;</span><br><span class="line">    io_destroy(ctx);</span><br><span class="line">    close(fd);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;All %d I/O requests completed.\n&quot;</span>, IODEPTH);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-<h3 id="延迟"><a href="#延迟" class="headerlink" title="延迟"></a>延迟</h3><table>
+<h3 id="延迟">延迟</h3>
+<table>
 <thead>
 <tr>
 <th>指标</th>
@@ -1068,37 +1288,66 @@
 <th>描述</th>
 </tr>
 </thead>
-<tbody><tr>
+<tbody>
+<tr>
 <td>slat</td>
 <td>Submission Latency</td>
-<td>从 fio 发起 I&#x2F;O 请求到内核接收该请求的时间。通常很短，单位是微秒（usec）。</td>
+<td>从 fio 发起 I/O 请求到内核接收该请求的时间。通常很短，单位是微秒（usec）。</td>
 </tr>
 <tr>
 <td>clat</td>
 <td>Completion Latency</td>
-<td>从内核接收请求到 I&#x2F;O 操作完成的时间。这个是最能反映存储设备性能的部分。</td>
+<td>从内核接收请求到 I/O 操作完成的时间。这个是最能反映存储设备性能的部分。</td>
 </tr>
 <tr>
 <td>lat</td>
 <td>Total Latency</td>
-<td>总延迟，即 slat + clat，表示从 fio 发起请求到 I&#x2F;O 完成的整个过程。</td>
+<td>总延迟，即 slat + clat，表示从 fio 发起请求到 I/O 完成的整个过程。</td>
 </tr>
-</tbody></table>
-<h3 id="结果分析"><a href="#结果分析" class="headerlink" title="结果分析"></a>结果分析</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">$ fio --name=seqwrite --rw=write --bs=1M --size=5G --numjobs=2 --direct=1 --runtime=60 --group_reporting</span><br><span class="line">seqwrite: (g=0): rw=write, bs=(R) 1024KiB-1024KiB, (W) 1024KiB-1024KiB, (T) 1024KiB-1024KiB, ioengine=psync, iodepth=1</span><br><span class="line">...</span><br><span class="line">fio-3.41</span><br><span class="line">Starting 2 processes</span><br><span class="line">seqwrite: Laying out IO file (1 file / 5120MiB)</span><br><span class="line">seqwrite: Laying out IO file (1 file / 5120MiB)</span><br><span class="line">Jobs: 2 (f=2): [W(2)][100.0%][w=112MiB/s][w=112 IOPS][eta 00m:00s]</span><br><span class="line">seqwrite: (groupid=0, <span class="built_in">jobs</span>=2): err= 0: pid=70688: Sun Sep  7 22:37:47 2025</span><br><span class="line">  write: IOPS=111, BW=111MiB/s (117MB/s)(6685MiB/60016msec); 0 zone resets</span><br><span class="line">    clat (usec): min=9606, max=74763, avg=17922.82, stdev=1446.89</span><br><span class="line">     lat (usec): min=9628, max=74791, avg=17951.49, stdev=1446.80</span><br><span class="line">    clat percentiles (usec):</span><br><span class="line">     |  1.00th=[15008],  5.00th=[16319], 10.00th=[16909], 20.00th=[17433],</span><br><span class="line">     | 30.00th=[17695], 40.00th=[17695], 50.00th=[17957], 60.00th=[17957],</span><br><span class="line">     | 70.00th=[18220], 80.00th=[18482], 90.00th=[19006], 95.00th=[19268],</span><br><span class="line">     | 99.00th=[21365], 99.50th=[22414], 99.90th=[32375], 99.95th=[40109],</span><br><span class="line">     | 99.99th=[74974]</span><br><span class="line">   bw (KiB/s): min=96062, max=116736, per=100.00%, avg=114150.20, stdev=1061.35, samples=238</span><br><span class="line">   iops        : min=   92, max=  114, avg=110.77, stdev= 1.18, samples=238</span><br><span class="line">  lat (msec)   : 10=0.03%, 20=97.43%, 50=2.53%, 100=0.01%</span><br><span class="line">  cpu          : usr=0.22%, sys=0.75%, ctx=6717, majf=0, minf=67</span><br><span class="line">  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, &gt;=64=0.0%</span><br><span class="line">     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, &gt;=64=0.0%</span><br><span class="line">     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, &gt;=64=0.0%</span><br><span class="line">     issued rwts: total=0,6685,0,0 short=0,0,0,0 dropped=0,0,0,0</span><br><span class="line">     latency   : target=0, window=0, percentile=100.00%, depth=1</span><br><span class="line"></span><br><span class="line">Run status group 0 (all <span class="built_in">jobs</span>):</span><br><span class="line">  WRITE: bw=111MiB/s (117MB/s), 111MiB/s-111MiB/s (117MB/s-117MB/s), io=6685MiB (7010MB), run=60016-60016mse</span><br></pre></td></tr></table></figure>
-
-<p>🧾 测试配置解析<br>bash<br>fio –name&#x3D;seqwrite –rw&#x3D;write –bs&#x3D;1M –size&#x3D;10G –numjobs&#x3D;1 –direct&#x3D;1 –runtime&#x3D;60 –group_reporting<br>参数	含义<br>rw&#x3D;write	顺序写入<br>bs&#x3D;1M	每次写入块大小为 1MiB<br>numjobs&#x3D;1	单线程写入<br>direct&#x3D;1	使用 Direct I&#x2F;O，绕过页缓存<br>ioengine&#x3D;psync	使用同步 I&#x2F;O（每次 pwrite()）<br>iodepth&#x3D;1	每次只挂起一个 I&#x2F;O 请求（同步模式下默认如此）<br>📊 性能结果概览<br>指标	数值	说明<br>IOPS	96	每秒执行 96 次写入操作<br>带宽	96.2 MiB&#x2F;s（101 MB&#x2F;s）	每秒写入约 96 MiB 数据<br>总写入量	5772 MiB	在 60 秒内完成的写入总量<br>延迟（avg clat）	10.36 ms	每次写入的平均完成时间<br>CPU 使用率	usr&#x3D;0.46%, sys&#x3D;1.23%	CPU 负载极低，瓶颈不在 CPU<br>⏱ 延迟分布分析<br>50% 的写入延迟低于 9.9 ms</p>
+</tbody>
+</table>
+<h3 id="结果分析">结果分析</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">$ fio --name=seqwrite --rw=write --bs=1M --size=5G --numjobs=2 --direct=1 --runtime=60 --group_reporting</span><br><span class="line">seqwrite: (g=0): rw=write, bs=(R) 1024KiB-1024KiB, (W) 1024KiB-1024KiB, (T) 1024KiB-1024KiB, ioengine=psync, iodepth=1</span><br><span class="line">...</span><br><span class="line">fio-3.41</span><br><span class="line">Starting 2 processes</span><br><span class="line">seqwrite: Laying out IO file (1 file / 5120MiB)</span><br><span class="line">seqwrite: Laying out IO file (1 file / 5120MiB)</span><br><span class="line">Jobs: 2 (f=2): [W(2)][100.0%][w=112MiB/s][w=112 IOPS][eta 00m:00s]</span><br><span class="line">seqwrite: (groupid=0, <span class="built_in">jobs</span>=2): err= 0: pid=70688: Sun Sep  7 22:37:47 2025</span><br><span class="line">  write: IOPS=111, BW=111MiB/s (117MB/s)(6685MiB/60016msec); 0 zone resets</span><br><span class="line">    clat (usec): min=9606, max=74763, avg=17922.82, stdev=1446.89</span><br><span class="line">     lat (usec): min=9628, max=74791, avg=17951.49, stdev=1446.80</span><br><span class="line">    clat percentiles (usec):</span><br><span class="line">     |  1.00th=[15008],  5.00th=[16319], 10.00th=[16909], 20.00th=[17433],</span><br><span class="line">     | 30.00th=[17695], 40.00th=[17695], 50.00th=[17957], 60.00th=[17957],</span><br><span class="line">     | 70.00th=[18220], 80.00th=[18482], 90.00th=[19006], 95.00th=[19268],</span><br><span class="line">     | 99.00th=[21365], 99.50th=[22414], 99.90th=[32375], 99.95th=[40109],</span><br><span class="line">     | 99.99th=[74974]</span><br><span class="line">   bw (KiB/s): min=96062, max=116736, per=100.00%, avg=114150.20, stdev=1061.35, samples=238</span><br><span class="line">   iops        : min=   92, max=  114, avg=110.77, stdev= 1.18, samples=238</span><br><span class="line">  lat (msec)   : 10=0.03%, 20=97.43%, 50=2.53%, 100=0.01%</span><br><span class="line">  cpu          : usr=0.22%, sys=0.75%, ctx=6717, majf=0, minf=67</span><br><span class="line">  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, &gt;=64=0.0%</span><br><span class="line">     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, &gt;=64=0.0%</span><br><span class="line">     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, &gt;=64=0.0%</span><br><span class="line">     issued rwts: total=0,6685,0,0 short=0,0,0,0 dropped=0,0,0,0</span><br><span class="line">     latency   : target=0, window=0, percentile=100.00%, depth=1</span><br><span class="line"></span><br><span class="line">Run status group 0 (all <span class="built_in">jobs</span>):</span><br><span class="line">  WRITE: bw=111MiB/s (117MB/s), 111MiB/s-111MiB/s (117MB/s-117MB/s), io=6685MiB (7010MB), run=60016-60016mse</span><br></pre></td></tr></table></figure>
+<p>🧾 测试配置解析<br>
+bash<br>
+fio --name=seqwrite --rw=write --bs=1M --size=10G --numjobs=1 --direct=1 --runtime=60 --group_reporting<br>
+参数	含义<br>
+rw=write	顺序写入<br>
+bs=1M	每次写入块大小为 1MiB<br>
+numjobs=1	单线程写入<br>
+direct=1	使用 Direct I/O，绕过页缓存<br>
+ioengine=psync	使用同步 I/O（每次 pwrite()）<br>
+iodepth=1	每次只挂起一个 I/O 请求（同步模式下默认如此）<br>
+📊 性能结果概览<br>
+指标	数值	说明<br>
+IOPS	96	每秒执行 96 次写入操作<br>
+带宽	96.2 MiB/s（101 MB/s）	每秒写入约 96 MiB 数据<br>
+总写入量	5772 MiB	在 60 秒内完成的写入总量<br>
+延迟（avg clat）	10.36 ms	每次写入的平均完成时间<br>
+CPU 使用率	usr=0.46%, sys=1.23%	CPU 负载极低，瓶颈不在 CPU<br>
+⏱ 延迟分布分析<br>
+50% 的写入延迟低于 9.9 ms</p>
 <p>95% 的写入低于 12.5 ms</p>
 <p>99.95% 的写入延迟达到了 22.9 ms</p>
 <p>最慢的写入高达 28.2 ms</p>
 <p>尾部延迟略高，说明偶尔会有磁盘响应变慢的情况，可能是设备内部缓存刷新或寻址造成。</p>
-<p>📈 带宽波动情况<br>平均带宽：约 96 MiB&#x2F;s</p>
-<p>最小带宽：60 MiB&#x2F;s</p>
-<p>最大带宽：104 MiB&#x2F;s</p>
-<p>标准差：6.2 MiB&#x2F;s → 表明带宽相对稳定，但仍有轻微波动</p>
-<p>🧠 深层解读<br>✅ 为什么 IOPS ≈ 带宽（MiB&#x2F;s）？<br>因为你设置了 bs&#x3D;1M，每次写入 1MiB 数据，所以：</p>
-<p>Code<br>IOPS × Block Size &#x3D; Bandwidth<br>96 IOPS × 1 MiB &#x3D; 96 MiB&#x2F;s<br>✅ 为什么 Direct I&#x2F;O？<br>绕过页缓存，测试的是磁盘的真实物理性能，避免被内存加速 “欺骗”。</p>
-<p>✅ 为什么使用 psync？<br>psync 是同步写入，每次调用 pwrite()，适合模拟数据库或日志系统的写入行为。但它无法并发挂起多个请求，限制了吞吐。</p>
-<p>📌 性能瓶颈分析<br>磁盘类型：如果是 HDD，这个结果（96 MiB&#x2F;s）非常合理；如果是 SSD，则偏低，可能受限于同步 I&#x2F;O 或单线程。</p>
+<p>📈 带宽波动情况<br>
+平均带宽：约 96 MiB/s</p>
+<p>最小带宽：60 MiB/s</p>
+<p>最大带宽：104 MiB/s</p>
+<p>标准差：6.2 MiB/s → 表明带宽相对稳定，但仍有轻微波动</p>
+<p>🧠 深层解读<br>
+✅ 为什么 IOPS ≈ 带宽（MiB/s）？<br>
+因为你设置了 bs=1M，每次写入 1MiB 数据，所以：</p>
+<p>Code<br>
+IOPS × Block Size = Bandwidth<br>
+96 IOPS × 1 MiB = 96 MiB/s<br>
+✅ 为什么 Direct I/O？<br>
+绕过页缓存，测试的是磁盘的真实物理性能，避免被内存加速 “欺骗”。</p>
+<p>✅ 为什么使用 psync？<br>
+psync 是同步写入，每次调用 pwrite()，适合模拟数据库或日志系统的写入行为。但它无法并发挂起多个请求，限制了吞吐。</p>
+<p>📌 性能瓶颈分析<br>
+磁盘类型：如果是 HDD，这个结果（96 MiB/s）非常合理；如果是 SSD，则偏低，可能受限于同步 I/O 或单线程。</p>
 <p>IO 引擎限制：psync 是阻塞式，无法发挥磁盘的并发能力。</p>
 <p>线程数限制：只有一个线程，磁盘可能未被充分利用。</p>
 
@@ -1151,7 +1400,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1174,7 +1423,8 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="使用共享内存优化"><a href="#使用共享内存优化" class="headerlink" title="使用共享内存优化"></a>使用共享内存优化</h2><p><a href='https://postimg.cc/BjfXcPQ9' target='_blank'><img src='https://i.postimg.cc/dVLrFGb1/matrix-Mul.png' border='0' alt='matrix-Mul'/></a></p>
+          <h2 id="使用共享内存优化">使用共享内存优化</h2>
+<p><a href='https://postimg.cc/BjfXcPQ9' target='_blank'><img src='https://i.postimg.cc/dVLrFGb1/matrix-Mul.png' border='0' alt='matrix-Mul'/></a></p>
 
 
       
@@ -1226,7 +1476,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1249,7 +1499,8 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="术语"><a href="#术语" class="headerlink" title="术语"></a>术语</h2><p>内存模型（Memory Model）是定义<strong>数据一致性</strong>与<strong>执行顺序</strong>规则的一组规范。</p>
+          <h2 id="术语">术语</h2>
+<p>内存模型（Memory Model）是定义<strong>数据一致性</strong>与<strong>执行顺序</strong>规则的一组规范。</p>
 <p>关键概念：</p>
 <ol>
 <li>原子性：操作不可打断；如果同时修改，硬件会串行排队。</li>
@@ -1258,31 +1509,35 @@
 </ol>
 <p>所有原子变量都满足原子性。但是其他两者不一定满足，由内存序定义。</p>
 <p>比如原子自增 fetch_add(relaxed) 是线程安全的，但是无法使用 load 指令读到最新的结果。</p>
-<h2 id="缓存一致性协议-MESI"><a href="#缓存一致性协议-MESI" class="headerlink" title="缓存一致性协议 (MESI)"></a>缓存一致性协议 (MESI)</h2><table>
+<h2 id="缓存一致性协议-MESI">缓存一致性协议 (MESI)</h2>
+<table>
 <thead>
 <tr>
-<th align="center">状态</th>
-<th align="center">含义</th>
+<th style="text-align:center">状态</th>
+<th style="text-align:center">含义</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">M (Modified)</td>
-<td align="center">缓存行已被修改，只有当前 CPU 拥有，主内存未更新</td>
+<tbody>
+<tr>
+<td style="text-align:center">M (Modified)</td>
+<td style="text-align:center">缓存行已被修改，只有当前 CPU 拥有，主内存未更新</td>
 </tr>
 <tr>
-<td align="center">E (Exclusive)</td>
-<td align="center">缓存行未被修改，只有当前 CPU 拥有，与主内存一致</td>
+<td style="text-align:center">E (Exclusive)</td>
+<td style="text-align:center">缓存行未被修改，只有当前 CPU 拥有，与主内存一致</td>
 </tr>
 <tr>
-<td align="center">S (Shared)</td>
-<td align="center">缓存行未被修改，多个 CPU 拥有，与主内存一致</td>
+<td style="text-align:center">S (Shared)</td>
+<td style="text-align:center">缓存行未被修改，多个 CPU 拥有，与主内存一致</td>
 </tr>
 <tr>
-<td align="center">I (Invalid)</td>
-<td align="center">缓存行无效，必须重新从主内存加载</td>
+<td style="text-align:center">I (Invalid)</td>
+<td style="text-align:center">缓存行无效，必须重新从主内存加载</td>
 </tr>
-</tbody></table>
-<h2 id="relaxed-内存序"><a href="#relaxed-内存序" class="headerlink" title="relaxed 内存序"></a>relaxed 内存序</h2><p>术语：</p>
+</tbody>
+</table>
+<h2 id="relaxed-内存序">relaxed 内存序</h2>
+<p>术语：</p>
 <ol>
 <li>保证原子性：整个操作不可被打断；不一定立即回写主内存，可能暂时把结果放在 Store Buffer 中。</li>
 <li>不保证顺序：编译器和CPU可能对指令重排序。</li>
@@ -1291,7 +1546,8 @@
 <p>说人话：</p>
 <ol>
 <li>原子性：原子操作是串行的（由硬件排队）</li>
-<li>不保证可见性：<ul>
+<li>不保证可见性：
+<ul>
 <li>load 操作是并行的，并且不保证看到最新值。</li>
 <li>“可见性”是针对程序员的，因为对于 relaxed ，没有任何指令可以保证 load 拿到最新值。它可能直接从自己的缓存行中把旧值返回给你。</li>
 <li>硬件本身是知道最新值的，它会根据 MESI 来保证自己当时拿到的是最新值（但是无法通过指令告知你）。</li>
@@ -1302,43 +1558,51 @@
 <table>
 <thead>
 <tr>
-<th align="center">层级</th>
-<th align="center">机制</th>
-<th align="center">作用</th>
+<th style="text-align:center">层级</th>
+<th style="text-align:center">机制</th>
+<th style="text-align:center">作用</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">指令级</td>
-<td align="center">原子指令（如 LOCK XADD）</td>
-<td align="center">保证操作不可打断</td>
+<tbody>
+<tr>
+<td style="text-align:center">指令级</td>
+<td style="text-align:center">原子指令（如 LOCK XADD）</td>
+<td style="text-align:center">保证操作不可打断</td>
 </tr>
 <tr>
-<td align="center">缓存级</td>
-<td align="center">MESI 协议</td>
-<td align="center">控制缓存行访问，避免冲突</td>
+<td style="text-align:center">缓存级</td>
+<td style="text-align:center">MESI 协议</td>
+<td style="text-align:center">控制缓存行访问，避免冲突</td>
 </tr>
 <tr>
-<td align="center">编译器级</td>
-<td align="center">编译器屏障</td>
-<td align="center">防止指令重排</td>
+<td style="text-align:center">编译器级</td>
+<td style="text-align:center">编译器屏障</td>
+<td style="text-align:center">防止指令重排</td>
 </tr>
 <tr>
-<td align="center">CPU级</td>
-<td align="center">内存屏障</td>
-<td align="center">保证执行顺序</td>
+<td style="text-align:center">CPU级</td>
+<td style="text-align:center">内存屏障</td>
+<td style="text-align:center">保证执行顺序</td>
 </tr>
 <tr>
-<td align="center">高级机制</td>
-<td align="center">事务性内存</td>
-<td align="center">实现复杂原子逻辑（可选）</td>
+<td style="text-align:center">高级机制</td>
+<td style="text-align:center">事务性内存</td>
+<td style="text-align:center">实现复杂原子逻辑（可选）</td>
 </tr>
-</tbody></table>
-<h2 id="release-acquire-语义"><a href="#release-acquire-语义" class="headerlink" title="release-acquire 语义"></a>release-acquire 语义</h2><h2 id="指令重排序"><a href="#指令重排序" class="headerlink" title="指令重排序"></a>指令重排序</h2><ol>
+</tbody>
+</table>
+<h2 id="release-acquire-语义">release-acquire 语义</h2>
+<h2 id="指令重排序">指令重排序</h2>
+<ol>
 <li>编译器指令重排：编译器屏障防止指令重排</li>
 <li>CPU 乱序执行：内存屏障保证执行顺序。</li>
 </ol>
-<h2 id="原子指令"><a href="#原子指令" class="headerlink" title="原子指令"></a>原子指令</h2><p>原子指令（如 LOCK XADD）：保证操作不可打断</p>
-<h2 id="Load-Store-Buffer"><a href="#Load-Store-Buffer" class="headerlink" title="Load &#x2F; Store Buffer"></a>Load &#x2F; Store Buffer</h2><h2 id="缓存行"><a href="#缓存行" class="headerlink" title="缓存行"></a>缓存行</h2><h2 id="内存屏障"><a href="#内存屏障" class="headerlink" title="内存屏障"></a>内存屏障</h2>
+<h2 id="原子指令">原子指令</h2>
+<p>原子指令（如 LOCK XADD）：保证操作不可打断</p>
+<h2 id="Load-Store-Buffer">Load / Store Buffer</h2>
+<h2 id="缓存行">缓存行</h2>
+<h2 id="内存屏障">内存屏障</h2>
+
       
     </div>
 
@@ -1388,7 +1652,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1411,40 +1675,42 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="位置无关代码（PIC）"><a href="#位置无关代码（PIC）" class="headerlink" title="位置无关代码（PIC）"></a>位置无关代码（PIC）</h2><ul>
+          <h2 id="位置无关代码（PIC）">位置无关代码（PIC）</h2>
+<ul>
 <li>位置无关代码（<code>PIC</code>）：程序可以在内存中的任意位置运行，不需要修改代码中的绝对地址。</li>
 <li>节省空间：相比使用 64 位绝对地址，RIP 相对寻址只需要一个 32 位偏移量。</li>
 <li>更安全：支持地址随机化（ASLR），提高程序的安全性。</li>
 </ul>
 <p>在 x86-64 架构中，传统的绝对地址寻址方式不再适用于位置无关代码。于是引入了 RIP（指令指针）相对寻址：</p>
-<p>假设你有一个全局变量 int x &#x3D; 42;，在汇编中访问它可能会变成：</p>
+<p>假设你有一个全局变量 int x = 42;，在汇编中访问它可能会变成：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">asm</span><br><span class="line">mov eax, DWORD PTR [rip + offset_to_x]</span><br></pre></td></tr></table></figure>
-
 <p>这里的 offset_to_x 是编译器计算出来的 x 相对于当前指令的偏移量。</p>
 <table>
 <thead>
 <tr>
-<th align="center">寻址方式</th>
-<th align="center">描述</th>
-<th align="center">是否位置无关</th>
+<th style="text-align:center">寻址方式</th>
+<th style="text-align:center">描述</th>
+<th style="text-align:center">是否位置无关</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">绝对地址寻址</td>
-<td align="center">使用固定地址，如 [0x400123]</td>
-<td align="center">❌ 否</td>
+<tbody>
+<tr>
+<td style="text-align:center">绝对地址寻址</td>
+<td style="text-align:center">使用固定地址，如 [0x400123]</td>
+<td style="text-align:center">❌ 否</td>
 </tr>
 <tr>
-<td align="center">寄存器间接寻址</td>
-<td align="center">如 [rax]，地址由寄存器决定</td>
-<td align="center">✅ 是</td>
+<td style="text-align:center">寄存器间接寻址</td>
+<td style="text-align:center">如 [rax]，地址由寄存器决定</td>
+<td style="text-align:center">✅ 是</td>
 </tr>
 <tr>
-<td align="center">RIP 相对寻址</td>
-<td align="center">如 [rip + offset]，相对当前指令位置</td>
-<td align="center">✅ 是</td>
+<td style="text-align:center">RIP 相对寻址</td>
+<td style="text-align:center">如 [rip + offset]，相对当前指令位置</td>
+<td style="text-align:center">✅ 是</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <p>但并不是所有 PIC 都用 RIP 相对寻址，PIC 的实现方式取决于：</p>
 <ul>
 <li>架构：在 x86（32 位）中没有 RIP 寄存器，PIC 通常通过 call 指令获取当前地址，再加偏移量。</li>
@@ -1454,25 +1720,26 @@
 <table>
 <thead>
 <tr>
-<th align="center">架构</th>
-<th align="center">是否使用 RIP 相对寻址</th>
-<th align="center">是否支持位置无关代码</th>
+<th style="text-align:center">架构</th>
+<th style="text-align:center">是否使用 RIP 相对寻址</th>
+<th style="text-align:center">是否支持位置无关代码</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">x86-64</td>
-<td align="center">✅ 常用，尤其访问数据段</td>
-<td align="center">✅ 强力支持（默认启用）</td>
+<tbody>
+<tr>
+<td style="text-align:center">x86-64</td>
+<td style="text-align:center">✅ 常用，尤其访问数据段</td>
+<td style="text-align:center">✅ 强力支持（默认启用）</td>
 </tr>
 <tr>
-<td align="center">x86 (32位)</td>
-<td align="center">❌ 无 RIP，用其他方式实现</td>
-<td align="center">✅ 但需要特殊技巧</td>
+<td style="text-align:center">x86 (32位)</td>
+<td style="text-align:center">❌ 无 RIP，用其他方式实现</td>
+<td style="text-align:center">✅ 但需要特殊技巧</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <p>举个 gdb 调试的例子：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(gdb) x/i <span class="variable">$rip</span></span><br><span class="line">=&gt; 0x2ac084b5ec10 &lt;poll&gt;:       cmpl   <span class="variable">$0x0</span>,0x2d939d(%rip)        <span class="comment"># 0x2ac084e37fb4 &lt;__libc_multiple_threads&gt;</span></span><br><span class="line">(gdb) p (bool)<span class="variable">$__libc_multiple_threads</span></span><br><span class="line"><span class="literal">true</span></span><br></pre></td></tr></table></figure>
-
 <ul>
 <li><code>cmpl $0x0, 0x2d939d(%rip)</code> 是一条比较指令（<code>cmp</code>），用于将某个内存地址中的值与立即数 <code>0</code> 进行比较。</li>
 <li><code>(%rip)</code> 表示使用 RIP 相对寻址，这是 x86-64 架构中常见的一种寻址方式。</li>
@@ -1485,7 +1752,8 @@
 <li>如果是非零，说明进程中有多个线程。</li>
 </ul>
 <p>所以这条指令的作用是：判断当前进程是否是多线程环境，可能用于决定是否启用线程安全的行为。</p>
-<h3 id="为什么使用-RIP-相对寻址？"><a href="#为什么使用-RIP-相对寻址？" class="headerlink" title="为什么使用 RIP 相对寻址？"></a>为什么使用 RIP 相对寻址？</h3><ol>
+<h3 id="为什么使用-RIP-相对寻址？">为什么使用 RIP 相对寻址？</h3>
+<ol>
 <li>RIP 是唯一始终已知的寄存器</li>
 </ol>
 <ul>
@@ -1514,14 +1782,18 @@
 <li>使用 RIP 相对寻址只需要一个 32 位偏移量。</li>
 <li>如果使用绝对地址，需要嵌入完整的 64 位地址，指令长度更长，效率更低。</li>
 </ul>
-<h3 id="为什么使用-RIP-相对寻址只需要一个-32-位偏移量"><a href="#为什么使用-RIP-相对寻址只需要一个-32-位偏移量" class="headerlink" title="为什么使用 RIP 相对寻址只需要一个 32 位偏移量"></a>为什么使用 RIP 相对寻址只需要一个 32 位偏移量</h3><p>在 x86-64 架构中，RIP 相对寻址的偏移量被设计为一个有符号的 32 位整数，也就是一个 displacement（位移）字段，它在机器码中只占用 4 个字节。</p>
+<h3 id="为什么使用-RIP-相对寻址只需要一个-32-位偏移量">为什么使用 RIP 相对寻址只需要一个 32 位偏移量</h3>
+<p>在 x86-64 架构中，RIP 相对寻址的偏移量被设计为一个有符号的 32 位整数，也就是一个 displacement（位移）字段，它在机器码中只占用 4 个字节。</p>
 <ul>
-<li><p>RIP 是 64 位的指令指针，表示当前指令的地址。</p>
+<li>
+<p>RIP 是 64 位的指令指针，表示当前指令的地址。</p>
 </li>
-<li><p>RIP 相对寻址的目标地址是通过：</p>
+<li>
+<p>RIP 相对寻址的目标地址是通过：</p>
 <p><code>目标地址 = 下一条指令地址（RIP） + 32 位偏移量</code></p>
 </li>
-<li><p>这个偏移量是一个 有符号整数，所以它的范围是：</p>
+<li>
+<p>这个偏移量是一个 有符号整数，所以它的范围是：</p>
 <p>从 −2³¹ 到 +2³¹−1，即 <strong>±2GB</strong> 的寻址范围。</p>
 </li>
 </ul>
@@ -1529,28 +1801,31 @@
 <table>
 <thead>
 <tr>
-<th align="center">优点</th>
-<th align="center">说明</th>
+<th style="text-align:center">优点</th>
+<th style="text-align:center">说明</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">✅ 节省空间</td>
-<td align="center">只用 4 字节表示偏移，比使用完整 64 位地址节省指令长度</td>
+<tbody>
+<tr>
+<td style="text-align:center">✅ 节省空间</td>
+<td style="text-align:center">只用 4 字节表示偏移，比使用完整 64 位地址节省指令长度</td>
 </tr>
 <tr>
-<td align="center">✅ 支持位置无关代码</td>
-<td align="center">编译器只需计算偏移，不依赖绝对地址</td>
+<td style="text-align:center">✅ 支持位置无关代码</td>
+<td style="text-align:center">编译器只需计算偏移，不依赖绝对地址</td>
 </tr>
 <tr>
-<td align="center">✅ 高效</td>
-<td align="center">CPU 执行时只需加法运算，无需查表或重定位</td>
+<td style="text-align:center">✅ 高效</td>
+<td style="text-align:center">CPU 执行时只需加法运算，无需查表或重定位</td>
 </tr>
 <tr>
-<td align="center">✅ 安全</td>
-<td align="center">支持地址空间布局随机化（ASLR），提高安全性</td>
+<td style="text-align:center">✅ 安全</td>
+<td style="text-align:center">支持地址空间布局随机化（ASLR），提高安全性</td>
 </tr>
-</tbody></table>
-<h3 id="为什么可以被多个进程共享？"><a href="#为什么可以被多个进程共享？" class="headerlink" title="为什么可以被多个进程共享？"></a>为什么可以被多个进程共享？</h3><p>因为代码中不再硬编码具体地址，多个进程可以：</p>
+</tbody>
+</table>
+<h3 id="为什么可以被多个进程共享？">为什么可以被多个进程共享？</h3>
+<p>因为代码中不再硬编码具体地址，多个进程可以：</p>
 <ul>
 <li>使用同一份物理内存中的代码段。</li>
 <li>每个进程有自己的数据段，但共享同一份只读代码。</li>
@@ -1560,26 +1835,29 @@
 <table>
 <thead>
 <tr>
-<th align="center">进程</th>
-<th align="center">加载地址</th>
-<th align="center">使用的代码段</th>
+<th style="text-align:center">进程</th>
+<th style="text-align:center">加载地址</th>
+<th style="text-align:center">使用的代码段</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">A</td>
-<td align="center">0x400000</td>
-<td align="center">使用共享代码段</td>
+<tbody>
+<tr>
+<td style="text-align:center">A</td>
+<td style="text-align:center">0x400000</td>
+<td style="text-align:center">使用共享代码段</td>
 </tr>
 <tr>
-<td align="center">B</td>
-<td align="center">0x500000</td>
-<td align="center">使用共享代码段</td>
+<td style="text-align:center">B</td>
+<td style="text-align:center">0x500000</td>
+<td style="text-align:center">使用共享代码段</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <p>两者的代码段内容完全一样，因为里面的寻址是相对 RIP 的，不依赖于加载地址。</p>
 <p>为什么绝对寻址不可以被多进程共享？</p>
 <ul>
-<li>每个进程的虚拟地址空间是独立的<ul>
+<li>每个进程的虚拟地址空间是独立的
+<ul>
 <li>操作系统为每个进程分配独立的虚拟地址空间。</li>
 <li>即使两个进程都加载了同一个程序，它们的地址空间可能完全不同。</li>
 <li>如果代码中使用绝对地址，加载到不同地址空间后，这些地址就不再有效。</li>
@@ -1588,14 +1866,16 @@
 </ul>
 <p>所以，绝对地址在一个进程中是有效的，在另一个进程中可能就指向错误的地方或根本不存在。</p>
 <ul>
-<li><p>需要重定位，无法直接共享物理页</p>
+<li>
+<p>需要重定位，无法直接共享物理页</p>
 <ul>
 <li>如果使用绝对地址，操作系统必须在每个进程加载时对代码进行“重定位”，修改指令中的地址。</li>
 <li>一旦修改，代码段就变成了进程私有，不能共享同一份物理内存。</li>
 <li>而位置无关代码（如使用 RIP 相对寻址）不需要修改，可以直接映射到多个进程的地址空间。</li>
 </ul>
 </li>
-<li><p>违反共享库的设计原则</p>
+<li>
+<p>违反共享库的设计原则</p>
 <ul>
 <li>动态链接库（如 <code>.so</code> 或 <code>.dll</code>）的核心优势就是可以被多个进程共享。</li>
 <li>如果库中使用绝对地址，每个进程都要有自己的副本，失去了共享的意义。</li>
@@ -1606,685 +1886,40 @@
 <table>
 <thead>
 <tr>
-<th align="center">区域</th>
-<th align="center">是否可共享</th>
-<th align="center">原因说明</th>
+<th style="text-align:center">区域</th>
+<th style="text-align:center">是否可共享</th>
+<th style="text-align:center">原因说明</th>
 </tr>
 </thead>
-<tbody><tr>
-<td align="center">代码段</td>
-<td align="center">✅ 是</td>
-<td align="center">只读 + 位置无关，多个进程可映射同一物理页</td>
+<tbody>
+<tr>
+<td style="text-align:center">代码段</td>
+<td style="text-align:center">✅ 是</td>
+<td style="text-align:center">只读 + 位置无关，多个进程可映射同一物理页</td>
 </tr>
 <tr>
-<td align="center">数据段</td>
-<td align="center">❌ 否</td>
-<td align="center">每个进程的数据不同，需独立副本</td>
+<td style="text-align:center">数据段</td>
+<td style="text-align:center">❌ 否</td>
+<td style="text-align:center">每个进程的数据不同，需独立副本</td>
 </tr>
 <tr>
-<td align="center">堆</td>
-<td align="center">❌ 否</td>
-<td align="center">动态分配，地址空间不同</td>
+<td style="text-align:center">堆</td>
+<td style="text-align:center">❌ 否</td>
+<td style="text-align:center">动态分配，地址空间不同</td>
 </tr>
 <tr>
-<td align="center">栈</td>
-<td align="center">❌ 否</td>
-<td align="center">私有调用栈，不能混用</td>
+<td style="text-align:center">栈</td>
+<td style="text-align:center">❌ 否</td>
+<td style="text-align:center">私有调用栈，不能混用</td>
 </tr>
 <tr>
-<td align="center">共享内存段</td>
-<td align="center">✅ 是</td>
-<td align="center">显式创建，专门用于共享</td>
+<td style="text-align:center">共享内存段</td>
+<td style="text-align:center">✅ 是</td>
+<td style="text-align:center">显式创建，专门用于共享</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <p>如果你想深入了解某个进程的内存布局，可以分析 <code>/proc/[pid]/maps</code> 或用工具如 <code>pmap</code>、<code>vmmap</code>。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/22/tech/cpp/debug/assembly-and-gdb/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/22/tech/cpp/debug/assembly-and-gdb/" class="post-title-link" itemprop="url">汇编与 gdb</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-22 15:42:27" itemprop="dateCreated datePublished" datetime="2025-08-22T15:42:27+00:00">2025-08-22</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="1-前言"><a href="#1-前言" class="headerlink" title="1. 前言"></a>1. 前言</h2><p>我们在调试 release 版本的程序时，由于缺乏符号信息，所以需要通过寄存器来查看函数的参数、返回值等。</p>
-<h2 id="2-寄存器"><a href="#2-寄存器" class="headerlink" title="2. 寄存器"></a>2. 寄存器</h2><h3 id="2-1-通用寄存器-General-Purpose-Registers"><a href="#2-1-通用寄存器-General-Purpose-Registers" class="headerlink" title="2.1. 通用寄存器 (General Purpose Registers)"></a>2.1. 通用寄存器 (General Purpose Registers)</h3><table>
-<thead>
-<tr>
-<th>寄存器名</th>
-<th>英文名称</th>
-<th>作用</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>rax</td>
-<td>Accumulator</td>
-<td>累加器，通常用于算术运算和函数返回值存储。</td>
-</tr>
-<tr>
-<td>rbx</td>
-<td>Base</td>
-<td>基址寄存器，常用于存储数据或指针。</td>
-</tr>
-<tr>
-<td>rsi</td>
-<td>Source Index</td>
-<td>源索引寄存器，常用于字符串操作中的源地址指针（函数第一个参数）。</td>
-</tr>
-<tr>
-<td>rdi</td>
-<td>Destination Index</td>
-<td>目标索引寄存器，常用于字符串操作中的目标地址指针或结构体指针（函数第二个参数）。</td>
-</tr>
-<tr>
-<td>rdx</td>
-<td>Data</td>
-<td>数据寄存器，常用于 I&#x2F;O 操作或乘除法运算中的扩展数据存储（函数第三个参数）。</td>
-</tr>
-<tr>
-<td>rcx</td>
-<td>Counter</td>
-<td>计数器寄存器，常用于循环计数或字符串操作中的计数（函数第四个参数）。</td>
-</tr>
-<tr>
-<td>rsp</td>
-<td>Stack Pointer</td>
-<td>栈指针寄存器，指向当前栈顶。</td>
-</tr>
-<tr>
-<td>rbp</td>
-<td>Base Pointer</td>
-<td>基址指针寄存器，指向当前栈帧的基址。</td>
-</tr>
-<tr>
-<td>r8~r15</td>
-<td>General Purpose</td>
-<td>通用寄存器，扩展的 64 位寄存器之一，用于存储数据或指针（<code>r8</code><del><code>r9</code> 常用于保存函数第五</del>六个参数）。</td>
-</tr>
-</tbody></table>
-<h3 id="2-2-特殊用途寄存器-Special-Purpose-Registers"><a href="#2-2-特殊用途寄存器-Special-Purpose-Registers" class="headerlink" title="2.2. 特殊用途寄存器 (Special Purpose Registers)"></a>2.2. 特殊用途寄存器 (Special Purpose Registers)</h3><table>
-<thead>
-<tr>
-<th>寄存器名</th>
-<th>英文名称</th>
-<th>作用</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>rip</td>
-<td>Instruction Pointer</td>
-<td>指令指针寄存器，存储当前执行指令的地址。</td>
-</tr>
-<tr>
-<td>rflags</td>
-<td>Flags</td>
-<td>标志寄存器，存储状态标志位（如进位、溢出、零标志等）。</td>
-</tr>
-</tbody></table>
-<h3 id="2-3-段寄存器-Segment-Registers"><a href="#2-3-段寄存器-Segment-Registers" class="headerlink" title="2.3. 段寄存器 (Segment Registers)"></a>2.3. 段寄存器 (Segment Registers)</h3><table>
-<thead>
-<tr>
-<th>寄存器名</th>
-<th>英文名称</th>
-<th>作用</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>cs</td>
-<td>Code Segment</td>
-<td>代码段寄存器，指向当前代码段的基址。</td>
-</tr>
-<tr>
-<td>ds</td>
-<td>Data Segment</td>
-<td>数据段寄存器，指向当前数据段的基址。</td>
-</tr>
-<tr>
-<td>es</td>
-<td>Extra Segment</td>
-<td>额外段寄存器，指向额外数据段的基址。</td>
-</tr>
-<tr>
-<td>fs</td>
-<td>FS Segment</td>
-<td>特殊用途段寄存器，常用于线程本地存储等。</td>
-</tr>
-<tr>
-<td>gs</td>
-<td>GS Segment</td>
-<td>特殊用途段寄存器，常用于线程本地存储等。</td>
-</tr>
-<tr>
-<td>ss</td>
-<td>Stack Segment</td>
-<td>栈段寄存器，指向当前栈段的基址。</td>
-</tr>
-</tbody></table>
-<h3 id="2-4-浮点与向量寄存器-Floating-Point-and-Vector-Registers"><a href="#2-4-浮点与向量寄存器-Floating-Point-and-Vector-Registers" class="headerlink" title="2.4. 浮点与向量寄存器 (Floating Point and Vector Registers)"></a>2.4. 浮点与向量寄存器 (Floating Point and Vector Registers)</h3><table>
-<thead>
-<tr>
-<th>寄存器名</th>
-<th>英文名称</th>
-<th>作用</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>xmm0-xmm15</td>
-<td>SIMD Registers</td>
-<td>用于 SSE 指令集的 128 位向量运算。</td>
-</tr>
-<tr>
-<td>ymm0-ymm15</td>
-<td>AVX Registers</td>
-<td>用于 AVX 指令集的 256 位向量运算。</td>
-</tr>
-<tr>
-<td>zmm0-zmm31</td>
-<td>AVX-512 Registers</td>
-<td>用于 AVX-512 指令集的 512 位向量运算。</td>
-</tr>
-</tbody></table>
-<h3 id="2-5-函数调用时的参数传递"><a href="#2-5-函数调用时的参数传递" class="headerlink" title="2.5. 函数调用时的参数传递"></a>2.5. 函数调用时的参数传递</h3><p>在 x86_64 架构中，函数调用时的参数传递遵循 System V AMD64 ABI（Linux&#x2F;Unix 系统的标准调用约定）。</p>
-<p>前六个整数或指针类型的参数依次存储在以下寄存器中：</p>
-<ol>
-<li><strong>rdi</strong> - 第一个参数</li>
-<li><strong>rsi</strong> - 第二个参数</li>
-<li><strong>rdx</strong> - 第三个参数</li>
-<li><strong>rcx</strong> - 第四个参数</li>
-<li><strong>r8</strong> - 第五个参数</li>
-<li><strong>r9</strong> - 第六个参数</li>
-</ol>
-<p>对于浮点类型的参数（如 <code>float</code> 或 <code>double</code>），前八个参数存储在以下 <strong>SSE 寄存器</strong> 中：</p>
-<ol>
-<li><strong>xmm0</strong> - 第一个浮点参数</li>
-<li><strong>xmm1</strong> - 第二个浮点参数</li>
-<li><strong>xmm2</strong> - 第三个浮点参数</li>
-<li><strong>xmm3</strong> - 第四个浮点参数</li>
-<li><strong>xmm4</strong> - 第五个浮点参数</li>
-<li><strong>xmm5</strong> - 第六个浮点参数</li>
-<li><strong>xmm6</strong> - 第七个浮点参数</li>
-<li><strong>xmm7</strong> - 第八个浮点参数</li>
-</ol>
-<p>溢出参数（超过寄存器数量）会依次存储在 <strong>栈</strong> 中：</p>
-<ul>
-<li>超过寄存器数量（整数参数超过 6 个，浮点参数超过 8 个）的参数会依次压入栈中。</li>
-<li>栈需要保持 16 字节对齐，可能会插入填充字节。</li>
-<li>可以通过访问栈指针（rsp）或基址指针（rbp）来找到栈上的参数。<ul>
-<li>使用 rsp（栈指针）<ul>
-<li>在函数入口时，rsp 指向栈顶（即返回地址的下一个位置）。</li>
-<li>栈上的第一个参数位于 [rsp + 8]（跳过返回地址）。</li>
-<li>第二个参数位于 [rsp + 16]，依此类推。</li>
-</ul>
-</li>
-<li>使用 rbp（基址指针）<ul>
-<li>如果函数使用了帧指针（rbp），rbp 通常指向调用者的栈帧基址。</li>
-<li>栈上的第一个参数位于 [rbp + 16]（跳过返回地址和保存的 rbp）。</li>
-<li>第二个参数位于 [rbp + 24]，依此类推。</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<hr>
-<h2 id="3-栈"><a href="#3-栈" class="headerlink" title="3. 栈"></a>3. 栈</h2><h3 id="3-1-理解栈布局"><a href="#3-1-理解栈布局" class="headerlink" title="3.1. 理解栈布局"></a>3.1. 理解栈布局</h3><p>在函数调用时，栈的布局通常如下（从高地址到低地址）：</p>
-<ol>
-<li>返回地址：调用函数时，call 指令会将返回地址（下一条指令的地址）压入栈中。</li>
-<li>溢出参数：如果参数超过寄存器数量，多余的参数会依次压入栈中。</li>
-<li>栈对齐填充：为了满足 16 字节对齐要求，可能会有额外的填充字节。</li>
-<li>局部变量和保存的寄存器：函数内部可能会在栈上分配空间用于局部变量或保存调用者的寄存器。</li>
-</ol>
-<h3 id="3-2-函数调用时的压栈过程"><a href="#3-2-函数调用时的压栈过程" class="headerlink" title="3.2. 函数调用时的压栈过程"></a>3.2. 函数调用时的压栈过程</h3><p>在 x86_64 架构中，函数调用时会涉及到栈的操作，包括压栈和出栈。这些操作主要用于保存调用者的上下文（如<br>返回地址、寄存器值）以及为被调用函数分配栈帧。</p>
-<h4 id="3-2-1-调用者（Caller）的操作"><a href="#3-2-1-调用者（Caller）的操作" class="headerlink" title="3.2.1. 调用者（Caller）的操作"></a>3.2.1. 调用者（Caller）的操作</h4><ol>
-<li><p><strong>压入返回地址</strong> 当调用者使用 <code>call</code> 指令调用函数时，CPU 会自动将返回地址（下一条指令的地址）压入<br>栈中。此时，<code>rsp</code>（栈指针）会减少 8 字节（64 位系统）。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">call function</span><br><span class="line"># 等价于：</span><br><span class="line">push rip  ; 将返回地址压入栈</span><br><span class="line">jmp function</span><br></pre></td></tr></table></figure>
-</li>
-<li><p><strong>压入溢出参数（如果有）</strong> 如果函数的参数超过了寄存器数量（整数参数超过 6 个，浮点参数超过 8 个）<br>，多余的参数会从右到左依次压入栈中。<code>rsp</code> 会随着每个参数的压入减少。</p>
-</li>
-<li><p><strong>对齐栈</strong> 为了满足 <strong>16 字节对齐</strong> 的要求，调用者可能会插入额外的填充字节，使得 <code>rsp</code> 在调用函数<br>前保持 16 字节对齐。</p>
-</li>
-</ol>
-<h4 id="3-2-2-被调用者（Callee）的操作"><a href="#3-2-2-被调用者（Callee）的操作" class="headerlink" title="3.2.2. 被调用者（Callee）的操作"></a>3.2.2. <strong>被调用者（Callee）的操作</strong></h4><ol>
-<li><p><strong>保存调用者的栈帧基址</strong> 被调用者通常会保存调用者的栈帧基址（<code>rbp</code>），以便在函数返回时恢复调用者<br>的栈帧。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">push rbp       ; 保存调用者的 rbp</span><br><span class="line">mov rbp, rsp   ; 设置当前函数的栈帧基址</span><br></pre></td></tr></table></figure>
-</li>
-<li><p><strong>分配栈空间</strong> 被调用者会根据函数内部局部变量的需求，在栈上分配空间。<code>rsp</code> 会减少相应的字节数。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sub rsp, &lt;size&gt;  ; 为局部变量分配栈空间</span><br></pre></td></tr></table></figure></li>
-</ol>
-<h3 id="3-3-2-函数返回时的出栈过程"><a href="#3-3-2-函数返回时的出栈过程" class="headerlink" title="3.3. 2. 函数返回时的出栈过程"></a>3.3. <strong>2. 函数返回时的出栈过程</strong></h3><h4 id="3-3-1-被调用者（Callee）的操作"><a href="#3-3-1-被调用者（Callee）的操作" class="headerlink" title="3.3.1. 被调用者（Callee）的操作"></a>3.3.1. <strong>被调用者（Callee）的操作</strong></h4><ol>
-<li><p><strong>释放局部变量的栈空间</strong> 被调用者在返回前会释放为局部变量分配的栈空间。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">add rsp, &lt;size&gt;  ; 恢复 rsp</span><br></pre></td></tr></table></figure>
-</li>
-<li><p><strong>恢复调用者的栈帧基址</strong> 被调用者会恢复调用者的 <code>rbp</code>，以确保调用者的栈帧完整。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pop rbp  ; 恢复调用者的 rbp</span><br></pre></td></tr></table></figure>
-</li>
-<li><p><strong>返回到调用者</strong> 被调用者使用 <code>ret</code> 指令从栈中弹出返回地址，并跳转到该地址。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ret  ; 等价于：pop rip</span><br></pre></td></tr></table></figure></li>
-</ol>
-<h4 id="3-3-2-调用者（Caller）的操作"><a href="#3-3-2-调用者（Caller）的操作" class="headerlink" title="3.3.2. 调用者（Caller）的操作"></a>3.3.2. <strong>调用者（Caller）的操作</strong></h4><ol>
-<li><strong>清理栈上的参数（如果需要）</strong> 如果调用约定要求调用者清理栈上的参数（如 <code>cdecl</code> 调用约定），调用<br>者会调整 <code>rsp</code>。<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">add rsp, &lt;size&gt;  ; 清理栈上的参数</span><br></pre></td></tr></table></figure></li>
-</ol>
-<h3 id="3-4-3-栈指针（rsp）和基址指针（rbp）的变化"><a href="#3-4-3-栈指针（rsp）和基址指针（rbp）的变化" class="headerlink" title="3.4. 3. 栈指针（rsp）和基址指针（rbp）的变化"></a>3.4. <strong>3. 栈指针（<code>rsp</code>）和基址指针（<code>rbp</code>）的变化</strong></h3><p>以下是一个函数调用的栈布局示例：</p>
-<p><strong>C 代码</strong></p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">example</span><span class="params">(<span class="type">int</span> a, <span class="type">int</span> b)</span> &#123;</span><br><span class="line">    <span class="type">int</span> x = a + b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">    example(<span class="number">1</span>, <span class="number">2</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><strong>汇编代码（简化版）</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"># main 函数</span><br><span class="line">main:</span><br><span class="line">    sub rsp, 16         ; 对齐栈</span><br><span class="line">    mov edi, 1          ; 第一个参数 -&gt; rdi</span><br><span class="line">    mov esi, 2          ; 第二个参数 -&gt; rsi</span><br><span class="line">    call example        ; 调用 example 函数</span><br><span class="line">    add rsp, 16         ; 恢复栈</span><br><span class="line">    ret</span><br><span class="line"></span><br><span class="line"># example 函数</span><br><span class="line">example:</span><br><span class="line">    push rbp            ; 保存调用者的 rbp</span><br><span class="line">    mov rbp, rsp        ; 设置当前栈帧基址</span><br><span class="line">    sub rsp, 16         ; 为局部变量分配栈空间</span><br><span class="line">    mov eax, edi        ; a -&gt; eax</span><br><span class="line">    add eax, esi        ; a + b</span><br><span class="line">    leave               ; 恢复栈帧（等价于：mov rsp, rbp; pop rbp）</span><br><span class="line">    ret                 ; 返回调用者</span><br></pre></td></tr></table></figure>
-
-<p><strong>栈布局变化</strong> | 操作 | <code>rsp</code> 变化 | 栈内容（从高地址到低地址） | | ————– | ———– |<br>————————– | | <code>call example</code> | <code>rsp -= 8</code> | 返回地址 | | <code>push rbp</code> | <code>rsp -= 8</code> |<br>保存调用者的 <code>rbp</code> | | <code>sub rsp, 16</code> | <code>rsp -= 16</code> | 为局部变量分配空间 | | <code>leave</code> | <code>rsp += 16</code> |<br>释放局部变量空间 | | <code>ret</code> | <code>rsp += 8</code> | 弹出返回地址 |</p>
-<h3 id="3-5-总结"><a href="#3-5-总结" class="headerlink" title="3.5. 总结"></a>3.5. <strong>总结</strong></h3><ol>
-<li><strong>函数调用的栈操作</strong>：<ul>
-<li>调用者负责压入返回地址和溢出参数。</li>
-<li>被调用者负责保存 <code>rbp</code> 和分配局部变量空间。</li>
-<li>函数返回时，释放局部变量空间并恢复调用者的栈帧。</li>
-</ul>
-</li>
-<li><strong><code>rsp</code> 和 <code>rbp</code> 的变化</strong>：<ul>
-<li><code>rsp</code> 指向栈顶，动态变化。</li>
-<li><code>rbp</code> 指向栈帧基址，通常固定不变。</li>
-</ul>
-</li>
-</ol>
-<h2 id="4-使用-gdb-查看寄存器"><a href="#4-使用-gdb-查看寄存器" class="headerlink" title="4. 使用 gdb 查看寄存器"></a>4. 使用 gdb 查看寄存器</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看所有寄存器</span></span><br><span class="line">info registers</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看指定寄存器</span></span><br><span class="line">info registers rdi</span><br><span class="line"><span class="comment"># 或简写</span></span><br><span class="line">i r rdi</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看十六进制</span></span><br><span class="line">p/x <span class="variable">$rdx</span>    <span class="comment"># 十六进制</span></span><br><span class="line">p/d <span class="variable">$rdx</span>    <span class="comment"># 十进制</span></span><br><span class="line"><span class="comment"># 或简写</span></span><br><span class="line">p <span class="variable">$rdx</span></span><br></pre></td></tr></table></figure>
-
-<p>其中，<code>info registers</code> 会打印三列：</p>
-<ul>
-<li>第一列：寄存器名称</li>
-<li>第二列：寄存器的值（十六进制）</li>
-<li>第三列：寄存器的值（十进制；也可能是十六进制，用 <code>0x</code> 开头）</li>
-</ul>
-<p><code>info registers rdi</code> 与 <code>p $rdi</code> 效果相同。</p>
-<p>从寄存器查到的内存地址，可以用 <code>x</code> （examinze）命令来查看内存的值：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看指令</span></span><br><span class="line">x/i <span class="variable">$rip</span></span><br><span class="line"><span class="comment"># 查看栈顶</span></span><br><span class="line">x/16x <span class="variable">$rsp</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看内存</span></span><br><span class="line">p <span class="variable">$rdi</span></span><br><span class="line">x/2gx <span class="variable">$rdi</span></span><br><span class="line"><span class="comment"># 或先用 $rdi 查出内存地址，直接用地址访问</span></span><br><span class="line">x/2gx 47926411878160</span><br></pre></td></tr></table></figure>
-
-<p><code>x</code> 命令的说明：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">x/FMT ADDRESS</span><br></pre></td></tr></table></figure>
-
-<p>其中：</p>
-<ul>
-<li><code>x</code>：表示“examine memory”（查看内存）</li>
-<li><code>2</code>：数字，表示要查看的单元数</li>
-<li><code>g</code>：表示每个单元的 size，有 b(byte), h(halfword), w(word), g(giant, 8 bytes)</li>
-<li><code>x</code>：表示值的格式，有 o(octal), x(hex), d(decimal), u(unsigned decimal), t(binary), f(float),<br>a(address), i(instruction), c(char), s(string) and z(hex, zero padded on the left).</li>
-</ul>
-<p>在 gdb 命令行中使用 <code>help</code> 命令，可以查看命令的说明。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">(gdb) <span class="built_in">help</span> x</span><br><span class="line">Examine memory: x/FMT ADDRESS.</span><br><span class="line">ADDRESS is an expression <span class="keyword">for</span> the memory address to examine.</span><br><span class="line">FMT is a repeat count followed by a format letter and a size letter.</span><br><span class="line">Format letters are o(octal), x(hex), d(decimal), u(unsigned decimal),</span><br><span class="line">  t(binary), f(<span class="built_in">float</span>), a(address), i(instruction), c(char), s(string)</span><br><span class="line">  and z(hex, zero padded on the left).</span><br><span class="line">Size letters are b(byte), h(halfword), w(word), g(giant, 8 bytes).</span><br><span class="line">The specified number of objects of the specified size are printed</span><br><span class="line">according to the format.  If a negative number is specified, memory is</span><br><span class="line">examined backward from the address.</span><br><span class="line"></span><br><span class="line">Defaults <span class="keyword">for</span> format and size letters are those previously used.</span><br><span class="line">Default count is 1.  Default address is following last thing printed</span><br><span class="line">with this <span class="built_in">command</span> or <span class="string">&quot;print&quot;</span>.</span><br></pre></td></tr></table></figure>
-
-<h2 id="5-使用-gdb-查看栈"><a href="#5-使用-gdb-查看栈" class="headerlink" title="5. 使用 gdb 查看栈"></a>5. 使用 gdb 查看栈</h2><ul>
-<li>bt</li>
-<li>frame</li>
-<li>args</li>
-<li>locals</li>
-<li>x</li>
-</ul>
-<p>TDODO</p>
-<h3 id="5-1-frame-与寄存器的值"><a href="#5-1-frame-与寄存器的值" class="headerlink" title="5.1. frame 与寄存器的值"></a>5.1. <code>frame</code> 与寄存器的值</h3><ul>
-<li>GDB 中的寄存器值（如 <code>$rax</code>, <code>$rdi</code>, <code>$rsp</code> 等）是当前 CPU 执行上下文的快照。</li>
-<li>当你切换到 <code>frame 0</code>（最内层栈帧）时，寄存器值是最真实的，因为这是程序当前正在执行的地方。</li>
-<li>当你切换到 外层栈帧（frame 1, 2, …）时，GDB 会尝试还原当时的寄存器状态，但这依赖于：<ul>
-<li>编译器是否保存了寄存器值（如 callee-saved）</li>
-<li>是否有调试符号或 unwind 信息</li>
-<li>GDB 是否能推断出寄存器的保存位置</li>
-</ul>
-</li>
-</ul>
-<p>寄存器值可能出现的情况</p>
-<table>
-<thead>
-<tr>
-<th align="center">情况</th>
-<th align="center">表现</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">寄存器是 caller-saved（如 rdi, rsi, rax）</td>
-<td align="center">可能显示 <not saved> 或错误值</td>
-</tr>
-<tr>
-<td align="center">寄存器是 callee-saved（如 rbx, rbp, r12~r15）</td>
-<td align="center">通常能正确还原</td>
-</tr>
-<tr>
-<td align="center">没有调试信息或优化严重</td>
-<td align="center">GDB 无法还原，显示当前值或 <not saved></td>
-</tr>
-</tbody></table>
-<p>建议</p>
-<ul>
-<li>如果你要分析寄存器状态，最好在 frame 0 或断点处进行。</li>
-<li>如果你在分析 core dump 或栈破坏问题，寄存器值只能作为参考，不要完全依赖外层 frame 的寄存器快照。</li>
-<li>使用 info args 和 info locals 更可靠地查看参数和局部变量（如果有符号信息）。</li>
-</ul>
-<h2 id="6-在特定线程中设置断点"><a href="#6-在特定线程中设置断点" class="headerlink" title="6. 在特定线程中设置断点"></a>6. 在特定线程中设置断点</h2><h3 id="6-1-断点只作用于某线程"><a href="#6-1-断点只作用于某线程" class="headerlink" title="6.1. 断点只作用于某线程"></a>6.1. 断点只作用于某线程</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看所有线程 ID 和当前线程 ID（gdb 中会使用 * 标注当前线程）</span></span><br><span class="line">(gdb) info threads</span><br><span class="line"><span class="comment"># 切换当前上下文到指定线程</span></span><br><span class="line">(gdb) thread &lt;THREAD_ID&gt;</span><br><span class="line"><span class="comment"># 通过查看当前堆栈是不是自己要断点的线程</span></span><br><span class="line">(gdb) bt</span><br><span class="line">(gdb) <span class="built_in">break</span> LOCATION thread THREADNUM</span><br><span class="line"><span class="comment"># 条件断点</span></span><br><span class="line">(gdb) <span class="built_in">break</span> source.c:123 thread 5 <span class="keyword">if</span> fds[0].fd == 7</span><br><span class="line"><span class="comment"># 如果没有 debug 符号，可以利用函数返回值寄存器断点</span></span><br><span class="line">(gdb) <span class="built_in">break</span> poll thread 2 <span class="keyword">if</span> <span class="variable">$rdx</span> &gt; 0</span><br><span class="line"><span class="comment"># 完整格式</span></span><br><span class="line"><span class="built_in">break</span> [PROBE_MODIFIER] [LOCATION] [thread THREADNUM] [<span class="keyword">if</span> CONDITION]</span><br></pre></td></tr></table></figure>
-
-<h3 id="6-2-锁定调度器，只让当前线程运行"><a href="#6-2-锁定调度器，只让当前线程运行" class="headerlink" title="6.2. 锁定调度器，只让当前线程运行"></a>6.2. 锁定调度器，只让当前线程运行</h3><p>默认情况下，GDB 会让所有线程一起运行（比如你执行 continue 时）。如果你只想让当前线程运行，其它线程保<br>持暂停，可以使用：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) <span class="built_in">set</span> scheduler-locking on</span><br></pre></td></tr></table></figure>
-
-<p>这表示：只有当前线程会执行，其他线程全部暂停。</p>
-<p>其中模式还有：</p>
-<table>
-<thead>
-<tr>
-<th align="center">模式</th>
-<th align="center">说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">off</td>
-<td align="center">默认值，所有线程都可以运行</td>
-</tr>
-<tr>
-<td align="center">on</td>
-<td align="center">只有当前线程运行，其他线程暂停</td>
-</tr>
-<tr>
-<td align="center">step</td>
-<td align="center">单步调试时只运行当前线程，continue 时其他线程也会运行</td>
-</tr>
-</tbody></table>
-<p>你可以随时切换：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) <span class="built_in">set</span> scheduler-locking step</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>如果你在调试死锁、竞态或线程间通信问题，锁定调度器是非常有效的方式。</li>
-<li>如果你在调试某个 poll() 或 epoll_wait() 调用，只想观察某个线程的行为，可以结合 catch syscall 和<br>thread 命令一起使用。</li>
-</ul>
-<h2 id="7-查看汇编代码"><a href="#7-查看汇编代码" class="headerlink" title="7. 查看汇编代码"></a>7. 查看汇编代码</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看汇编代码，其中 &quot;=&gt;&quot; 标记的是当前执行位置</span></span><br><span class="line">(gdb) disassemble</span><br><span class="line"><span class="comment"># 反汇编指定地址范围</span></span><br><span class="line"><span class="comment"># 这会显示从当前指令开始的 32 字节范围内的汇编代码。</span></span><br><span class="line">(gdb) disassemble <span class="variable">$rip</span>, <span class="variable">$rip</span>+32</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看当前指令（x86）</span></span><br><span class="line">(gdb) x/i <span class="variable">$pc</span></span><br><span class="line"><span class="comment"># 或在 x86-64 架构下：</span></span><br><span class="line">(gdb) x/i <span class="variable">$rip</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Bonus: 默认 GDB 使用 AT&amp;T 风格（如 %rax），你可以切换为 Intel 风格</span></span><br><span class="line"><span class="comment"># 这样输出会更接近你在汇编教材或 IDA Pro 中看到的格式</span></span><br><span class="line">(gdb) <span class="built_in">set</span> disassembly-flavor intel</span><br></pre></td></tr></table></figure>
-
-<h2 id="8-位置无关代码（PIC）"><a href="#8-位置无关代码（PIC）" class="headerlink" title="8. 位置无关代码（PIC）"></a>8. 位置无关代码（PIC）</h2><h3 id="8-1-什么是-PIC"><a href="#8-1-什么是-PIC" class="headerlink" title="8.1. 什么是 PIC"></a>8.1. <strong>什么是 PIC</strong></h3><ul>
-<li><strong>PIC</strong>（Position Independent Code，位置无关代码）是一种编译方式，使得生成的代码可以在内存中的任意<br>位置运行，而无需硬编码绝对地址。</li>
-<li>在动态链接库（<code>shared libraries</code>）中，通常需要使用 PIC，以便库可以被加载到任意内存地址。</li>
-<li>节省空间：相比使用 64 位绝对地址，RIP 相对寻址只需要一个 32 位偏移量。</li>
-<li>更安全：支持地址随机化（ASLR），提高程序的安全性。</li>
-</ul>
-<h3 id="8-2-PIC-的实现"><a href="#8-2-PIC-的实现" class="headerlink" title="8.2. PIC 的实现"></a>8.2. <strong>PIC 的实现</strong></h3><ol>
-<li><p><strong>访问全局变量</strong> 在 PIC 模式下，代码通过 <strong>全局偏移表（GOT, Global Offset Table）</strong> 和 <strong>过程链接<br>表（PLT, Procedure Linkage Table）</strong> 访问全局变量和函数地址。</p>
-</li>
-<li><p><strong>寄存器 <code>rip</code> 的使用</strong> x86_64 支持基于 <code>rip</code>（指令指针）的寻址方式，PIC 会利用 <code>rip</code> 相对寻址来<br>访问全局变量或函数地址，而不是使用绝对地址。</p>
-</li>
-</ol>
-<p>在 x86-64 架构中，传统的绝对地址寻址方式不再适用于位置无关代码。于是引入了 RIP（指令指针）相对寻址：</p>
-<p>假设你有一个全局变量 int x &#x3D; 42;，在汇编中访问它可能会变成：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">asm</span><br><span class="line">mov eax, DWORD PTR [rip + offset_to_x]</span><br></pre></td></tr></table></figure>
-
-<p>这里的 offset_to_x 是编译器计算出来的 x 相对于当前指令的偏移量。</p>
-<table>
-<thead>
-<tr>
-<th align="center">寻址方式</th>
-<th align="center">描述</th>
-<th align="center">是否位置无关</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">绝对地址寻址</td>
-<td align="center">使用固定地址，如 [0x400123]</td>
-<td align="center">❌ 否</td>
-</tr>
-<tr>
-<td align="center">寄存器间接寻址</td>
-<td align="center">如 [rax]，地址由寄存器决定</td>
-<td align="center">✅ 是</td>
-</tr>
-<tr>
-<td align="center">RIP 相对寻址</td>
-<td align="center">如 [rip + offset]，相对当前指令位置</td>
-<td align="center">✅ 是</td>
-</tr>
-</tbody></table>
-<h3 id="8-3-PIC-的优化"><a href="#8-3-PIC-的优化" class="headerlink" title="8.3. PIC 的优化"></a>8.3. <strong>PIC 的优化</strong></h3><ul>
-<li><strong>减少重定位</strong>：通过 <code>rip</code> 相对寻址，避免了加载时的重定位操作，提高了加载速度。</li>
-<li><strong>共享内存</strong>：多个进程可以共享同一段动态库代码，而无需为每个进程生成独立的副本。</li>
-</ul>
-<h3 id="8-4-示例"><a href="#8-4-示例" class="headerlink" title="8.4. 示例"></a>8.4. <strong>示例</strong></h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mov rax, [rip + global_var@GOTPCREL]  ; 通过 GOT 表访问全局变量</span><br><span class="line">call [rip + func@PLT]                ; 通过 PLT 表调用函数</span><br></pre></td></tr></table></figure>
-
-<p>举个 gdb 调试的例子：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(gdb) x/i <span class="variable">$rip</span></span><br><span class="line">=&gt; 0x2ac084b5ec10 &lt;poll&gt;:       cmpl   <span class="variable">$0x0</span>,0x2d939d(%rip)        <span class="comment"># 0x2ac084e37fb4 &lt;__libc_multiple_threads&gt;</span></span><br><span class="line">(gdb) p (bool)<span class="variable">$__libc_multiple_threads</span></span><br><span class="line"><span class="literal">true</span></span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><code>cmpl $0x0, 0x2d939d(%rip)</code> 是一条比较指令（<code>cmp</code>），用于将某个内存地址中的值与立即数 <code>0</code> 进行比较<br>。</li>
-<li><code>(%rip)</code> 表示使用 RIP 相对寻址，这是 x86-64 架构中常见的一种寻址方式。</li>
-<li>实际比较的是地址 <code>0x2ac084e37fb4</code> 处的值，也就是 <code>__libc_multiple_threads</code> 这个变量。</li>
-</ul>
-<p><code>__libc_multiple_threads</code> 是什么？</p>
-<ul>
-<li>这是 GNU C 库（glibc）中的一个内部变量，用来标记当前进程是否启用了多线程。</li>
-<li>如果这个值是 0，说明当前进程是单线程。</li>
-<li>如果是非零，说明进程中有多个线程。</li>
-</ul>
-<p>所以这条指令的作用是：判断当前进程是否是多线程环境，可能用于决定是否启用线程安全的行为。</p>
-<h3 id="8-5-为什么使用-RIP-相对寻址？"><a href="#8-5-为什么使用-RIP-相对寻址？" class="headerlink" title="8.5. 为什么使用 RIP 相对寻址？"></a>8.5. 为什么使用 RIP 相对寻址？</h3><ol>
-<li>RIP 是唯一始终已知的寄存器</li>
-</ol>
-<ul>
-<li>在执行指令时，CPU 总是知道当前指令的地址（即 RIP）。</li>
-<li>所以可以在编译时计算出目标数据与当前指令之间的偏移量，而不需要知道数据的绝对地址。</li>
-</ul>
-<p>这就允许编译器生成位置无关代码，即使程序被加载到不同的内存地址，偏移量仍然有效。</p>
-<ol start="2">
-<li>其他寄存器值是动态的，不可预测</li>
-</ol>
-<ul>
-<li>比如 RBX、RAX、RDI 等寄存器，它们的值在运行时可能被程序修改。</li>
-<li>如果用这些寄存器做基址寻址，编译器就无法提前知道它们的值，也就无法生成稳定的偏移量。</li>
-</ul>
-<ol start="3">
-<li>支持共享库和地址空间布局随机化（ASLR）</li>
-</ol>
-<ul>
-<li>RIP 相对寻址让代码段不依赖固定地址，可以被多个进程共享。</li>
-<li>也支持操作系统在运行时随机加载地址，提高安全性（ASLR）。</li>
-</ul>
-<ol start="4">
-<li>节省指令空间</li>
-</ol>
-<ul>
-<li>使用 RIP 相对寻址只需要一个 32 位偏移量。</li>
-<li>如果使用绝对地址，需要嵌入完整的 64 位地址，指令长度更长，效率更低。</li>
-</ul>
-<h3 id="8-6-为什么使用-RIP-相对寻址只需要一个-32-位偏移量"><a href="#8-6-为什么使用-RIP-相对寻址只需要一个-32-位偏移量" class="headerlink" title="8.6. 为什么使用 RIP 相对寻址只需要一个 32 位偏移量"></a>8.6. 为什么使用 RIP 相对寻址只需要一个 32 位偏移量</h3><p>在 x86-64 架构中，RIP 相对寻址的偏移量被设计为一个有符号的 32 位整数，也就是一个 displacement（位移<br>）字段，它在机器码中只占用 4 个字节。</p>
-<ul>
-<li><p>RIP 是 64 位的指令指针，表示当前指令的地址。</p>
-</li>
-<li><p>RIP 相对寻址的目标地址是通过：</p>
-<p><code>目标地址 = 下一条指令地址（RIP） + 32 位偏移量</code></p>
-</li>
-<li><p>这个偏移量是一个 有符号整数，所以它的范围是：</p>
-<p>从 −2³¹ 到 +2³¹−1，即 <strong>±2GB</strong> 的寻址范围。</p>
-</li>
-</ul>
-<p>这意味着，当前指令附近 ±2GB 范围内的任何数据都可以通过 RIP 相对寻址访问。</p>
-<table>
-<thead>
-<tr>
-<th align="center">优点</th>
-<th align="center">说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">✅ 节省空间</td>
-<td align="center">只用 4 字节表示偏移，比使用完整 64 位地址节省指令长度</td>
-</tr>
-<tr>
-<td align="center">✅ 支持位置无关代码</td>
-<td align="center">编译器只需计算偏移，不依赖绝对地址</td>
-</tr>
-<tr>
-<td align="center">✅ 高效</td>
-<td align="center">CPU 执行时只需加法运算，无需查表或重定位</td>
-</tr>
-<tr>
-<td align="center">✅ 安全</td>
-<td align="center">支持地址空间布局随机化（ASLR），提高安全性</td>
-</tr>
-</tbody></table>
-<h3 id="8-7-为什么可以被多个进程共享？"><a href="#8-7-为什么可以被多个进程共享？" class="headerlink" title="8.7. 为什么可以被多个进程共享？"></a>8.7. 为什么可以被多个进程共享？</h3><p>因为代码中不再硬编码具体地址，多个进程可以：</p>
-<ul>
-<li>使用同一份物理内存中的代码段。</li>
-<li>每个进程有自己的数据段，但共享同一份只读代码。</li>
-</ul>
-<p>这大大节省了内存，提高了系统效率。</p>
-<p>举个例子：</p>
-<table>
-<thead>
-<tr>
-<th align="center">进程</th>
-<th align="center">加载地址</th>
-<th align="center">使用的代码段</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">A</td>
-<td align="center">0x400000</td>
-<td align="center">使用共享代码段</td>
-</tr>
-<tr>
-<td align="center">B</td>
-<td align="center">0x500000</td>
-<td align="center">使用共享代码段</td>
-</tr>
-</tbody></table>
-<p>两者的代码段内容完全一样，因为里面的寻址是相对 RIP 的，不依赖于加载地址。</p>
-<p>为什么绝对寻址不可以被多进程共享？</p>
-<ul>
-<li>每个进程的虚拟地址空间是独立的<ul>
-<li>操作系统为每个进程分配独立的虚拟地址空间。</li>
-<li>即使两个进程都加载了同一个程序，它们的地址空间可能完全不同。</li>
-<li>如果代码中使用绝对地址，加载到不同地址空间后，这些地址就不再有效。</li>
-</ul>
-</li>
-</ul>
-<p>所以，绝对地址在一个进程中是有效的，在另一个进程中可能就指向错误的地方或根本不存在。</p>
-<ul>
-<li><p>需要重定位，无法直接共享物理页</p>
-<ul>
-<li>如果使用绝对地址，操作系统必须在每个进程加载时对代码进行“重定位”，修改指令中的地址。</li>
-<li>一旦修改，代码段就变成了进程私有，不能共享同一份物理内存。</li>
-<li>而位置无关代码（如使用 RIP 相对寻址）不需要修改，可以直接映射到多个进程的地址空间。</li>
-</ul>
-</li>
-<li><p>违反共享库的设计原则</p>
-<ul>
-<li>动态链接库（如 <code>.so</code> 或 <code>.dll</code>）的核心优势就是可以被多个进程共享。</li>
-<li>如果库中使用绝对地址，每个进程都要有自己的副本，失去了共享的意义。</li>
-<li>正确做法是使用位置无关代码（PIC），让库在任意地址都能运行。</li>
-</ul>
-</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th align="center">区域</th>
-<th align="center">是否可共享</th>
-<th align="center">原因说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">代码段</td>
-<td align="center">✅ 是</td>
-<td align="center">只读 + 位置无关，多个进程可映射同一物理页</td>
-</tr>
-<tr>
-<td align="center">数据段</td>
-<td align="center">❌ 否</td>
-<td align="center">每个进程的数据不同，需独立副本</td>
-</tr>
-<tr>
-<td align="center">堆</td>
-<td align="center">❌ 否</td>
-<td align="center">动态分配，地址空间不同</td>
-</tr>
-<tr>
-<td align="center">栈</td>
-<td align="center">❌ 否</td>
-<td align="center">私有调用栈，不能混用</td>
-</tr>
-<tr>
-<td align="center">共享内存段</td>
-<td align="center">✅ 是</td>
-<td align="center">显式创建，专门用于共享</td>
-</tr>
-</tbody></table>
-<p>如果你想深入了解某个进程的内存布局，可以分析 <code>/proc/[pid]/maps</code> 或用工具如 <code>pmap</code>、<code>vmmap</code>。</p>
-<h2 id="9-实际-debug-例子：在多线程中查看-poll-的事件"><a href="#9-实际-debug-例子：在多线程中查看-poll-的事件" class="headerlink" title="9. 实际 debug 例子：在多线程中查看 poll 的事件"></a>9. 实际 debug 例子：在多线程中查看 poll 的事件</h2><p>先复习下 <code>poll</code> 函数：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">poll</span><span class="params">(<span class="keyword">struct</span> pollfd *fds, <span class="type">nfds_t</span> nfds, <span class="type">int</span> timeout)</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 第一个参数 fds 的类型</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">pollfd</span> &#123;</span></span><br><span class="line">    <span class="type">int</span>   fd;         <span class="comment">/* file descriptor */</span></span><br><span class="line">    <span class="type">short</span> events;     <span class="comment">/* requested events */</span></span><br><span class="line">    <span class="type">short</span> revents;    <span class="comment">/* returned events */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<p><strong>FIXME：这种在汇编代码 ret 前断点，并依据 <code>rax</code> 、<code>rdi</code> 设置条件断点的方式不可靠，因为可能进入了<br>libc 层。</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看 polll 的汇编代码</span></span><br><span class="line">(gdb) disass poll</span><br><span class="line">Dump of assembler code <span class="keyword">for</span> <span class="keyword">function</span> poll:</span><br><span class="line">   0x00002ac084b5ec10 &lt;+0&gt;:     cmpl   <span class="variable">$0x0</span>,0x2d939d(%rip)        <span class="comment"># 0x2ac084e37fb4 &lt;__libc_multiple_threads&gt;</span></span><br><span class="line">   0x00002ac084b5ec17 &lt;+7&gt;:     jne    0x2ac084b5ec29 &lt;poll+25&gt;</span><br><span class="line">   0x00002ac084b5ec19 &lt;+0&gt;:     mov    <span class="variable">$0x7</span>,%eax</span><br><span class="line">   0x00002ac084b5ec1e &lt;+5&gt;:     syscall</span><br><span class="line">   0x00002ac084b5ec20 &lt;+7&gt;:     cmp    <span class="variable">$0xfffffffffffff001</span>,%rax</span><br><span class="line">   0x00002ac084b5ec26 &lt;+13&gt;:    jae    0x2ac084b5ec59 &lt;poll+73&gt;</span><br><span class="line">   0x00002ac084b5ec28 &lt;+15&gt;:    ret</span><br><span class="line">   0x00002ac084b5ec29 &lt;+25&gt;:    sub    <span class="variable">$0x8</span>,%rsp</span><br><span class="line">   0x00002ac084b5ec2d &lt;+29&gt;:    call   0x2ac084b77600 &lt;__libc_enable_asynccancel&gt;</span><br><span class="line">   0x00002ac084b5ec32 &lt;+34&gt;:    mov    %rax,(%rsp)</span><br><span class="line">   0x00002ac084b5ec36 &lt;+38&gt;:    mov    <span class="variable">$0x7</span>,%eax</span><br><span class="line">   0x00002ac084b5ec3b &lt;+43&gt;:    syscall</span><br><span class="line">   0x00002ac084b5ec3d &lt;+45&gt;:    mov    (%rsp),%rdi</span><br><span class="line">   0x00002ac084b5ec41 &lt;+49&gt;:    mov    %rax,%rdx</span><br><span class="line">   0x00002ac084b5ec44 &lt;+52&gt;:    call   0x2ac084b77660 &lt;__libc_disable_asynccancel&gt;</span><br><span class="line">   0x00002ac084b5ec49 &lt;+57&gt;:    mov    %rdx,%rax</span><br><span class="line">   0x00002ac084b5ec4c &lt;+60&gt;:    add    <span class="variable">$0x8</span>,%rsp</span><br><span class="line">   0x00002ac084b5ec50 &lt;+64&gt;:    cmp    <span class="variable">$0xfffffffffffff001</span>,%rax</span><br><span class="line">   0x00002ac084b5ec56 &lt;+70&gt;:    jae    0x2ac084b5ec59 &lt;poll+73&gt;</span><br><span class="line">=&gt; 0x00002ac084b5ec58 &lt;+72&gt;:    ret</span><br><span class="line">   0x00002ac084b5ec59 &lt;+73&gt;:    mov    0x2d31f0(%rip),%rcx        <span class="comment"># 0x2ac084e31e50</span></span><br><span class="line">   0x00002ac084b5ec60 &lt;+80&gt;:    neg    %eax</span><br><span class="line">   0x00002ac084b5ec62 &lt;+82&gt;:    mov    %eax,%fs:(%rcx)</span><br><span class="line">   0x00002ac084b5ec65 &lt;+85&gt;:    or     <span class="variable">$0xffffffffffffffff</span>,%rax</span><br><span class="line">   0x00002ac084b5ec69 &lt;+89&gt;:    ret</span><br><span class="line"></span><br><span class="line"><span class="comment"># 找到所有的 ret 指令，设置条件断点</span></span><br><span class="line"><span class="comment"># 注意：最好是在 ret 指令之前的指令上也加上断点，</span></span><br><span class="line"><span class="comment"># 因为 ret 的时候，可能已经把当前栈（除 rsp / rbp 外）都弹出了，寄存器中将看不到当前栈的信息</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># $rax 是返回值寄存器，也就是返回大于 0 时，让进程暂停</span></span><br><span class="line"><span class="comment"># 这里的 * 表示取内存的值（存放的是指令），* 断不可少，不然会被认为是 Function name</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line">(gdb) b *0x00002ac084b5ec26 thread 4 <span class="keyword">if</span> <span class="variable">$rax</span> &gt; 0</span><br><span class="line">(gdb) b *0x00002ac084b5ec28 thread 4 <span class="keyword">if</span> <span class="variable">$rax</span> &gt; 0</span><br><span class="line">(gdb) b *0x00002ac084b5ec56 thread 4 <span class="keyword">if</span> <span class="variable">$rax</span> &gt; 0</span><br><span class="line">(gdb) b *0x00002ac084b5ec58 thread 4 <span class="keyword">if</span> <span class="variable">$rax</span> &gt; 0</span><br><span class="line">(gdb) b *0x00002ac084b5ec65 thread 4 <span class="keyword">if</span> <span class="variable">$rax</span> &gt; 0</span><br><span class="line">(gdb) b *0x00002ac084b5ec69 thread 4 <span class="keyword">if</span> <span class="variable">$rax</span> &gt; 0</span><br><span class="line"></span><br><span class="line"><span class="comment"># 继续运行</span></span><br><span class="line">(gdb) c</span><br><span class="line"></span><br><span class="line"><span class="comment"># 当 IO 事件发生，程序会被暂停</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<h2 id="其他工具"><a href="#其他工具" class="headerlink" title="其他工具"></a>其他工具</h2><ul>
-<li>addr2line</li>
-</ul>
-<p>日志：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Thread 0 (crashed) 0 libexample.so + 0x36406</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">addr2line -e libexample.so 0x36406</span><br></pre></td></tr></table></figure>
-
-<p>或用 gdb :</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">gdb libexample.so</span><br><span class="line">(gdb) info line *0x36406</span><br></pre></td></tr></table></figure>
 
       
     </div>
@@ -2371,7 +2006,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">123</span>
+          <span class="site-state-item-count">124</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -2384,7 +2019,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">42</span>
+        <span class="site-state-item-count">43</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -2504,6 +2139,8 @@ if (document.querySelectorAll('pre.mermaid').length) {
 }
 </script>
 
+
+  
 
   
 

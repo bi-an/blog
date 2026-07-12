@@ -20,15 +20,15 @@
     var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="变量约定：  LIB：要解析的 *.so 绝对或相对路径（请换成你的文件）。 OFF：栈里 +0x... 的十六进制偏移；下文示例中 OFF &#x3D; 0x8fa860（与 addr2line 所用一致）。 PC：栈里 [0x...] 的进程内虚拟地址；示例 PC &#x3D; 0x15182684b860（会随每次运行&#x2F;ASLR 变化  ，仅为与下组 BASE 配套的一例）。 BASE：与上式满足 P">
+  <meta name="description" content="变量约定：  LIB：要解析的 *.so 绝对或相对路径（请换成你的文件）。 OFF：栈里 +0x... 的十六进制偏移；下文示例中 OFF &#x3D; 0x8fa860（与 addr2line 所用一致）。 PC：栈里 [0x...] 的进程内虚拟地址；示例 PC &#x3D; 0x15182684b860（会随每次运行&#x2F;ASLR 变化 ，仅为与下组 BASE 配套的一例）。 BASE：与上式满足 PC - BA">
 <meta property="og:type" content="article">
 <meta property="og:title" content="从共享库偏移反查符号（Linux &#x2F; ELF）">
 <meta property="og:url" content="https://bi-an.github.io/blog/2026/04/22/tech/cpp/debug/reverse-lookup-symbol-from-shared-library-offset/index.html">
 <meta property="og:site_name" content="江南人物的博客">
-<meta property="og:description" content="变量约定：  LIB：要解析的 *.so 绝对或相对路径（请换成你的文件）。 OFF：栈里 +0x... 的十六进制偏移；下文示例中 OFF &#x3D; 0x8fa860（与 addr2line 所用一致）。 PC：栈里 [0x...] 的进程内虚拟地址；示例 PC &#x3D; 0x15182684b860（会随每次运行&#x2F;ASLR 变化  ，仅为与下组 BASE 配套的一例）。 BASE：与上式满足 P">
+<meta property="og:description" content="变量约定：  LIB：要解析的 *.so 绝对或相对路径（请换成你的文件）。 OFF：栈里 +0x... 的十六进制偏移；下文示例中 OFF &#x3D; 0x8fa860（与 addr2line 所用一致）。 PC：栈里 [0x...] 的进程内虚拟地址；示例 PC &#x3D; 0x15182684b860（会随每次运行&#x2F;ASLR 变化 ，仅为与下组 BASE 配套的一例）。 BASE：与上式满足 PC - BA">
 <meta property="og:locale">
 <meta property="article:published_time" content="2026-04-22T14:20:41.000Z">
-<meta property="article:modified_time" content="2026-07-09T07:27:34.301Z">
+<meta property="article:modified_time" content="2026-07-12T14:58:38.879Z">
 <meta property="article:author" content="bi-an">
 <meta property="article:tag" content="cpp">
 <meta property="article:tag" content="debug">
@@ -225,7 +225,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
               </span>
 
           
@@ -243,13 +243,15 @@
 <ul>
 <li><code>LIB</code>：要解析的 <code>*.so</code> 绝对或相对路径（请换成你的文件）。</li>
 <li><code>OFF</code>：栈里 <code>+0x...</code> 的十六进制偏移；下文示例中 <strong><code>OFF = 0x8fa860</code></strong>（与 <code>addr2line</code> 所用一致）。</li>
-<li><code>PC</code>：栈里 <code>[0x...]</code> 的<strong>进程内</strong>虚拟地址；示例 <strong><code>PC = 0x15182684b860</code></strong>（会随每次运行&#x2F;ASLR 变化<br>  ，仅为与下组 <code>BASE</code> 配套的一例）。</li>
-<li><code>BASE</code>：与上式满足 <strong><code>PC - BASE = OFF</code></strong> 的映射基址；示例 <strong><code>BASE = 0x151825f51000</code></strong>。具体取<br>  <code>maps</code> 中哪一段以实际进程为准。</li>
+<li><code>PC</code>：栈里 <code>[0x...]</code> 的<strong>进程内</strong>虚拟地址；示例 <strong><code>PC = 0x15182684b860</code></strong>（会随每次运行/ASLR 变化<br>
+，仅为与下组 <code>BASE</code> 配套的一例）。</li>
+<li><code>BASE</code>：与上式满足 <strong><code>PC - BASE = OFF</code></strong> 的映射基址；示例 <strong><code>BASE = 0x151825f51000</code></strong>。具体取<br>
+<code>maps</code> 中哪一段以实际进程为准。</li>
 </ul>
 <hr>
-<h2 id="场景"><a href="#场景" class="headerlink" title="场景"></a>场景</h2><p>栈回溯里常见这种形式：</p>
+<h2 id="场景">场景</h2>
+<p>栈回溯里常见这种形式：</p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/path/to/libapp.so(+0x8fa860)[0x15182684b860]</span><br></pre></td></tr></table></figure>
-
 <p>含义：</p>
 <ul>
 <li><strong><code>libapp.so</code></strong>：出问题的共享库（例名，请替换为实际名）。</li>
@@ -258,13 +260,13 @@
 </ul>
 <p>调试时通常先用 <strong><code>+0x...</code> 偏移</strong> 对 <strong>磁盘上的 <code>.so</code> 文件</strong> 做解析。</p>
 <hr>
-<h2 id="首选：addr2line"><a href="#首选：addr2line" class="headerlink" title="首选：addr2line"></a>首选：<code>addr2line</code></h2><p>在带有 <strong>debug info</strong>（<code>-g</code>，且未 strip 掉调试信息）的 <code>.so</code> 上：</p>
+<h2 id="首选：addr2line">首选：<code>addr2line</code></h2>
+<p>在带有 <strong>debug info</strong>（<code>-g</code>，且未 strip 掉调试信息）的 <code>.so</code> 上：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">addr2line -e /path/to/libapp.so -f -C 0x8fa860</span><br></pre></td></tr></table></figure>
-
 <p><strong>形态示例（你本机实跑时会是你的函数与路径）：</strong></p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">myapp::CommandHandler(int, char const**, long, char const*)</span><br><span class="line">/path/to/src/cli/handler.cpp:42</span><br></pre></td></tr></table></figure>
-
-<p><code>addr2line</code> 可能把路径记成<strong>编译时目录</strong>（如 <code>out/../handler.cpp</code>），以 DWARF 记录为准；若行号对不上<br>，多半是<strong>二进制与当前源码</strong>不是同一版构建。</p>
+<p><code>addr2line</code> 可能把路径记成<strong>编译时目录</strong>（如 <code>out/../handler.cpp</code>），以 DWARF 记录为准；若行号对不上<br>
+，多半是<strong>二进制与当前源码</strong>不是同一版构建。</p>
 <table>
 <thead>
 <tr>
@@ -272,7 +274,8 @@
 <th>作用</th>
 </tr>
 </thead>
-<tbody><tr>
+<tbody>
+<tr>
 <td><code>-e FILE</code></td>
 <td>指定 ELF（<code>.so</code> 或可执行文件）</td>
 </tr>
@@ -284,83 +287,87 @@
 <td><code>-C</code></td>
 <td>Demangle C++ 符号</td>
 </tr>
-</tbody></table>
-<h3 id="从「PC-映射基址」反算并调用（注意-64-位运算）"><a href="#从「PC-映射基址」反算并调用（注意-64-位运算）" class="headerlink" title="从「PC + 映射基址」反算并调用（注意 64 位运算）"></a>从「PC + 映射基址」反算并调用（注意 64 位运算）</h3><p><code>addr2line</code> 需要的是<strong>相对</strong>该 ELF <strong>文件布局</strong>的偏移，通常就是栈上 <code>+0x...</code>，此处即<br><strong><code>0x8fa860</code></strong>。若你只有 <code>PC</code> 和 <code>BASE</code>，应得到 <code>OFF = PC - BASE</code>（在 64 位下计算）。</p>
-<p><strong>Bash 的 <code>$(( ... ))</code> 对很大的十六进制字面量会溢出</strong>；大地址用 Python 等做减法后再喂给<br><code>addr2line</code>。</p>
-<p><strong>脚本形态（数值与上节 <code>PC</code> &#x2F; <code>OFF</code> &#x2F; <code>BASE</code> 一致）：</strong></p>
+</tbody>
+</table>
+<h3 id="从「PC-映射基址」反算并调用（注意-64-位运算）">从「PC + 映射基址」反算并调用（注意 64 位运算）</h3>
+<p><code>addr2line</code> 需要的是<strong>相对</strong>该 ELF <strong>文件布局</strong>的偏移，通常就是栈上 <code>+0x...</code>，此处即<br>
+<strong><code>0x8fa860</code></strong>。若你只有 <code>PC</code> 和 <code>BASE</code>，应得到 <code>OFF = PC - BASE</code>（在 64 位下计算）。</p>
+<p><strong>Bash 的 <code>$(( ... ))</code> 对很大的十六进制字面量会溢出</strong>；大地址用 Python 等做减法后再喂给<br>
+<code>addr2line</code>。</p>
+<p><strong>脚本形态（数值与上节 <code>PC</code> / <code>OFF</code> / <code>BASE</code> 一致）：</strong></p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">python3 &lt;&lt;<span class="string">&#x27;PY&#x27;</span></span><br><span class="line">import subprocess</span><br><span class="line">so = <span class="string">&quot;/path/to/libapp.so&quot;</span>  <span class="comment"># 换成你的 LIB</span></span><br><span class="line">pc = 0x15182684b860</span><br><span class="line">off = 0x8fa860             <span class="comment"># 与栈中 +0x8fa860 相同</span></span><br><span class="line">base = pc - off</span><br><span class="line"><span class="built_in">print</span>(f<span class="string">&quot;BASE = 0x&#123;pc:x&#125; - 0x&#123;off:x&#125; = 0x&#123;base:x&#125;&quot;</span>)</span><br><span class="line">subprocess.run([<span class="string">&quot;addr2line&quot;</span>, <span class="string">&quot;-e&quot;</span>, so, <span class="string">&quot;-f&quot;</span>, <span class="string">&quot;-C&quot;</span>, hex(pc - base)], check=False)</span><br><span class="line">PY</span><br></pre></td></tr></table></figure>
-
-<p><strong>形态示例（<code>BASE</code> 行与上式为算术一致的一例；函数名&#x2F;路径为占位）：</strong></p>
+<p><strong>形态示例（<code>BASE</code> 行与上式为算术一致的一例；函数名/路径为占位）：</strong></p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">BASE = 0x15182684b860 - 0x8fa860 = 0x151825f51000</span><br><span class="line">myapp::CommandHandler(int, char const**, long, char const*)</span><br><span class="line">/path/to/src/cli/handler.cpp:42</span><br></pre></td></tr></table></figure>
-
 <p>当 <code>pc - base</code> 与栈中 <code>+0x8fa860</code> 一致时，与直接 <code>addr2line -e ... -C 0x8fa860</code> 等价。</p>
 <hr>
-<h2 id="补充：nm-objdump（看落在哪个符号里）"><a href="#补充：nm-objdump（看落在哪个符号里）" class="headerlink" title="补充：nm &#x2F; objdump（看落在哪个符号里）"></a>补充：<code>nm</code> &#x2F; <code>objdump</code>（看落在哪个符号里）</h2><p>无行号信息或想确认符号边界时，可按地址排序查看。全量往往很长，可只取前几行，或用 <code>grep</code> 搜<strong>已知</strong>子<br>串（来自 demangle 后的名字片段）。</p>
+<h2 id="补充：nm-objdump（看落在哪个符号里）">补充：<code>nm</code> / <code>objdump</code>（看落在哪个符号里）</h2>
+<p>无行号信息或想确认符号边界时，可按地址排序查看。全量往往很长，可只取前几行，或用 <code>grep</code> 搜<strong>已知</strong>子<br>
+串（来自 demangle 后的名字片段）。</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nm -n --defined-only /path/to/libapp.so | <span class="built_in">head</span> -5</span><br></pre></td></tr></table></figure>
-
 <p><strong>形态示例：</strong></p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">0000000000000000 n _GLOBAL_OFFSET_TABLE_</span><br><span class="line">000000000000a000 t _ZN3App6WidgetC1Ev</span><br><span class="line">000000000000a030 t _ZN3App6WidgetD1Ev</span><br><span class="line">000000000000a060 t _ZN3App4InitEi</span><br><span class="line">000000000000a090 t _ZN3App3RunEv</span><br></pre></td></tr></table></figure>
-
-<p>粗判：在排序列表里找 <strong>地址不大于目标 <code>0x8fa860</code> 的最后一个</strong>对应函数符号。精确行号仍以 <code>addr2line</code><br>为准。</p>
+<p>粗判：在排序列表里找 <strong>地址不大于目标 <code>0x8fa860</code> 的最后一个</strong>对应函数符号。精确行号仍以 <code>addr2line</code><br>
+为准。</p>
 <p>符号条数可能很大，例如某次对<strong>同一类大 <code>.so</code></strong> 的统计（仅作数量级参考）：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nm -n --defined-only /path/to/libapp.so | <span class="built_in">wc</span> -l</span><br></pre></td></tr></table></figure>
-
 <p><strong>形态示例：</strong></p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">86817</span><br></pre></td></tr></table></figure>
-
-<p>用 <code>objdump</code> 在符号表里按<strong>短关键字</strong>辅助定位；下面地址与<strong>偏移 <code>0x8fa860</code></strong> 配套（符号起点略小于该<br>PC，落在函数体内）：</p>
+<p>用 <code>objdump</code> 在符号表里按<strong>短关键字</strong>辅助定位；下面地址与<strong>偏移 <code>0x8fa860</code></strong> 配套（符号起点略小于该<br>
+PC，落在函数体内）：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">objdump -t /path/to/libapp.so | grep <span class="string">&#x27;CommandHandler&#x27;</span> | <span class="built_in">head</span> -3</span><br></pre></td></tr></table></figure>
-
 <p><strong>形态示例：</strong></p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">00000000008fa71a l     F .text	0000000000000abc              _ZN5myapp15CommandHandlerEiPPKclS1_</span><br></pre></td></tr></table></figure>
-
-<p>行首 <code>0x8fa71a</code> 为该符号的<strong>起点</strong>，大小 <code>0xabc</code>；<code>0x8fa860</code> 落在区间 <code>[0x8fa71a, 0x8fa71a+0xabc)</code><br>内。精确行号仍以 <code>addr2line</code> 为准。</p>
-<h3 id="readelf：查看-LOAD-段"><a href="#readelf：查看-LOAD-段" class="headerlink" title="readelf：查看 LOAD 段"></a><code>readelf</code>：查看 LOAD 段</h3><p>下面来自与上述 <strong><code>0x8fa860</code></strong> 同一 ELF 样例的 <strong><code>readelf -l | head -20</code></strong>（段尺寸因库而异，此组与示<br>例偏移<strong>同时出现</strong>时便于对照；若你换库则整段以本机为准）：</p>
+<p>行首 <code>0x8fa71a</code> 为该符号的<strong>起点</strong>，大小 <code>0xabc</code>；<code>0x8fa860</code> 落在区间 <code>[0x8fa71a, 0x8fa71a+0xabc)</code><br>
+内。精确行号仍以 <code>addr2line</code> 为准。</p>
+<h3 id="readelf：查看-LOAD-段"><code>readelf</code>：查看 LOAD 段</h3>
+<p>下面来自与上述 <strong><code>0x8fa860</code></strong> 同一 ELF 样例的 <strong><code>readelf -l | head -20</code></strong>（段尺寸因库而异，此组与示<br>
+例偏移<strong>同时出现</strong>时便于对照；若你换库则整段以本机为准）：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">readelf -l /path/to/libapp.so | <span class="built_in">head</span> -20</span><br></pre></td></tr></table></figure>
-
 <p><strong>配套示例输出：</strong></p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">Elf file type is DYN (Shared object file)</span><br><span class="line">Entry point 0x0</span><br><span class="line">There are 9 program headers, starting at offset 64</span><br><span class="line"></span><br><span class="line">Program Headers:</span><br><span class="line">  Type           Offset             VirtAddr           PhysAddr</span><br><span class="line">                 FileSiz            MemSiz              Flags  Align</span><br><span class="line">  LOAD           0x0000000000000000 0x0000000000000000 0x0000000000000000</span><br><span class="line">                 0x00000000007aa408 0x00000000007aa408  R      0x1000</span><br><span class="line">  LOAD           0x00000000007ab000 0x00000000007ab000 0x00000000007ab000</span><br><span class="line">                 0x00000000007bf251 0x00000000007bf251  R E    0x1000</span><br><span class="line">  LOAD           0x0000000000f6b000 0x0000000000f6b000 0x0000000000f6b000</span><br><span class="line">                 0x0000000000317c05 0x0000000000317c05  R      0x1000</span><br><span class="line">  LOAD           0x0000000001282e20 0x0000000001283e20 0x0000000001283e20</span><br><span class="line">                 0x00000000000c67c8 0x00000000000e2b68  RW     0x1000</span><br><span class="line">  DYNAMIC        0x00000000012ec758 0x00000000012ed758 0x00000000012ed758</span><br><span class="line">                 0x0000000000000530 0x0000000000000530  RW     0x8</span><br><span class="line">  NOTE           0x0000000000000238 0x0000000000000238 0x0000000000000238</span><br><span class="line">                 0x0000000000000024 0x0000000000000024  R      0x4</span><br></pre></td></tr></table></figure>
-
 <p>不同 <code>readelf</code> 版本与不同 ELF 细节可能略有差异，以<strong>本机实跑</strong>为准。</p>
 <hr>
-<h2 id="C-符号-demangle"><a href="#C-符号-demangle" class="headerlink" title="C++ 符号 demangle"></a>C++ 符号 demangle</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;_ZN5myapp15CommandHandlerEiPPKclS1_&#x27;</span> | c++filt</span><br></pre></td></tr></table></figure>
-
+<h2 id="C-符号-demangle">C++ 符号 demangle</h2>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;_ZN5myapp15CommandHandlerEiPPKclS1_&#x27;</span> | c++filt</span><br></pre></td></tr></table></figure>
 <p><strong>形态示例：</strong></p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">myapp::CommandHandler(int, char const**, long, char const*)</span><br></pre></td></tr></table></figure>
-
-<p>（上式 mangled 名须换成你从 <code>nm</code>&#x2F;<code>objdump</code>&#x2F;栈上看到的真实字符串。）</p>
+<p>（上式 mangled 名须换成你从 <code>nm</code>/<code>objdump</code>/栈上看到的真实字符串。）</p>
 <hr>
-<h2 id="文件是符号链时"><a href="#文件是符号链时" class="headerlink" title="文件是符号链时"></a>文件是符号链时</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">file /path/to/libapp.so</span><br></pre></td></tr></table></figure>
-
+<h2 id="文件是符号链时">文件是符号链时</h2>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">file /path/to/libapp.so</span><br></pre></td></tr></table></figure>
 <p><strong>形态示例：</strong></p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/path/to/libapp.so: symbolic link to ../../build/obj/libapp.so</span><br></pre></td></tr></table></figure>
-
-<p><code>addr2line</code> 应针对<strong>实际打开的那份 ELF</strong>（解析符号链后的目标或你确认参与调试的那份）；若安装目录下链<br>到构建树，以 inode 与更新时间为准，避免对旧副本解析。</p>
+<p><code>addr2line</code> 应针对<strong>实际打开的那份 ELF</strong>（解析符号链后的目标或你确认参与调试的那份）；若安装目录下链<br>
+到构建树，以 inode 与更新时间为准，避免对旧副本解析。</p>
 <hr>
-<h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2><ol>
-<li><p><strong><code>??</code> 或明显不对</strong></p>
+<h2 id="常见问题">常见问题</h2>
+<ol>
+<li>
+<p><strong><code>??</code> 或明显不对</strong></p>
 <ul>
 <li>二进制被 strip、或 debug 在单独文件且工具未找到 → 需带 debug 的构建物或 <code>DEBUGINFOD</code> 等。</li>
 </ul>
 </li>
-<li><p><strong>行号与当前仓库不一致</strong></p>
+<li>
+<p><strong>行号与当前仓库不一致</strong></p>
 <ul>
-<li>对应栈的二进制与当前源码<strong>版本&#x2F;配置</strong>不同 → 以<strong>构建该库</strong>时的源码为准。</li>
+<li>对应栈的二进制与当前源码<strong>版本/配置</strong>不同 → 以<strong>构建该库</strong>时的源码为准。</li>
 </ul>
 </li>
-<li><p><strong>大地址用 Bash 做 <code>PC - BASE</code></strong></p>
+<li>
+<p><strong>大地址用 Bash 做 <code>PC - BASE</code></strong></p>
 <ul>
-<li>易 32 位溢出；用 <code>python3</code> 或能表示 64 位无符号&#x2F;有符号整数的工具计算后再调 <code>addr2line</code>。</li>
+<li>易 32 位溢出；用 <code>python3</code> 或能表示 64 位无符号/有符号整数的工具计算后再调 <code>addr2line</code>。</li>
 </ul>
 </li>
 </ol>
 <hr>
-<h2 id="最小复现（变量-一次-addr2line）"><a href="#最小复现（变量-一次-addr2line）" class="headerlink" title="最小复现（变量 + 一次 addr2line）"></a>最小复现（变量 + 一次 <code>addr2line</code>）</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">SO=/path/to/libapp.so</span><br><span class="line">OFF=0x8fa860</span><br><span class="line"></span><br><span class="line">addr2line -e <span class="string">&quot;<span class="variable">$SO</span>&quot;</span> -f -C <span class="string">&quot;<span class="variable">$OFF</span>&quot;</span></span><br></pre></td></tr></table></figure>
-
+<h2 id="最小复现（变量-一次-addr2line）">最小复现（变量 + 一次 <code>addr2line</code>）</h2>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">SO=/path/to/libapp.so</span><br><span class="line">OFF=0x8fa860</span><br><span class="line"></span><br><span class="line">addr2line -e <span class="string">&quot;<span class="variable">$SO</span>&quot;</span> -f -C <span class="string">&quot;<span class="variable">$OFF</span>&quot;</span></span><br></pre></td></tr></table></figure>
 <p><strong>形态示例：</strong></p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">myapp::CommandHandler(int, char const**, long, char const*)</span><br><span class="line">/path/to/src/cli/handler.cpp:42</span><br></pre></td></tr></table></figure>
-
-<p>将 <code>SO</code> 换成你的库路径；<strong>偏移</strong>若与栈上一致，可继续用 <strong><code>0x8fa860</code></strong> 作对照。函数名、源路径与行号以<br>你本机 <code>addr2line</code> 输出为准（受调试信息与构建一致性约束）。</p>
+<p>将 <code>SO</code> 换成你的库路径；<strong>偏移</strong>若与栈上一致，可继续用 <strong><code>0x8fa860</code></strong> 作对照。函数名、源路径与行号以<br>
+你本机 <code>addr2line</code> 输出为准（受调试信息与构建一致性约束）。</p>
 
     </div>
 
@@ -461,7 +468,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">123</span>
+          <span class="site-state-item-count">124</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -474,7 +481,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">42</span>
+        <span class="site-state-item-count">43</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -594,6 +601,8 @@ if (document.querySelectorAll('pre.mermaid').length) {
 }
 </script>
 
+
+  
 
   
 

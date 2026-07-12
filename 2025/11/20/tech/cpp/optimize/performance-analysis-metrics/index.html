@@ -20,15 +20,15 @@
     var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="CPU 硬件层次概念 Package → 整个处理器封装，包含一个或多个 die。 Socket (S) → 主板上的物理 CPU 插槽 Die (D) → 封装里的裸片（可能有多个 chiplet&#x2F;die） Core (C) → die 上的计算核心 Thread (T) → 核心里的硬件线程（SMT&#x2F;超线程），即逻辑处理器  假设一台双路服务器，每个 socket 上的 C">
+  <meta name="description" content="CPU 硬件层次概念  Package → 整个处理器封装，包含一个或多个 die。 Socket (S) → 主板上的物理 CPU 插槽 Die (D) → 封装里的裸片（可能有多个 chiplet&#x2F;die） Core © → die 上的计算核心 Thread (T) → 核心里的硬件线程（SMT&#x2F;超线程），即逻辑处理器  假设一台双路服务器，每个 socket 上的 CPU 封装里有两个 d">
 <meta property="og:type" content="article">
 <meta property="og:title" content="性能分析指标和概念">
 <meta property="og:url" content="https://bi-an.github.io/blog/2025/11/20/tech/cpp/optimize/performance-analysis-metrics/index.html">
 <meta property="og:site_name" content="江南人物的博客">
-<meta property="og:description" content="CPU 硬件层次概念 Package → 整个处理器封装，包含一个或多个 die。 Socket (S) → 主板上的物理 CPU 插槽 Die (D) → 封装里的裸片（可能有多个 chiplet&#x2F;die） Core (C) → die 上的计算核心 Thread (T) → 核心里的硬件线程（SMT&#x2F;超线程），即逻辑处理器  假设一台双路服务器，每个 socket 上的 C">
+<meta property="og:description" content="CPU 硬件层次概念  Package → 整个处理器封装，包含一个或多个 die。 Socket (S) → 主板上的物理 CPU 插槽 Die (D) → 封装里的裸片（可能有多个 chiplet&#x2F;die） Core © → die 上的计算核心 Thread (T) → 核心里的硬件线程（SMT&#x2F;超线程），即逻辑处理器  假设一台双路服务器，每个 socket 上的 CPU 封装里有两个 d">
 <meta property="og:locale">
 <meta property="article:published_time" content="2025-11-20T15:54:29.000Z">
-<meta property="article:modified_time" content="2026-07-09T07:27:34.302Z">
+<meta property="article:modified_time" content="2026-07-12T14:58:38.879Z">
 <meta property="article:author" content="bi-an">
 <meta property="article:tag" content="cpp">
 <meta property="article:tag" content="performance-optimize">
@@ -225,7 +225,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-09 07:27:34" itemprop="dateModified" datetime="2026-07-09T07:27:34+00:00">2026-07-09</time>
+                <time title="Modified: 2026-07-12 14:58:38" itemprop="dateModified" datetime="2026-07-12T14:58:38+00:00">2026-07-12</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -248,12 +248,13 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h2 id="CPU-硬件层次概念"><a href="#CPU-硬件层次概念" class="headerlink" title="CPU 硬件层次概念"></a>CPU 硬件层次概念</h2><ul>
+        <h2 id="CPU-硬件层次概念">CPU 硬件层次概念</h2>
+<ul>
 <li>Package → 整个处理器封装，包含一个或多个 die。</li>
 <li>Socket (S) → 主板上的物理 CPU 插槽</li>
-<li>Die (D) → 封装里的裸片（可能有多个 chiplet&#x2F;die）</li>
-<li>Core (C) → die 上的计算核心</li>
-<li>Thread (T) → 核心里的硬件线程（SMT&#x2F;超线程），即逻辑处理器</li>
+<li>Die (D) → 封装里的裸片（可能有多个 chiplet/die）</li>
+<li>Core © → die 上的计算核心</li>
+<li>Thread (T) → 核心里的硬件线程（SMT/超线程），即逻辑处理器</li>
 </ul>
 <p>假设一台双路服务器，每个 socket 上的 CPU 封装里有两个 die，每个 die 有 8 个核心：</p>
 <ul>
@@ -266,68 +267,74 @@
 <li><code>S0-D0-C0-T0</code> → Socket 0, Die 0, Core 0, Thread 0</li>
 <li><code>S0-D0-C0-T1</code> → Socket 0, Die 0, Core 0, Thread 1</li>
 </ul>
-<p>可以用命令 <code>lscpu</code> 或 <code>cat /proc/cpuinfo</code> 来查看逻辑 CPU ID 与 Socket&#x2F;Core&#x2F;Thread 的对应关系。</p>
+<p>可以用命令 <code>lscpu</code> 或 <code>cat /proc/cpuinfo</code> 来查看逻辑 CPU ID 与 Socket/Core/Thread 的对应关系。</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ lscpu</span><br><span class="line">...</span><br><span class="line">    Thread(s) per core:  2</span><br><span class="line">    Core(s) per socket:  4</span><br><span class="line">    Socket(s):           1</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
-
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">总逻辑 CPU 数量 = 1 × 4 × 2 = 8</span><br></pre></td></tr></table></figure>
-
 <p>nproc 输出的是 逻辑 CPU 数</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">nproc</span></span><br><span class="line">8</span><br></pre></td></tr></table></figure>
-
-<h2 id="CPU-微架构概念"><a href="#CPU-微架构概念" class="headerlink" title="CPU 微架构概念"></a>CPU 微架构概念</h2><ul>
+<h2 id="CPU-微架构概念">CPU 微架构概念</h2>
+<ul>
 <li>Pipeline：指令执行的分阶段过程（取指、解码、执行、写回）。</li>
 <li>Width：每周期最多能发射多少条 uops（如 4‑wide）。</li>
 <li>Slot：每周期的发射机会，宽度决定 slot 数。</li>
 <li>ROB (Reorder Buffer)：乱序执行的关键结构，保证指令按程序顺序退休。</li>
 <li>Scheduler：调度器，决定哪些 uops 在某周期进入执行端口。</li>
-<li>Execution Ports：后端的执行单元入口，比如整数 ALU、浮点 FPU、Load&#x2F;Store。</li>
+<li>Execution Ports：后端的执行单元入口，比如整数 ALU、浮点 FPU、Load/Store。</li>
 <li>Branch Predictor：预测分支走向，减少流水线停顿。</li>
 </ul>
-<h2 id="存储与层次结构"><a href="#存储与层次结构" class="headerlink" title="存储与层次结构"></a>存储与层次结构</h2><ul>
+<h2 id="存储与层次结构">存储与层次结构</h2>
+<ul>
 <li>Registers：CPU 内部的寄存器，最快的存储。</li>
 <li>Cache：分层缓存（L1、L2、L3），用于减少访存延迟。</li>
 <li>LLC (Last Level Cache)：最后一级缓存，通常是 L3，多个核心共享。</li>
 <li>Memory Controller：负责和 DRAM 通信。</li>
 <li>NUMA (Non-Uniform Memory Access)：多 socket 系统里，内存访问延迟因位置不同而不同。</li>
 </ul>
-<h2 id="性能分析相关"><a href="#性能分析相关" class="headerlink" title="性能分析相关"></a>性能分析相关</h2><ul>
+<h2 id="性能分析相关">性能分析相关</h2>
+<ul>
 <li>IPC (Instructions Per Cycle)：每周期平均执行的指令数。</li>
 <li>ILP (Instruction-Level Parallelism)：指令级并行度，程序能提供多少独立指令。</li>
 <li>Topdown Metrics：Retiring、Bad Speculation、Frontend Bound、Backend Bound。</li>
-<li>BE&#x2F;Core vs BE&#x2F;Mem：后端瓶颈是算力不足还是访存延迟。</li>
+<li>BE/Core vs BE/Mem：后端瓶颈是算力不足还是访存延迟。</li>
 <li>CPI (Cycles Per Instruction)：每条指令平均耗费的周期数。</li>
 </ul>
-<h2 id="Top-Down-Microarchitecture-Analysis-TMA"><a href="#Top-Down-Microarchitecture-Analysis-TMA" class="headerlink" title="Top-Down Microarchitecture Analysis (TMA)"></a>Top-Down Microarchitecture Analysis (TMA)</h2><p>这是 Intel 提出的一个 CPU 性能瓶颈分析框架。它的核心思想是：把 CPU 每个周期的 发射机会（slot） 分门<br>别类，逐层细分，最终定位到性能瓶颈的根源。</p>
+<h2 id="Top-Down-Microarchitecture-Analysis-TMA">Top-Down Microarchitecture Analysis (TMA)</h2>
+<p>这是 Intel 提出的一个 CPU 性能瓶颈分析框架。它的核心思想是：把 CPU 每个周期的 发射机会（slot） 分门<br>
+别类，逐层细分，最终定位到性能瓶颈的根源。</p>
 <p>Topdown 是分层树状结构：</p>
 <ul>
-<li>Level 1：Retiring &#x2F; Bad Speculation &#x2F; Frontend Bound &#x2F; Backend Bound</li>
-<li>Level 2：Backend Bound → BE&#x2F;Core、BE&#x2F;Mem</li>
-<li>Level 3：BE&#x2F;Mem → L1 Bound、L2 Bound、DRAM Bound</li>
+<li>Level 1：Retiring / Bad Speculation / Frontend Bound / Backend Bound</li>
+<li>Level 2：Backend Bound → BE/Core、BE/Mem</li>
+<li>Level 3：BE/Mem → L1 Bound、L2 Bound、DRAM Bound</li>
 </ul>
 <ol>
 <li>Level 1: 顶层四大分类</li>
 </ol>
 <p>在每个周期的 slot 中，CPU 的工作被划分为四类：</p>
 <ul>
-<li><p>Retiring</p>
+<li>
+<p>Retiring</p>
 <ul>
 <li>指令成功退休（完成执行并写回结果）。</li>
 <li>这是“有用工作”，比例越高说明 CPU 利用率越好。</li>
 </ul>
 </li>
-<li><p>Bad Speculation</p>
+<li>
+<p>Bad Speculation</p>
 <ul>
 <li>由于错误预测（如分支预测失败、错误路径执行）导致的浪费。</li>
 <li>这些 slot 最终没有产生有效结果。</li>
 </ul>
 </li>
-<li><p>Frontend Bound (FE)</p>
+<li>
+<p>Frontend Bound (FE)</p>
 <ul>
 <li>前端受限：取指、解码、指令缓存不足。</li>
 <li>CPU 等待指令进入流水线。</li>
 </ul>
 </li>
-<li><p>Backend Bound (BE)</p>
+<li>
+<p>Backend Bound (BE)</p>
 <ul>
 <li>后端受限：执行单元或数据不可用。</li>
 <li>CPU 等待算力资源或内存数据。</li>
@@ -339,19 +346,21 @@
 <li>Level 2: Backend 的进一步细分</li>
 </ol>
 <ul>
-<li>BE&#x2F;Core<ul>
+<li>BE/Core
+<ul>
 <li>后端瓶颈主要来自核心执行资源不足（算术逻辑单元、浮点单元、端口冲突）。</li>
 <li>程序算力密集。</li>
 </ul>
 </li>
-<li>BE&#x2F;Mem<ul>
+<li>BE/Mem
+<ul>
 <li>后端瓶颈主要来自访存延迟（缓存未命中、DRAM 访问慢）。</li>
 <li>程序内存密集。</li>
 </ul>
 </li>
 </ul>
 <ol start="3">
-<li>Level 3: BE&#x2F;Mem 的进一步细分</li>
+<li>Level 3: BE/Mem 的进一步细分</li>
 </ol>
 <ul>
 <li>L1 Bound</li>
@@ -359,13 +368,17 @@
 <li>L3 Bound</li>
 <li>DRAM Bound</li>
 </ul>
-<h3 id="Roofline"><a href="#Roofline" class="headerlink" title="Roofline"></a>Roofline</h3><h2 id="性能分析工具"><a href="#性能分析工具" class="headerlink" title="性能分析工具"></a>性能分析工具</h2><ol>
+<h3 id="Roofline">Roofline</h3>
+<h2 id="性能分析工具">性能分析工具</h2>
+<ol>
 <li>perf (Linux)</li>
 <li><a target="_blank" rel="noopener" href="https://github.com/andikleen/pmu-tools">Intel® pmu-tools</a> ：对 perf 的封装</li>
 <li><a target="_blank" rel="noopener" href="https://www.intel.com/content/www/us/en/developer/tools/oneapi/advisor-download.html">Intel Advisor</a></li>
 </ol>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
-<li>perf-ninja: <a target="_blank" rel="noopener" href="https://github.com/dendibakh/perf-ninja">代码</a> +<br><a target="_blank" rel="noopener" href="https://www.youtube.com/playlist?list=PLRWO2AL1QAV6bJAU2kgB4xfodGID43Y5d">视频</a></li>
+<h2 id="参考">参考</h2>
+<ol>
+<li>perf-ninja: <a target="_blank" rel="noopener" href="https://github.com/dendibakh/perf-ninja">代码</a> +<br>
+<a target="_blank" rel="noopener" href="https://www.youtube.com/playlist?list=PLRWO2AL1QAV6bJAU2kgB4xfodGID43Y5d">视频</a></li>
 </ol>
 
     </div>
@@ -467,7 +480,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">123</span>
+          <span class="site-state-item-count">124</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -480,7 +493,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">42</span>
+        <span class="site-state-item-count">43</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -600,6 +613,8 @@ if (document.querySelectorAll('pre.mermaid').length) {
 }
 </script>
 
+
+  
 
   
 
