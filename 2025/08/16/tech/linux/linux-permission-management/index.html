@@ -28,7 +28,7 @@
 <meta property="og:description" content="Unix 权限涉及三个部分：** 用户 、 进程 、 文件 **。 权限分为常用权限、SELinux 权限。 manpage: man 2 stat 中搜索 “mode” 可以看到几种常用权限的详情。 用户和分组 用户用 user ID 区分。多个用户可以划入同一个用户分组，一个用户可以同时属于不同的分组。这就是 UID（User ID）和 GID（Group ID）。 现在我将使用我的凭据登录到">
 <meta property="og:locale">
 <meta property="article:published_time" content="2025-08-16T20:37:50.000Z">
-<meta property="article:modified_time" content="2026-07-14T05:06:25.272Z">
+<meta property="article:modified_time" content="2026-07-14T08:48:33.672Z">
 <meta property="article:author" content="bi-an">
 <meta property="article:tag" content="linux">
 <meta property="article:tag" content="shell">
@@ -225,7 +225,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 05:06:25" itemprop="dateModified" datetime="2026-07-14T05:06:25+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-14 08:48:33" itemprop="dateModified" datetime="2026-07-14T08:48:33+00:00">2026-07-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -262,7 +262,7 @@ manpage: <code>man 2 stat</code> 中搜索 “mode” 可以看到几种常用�
 <h2 id="进程的用户-ID-UID">进程的用户 ID (UID)</h2>
 <p>每个进程都有一个所有者，并且每个进程都属于一个组。</p>
 <p>进程有 3 种 UID：<code>real user ID</code>、<code>effective user ID</code>、<code>saved user ID</code>。其中还有一个 <code>set-user-ID</code> 的概念，这个概念和 <code>effective user ID</code> 紧密关联。</p>
-<h3 id="实际用户-ID-RUID-Real-User-ID-5">实际用户 ID (RUID, Real User ID) [^5]</h3>
+<h3 id="实际用户-ID-RUID-Real-User-ID">实际用户 ID (RUID, Real User ID) <sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup></h3>
 <p>在我们的 shell 中，我们现在将运行的每个进程都将继承我的用户帐户的权限，并将使用相同的 UID 和 GID 运行。</p>
 <p>当您 <code>fork</code> 一个新进程时，该进程会继承父进程的 RUID。通常父级的 RUID 是你的 shell 并且它有当前登录用户的 UID。所以新进程有当前登录用户的 UID 的 RUID。通常这不会改变，只有 root 可以改变它。</p>
 <p>举个例子，想想 init 进程派生了你的登录 shell。在 fork 期间，shell 将具有 root 的 RUID（因为 shell 的父级是 init）。但是，init 进程使用 <code>/etc/passwd</code> 将 shell 的 RUID 改成你的 UID. 因此，此后登录 shell 的 RUID 将是您的 UID，而不是 root。所以，我们可以说 RUID 是进程所有者的。</p>
@@ -448,7 +448,7 @@ For a directory, it indicates that BSD semantics is to be used for that director
 <li>第 3 bit：表示文件所属组的权限：可读（4）、可写（2）、可执行（1）；</li>
 <li>第 4 bit：表示其他用户的权限：可读（4）、可写（2）、可执行（1）。</li>
 </ul>
-<p>以下是 <code>chmod</code> 的 man page 的说明 [^2]：</p>
+<p>以下是 <code>chmod</code> 的 man page 的说明 <sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>：</p>
 <blockquote>
 <p>A numeric mode is from one to  four  octal  digits  (0-7),  derived  by adding up the bits with values 4, 2, and 1.  Omitted digits are assumed to be leading zeros.  The first digit selects the set user ID  (4)  and set group ID (2) and restricted deletion or sticky (1) attributes.  The second digit selects permissions for the user who owns the  file:  read (4),  write  (2),  and  execute  (1); the third selects permissions for other users in the file’s group, with the same values; and  the  fourth for other users not in the file’s group, with the same values.</p>
 </blockquote>
@@ -459,12 +459,12 @@ For a directory, it indicates that BSD semantics is to be used for that director
 <p><code>chmod</code> 命令用于改变文件权限。</p>
 <p>基本用法：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">chmod</span> [OPTION]... MODE[,MODE]... FILE...</span><br><span class="line"><span class="built_in">chmod</span> [OPTION]... OCTAL-MODE FILE...</span><br><span class="line"><span class="built_in">chmod</span> [OPTION]... --reference=RFILE FILE...</span><br></pre></td></tr></table></figure>
-<p>** 大写 <code>X</code> 参数 ** <a target="_blank" rel="noopener" href="https://www.franzoni.eu/chmod-and-the-capital-x/">^1</a>：</p>
+<p>** 大写 <code>X</code> 参数 ** <sup class="footnote-ref"><a href="#fn3" id="fnref3">[3]</a></sup>：</p>
 <p>例如 <code>chmod u+X filename</code> 或 <code>chmod u-X filename</code>。</p>
 <p>在 <code>chmod</code> 的 man page 中介绍如下：</p>
 <blockquote>
 <p>The  letters <code>rwxXst</code> select file mode bits for the affected users: read (<code>r</code>), write (<code>w</code>), execute (or search for directories) (<code>x</code>), <strong>execute/search only if the file is a directory or<br>
-already has execute permission for some user (<code>X</code>)</strong>, set user or group ID on execution (<code>s</code>), restricted deletion flag or sticky bit (<code>t</code>) [^2].</p>
+already has execute permission for some user (<code>X</code>)</strong>, set user or group ID on execution (<code>s</code>), restricted deletion flag or sticky bit (<code>t</code>) <sup class="footnote-ref"><a href="#fn2" id="fnref2:1">[2:1]</a></sup>.</p>
 </blockquote>
 <p>加黑体的话很费解，但是又十分准确，解释如下：</p>
 <ol>
@@ -503,13 +503,21 @@ already has execute permission for some user (<code>X</code>)</strong>, set user
 </ul>
 <h2 id="SELinux-权限">SELinux 权限</h2>
 <p>SELinux 提供更为严格的访问控制。<br>
-可以用 <code>ls -Z</code> 查看文件的 SELinux 权限（安全上下文）。这部分将来另用一篇博客说明。暂时可以参考文献 [^3]。</p>
+可以用 <code>ls -Z</code> 查看文件的 SELinux 权限（安全上下文）。这部分将来另用一篇博客说明。暂时可以参考文献 <sup class="footnote-ref"><a href="#fn4" id="fnref4">[4]</a></sup>。</p>
 <h2 id="参考文献">参考文献</h2>
-<p>[^2]: chmod 的 man page<br>
-[^3]:<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/73621cc7c222">https://www.jianshu.com/p/73621cc7c222</a><br>
-[^4]:<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/User_identifier#Saved_user_ID">https://en.wikipedia.org/wiki/User_identifier#Saved_user_ID</a><br>
-[^5]:<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/32455684/difference-between-real-user-ID-effective-user-ID-and-saved-user-ID">https://stackoverflow.com/questions/32455684/difference-between-real-user-ID-effective-user-ID-and-saved-user-ID</a><br>
-[^6]:<a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1722142">https://cloud.tencent.com/developer/article/1722142</a></p>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/32455684/difference-between-real-user-ID-effective-user-ID-and-saved-user-ID">https://stackoverflow.com/questions/32455684/difference-between-real-user-ID-effective-user-ID-and-saved-user-ID</a> <a href="#fnref1" class="footnote-backref">↩︎</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p>chmod 的 man page <a href="#fnref2" class="footnote-backref">↩︎</a> <a href="#fnref2:1" class="footnote-backref">↩︎</a></p>
+</li>
+<li id="fn3" class="footnote-item"><p><a target="_blank" rel="noopener" href="https://www.franzoni.eu/chmod-and-the-capital-x/">https://www.franzoni.eu/chmod-and-the-capital-x/</a> <a href="#fnref3" class="footnote-backref">↩︎</a></p>
+</li>
+<li id="fn4" class="footnote-item"><p><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/73621cc7c222">https://www.jianshu.com/p/73621cc7c222</a> <a href="#fnref4" class="footnote-backref">↩︎</a></p>
+</li>
+</ol>
+</section>
 
     </div>
 
@@ -594,7 +602,7 @@ already has execute permission for some user (<code>X</code>)</strong>, set user
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E5%92%8C%E5%88%86%E7%BB%84"><span class="nav-text">用户和分组</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E7%94%A8%E6%88%B7-ID-UID"><span class="nav-text">进程的用户 ID (UID)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%99%85%E7%94%A8%E6%88%B7-ID-RUID-Real-User-ID-5"><span class="nav-text">实际用户 ID (RUID, Real User ID) [^5]</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%89%E6%95%88%E7%94%A8%E6%88%B7-ID%EF%BC%88EUID-Effective-User-ID%EF%BC%89"><span class="nav-text">有效用户 ID（EUID, Effective User ID）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#set-user-ID"><span class="nav-text">set-user-ID</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#set-group-ID"><span class="nav-text">set-group-ID</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%B2%98%E6%BB%9E%E4%BD%8D%EF%BC%9A"><span class="nav-text">粘滞位：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%9D%E5%AD%98%E7%9A%84%E7%94%A8%E6%88%B7-ID-SUID-Saved-User-ID"><span class="nav-text">保存的用户 ID (SUID, Saved User ID)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E6%9D%83%E9%99%90"><span class="nav-text">文件权限</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%A6%E5%8F%B7%E5%BD%A2%E5%BC%8F%E7%9A%84%E6%9D%83%E9%99%90%EF%BC%88Symbolic-permissions%EF%BC%89"><span class="nav-text">符号形式的权限（Symbolic permissions）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E5%AD%97%E5%BD%A2%E5%BC%8F%E7%9A%84%E6%9D%83%E9%99%90%EF%BC%88Numeric-permissions%EF%BC%89"><span class="nav-text">数字形式的权限（Numeric permissions）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E5%91%BD%E4%BB%A4"><span class="nav-text">相关命令</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ls-%E5%91%BD%E4%BB%A4"><span class="nav-text">ls 命令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#chmod-%E5%91%BD%E4%BB%A4"><span class="nav-text">chmod 命令</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SELinux-%E6%9D%83%E9%99%90"><span class="nav-text">SELinux 权限</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="nav-text">参考文献</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E5%92%8C%E5%88%86%E7%BB%84"><span class="nav-text">用户和分组</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E7%94%A8%E6%88%B7-ID-UID"><span class="nav-text">进程的用户 ID (UID)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%99%85%E7%94%A8%E6%88%B7-ID-RUID-Real-User-ID"><span class="nav-text">实际用户 ID (RUID, Real User ID) [1]</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%89%E6%95%88%E7%94%A8%E6%88%B7-ID%EF%BC%88EUID-Effective-User-ID%EF%BC%89"><span class="nav-text">有效用户 ID（EUID, Effective User ID）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#set-user-ID"><span class="nav-text">set-user-ID</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#set-group-ID"><span class="nav-text">set-group-ID</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%B2%98%E6%BB%9E%E4%BD%8D%EF%BC%9A"><span class="nav-text">粘滞位：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%9D%E5%AD%98%E7%9A%84%E7%94%A8%E6%88%B7-ID-SUID-Saved-User-ID"><span class="nav-text">保存的用户 ID (SUID, Saved User ID)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E6%9D%83%E9%99%90"><span class="nav-text">文件权限</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%A6%E5%8F%B7%E5%BD%A2%E5%BC%8F%E7%9A%84%E6%9D%83%E9%99%90%EF%BC%88Symbolic-permissions%EF%BC%89"><span class="nav-text">符号形式的权限（Symbolic permissions）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E5%AD%97%E5%BD%A2%E5%BC%8F%E7%9A%84%E6%9D%83%E9%99%90%EF%BC%88Numeric-permissions%EF%BC%89"><span class="nav-text">数字形式的权限（Numeric permissions）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E5%91%BD%E4%BB%A4"><span class="nav-text">相关命令</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ls-%E5%91%BD%E4%BB%A4"><span class="nav-text">ls 命令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#chmod-%E5%91%BD%E4%BB%A4"><span class="nav-text">chmod 命令</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SELinux-%E6%9D%83%E9%99%90"><span class="nav-text">SELinux 权限</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="nav-text">参考文献</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 

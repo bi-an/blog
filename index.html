@@ -213,7 +213,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2026-07-14 11:56:13 / Modified: 05:06:25" itemprop="dateCreated datePublished" datetime="2026-07-14T11:56:13+00:00">2026-07-14</time>
+              <time title="Created: 2026-07-14 11:56:13 / Modified: 08:48:33" itemprop="dateCreated datePublished" datetime="2026-07-14T11:56:13+00:00">2026-07-14</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -242,6 +242,7 @@
 <thead>
 <tr>
 <th></th>
+<th>命令</th>
 <th>主机 A（RHEL 9.4，内核 5.14）</th>
 <th>主机 B（RHEL 8.10，内核 4.18）</th>
 </tr>
@@ -249,21 +250,25 @@
 <tbody>
 <tr>
 <td><code>malloc(64 GiB)</code></td>
+<td><code>./probe_malloc_failure mmap</code><sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup></td>
 <td>返回 <code>NULL</code>，<code>errno = ENOMEM</code></td>
 <td>返回有效指针，成功</td>
 </tr>
 <tr>
 <td>物理内存</td>
+<td><code>grep MemTotal /proc/meminfo</code></td>
 <td>约 7.5 GiB</td>
 <td>约 3.0 TiB</td>
 </tr>
 <tr>
 <td>Swap</td>
+<td><code>grep SwapTotal /proc/meminfo</code></td>
 <td>约 8.0 GiB</td>
 <td>约 128 GiB</td>
 </tr>
 <tr>
 <td>overcommit 模式</td>
+<td><code>cat /proc/sys/vm/overcommit_memory</code></td>
 <td>mode 0（默认）</td>
 <td>mode 0（默认）</td>
 </tr>
@@ -274,19 +279,17 @@
 <h2 id="二、背景：Linux-的-先承诺、后兑现-内存模型">二、背景：Linux 的&quot;先承诺、后兑现&quot;内存模型</h2>
 <p>理解这个问题，需要先搞清楚 Linux 的内存分配不是&quot;直接给你物理内存&quot;：</p>
 <ul>
-<li><strong><code>malloc</code> 调用 <code>mmap</code></strong>：请求的块超过约 128 KiB 时，glibc 内部不通过 <code>brk</code> 扩堆，而是调用 <code>mmap</code><br>
-系统调用申请匿名内存。</li>
-<li><strong>承诺（commit）在先，物理页在后</strong>：<code>mmap</code> 成功时，内核只是&quot;承诺&quot;了一段虚拟地址区间，物理页面要等<br>
-到程序真正读写时才分配（缺页异常触发）。</li>
-<li><strong>承诺也有上限</strong>：内核在 <code>mmap</code> 时会检查&quot;这次的承诺量是否合理&quot;，超过限制直接拒绝，返回 <code>ENOMEM</code>——<br>
-即使此刻物理 RAM 还没用完。</li>
+<li><strong><code>malloc</code> 调用 <code>mmap</code></strong>：请求的块超过约 128 KiB 时，glibc 内部不通过 <code>brk</code> 扩堆，而是调用 <code>mmap</code> 系统调用申请匿名内存。</li>
+<li><strong>承诺（commit）在先，物理页在后</strong>：<code>mmap</code> 成功时，内核只是&quot;承诺&quot;了一段虚拟地址区间，物理页面要等到程序真正读写时才分配（缺页异常触发）。</li>
+<li><strong>承诺也有上限</strong>：内核在 <code>mmap</code> 时会检查&quot;这次的承诺量是否合理&quot;，超过限制直接拒绝，返回 <code>ENOMEM</code>——即使此刻物理 RAM 还没用完。</li>
 </ul>
 <p>因此 <code>ENOMEM</code> 不一定意味着&quot;内存满了&quot;，可能只是内核在承诺阶段预判&quot;将来可能兑现不了&quot;而提前拒绝。</p>
 <hr>
 <h2 id="三、排查过程">三、排查过程</h2>
 <h3 id="3-1-确认失败发生在哪一层：malloc-还是-mmap？">3.1 确认失败发生在哪一层：<code>malloc</code> 还是 <code>mmap</code>？</h3>
 <p><code>malloc</code> 失败可能有两种情况：glibc 内部逻辑拒绝，或底层 <code>mmap</code> 系统调用已失败。先分层确认：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./probe_malloc_failure mmap</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 配套测试程序见第六节，编译：</span></span><br><span class="line"><span class="comment"># g++ -O0 -o probe_malloc_failure probe_malloc_failure.cpp</span></span><br><span class="line">./probe_malloc_failure mmap</span><br></pre></td></tr></table></figure>
 <table>
 <thead>
 <tr>
@@ -308,13 +311,10 @@
 </tr>
 </tbody>
 </table>
-<p>主机 A 上 <code>mmap</code> 系统调用本身已失败，<code>malloc</code> 返回 NULL 只是下游表现。<strong>排查范围收缩至内核 <code>mmap</code> 路<br>
-径。</strong></p>
+<p>主机 A 上 <code>mmap</code> 系统调用本身已失败，<code>malloc</code> 返回 NULL 只是下游表现。<strong>排查范围收缩至内核 <code>mmap</code> 路径。</strong></p>
 <hr>
 <h3 id="3-2-假设：进程虚拟地址空间受到-RLIMIT-AS-限制">3.2 假设：进程虚拟地址空间受到 <code>RLIMIT_AS</code> 限制</h3>
-<p>Linux 可以通过 <code>RLIMIT_AS</code>（address space limit，进程虚拟地址空间上限）限制单个进程可映射的虚拟地址<br>
-总量。内核在 <code>mmap_region()</code> 中的 <code>may_expand_vm()</code> 检查：若当前已映射量 + 本次请求 &gt; 上限，拒绝并返<br>
-回 <code>ENOMEM</code>。</p>
+<p>Linux 可以通过 <code>RLIMIT_AS</code>（address space limit，进程虚拟地址空间上限）限制单个进程可映射的虚拟地址总量。内核在 <code>mmap_region()</code> 中的 <code>may_expand_vm()</code> 检查：若当前已映射量 + 本次请求 &gt; 上限，拒绝并返回 <code>ENOMEM</code>。</p>
 <p>查看方式：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ulimit</span> -v</span><br><span class="line"><span class="built_in">cat</span> /proc/self/limits | grep -i <span class="string">&#x27;max address&#x27;</span></span><br></pre></td></tr></table></figure>
 <table>
@@ -336,8 +336,7 @@
 <p>两台主机均无限制，<strong>排除此假设</strong>。</p>
 <hr>
 <h3 id="3-3-假设：内核-overcommit-检查拒绝了本次请求">3.3 假设：内核 overcommit 检查拒绝了本次请求</h3>
-<p>Linux 允许全系统&quot;承诺&quot;的虚拟内存总量超过物理 RAM，这叫<strong>超量承诺（overcommit）</strong>。策略由<br>
-<code>/proc/sys/vm/overcommit_memory</code> 控制，共三种模式：</p>
+<p>Linux 允许全系统&quot;承诺&quot;的虚拟内存总量超过物理 RAM，这叫<strong>超量承诺（overcommit）</strong>。策略由 <code>/proc/sys/vm/overcommit_memory</code> 控制，共三种模式：</p>
 <table>
 <thead>
 <tr>
@@ -349,22 +348,22 @@
 <tbody>
 <tr>
 <td><strong>启发式</strong>（默认）</td>
-<td><code>0</code></td>
-<td>单次 <code>mmap</code> 请求的页数 &gt; 物理 RAM 页数 + Swap 页数，则拒绝</td>
+<td><code>0</code>（<code>OVERCOMMIT_GUESS</code>）</td>
+<td>单次 <code>mmap</code> 请求的页数 &gt; 物理 RAM 页数 + Swap 页数，则拒绝（Linux v5.14及以后）<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup></td>
 </tr>
 <tr>
 <td><strong>始终允许</strong></td>
-<td><code>1</code></td>
+<td><code>1</code>（<code>OVERCOMMIT_ALWAYS</code>）</td>
 <td>无条件同意所有分配</td>
 </tr>
 <tr>
 <td><strong>严格限制</strong></td>
-<td><code>2</code></td>
+<td><code>2</code>（<code>OVERCOMMIT_NEVER</code>）</td>
 <td>全系统累计承诺量 &lt; 上限时才允许</td>
 </tr>
 </tbody>
 </table>
-<p>两台主机均为默认的 <strong>mode 0</strong>。其核心判断逻辑（Linux v5.14，<code>mm/util.c</code>）：</p>
+<p>两台主机均为默认的 <strong>mode 0</strong>。其核心判断逻辑（Linux v5.14，<a target="_blank" rel="noopener" href="https://github.com/torvalds/linux/blob/v5.14/mm/util.c#L884-L891"><code>mm/util.c</code> L884–891</a>）：</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// __vm_enough_memory()</span></span><br><span class="line"><span class="keyword">if</span> (sysctl_overcommit_memory == OVERCOMMIT_GUESS) &#123;</span><br><span class="line">    <span class="keyword">if</span> (pages &gt; totalram_pages() + total_swap_pages)</span><br><span class="line">        <span class="keyword">goto</span> error;   <span class="comment">// 返回 -ENOMEM</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><strong>在主机 A 上代入数字：</strong></p>
 <table>
@@ -418,8 +417,9 @@
 </table>
 <p>这直接解释了两台主机的差异。</p>
 <p><strong>用实验验证边界：</strong></p>
+
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./probe_malloc_failure threshold</span><br></pre></td></tr></table></figure>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">15360 MiB: OK</span><br><span class="line">15872 MiB: OK</span><br><span class="line">15880 MiB: FAIL errno=12</span><br><span class="line">16384 MiB: FAIL errno=12</span><br><span class="line">65536 MiB: FAIL errno=12</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">15360 MiB: OK errno=0</span><br><span class="line">15872 MiB: OK errno=0</span><br><span class="line">15880 MiB: FAIL errno=12</span><br><span class="line">16384 MiB: FAIL errno=12</span><br><span class="line">65536 MiB: FAIL errno=12</span><br></pre></td></tr></table></figure>
 <table>
 <thead>
 <tr>
@@ -451,35 +451,75 @@
 </tbody>
 </table>
 <p>实测边界与公式完全吻合，<strong>确认 mode 0 overcommit 检查是根因</strong>。</p>
-<blockquote>
-<p><strong>内核版本说明</strong>：<code>__vm_enough_memory()</code> 的 mode 0 实现随内核版本不同。Linux <strong>5.14</strong> 起 mode 0 只<br>
-做上述单次请求页数检查；<strong>5.14 之前</strong>（如主机 B 的 4.18）采用基于空闲页的估算公式，结论相同但计算<br>
-路径不同。查阅源码前须先用 <code>uname -r</code> 确认内核主版本号。</p>
-</blockquote>
 <hr>
 <h3 id="3-4-排除：mode-2-的累计承诺量限制">3.4 排除：mode 2 的累计承诺量限制</h3>
-<p>既然是 mode 0，顺手排除 mode 2 的逻辑：mode 2 下，全系统累计已承诺量（<code>Committed_AS</code>）超过上限<br>
-（<code>CommitLimit</code>）时才拒绝。两台主机均为 mode 0，这条路径根本不走。</p>
-<p>用实验双重确认：</p>
+<p>两台主机的 <code>overcommit_memory</code> 都是 <strong>0</strong>，本不该走到 mode 2。仍用实验确认当前失败<strong>不是</strong>「全系统累计承诺量超限」。</p>
+<p>下面按 Linux <strong>v5.14</strong> 源码（<a target="_blank" rel="noopener" href="https://github.com/torvalds/linux/blob/v5.14/mm/mmap.c"><code>mm/mmap.c</code> <code>accountable_mapping</code> / <code>mmap_region</code></a>、<a target="_blank" rel="noopener" href="https://github.com/torvalds/linux/blob/v5.14/mm/util.c#L872-L911"><code>mm/util.c</code> <code>__vm_enough_memory</code></a>）画出承诺检查：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">mmap_region()</span><br><span class="line">  │</span><br><span class="line">  ├─ accountable_mapping()？   // 私有可写且无 VM_NORESERVE</span><br><span class="line">  │     ├─ 否 → 跳过 __vm_enough_memory（不进入承诺检查）</span><br><span class="line">  │     └─ 是 → security_vm_enough_memory_mm()</span><br><span class="line">  │                    └─ __vm_enough_memory(pages)</span><br><span class="line">  │                    │</span><br><span class="line">  │                  ① vm_acct_memory(pages)</span><br><span class="line">  │                     （先把本次 pages 计入 Committed_AS）</span><br><span class="line">  │                    │</span><br><span class="line">  │                  ② 按 overcommit_memory 三选一（互斥，只走一条）</span><br><span class="line">  │             ┌─────────────────────┼─────────────────────────┐</span><br><span class="line">  │             │ == 0 GUESS          │ == 1 ALWAYS             │ == 2 NEVER</span><br><span class="line">  │             │ （当前主机）        │                         │</span><br><span class="line">  │             ▼                     ▼                         ▼</span><br><span class="line">  │   pages &gt;                     直接通过                  allowed = vm_commit_limit()</span><br><span class="line">  │   totalram + total_swap？     return 0                  （再减去 admin/user reserve）</span><br><span class="line">  │         │是      │否        （保留记账）                    │</span><br><span class="line">  │         │        │                                          ▼</span><br><span class="line">  │         │        │                                      vm_committed_as（已含本次）</span><br><span class="line">  │         │        │                                      &lt; allowed ？</span><br><span class="line">  │         │        │                                       │否（超限）  │是（未超）</span><br><span class="line">  │         ▼        │                                       ▼            │</span><br><span class="line">  │    goto error    │                                  goto error        │</span><br><span class="line">  │                  │                                                    │</span><br><span class="line">  │                  └─────────────────────────┬──────────────────────────┘</span><br><span class="line">  │                                            ▼</span><br><span class="line">  │                                        return 0</span><br><span class="line">  │                                     （保留①的记账）</span><br><span class="line">  │                                    mmap 继续成功路径</span><br><span class="line">  │</span><br><span class="line">  │     goto error:</span><br><span class="line">  │        ③ vm_unacct_memory(pages)  ← 仅失败路径</span><br><span class="line">  │           回滚刚才的记账</span><br><span class="line">  │           return -ENOMEM</span><br></pre></td></tr></table></figure>
+<ol>
+<li><strong>mode 0 不检查 <code>CommitLimit</code>。</strong></li>
+<li><strong>mode 2 不检查 <code>pages &gt; RAM + Swap</code>。</strong></li>
+<li><strong>记账是「先加；仅失败才回滚」</strong>，故失败时 <code>Committed_AS</code> 净不变。</li>
+</ol>
+<p><strong>第一步：读出 <code>CommitLimit</code>。</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">grep CommitLimit /proc/meminfo</span><br><span class="line"><span class="comment"># CommitLimit: 12323644 kB  →  11.75 GiB</span></span><br></pre></td></tr></table></figure>
+<p>要排除 mode 2，需要选一个同时满足的请求大小：</p>
+<ol>
+<li><strong>大于 <code>CommitLimit</code>（11.75 GiB）</strong>——否则即使用 mode 2 也不会因这次请求触顶</li>
+<li><strong>不超过 mode 0 的拒绝条件</strong>——即请求 ≤ RAM + Swap（主机 A 为 4,064,672 页 / 15.5 GiB），否则会先被 mode 0 拦下，看不清 mode 2</li>
+</ol>
+<p>§3.3 实测 <strong>15872 MiB（=15.5 GiB）</strong> 正好落在该区间内（&gt; 11.75 GiB 且 ≤ 15.5 GiB），用作本实验的主探测点。另用 <strong>16 GiB（=16384 MiB）</strong>（&gt; 15.5 GiB）作对照，确认超 mode 0 边界时拒绝且不记账。</p>
+
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./probe_malloc_failure commit</span><br></pre></td></tr></table></figure>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">before: Committed_AS = 6327800 kB</span><br><span class="line">mmap(15872 MiB): OK   Committed_AS 6327800 -&gt; 22580728 (delta 16252928 kB)</span><br><span class="line">mmap(16 GiB):    FAIL  Committed_AS 6327800 -&gt; 6327800  (delta 0 kB)</span><br></pre></td></tr></table></figure>
-<ul>
-<li><code>mmap(15872 MiB)</code> 成功后，<code>Committed_AS</code> 升至约 21.5 GiB，已超过 <code>CommitLimit</code>（约 11.8 GiB），却<br>
-没有报错——证明 mode 2 限制未生效。</li>
-<li><code>mmap(16 GiB)</code> 失败时，<code>Committed_AS</code> 完全没变——内核在拒绝时根本没有计入承诺量，说明失败发生在承诺<br>
-记账之前（mode 0 的单次页数检查）。</li>
-</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">CommitLimit: 12323644 KiB (11.75 GiB)</span><br><span class="line">mmap(15872 MiB / 15.5 GiB): OK  Committed_AS 6953140 KiB (6.63 GiB) -&gt; 23206068 KiB (22.13 GiB)</span><br><span class="line">mmap(16384 MiB / 16 GiB): FAIL  Committed_AS 6953140 KiB (6.63 GiB) -&gt; 6953140 KiB (6.63 GiB)</span><br></pre></td></tr></table></figure>
+<table>
+<thead>
+<tr>
+<th>步骤</th>
+<th>请求</th>
+<th>与条件的关系</th>
+<th>结果</th>
+<th><code>Committed_AS</code></th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>①</td>
+<td>读 <code>CommitLimit</code></td>
+<td>上限 = <strong>11.75 GiB</strong></td>
+<td>—</td>
+<td>—</td>
+<td>划定「须大于此值」</td>
+</tr>
+<tr>
+<td>②</td>
+<td>15872 MiB（=15.5 GiB）</td>
+<td>11.75 &lt; 15.5 ≤ 15.5（RAM+Swap）</td>
+<td><strong>成功</strong></td>
+<td>6.63 → <strong>22.13 GiB</strong></td>
+<td>记账后已超过 <code>CommitLimit</code> 仍成功 → <strong>不是 mode 2</strong></td>
+</tr>
+<tr>
+<td>③</td>
+<td>16384 MiB（=16 GiB）</td>
+<td>16 &gt; 15.5（超 mode 0 边界）</td>
+<td><strong>失败</strong></td>
+<td>6.63 → <strong>6.63 GiB</strong>（不变）</td>
+<td>未记账即拒绝 → mode 0 单次页数检查</td>
+</tr>
+</tbody>
+</table>
 <p><strong>排除 mode 2 累计承诺量限制。</strong></p>
 <hr>
 <h3 id="3-5-排除：地址空间碎片化，找不到连续区域">3.5 排除：地址空间碎片化，找不到连续区域</h3>
-<p><code>mmap(NULL, size)</code> 要求内核在进程虚拟地址空间中找到一段<strong>连续</strong>的、长度为 <code>size</code> 的未映射区域。如果<br>
-已有映射将地址空间切得过碎，即使未映射区域总量够，也可能找不到一段连续 64 GiB 的空闲区间。</p>
-<p><strong>区分方法</strong>：<code>MAP_NORESERVE</code> 标志会让内核<strong>跳过 overcommit 承诺检查</strong>，但不会跳过&quot;寻找连续区域&quot;这一<br>
-步。因此：</p>
+<p><code>mmap(NULL, size)</code> 要求内核在进程虚拟地址空间中找到一段<strong>连续</strong>的、长度为 <code>size</code> 的未映射区域。如果已有映射将地址空间切得过碎，即使未映射区域总量够，也可能找不到一段连续 64 GiB 的空闲区间。</p>
+<p><strong>区分方法</strong>：<code>MAP_NORESERVE</code> 标志会让内核<strong>跳过 overcommit 承诺检查</strong>，但不会跳过&quot;寻找连续区域&quot;这一步。因此：</p>
 <ul>
 <li>加了 <code>MAP_NORESERVE</code> 后 <code>mmap</code> <strong>成功</strong> → 连续区域是有的，失败只因承诺检查</li>
 <li>加了 <code>MAP_NORESERVE</code> 后 <code>mmap</code> <strong>仍失败</strong> → 可能确实找不到连续区域</li>
 </ul>
+
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./probe_malloc_failure noreserve</span><br></pre></td></tr></table></figure>
 <table>
 <thead>
@@ -545,9 +585,8 @@
 </table>
 <hr>
 <h2 id="六、测试程序">六、测试程序</h2>
-<p>源码：<code>probe_malloc_failure.C</code></p>
 <h3 id="编译与运行">编译与运行</h3>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> ua/Debug/uart/src/test</span><br><span class="line">g++ -O0 -o probe_malloc_failure probe_malloc_failure.C</span><br><span class="line">./probe_malloc_failure mmap        <span class="comment"># §3.1 定位失败层</span></span><br><span class="line">./probe_malloc_failure threshold   <span class="comment"># §3.3 验证 overcommit 边界</span></span><br><span class="line">./probe_malloc_failure commit      <span class="comment"># §3.4 排除 mode 2</span></span><br><span class="line">./probe_malloc_failure noreserve   <span class="comment"># §3.5 排除地址碎片化</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 源码展示名：probe_malloc_failure.cpp</span></span><br><span class="line">g++ -O0 -o probe_malloc_failure probe_malloc_failure.cpp</span><br><span class="line">./probe_malloc_failure mmap        <span class="comment"># §3.1 定位失败层</span></span><br><span class="line">./probe_malloc_failure threshold   <span class="comment"># §3.3 验证 overcommit 边界</span></span><br><span class="line">./probe_malloc_failure commit      <span class="comment"># §3.4 排除 mode 2</span></span><br><span class="line">./probe_malloc_failure noreserve   <span class="comment"># §3.5 排除地址碎片化</span></span><br></pre></td></tr></table></figure>
 <h3 id="预期输出对照">预期输出对照</h3>
 <table>
 <thead>
@@ -581,7 +620,7 @@
 </tbody>
 </table>
 <h3 id="源码">源码</h3>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cerrno&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstdio&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstdlib&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstring&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fstream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">size_t</span> kGiB = <span class="number">1024ULL</span> * <span class="number">1024</span> * <span class="number">1024</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">long</span> <span class="title">read_meminfo_kb</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* key)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function">std::ifstream <span class="title">f</span><span class="params">(<span class="string">&quot;/proc/meminfo&quot;</span>)</span></span>;</span><br><span class="line">    std::string line;</span><br><span class="line">    <span class="keyword">while</span> (std::<span class="built_in">getline</span>(f, line)) &#123;</span><br><span class="line">        <span class="keyword">if</span> (line.<span class="built_in">find</span>(key) == <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="type">long</span> v = <span class="number">0</span>;</span><br><span class="line">            <span class="built_in">sscanf</span>(line.<span class="built_in">c_str</span>(), <span class="string">&quot;%*s %ld&quot;</span>, &amp;v);</span><br><span class="line">            <span class="keyword">return</span> v;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// §3.1：确认失败发生在 mmap 层而非 malloc 层</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">probe_mmap_vs_malloc</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">size_t</span> sz = <span class="number">64</span> * kGiB;</span><br><span class="line">    errno = <span class="number">0</span>;</span><br><span class="line">    <span class="type">void</span>* mp = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz, PROT_READ | PROT_WRITE,</span><br><span class="line">                    MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;mmap(64 GiB):   %s errno=%d (%s)\n&quot;</span>,</span><br><span class="line">           mp == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, errno, <span class="built_in">strerror</span>(errno));</span><br><span class="line">    <span class="keyword">if</span> (mp != MAP_FAILED) <span class="built_in">munmap</span>(mp, sz);</span><br><span class="line"></span><br><span class="line">    errno = <span class="number">0</span>;</span><br><span class="line">    <span class="type">void</span>* p = <span class="built_in">malloc</span>(sz);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;malloc(64 GiB): %s errno=%d (%s)\n&quot;</span>,</span><br><span class="line">           p ? <span class="string">&quot;OK&quot;</span> : <span class="string">&quot;NULL&quot;</span>, errno, <span class="built_in">strerror</span>(errno));</span><br><span class="line">    <span class="keyword">if</span> (p) <span class="built_in">free</span>(p);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// §3.5：MAP_NORESERVE 绕过承诺检查，确认失败不是地址碎片化</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">probe_noreserve</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">size_t</span> gb : &#123;<span class="number">16ULL</span>, <span class="number">64ULL</span>&#125;) &#123;</span><br><span class="line">        <span class="type">size_t</span> sz = gb * kGiB;</span><br><span class="line">        errno = <span class="number">0</span>;</span><br><span class="line">        <span class="type">void</span>* d = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz, PROT_READ | PROT_WRITE,</span><br><span class="line">                       MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%zu GiB default:   %s errno=%d\n&quot;</span>,</span><br><span class="line">               gb, d == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, errno);</span><br><span class="line">        <span class="keyword">if</span> (d != MAP_FAILED) <span class="built_in">munmap</span>(d, sz);</span><br><span class="line"></span><br><span class="line">        errno = <span class="number">0</span>;</span><br><span class="line">        <span class="type">void</span>* n = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz, PROT_READ | PROT_WRITE,</span><br><span class="line">                       MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%zu GiB NORESERVE: %s errno=%d\n&quot;</span>,</span><br><span class="line">               gb, n == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, errno);</span><br><span class="line">        <span class="keyword">if</span> (n != MAP_FAILED) <span class="built_in">munmap</span>(n, sz);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// §3.3：探测 overcommit 检查的边界（RAM+Swap 附近逐步测试）</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">probe_threshold</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> mb : &#123;<span class="number">15360</span>, <span class="number">15872</span>, <span class="number">15880</span>, <span class="number">16384</span>, <span class="number">65536</span>&#125;) &#123;</span><br><span class="line">        <span class="type">size_t</span> sz = <span class="built_in">static_cast</span>&lt;<span class="type">size_t</span>&gt;(mb) * <span class="number">1024</span> * <span class="number">1024</span>;</span><br><span class="line">        errno = <span class="number">0</span>;</span><br><span class="line">        <span class="type">void</span>* p = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz, PROT_READ | PROT_WRITE,</span><br><span class="line">                       MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%5d MiB: %s errno=%d\n&quot;</span>,</span><br><span class="line">               mb, p == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, errno);</span><br><span class="line">        <span class="keyword">if</span> (p != MAP_FAILED) <span class="built_in">munmap</span>(p, sz);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// §3.4：观察 Committed_AS 变化，排除 mode 2 累计限制</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">probe_committed</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> committed = []() &#123; <span class="keyword">return</span> <span class="built_in">read_meminfo_kb</span>(<span class="string">&quot;Committed_AS:&quot;</span>); &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="type">long</span> c0 = <span class="built_in">committed</span>();</span><br><span class="line">    <span class="type">size_t</span> sz_ok = <span class="number">15872ULL</span> * <span class="number">1024</span> * <span class="number">1024</span>;</span><br><span class="line">    <span class="type">void</span>* p1 = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz_ok, PROT_READ | PROT_WRITE,</span><br><span class="line">                    MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;mmap(15872 MiB): %s  Committed_AS %ld -&gt; %ld kB\n&quot;</span>,</span><br><span class="line">           p1 == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, c0, <span class="built_in">committed</span>());</span><br><span class="line">    <span class="keyword">if</span> (p1 != MAP_FAILED) <span class="built_in">munmap</span>(p1, sz_ok);</span><br><span class="line"></span><br><span class="line">    c0 = <span class="built_in">committed</span>();</span><br><span class="line">    <span class="type">void</span>* p2 = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, <span class="number">16</span> * kGiB, PROT_READ | PROT_WRITE,</span><br><span class="line">                    MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;mmap(16 GiB):    %s  Committed_AS %ld -&gt; %ld kB\n&quot;</span>,</span><br><span class="line">           p2 == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, c0, <span class="built_in">committed</span>());</span><br><span class="line">    <span class="keyword">if</span> (p2 != MAP_FAILED) <span class="built_in">munmap</span>(p2, <span class="number">16</span> * kGiB);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125; <span class="comment">// namespace</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span>* argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>* mode = argc &gt; <span class="number">1</span> ? argv[<span class="number">1</span>] : <span class="string">&quot;all&quot;</span>;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">strcmp</span>(mode, <span class="string">&quot;mmap&quot;</span>)      || !<span class="built_in">strcmp</span>(mode, <span class="string">&quot;all&quot;</span>)) <span class="built_in">probe_mmap_vs_malloc</span>();</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">strcmp</span>(mode, <span class="string">&quot;threshold&quot;</span>) || !<span class="built_in">strcmp</span>(mode, <span class="string">&quot;all&quot;</span>)) <span class="built_in">probe_threshold</span>();</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">strcmp</span>(mode, <span class="string">&quot;commit&quot;</span>)    || !<span class="built_in">strcmp</span>(mode, <span class="string">&quot;all&quot;</span>)) <span class="built_in">probe_committed</span>();</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">strcmp</span>(mode, <span class="string">&quot;noreserve&quot;</span>) || !<span class="built_in">strcmp</span>(mode, <span class="string">&quot;all&quot;</span>)) <span class="built_in">probe_noreserve</span>();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 <hr>
 <h2 id="七、参考资料">七、参考资料</h2>
 <table>
@@ -614,30 +653,15 @@
 </tr>
 </tbody>
 </table>
-<hr>
-<h2 id="修订记录">修订记录</h2>
-<table>
-<thead>
-<tr>
-<th>日期</th>
-<th>摘要</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>2026-07</td>
-<td>初版</td>
-</tr>
-<tr>
-<td>2026-07</td>
-<td>重构为「§2 可能原因与背景 → §3 排查实验」结构</td>
-</tr>
-<tr>
-<td>2026-07</td>
-<td>重构为叙事结构，内联背景知识，以 ASCII 流程图替代步骤表格，去除 C1–C6 编号</td>
-</tr>
-</tbody>
-</table>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p>配套测试程序 <code>probe_malloc_failure.cpp</code> 见<a href="#%E5%85%AD%E3%80%81%E6%B5%8B%E8%AF%95%E7%A8%8B%E5%BA%8F">第六节</a>。 <a href="#fnref1" class="footnote-backref">↩︎</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p>此行为为 Linux <strong>5.14 及以后</strong>的实现（<a target="_blank" rel="noopener" href="https://github.com/torvalds/linux/blob/v5.14/mm/util.c#L885-L886"><code>mm/util.c</code> L885–886, v5.14</a>）。5.14 之前（如本文主机 B 的 4.18）mode 0 改用基于系统空闲页的启发式估算（<a target="_blank" rel="noopener" href="https://github.com/torvalds/linux/blob/v4.18/mm/util.c"><code>mm/util.c</code>, v4.18</a>），公式不同，但对本次场景的结论一致。排查时须先用 <code>uname -r</code> 确认内核主版本号再对照源码。 <a href="#fnref2" class="footnote-backref">↩︎</a></p>
+</li>
+</ol>
+</section>
 
       
     </div>
@@ -688,7 +712,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 05:06:25" itemprop="dateModified" datetime="2026-07-14T05:06:25+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-14 08:48:33" itemprop="dateModified" datetime="2026-07-14T08:48:33+00:00">2026-07-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -788,7 +812,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 05:06:25" itemprop="dateModified" datetime="2026-07-14T05:06:25+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-14 08:48:33" itemprop="dateModified" datetime="2026-07-14T08:48:33+00:00">2026-07-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -869,7 +893,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 05:06:25" itemprop="dateModified" datetime="2026-07-14T05:06:25+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-14 08:48:33" itemprop="dateModified" datetime="2026-07-14T08:48:33+00:00">2026-07-14</time>
               </span>
 
           
@@ -1062,7 +1086,7 @@ PC，落在函数体内）：</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 05:06:25" itemprop="dateModified" datetime="2026-07-14T05:06:25+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-14 08:48:33" itemprop="dateModified" datetime="2026-07-14T08:48:33+00:00">2026-07-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1389,7 +1413,7 @@ PC，落在函数体内）：</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 05:06:25" itemprop="dateModified" datetime="2026-07-14T05:06:25+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-14 08:48:33" itemprop="dateModified" datetime="2026-07-14T08:48:33+00:00">2026-07-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1695,7 +1719,7 @@ PC，落在函数体内）：</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 05:06:25" itemprop="dateModified" datetime="2026-07-14T05:06:25+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-14 08:48:33" itemprop="dateModified" datetime="2026-07-14T08:48:33+00:00">2026-07-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2579,7 +2603,7 @@ PC，落在函数体内）：</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 05:06:25" itemprop="dateModified" datetime="2026-07-14T05:06:25+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-14 08:48:33" itemprop="dateModified" datetime="2026-07-14T08:48:33+00:00">2026-07-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -3001,7 +3025,7 @@ PC，落在函数体内）：</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 05:06:25" itemprop="dateModified" datetime="2026-07-14T05:06:25+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-14 08:48:33" itemprop="dateModified" datetime="2026-07-14T08:48:33+00:00">2026-07-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -3876,7 +3900,7 @@ PC，落在函数体内）：</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 05:06:25" itemprop="dateModified" datetime="2026-07-14T05:06:25+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-14 08:48:33" itemprop="dateModified" datetime="2026-07-14T08:48:33+00:00">2026-07-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
