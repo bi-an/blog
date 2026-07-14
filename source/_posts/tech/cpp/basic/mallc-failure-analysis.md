@@ -161,7 +161,7 @@ mmap_region()
   │                  ② 按 overcommit_memory 三选一（互斥，只走一条）
   │             ┌─────────────────────┼─────────────────────────┐
   │             │ == 0 GUESS          │ == 1 ALWAYS             │ == 2 NEVER
-  │             │ （当前主机）        │                         │
+  │             │ （当前主机）         │                         │
   │             ▼                     ▼                         ▼
   │   pages >                     直接通过                  allowed = vm_commit_limit()
   │   totalram + total_swap？     return 0                  （再减去 admin/user reserve）
@@ -284,7 +284,7 @@ mmap(16384 MiB / 16 GiB): FAIL  Committed_AS 6953140 KiB (6.63 GiB) -> 6953140 K
                   超限│                 │通过
                       ▼                 │
                   ENOMEM                │
-               （VA 上限）              │
+                （VA 上限）              │
                               ┌─────────▼────────────┐
                               │  accountable_mapping()│
                               │  VM_NORESERVE 已置位? │
@@ -299,11 +299,11 @@ mmap(16384 MiB / 16 GiB): FAIL  Committed_AS 6953140 KiB (6.63 GiB) -> 6953140 K
   pages > RAM + Swap?                │
   ┌────┬───────────────────┐         │
   │是  │否                 │         │
-  ▼    ▼                   │         │
+  ▼    ▼                  │         │
 ENOMEM 通过                │         │
-主机A  ──────────────────────┘         │
-失败点                                 │
-              ┌────────────────────────┘
+主机A  ────────────────────┘         │
+失败点                               │
+              ┌──────────────────────┘
               ▼
     get_unmapped_area()          §3.5 已排除
     查找连续未映射区域
