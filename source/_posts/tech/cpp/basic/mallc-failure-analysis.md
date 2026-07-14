@@ -185,6 +185,17 @@ mmap_region()
   │           return -ENOMEM
 ```
 
+简化版（只看主干）：
+
+```
+accountable_mapping？  // 私有可写且无 VM_NORESERVE
+  ├─ 否 → 跳过承诺检查，mmap 继续（仍可能因其它原因失败）
+  └─ 是 → 先记账，再按 overcommit_memory：
+              ├─ 0 → 单次 pages > RAM+Swap？  是→失败(回滚) / 否→检查通过
+              ├─ 1 → 始终通过承诺检查
+              └─ 2 → Committed_AS 超限？  是→失败(回滚) / 否→检查通过
+```
+
 1. **mode 0 不检查 `CommitLimit`。**
 2. **mode 2 不检查 `pages > RAM + Swap`。**
 3. **记账是「先加；仅失败才回滚」**，故失败时 `Committed_AS` 净不变。
