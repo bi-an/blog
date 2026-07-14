@@ -4,6 +4,16 @@ This is bi-an's personal blog.
 
 Preview: [Home Page](https://bi-an.github.io/blog)
 
+## Docs map
+
+| File | Purpose |
+|------|---------|
+| `README.md` (this file) | Clone, install, Hexo config, plugins |
+| [`CONTENT.md`](CONTENT.md) | Post layout, naming, tags, images & code (authors + AI) |
+| [`AGENTS.md`](AGENTS.md) | Short pointer for AI tools to `CONTENT.md` |
+
+Keep content conventions in `CONTENT.md` only. Theme docs under `themes/next/` belong to the submodule.
+
 ## Download
 
 ```bash
