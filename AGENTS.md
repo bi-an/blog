@@ -1,11 +1,12 @@
-# Agent instructions
+# AI 工作说明
 
-本仓库是 bi-an 的 Hexo 个人博客。不同文档职责如下，勿混用：
+本仓库是 bi-an 的 Hexo 个人博客。文档职责如下，勿混用：
 
 | 文件 | 用途 |
 |------|------|
-| `README.md` | 克隆、依赖、配置、插件（面向使用者） |
-| `CONTENT.md` | **内容写作与目录规范（SSOT）**；人类作者与 AI 均以它为准 |
+| `README.md` | 简介与安装 |
+| `TIPS.md` | 配置、include_code、插件等使用提示 |
+| `CONTENT.md` | **内容写作与目录规范（唯一正文）**；人类作者与 AI 均以它为准 |
 | `AGENTS.md` | 本文件：给 AI 的短入口与摘要 |
 | `themes/next/**/README*` | 主题 submodule 自带文档，勿改作本站规范 |
 
@@ -14,6 +15,7 @@
 在新增或修改以下路径的内容前，**必须先阅读并遵守** [`CONTENT.md`](CONTENT.md)：
 
 - `source/_posts/`
+- `source/_drafts/`
 - `source/assets/images/`
 - `source/downloads/code/`
 
@@ -27,5 +29,5 @@
 
 ## 其它改动
 
-- 站点/主题配置：优先看根 `README.md`、`_config.yml`、`_config.next.yml`
+- 站点用法与配置提示：优先看 [`README.md`](README.md)、[`TIPS.md`](TIPS.md)、`_config.yml`、`_config.next.yml`
 - 不要把规范正文复制多份；只维护 `CONTENT.md`
