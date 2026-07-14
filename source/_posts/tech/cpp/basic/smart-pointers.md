@@ -85,7 +85,7 @@ p3.reset(new int(2)); // undefined, multiple writes
 <details>
 <summary>示例1：复制构造和reset()竞争</summary>
 
-{% include_code lang:cpp smart-pointers-01.cpp %}
+{% include_code lang:cpp tech/cpp/basic/smart-pointers-01.cpp %}
 
 </details>
 
@@ -94,7 +94,7 @@ p3.reset(new int(2)); // undefined, multiple writes
 <details>
 <summary>示例2：复制构造和析构竞争</summary>
 
-{% include_code lang:cpp smart-pointers-02.cpp %}
+{% include_code lang:cpp tech/cpp/basic/smart-pointers-02.cpp %}
 
 </details>
 
@@ -134,7 +134,7 @@ p3.reset(new int(2)); // undefined, multiple writes
 <details>
 <summary>SimpleSharedPtr</summary>
 
-{% include_code lang:cpp smart-pointers-03.cpp %}
+{% include_code lang:cpp tech/cpp/basic/smart-pointers-03.cpp %}
 
 </details>
 
@@ -148,16 +148,16 @@ https://gcc.gnu.org/onlinedocs/libstdc++/latest-doxygen/index.html
 
 <details>
 <summary>shared_ptr.h</summary>
-{% include_code lang:cpp smart-pointers-04.h %}
+{% include_code lang:cpp tech/cpp/basic/smart-pointers-04.h %}
 </details>
 
 <details>
 <summary>shared_ptr_base.h</summary>
-{% include_code lang:cpp smart-pointers-05.h %}
+{% include_code lang:cpp tech/cpp/basic/smart-pointers-05.h %}
 </details>
 
 <details>
 <summary>shared_ptr_atomic.h</summary>
-{% include_code lang:cpp smart-pointers-06.h %}
+{% include_code lang:cpp tech/cpp/basic/smart-pointers-06.h %}
 </details>
 

@@ -47,4 +47,4 @@ tags:
 - 悬挂指针：其他线程还在访问被释放的节点。
 - ABA 问题：节点被释放后地址复用，导致逻辑错误。
 
-{% include_code lang:cpp memory-reclamation-in-concurrency-01.cpp %}
+{% include_code lang:cpp tech/concurrent/memory-reclamation-in-concurrency-01.cpp %}

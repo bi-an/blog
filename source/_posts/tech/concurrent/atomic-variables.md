@@ -20,7 +20,7 @@ tags:
 
 举个例子，假设我们有一个原子变量 `std::atomic<int> counter`，两个线程同时执行 `counter++` 操作：
 
-{% include_code lang:cpp atomic-variables-01.cpp %}
+{% include_code lang:cpp tech/concurrent/atomic-variables-01.cpp %}
 
 在这个例子中：
 
@@ -48,14 +48,14 @@ tags:
 5. 伪代码示例
 以下是一个伪代码示例，展示了CAS操作的工作原理：
 
-{% include_code lang:cpp atomic-variables-02.cpp %}
+{% include_code lang:cpp tech/concurrent/atomic-variables-02.cpp %}
 
 在多线程环境中，CAS操作可以确保只有一个线程成功修改变量的值，而其他线程会失败并重试。
 
 6. 实际应用
 在实际应用中，原子变量的操作可能如下所示：
 
-{% include_code lang:cpp atomic-variables-03.cpp %}
+{% include_code lang:cpp tech/concurrent/atomic-variables-03.cpp %}
 
 在这个例子中，compare_exchange_weak 使用CAS操作来确保 counter 的原子性修改。每次修改失败时，线程会重试，直到成功。
 
@@ -122,7 +122,7 @@ CAS操作可以用于实现复杂的并发数据结构，如无锁队列、无�
 
 以下是一个使用CAS操作实现无锁计数器的示例：
 
-{% include_code lang:cpp atomic-variables-04.cpp %}
+{% include_code lang:cpp tech/concurrent/atomic-variables-04.cpp %}
 
 在这个例子中，compare_exchange_weak 使用CAS操作来确保 counter 的原子性修改。每次修改失败时，线程会重试，直到成功。
 
@@ -165,11 +165,11 @@ fetch_add 是一种原子加法操作，它将给定的值加到原子变量的�
 
 compare_exchange_weak 示例：
 
-{% include_code lang:cpp atomic-variables-05.cpp %}
+{% include_code lang:cpp tech/concurrent/atomic-variables-05.cpp %}
 
 fetch_add 示例：
 
-{% include_code lang:cpp atomic-variables-06.cpp %}
+{% include_code lang:cpp tech/concurrent/atomic-variables-06.cpp %}
 
 
 如果我们只需要简单地递增计数器，并且没有其他条件限制，fetch_add 确实是一个更直接和高效的选择。fetch_add 能够确保每次递增操作都是原子的，避免了竞争条件。
@@ -179,14 +179,14 @@ fetch_add 示例：
 示例：基于条件的更新
 假设我们有一个计数器，需要在满足特定条件时进行递增操作：
 
-{% include_code lang:cpp atomic-variables-07.cpp %}
+{% include_code lang:cpp tech/concurrent/atomic-variables-07.cpp %}
 
 在这个例子中，只有当 counter 的值小于500时，才会进行递增操作。compare_exchange_weak 确保条件更新的原子性和安全性。
 
 使用 fetch_add 的场景
 如果我们不需要基于条件进行更新，只是简单地递增计数器，那么 fetch_add 是一个更好的选择：
 
-{% include_code lang:cpp atomic-variables-08.cpp %}
+{% include_code lang:cpp tech/concurrent/atomic-variables-08.cpp %}
 
 在这个例子中，fetch_add 确保每次递增操作都是原子的，避免了竞争条件。
 
@@ -199,7 +199,7 @@ ABA问题在并发编程中是一个常见的问题，尤其是在使用CAS（Co
 示例：使用 AtomicStampedReference 避免ABA问题
 以下是一个使用 AtomicStampedReference 避免ABA问题的示例：
 
-{% include_code lang:cpp atomic-variables-09.cpp %}
+{% include_code lang:cpp tech/concurrent/atomic-variables-09.cpp %}
 
 在这个例子中，我们使用了一个额外的 stamp 变量来记录每次更新的版本号。每次更新 counter 时，同时更新 stamp。这样，即使 counter 的值回到了原始值，stamp 的值也会不同，从而避免了ABA问题。
 
@@ -229,7 +229,7 @@ ABA问题不仅存在于CAS操作中，还可能在其他并发编程场景中�
 示例：使用 AtomicStampedReference 避免ABA问题
 以下是一个使用 AtomicStampedReference 避免ABA问题的示例：
 
-{% include_code lang:java atomic-variables-10.java %}
+{% include_code lang:java tech/concurrent/atomic-variables-10.java %}
 
 在这个例子中，AtomicStampedReference 使用版本号来避免ABA问题，确保每次更新都有一个唯一的版本号。
 
@@ -237,7 +237,7 @@ C++ 标准库中没有直接等同于 Java 的 AtomicStampedReference 的类，�
 
 示例：实现带有版本号的原子引用
 
-{% include_code lang:cpp atomic-variables-11.cpp %}
+{% include_code lang:cpp tech/concurrent/atomic-variables-11.cpp %}
 
 解释
 StampedValue 结构体：包含一个值和一个版本号（或时间戳）。
@@ -302,7 +302,7 @@ compare_exchange_strong 更适合需要确保操作成功的场景，如线程�
 代码示例
 以下是一个使用 compare_exchange_weak 实现自旋锁的示例：
 
-{% include_code lang:cpp atomic-variables-12.cpp %}
+{% include_code lang:cpp tech/concurrent/atomic-variables-12.cpp %}
 
 在这个示例中，compare_exchange_weak 被用来实现自旋锁，因为它在失败时可以快速重试，从而提高性能
 
@@ -339,7 +339,7 @@ compare_exchange_strong 更适合需要确保操作成功的场景，如线程�
 
 以下是一个简单的代码示例，展示了如何使用内存屏障：
 
-{% include_code lang:cpp atomic-variables-13.cpp %}
+{% include_code lang:cpp tech/concurrent/atomic-variables-13.cpp %}
 
 在这个示例中，std::atomic_thread_fence 用于插入内存屏障，确保在屏障之前的存储操作完成后，才开始执行屏障之后的存储操作
 
@@ -377,7 +377,7 @@ compare_exchange_strong 更适合需要确保操作成功的场景，如线程�
 
 以下是一个简单的代码示例，展示了如何使用不同的内存序：
 
-{% include_code lang:cpp atomic-variables-14.cpp %}
+{% include_code lang:cpp tech/concurrent/atomic-variables-14.cpp %}
 
 在这个示例中，producer 线程使用 memory_order_release 来发布数据，而 consumer 线程使用 memory_order_acquire 来确保读取到的数据是最新的
 

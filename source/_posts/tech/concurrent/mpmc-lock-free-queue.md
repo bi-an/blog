@@ -141,13 +141,13 @@ CAS），前提是在此期间头部块没有发生变化。为了避免 ABA 问
 
 BlockQueue（只用分块）：使用分块内存布局，但不使用 ticket 分发机制。
 
-{% include_code lang:cpp from:10 to:49 mpmc-lock-free-queue-01.cpp %}
+{% include_code mpmc-lock-free-queue-01.cpp:10-49 lang:cpp from:10 to:49 tech/concurrent/mpmc-lock-free-queue-01.cpp %}
 
 TicketQueue（分块 + ticket）：模拟 moodycamel 的 ticket 分发方式。
 
-{% include_code lang:cpp from:51 to:78 mpmc-lock-free-queue-01.cpp %}
+{% include_code mpmc-lock-free-queue-01.cpp:51-78 lang:cpp from:51 to:78 tech/concurrent/mpmc-lock-free-queue-01.cpp %}
 
 Benchmark 代码：
 
-{% include_code lang:cpp from:80 camel_mpmc/TicketQueue/TicketQueue_benchmark.cpp %}
+{% include_code TicketQueue_benchmark.cpp:80-174 lang:cpp from:80 to:174 tech/concurrent/mpmc-lock-free-queue-01.cpp %}
 

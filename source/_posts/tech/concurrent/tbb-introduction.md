@@ -12,7 +12,7 @@ tags:
 
 使用脚本一键监查系统是否安装了 TBB
 
-{% include_code lang:bash tbb-introduction-01.sh %}
+{% include_code lang:bash tech/concurrent/tbb-introduction-01.sh %}
 
 从包管理器安装：
 
@@ -135,7 +135,7 @@ task_group 的本质
 - 任务会被 提交到当前上下文的线程池，通常是 全局线程池
 - 由线程池中的工作线程去调度和执行
 
-{% include_code lang:cpp tbb-introduction-02.cpp %}
+{% include_code lang:cpp tech/concurrent/tbb-introduction-02.cpp %}
 
 
 测试：
@@ -260,11 +260,11 @@ API: [parallel_for](https://oneapi-spec.uxlfoundation.org/specifications/oneapi/
 
 1. 用 `my_parallel_for` 模拟 `parallel_for` 的实现：
 
-{% include_code lang:cpp tbb-introduction-03.cpp %}
+{% include_code lang:cpp tech/concurrent/tbb-introduction-03.cpp %}
 
 2. 发出任务的线程也会成为工作线程之一，并参与任务的执行，测试代码如下：
 
-{% include_code lang:cpp tbb-introduction-04.cpp %}
+{% include_code lang:cpp tech/concurrent/tbb-introduction-04.cpp %}
 
 测试结果：
 
