@@ -213,7 +213,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2026-07-14 11:56:13 / Modified: 09:54:01" itemprop="dateCreated datePublished" datetime="2026-07-14T11:56:13+00:00">2026-07-14</time>
+              <time title="Created: 2026-07-14 11:56:13 / Modified: 10:05:00" itemprop="dateCreated datePublished" datetime="2026-07-14T11:56:13+00:00">2026-07-14</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -456,6 +456,8 @@
 <p>两台主机的 <code>overcommit_memory</code> 都是 <strong>0</strong>，本不该走到 mode 2。仍用实验确认当前失败<strong>不是</strong>「全系统累计承诺量超限」。</p>
 <p>下面按 Linux <strong>v5.14</strong> 源码（<a target="_blank" rel="noopener" href="https://github.com/torvalds/linux/blob/v5.14/mm/mmap.c"><code>mm/mmap.c</code> <code>accountable_mapping</code> / <code>mmap_region</code></a>、<a target="_blank" rel="noopener" href="https://github.com/torvalds/linux/blob/v5.14/mm/util.c#L872-L911"><code>mm/util.c</code> <code>__vm_enough_memory</code></a>）画出承诺检查：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">mmap_region()</span><br><span class="line">  │</span><br><span class="line">  ├─ accountable_mapping()？   // 私有可写且无 VM_NORESERVE</span><br><span class="line">  │     ├─ 否 → 跳过 __vm_enough_memory（不进入承诺检查）</span><br><span class="line">  │     └─ 是 → security_vm_enough_memory_mm()</span><br><span class="line">  │                    └─ __vm_enough_memory(pages)</span><br><span class="line">  │                    │</span><br><span class="line">  │                  ① vm_acct_memory(pages)</span><br><span class="line">  │                     （先把本次 pages 计入 Committed_AS）</span><br><span class="line">  │                    │</span><br><span class="line">  │                  ② 按 overcommit_memory 三选一（互斥，只走一条）</span><br><span class="line">  │             ┌─────────────────────┼─────────────────────────┐</span><br><span class="line">  │             │ == 0 GUESS          │ == 1 ALWAYS             │ == 2 NEVER</span><br><span class="line">  │             │ （当前主机）         │                         │</span><br><span class="line">  │             ▼                     ▼                         ▼</span><br><span class="line">  │   pages &gt;                     直接通过                  allowed = vm_commit_limit()</span><br><span class="line">  │   totalram + total_swap？     return 0                  （再减去 admin/user reserve）</span><br><span class="line">  │         │是      │否        （保留记账）                    │</span><br><span class="line">  │         │        │                                          ▼</span><br><span class="line">  │         │        │                                      vm_committed_as（已含本次）</span><br><span class="line">  │         │        │                                      &lt; allowed ？</span><br><span class="line">  │         │        │                                       │否（超限）  │是（未超）</span><br><span class="line">  │         ▼        │                                       ▼            │</span><br><span class="line">  │    goto error    │                                  goto error        │</span><br><span class="line">  │                  │                                                    │</span><br><span class="line">  │                  └─────────────────────────┬──────────────────────────┘</span><br><span class="line">  │                                            ▼</span><br><span class="line">  │                                        return 0</span><br><span class="line">  │                                     （保留①的记账）</span><br><span class="line">  │                                    mmap 继续成功路径</span><br><span class="line">  │</span><br><span class="line">  │     goto error:</span><br><span class="line">  │        ③ vm_unacct_memory(pages)  ← 仅失败路径</span><br><span class="line">  │           回滚刚才的记账</span><br><span class="line">  │           return -ENOMEM</span><br></pre></td></tr></table></figure>
+<p>简化版（只看主干）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">accountable_mapping？  // 私有可写且无 VM_NORESERVE</span><br><span class="line">  ├─ 否 → 跳过承诺检查，mmap 继续（仍可能因其它原因失败）</span><br><span class="line">  └─ 是 → 先记账，再按 overcommit_memory：</span><br><span class="line">              ├─ 0 → 单次 pages &gt; RAM+Swap？  是→失败(回滚) / 否→检查通过</span><br><span class="line">              ├─ 1 → 始终通过承诺检查</span><br><span class="line">              └─ 2 → Committed_AS 超限？  是→失败(回滚) / 否→检查通过</span><br></pre></td></tr></table></figure>
 <ol>
 <li><strong>mode 0 不检查 <code>CommitLimit</code>。</strong></li>
 <li><strong>mode 2 不检查 <code>pages &gt; RAM + Swap</code>。</strong></li>
@@ -712,7 +714,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 09:54:01" itemprop="dateModified" datetime="2026-07-14T09:54:01+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-14 10:05:00" itemprop="dateModified" datetime="2026-07-14T10:05:00+00:00">2026-07-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -812,7 +814,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 09:54:01" itemprop="dateModified" datetime="2026-07-14T09:54:01+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-14 10:05:00" itemprop="dateModified" datetime="2026-07-14T10:05:00+00:00">2026-07-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -893,7 +895,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 09:54:01" itemprop="dateModified" datetime="2026-07-14T09:54:01+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-14 10:05:00" itemprop="dateModified" datetime="2026-07-14T10:05:00+00:00">2026-07-14</time>
               </span>
 
           
@@ -1086,7 +1088,7 @@ PC，落在函数体内）：</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 09:54:01" itemprop="dateModified" datetime="2026-07-14T09:54:01+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-14 10:05:00" itemprop="dateModified" datetime="2026-07-14T10:05:00+00:00">2026-07-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1413,7 +1415,7 @@ PC，落在函数体内）：</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 09:54:01" itemprop="dateModified" datetime="2026-07-14T09:54:01+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-14 10:05:00" itemprop="dateModified" datetime="2026-07-14T10:05:00+00:00">2026-07-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1719,7 +1721,7 @@ PC，落在函数体内）：</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 09:54:01" itemprop="dateModified" datetime="2026-07-14T09:54:01+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-14 10:05:00" itemprop="dateModified" datetime="2026-07-14T10:05:00+00:00">2026-07-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2603,7 +2605,7 @@ PC，落在函数体内）：</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 09:54:01" itemprop="dateModified" datetime="2026-07-14T09:54:01+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-14 10:05:00" itemprop="dateModified" datetime="2026-07-14T10:05:00+00:00">2026-07-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -3025,7 +3027,7 @@ PC，落在函数体内）：</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 09:54:01" itemprop="dateModified" datetime="2026-07-14T09:54:01+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-14 10:05:00" itemprop="dateModified" datetime="2026-07-14T10:05:00+00:00">2026-07-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -3900,7 +3902,7 @@ PC，落在函数体内）：</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 09:54:01" itemprop="dateModified" datetime="2026-07-14T09:54:01+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-14 10:05:00" itemprop="dateModified" datetime="2026-07-14T10:05:00+00:00">2026-07-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
