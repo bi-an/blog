@@ -188,6 +188,182 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/02/tech/concurrent/memory-model-explained/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/09/02/tech/concurrent/memory-model-explained/" class="post-title-link" itemprop="url">人人都看得懂的内存模型</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-09-02 11:10:13" itemprop="dateCreated datePublished" datetime="2025-09-02T11:10:13+00:00">2025-09-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-07-16 09:57:21" itemprop="dateModified" datetime="2026-07-16T09:57:21+00:00">2026-07-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/concurrent/" itemprop="url" rel="index"><span itemprop="name">concurrent</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="术语">术语</h2>
+<p>内存模型（Memory Model）是定义<strong>数据一致性</strong>与<strong>执行顺序</strong>规则的一组规范。</p>
+<p>关键概念：</p>
+<ol>
+<li>原子性：操作不可打断；如果同时修改，硬件会串行排队。</li>
+<li>可见性：对其他核心（即<strong>其他线程</strong>）可见，也就是 load 指令可以读到最新值。</li>
+<li>顺序性：禁止<strong>本线程</strong>内的指令重排序。所以可以用作同步点。</li>
+</ol>
+<p>所有原子变量都满足原子性。但是其他两者不一定满足，由内存序定义。</p>
+<p>比如原子自增 fetch_add(relaxed) 是线程安全的，但是无法使用 load 指令读到最新的结果。</p>
+<h2 id="缓存一致性协议-MESI">缓存一致性协议 (MESI)</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">状态</th>
+<th style="text-align:center">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">M (Modified)</td>
+<td style="text-align:center">缓存行已被修改，只有当前 CPU 拥有，主内存未更新</td>
+</tr>
+<tr>
+<td style="text-align:center">E (Exclusive)</td>
+<td style="text-align:center">缓存行未被修改，只有当前 CPU 拥有，与主内存一致</td>
+</tr>
+<tr>
+<td style="text-align:center">S (Shared)</td>
+<td style="text-align:center">缓存行未被修改，多个 CPU 拥有，与主内存一致</td>
+</tr>
+<tr>
+<td style="text-align:center">I (Invalid)</td>
+<td style="text-align:center">缓存行无效，必须重新从主内存加载</td>
+</tr>
+</tbody>
+</table>
+<h2 id="relaxed-内存序">relaxed 内存序</h2>
+<p>术语：</p>
+<ol>
+<li>保证原子性：整个操作不可被打断；不一定立即回写主内存，可能暂时把结果放在 Store Buffer 中。</li>
+<li>不保证顺序：编译器和CPU可能对指令重排序。</li>
+<li>不保证可见性：其他核心不一定立即可见。</li>
+</ol>
+<p>说人话：</p>
+<ol>
+<li>原子性：原子操作是串行的（由硬件排队）</li>
+<li>不保证可见性：
+<ul>
+<li>load 操作是并行的，并且不保证看到最新值。</li>
+<li>“可见性”是针对程序员的，因为对于 relaxed ，没有任何指令可以保证 load 拿到最新值。它可能直接从自己的缓存行中把旧值返回给你。</li>
+<li>硬件本身是知道最新值的，它会根据 MESI 来保证自己当时拿到的是最新值（但是无法通过指令告知你）。</li>
+</ul>
+</li>
+<li>不保证顺序：不是同步点，无法保证前后指令与程序员的编写顺序一致。</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">层级</th>
+<th style="text-align:center">机制</th>
+<th style="text-align:center">作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">指令级</td>
+<td style="text-align:center">原子指令（如 LOCK XADD）</td>
+<td style="text-align:center">保证操作不可打断</td>
+</tr>
+<tr>
+<td style="text-align:center">缓存级</td>
+<td style="text-align:center">MESI 协议</td>
+<td style="text-align:center">控制缓存行访问，避免冲突</td>
+</tr>
+<tr>
+<td style="text-align:center">编译器级</td>
+<td style="text-align:center">编译器屏障</td>
+<td style="text-align:center">防止指令重排</td>
+</tr>
+<tr>
+<td style="text-align:center">CPU级</td>
+<td style="text-align:center">内存屏障</td>
+<td style="text-align:center">保证执行顺序</td>
+</tr>
+<tr>
+<td style="text-align:center">高级机制</td>
+<td style="text-align:center">事务性内存</td>
+<td style="text-align:center">实现复杂原子逻辑（可选）</td>
+</tr>
+</tbody>
+</table>
+<h2 id="release-acquire-语义">release-acquire 语义</h2>
+<h2 id="指令重排序">指令重排序</h2>
+<ol>
+<li>编译器指令重排：编译器屏障防止指令重排</li>
+<li>CPU 乱序执行：内存屏障保证执行顺序。</li>
+</ol>
+<h2 id="原子指令">原子指令</h2>
+<p>原子指令（如 LOCK XADD）：保证操作不可打断</p>
+<h2 id="Load-Store-Buffer">Load / Store Buffer</h2>
+<h2 id="缓存行">缓存行</h2>
+<h2 id="内存屏障">内存屏障</h2>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/26/tech/cpp/compile-link/pic-position-independent-code/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -219,7 +395,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 10:05:00" itemprop="dateModified" datetime="2026-07-14T10:05:00+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-16 09:57:21" itemprop="dateModified" datetime="2026-07-16T09:57:21+00:00">2026-07-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -537,7 +713,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 10:05:00" itemprop="dateModified" datetime="2026-07-14T10:05:00+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-16 09:57:21" itemprop="dateModified" datetime="2026-07-16T09:57:21+00:00">2026-07-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1264,7 +1440,7 @@ libc 层。</strong></p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 10:05:00" itemprop="dateModified" datetime="2026-07-14T10:05:00+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-16 09:57:21" itemprop="dateModified" datetime="2026-07-16T09:57:21+00:00">2026-07-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1469,7 +1645,7 @@ malloc 需要兼容各种尺寸，碎片和内存抖动不可避免。</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 10:05:00" itemprop="dateModified" datetime="2026-07-14T10:05:00+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-16 09:57:21" itemprop="dateModified" datetime="2026-07-16T09:57:21+00:00">2026-07-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1642,7 +1818,7 @@ Tag字段存储了主存中数据的地址信息，当CPU访问主存时，首�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 10:05:00" itemprop="dateModified" datetime="2026-07-14T10:05:00+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-16 09:57:21" itemprop="dateModified" datetime="2026-07-16T09:57:21+00:00">2026-07-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1724,7 +1900,7 @@ Tag字段存储了主存中数据的地址信息，当CPU访问主存时，首�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 10:05:00" itemprop="dateModified" datetime="2026-07-14T10:05:00+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-16 09:57:21" itemprop="dateModified" datetime="2026-07-16T09:57:21+00:00">2026-07-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2186,7 +2362,7 @@ Tag字段存储了主存中数据的地址信息，当CPU访问主存时，首�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 10:05:00" itemprop="dateModified" datetime="2026-07-14T10:05:00+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-16 09:57:21" itemprop="dateModified" datetime="2026-07-16T09:57:21+00:00">2026-07-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2323,7 +2499,7 @@ Tag字段存储了主存中数据的地址信息，当CPU访问主存时，首�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 10:05:00" itemprop="dateModified" datetime="2026-07-14T10:05:00+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-16 09:57:21" itemprop="dateModified" datetime="2026-07-16T09:57:21+00:00">2026-07-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2460,7 +2636,7 @@ Tag字段存储了主存中数据的地址信息，当CPU访问主存时，首�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 10:05:00" itemprop="dateModified" datetime="2026-07-14T10:05:00+00:00">2026-07-14</time>
+                <time title="Modified: 2026-07-16 09:57:21" itemprop="dateModified" datetime="2026-07-16T09:57:21+00:00">2026-07-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2525,80 +2701,6 @@ Tag字段存储了主存中数据的地址信息，当CPU访问主存时，首�
 <p>访问是通过 线程局部存储寄存器（FS/GS）+ 偏移量 实现的。</p>
 <p>存储空间由线程库在创建线程时分配和初始化。</p>
 
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/18/tech/cpp/cpp-book/useful-books-list/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/18/tech/cpp/cpp-book/useful-books-list/" class="post-title-link" itemprop="url">实用书籍列表</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-18 21:25:16" itemprop="dateCreated datePublished" datetime="2025-08-18T21:25:16+00:00">2025-08-18</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-14 10:05:00" itemprop="dateModified" datetime="2026-07-14T10:05:00+00:00">2026-07-14</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/cpp-book/" itemprop="url" rel="index"><span itemprop="name">cpp-book</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>列表：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">.</span><br><span class="line">├── AT&amp;T Assembly Manual.pdf</span><br><span class="line">├── C++ Primer Plus 第五版中文版.pdf</span><br><span class="line">├── C++.Primer.5th.Edition_2013.pdf</span><br><span class="line">├── CplusplusConcurrencyInAction_PracticalMultithreading.pdf</span><br><span class="line">├── Debug Hacks中文版：深入调试的技术和工具.pdf</span><br><span class="line">├── IB-Host-and-Ports.pdf</span><br><span class="line">├── IBTA-Overview-of-IBTA-Volume-1-Release-1.6-2022-07-15.pdf</span><br><span class="line">├── InifiniBand Guide.pdf</span><br><span class="line">├── LDAP Authentication Guide.pdf</span><br><span class="line">├── Linux Kernel Networking - Implementation and Theory.pdf</span><br><span class="line">├── Linux-UNIX系统编程手册（上、下册）.pdf</span><br><span class="line">├── Linux内核设计与实现(第三版中文高清带目录).pdf</span><br><span class="line">├── Linux多线程服务端编程 - 陈硕.pdf</span><br><span class="line">├── Linux多线程服务端编程：使用muduo C++网络库.pdf</span><br><span class="line">├── Linux高性能服务器编程.pdf</span><br><span class="line">├── OKTA Multifactor Authentication (MFA) FAQ.pdf</span><br><span class="line">├── Shell脚本学习指南.pdf</span><br><span class="line">├── TBB</span><br><span class="line">│   ├── Intel TBB.pdf</span><br><span class="line">│   ├── TBBtutorial.pdf</span><br><span class="line">│   ├── intel-tbb.pdf</span><br><span class="line">│   ├── oneTBB-master.zip</span><br><span class="line">│   └── onetbb_developer-guide-api-reference_2021.6-772616-772617.pdf</span><br><span class="line">├── UNIX环境高级编程(第三版).pdf</span><br><span class="line">├── UNIX网络编程卷1：套接字联网API（第3版）.pdf</span><br><span class="line">├── ccia_code_samples-master.zip</span><br><span class="line">├── dmtcp</span><br><span class="line">│   ├── Be Kind, Rewind —Checkpoint &amp; Restore Capability for Improving Reliability of Large-scale Semiconductor Design.pdf</span><br><span class="line">│   ├── dmtcp-mug-17.pdf</span><br><span class="line">│   └── plugin-tutorial.pdf</span><br><span class="line">├── gdb-and-assembly.pdf</span><br><span class="line">├── gdb-refcard.pdf</span><br><span class="line">├── gdb.pdf</span><br><span class="line">├── p4-p4v-cheat-sheet_cn.pdf</span><br><span class="line">├── thread-analyzer-193426.pdf</span><br><span class="line">├── 并行编程</span><br><span class="line">│   ├── C++ Concurrency in Action.pdf</span><br><span class="line">│   ├── C++-Concurrency-In-Action-2ed-zh-v0.2.pdf</span><br><span class="line">│   ├── C++并发编程实战(中文版).pdf</span><br><span class="line">│   ├── C++并发编程实战.pdf</span><br><span class="line">│   ├── C++并发编程实战源代码</span><br><span class="line">│   ├── C++并发编程实战源代码.zip</span><br><span class="line">│   ├── Patterns_for_Parallel_Programming.pdf</span><br><span class="line">│   └── 高并发网络模型.png</span><br><span class="line">└── 编译原理(龙书) 第二版.pdf</span><br></pre></td></tr></table></figure>
       
     </div>
 
@@ -2684,7 +2786,7 @@ Tag字段存储了主存中数据的地址信息，当CPU访问主存时，首�
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">125</span>
+          <span class="site-state-item-count">126</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
