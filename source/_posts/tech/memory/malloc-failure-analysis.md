@@ -1,10 +1,10 @@
 ---
 title: malloc(64 GiB) 返回 NULL 排查记录
 date: 2026-07-14 11:56:13
-categories: cpp
+categories: memory
 tags:
-  - cpp
-  - basic
+ - memory
+ - linux
 ---
 
 ## 一、现象
@@ -40,7 +40,7 @@ tags:
 
 `malloc` 失败可能有两种情况：glibc 内部逻辑拒绝，或底层 `mmap` 系统调用已失败。先分层确认：
 
-{% include_code probe_malloc_failure.cpp:32-48 lang:cpp from:32 to:48 tech/cpp/basic/mallc-failure-analysis-01.cpp %}
+{% include_code probe_malloc_failure.cpp:32-48 lang:cpp from:32 to:48 tech/memory/malloc-failure-analysis-01.cpp %}
 
 ```bash
 # 配套测试程序见第六节，编译：
@@ -117,7 +117,7 @@ if (sysctl_overcommit_memory == OVERCOMMIT_GUESS) {
 
 **用实验验证边界：**
 
-{% include_code probe_malloc_failure.cpp:71-85 lang:cpp from:71 to:85 tech/cpp/basic/mallc-failure-analysis-01.cpp %}
+{% include_code probe_malloc_failure.cpp:71-85 lang:cpp from:71 to:85 tech/memory/malloc-failure-analysis-01.cpp %}
 
 ```bash
 ./probe_malloc_failure threshold
@@ -214,7 +214,7 @@ grep CommitLimit /proc/meminfo
 
 §3.3 实测 **15872 MiB（=15.5 GiB）** 正好落在该区间内（> 11.75 GiB 且 ≤ 15.5 GiB），用作本实验的主探测点。另用 **16 GiB（=16384 MiB）**（> 15.5 GiB）作对照，确认超 mode 0 边界时拒绝且不记账。
 
-{% include_code probe_malloc_failure.cpp:87-121 lang:cpp from:87 to:121 tech/cpp/basic/mallc-failure-analysis-01.cpp %}
+{% include_code probe_malloc_failure.cpp:87-121 lang:cpp from:87 to:121 tech/memory/malloc-failure-analysis-01.cpp %}
 
 ```bash
 ./probe_malloc_failure commit
@@ -245,7 +245,7 @@ mmap(16384 MiB / 16 GiB): FAIL  Committed_AS 6953140 KiB (6.63 GiB) -> 6953140 K
 - 加了 `MAP_NORESERVE` 后 `mmap` **成功** → 连续区域是有的，失败只因承诺检查
 - 加了 `MAP_NORESERVE` 后 `mmap` **仍失败** → 可能确实找不到连续区域
 
-{% include_code probe_malloc_failure.cpp:50-69 lang:cpp from:50 to:69 tech/cpp/basic/mallc-failure-analysis-01.cpp %}
+{% include_code probe_malloc_failure.cpp:50-69 lang:cpp from:50 to:69 tech/memory/malloc-failure-analysis-01.cpp %}
 
 ```bash
 ./probe_malloc_failure noreserve
@@ -387,7 +387,7 @@ g++ -O0 -o probe_malloc_failure probe_malloc_failure.cpp
 
 ### 源码
 
-{% include_code probe_malloc_failure.cpp lang:cpp tech/cpp/basic/mallc-failure-analysis-01.cpp %}
+{% include_code probe_malloc_failure.cpp lang:cpp tech/memory/malloc-failure-analysis-01.cpp %}
 
 ---
 

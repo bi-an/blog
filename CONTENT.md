@@ -48,6 +48,7 @@ source
 │       │   │   └── third-lib/
 │       │   ├── process/
 │       │   ├── thread/
+│       │   ├── memory/
 │       │   ├── concurrent/
 │       │   ├── io/
 │       │   ├── algo/
@@ -75,6 +76,7 @@ source
     │   │
     │   ├── process/                # 进程全套体系（原理 + IPC + 信号）
     │   ├── thread/                 # 线程内核原理、线程模型、线程调度
+    │   ├── memory/                 # 操作系统内存管理（虚拟内存、地址空间等）
     │   ├── concurrent/             # 并发基础、硬件并发、CPU底层并发机制
     │   ├── io/                     # Linux IO 全套原理与模型
     │   ├── algo/                   # 数据结构与算法
@@ -108,7 +110,9 @@ source
 
 - **数据结构与算法**：通用数据结构、算法思想、刷题、复杂度分析归 algo；C\+\+ STL容器实操归 cpp/basic
 
-- **Linux实操**：Linux命令、Shell脚本、系统配置、运维操作归 linux；内核底层原理归 process/thread/io/concurrent
+- **Linux实操**：Linux命令、Shell脚本、系统配置、运维操作归 linux；内核与子系统原理归 process/thread/memory/io/concurrent
+
+- **内存相关**：操作系统内存机制（虚拟内存、地址空间、物理内存拓扑等）归 memory；应用层内存优化归 cpp/optimize；并发内存模型与回收归 concurrent；泄漏/工具排查归 cpp/debug
 
 - **TCL脚本**：所有EDA/IC专用TCL脚本、工程脚本，统一归 ic
 
@@ -148,35 +152,39 @@ source
 
 收录线程内核原理、线程模型、线程调度、线程栈、线程属性等线程底层相关内容。
 
-### 4\. concurrent 目录规范
+### 4\. memory 目录规范
+
+收录操作系统内存管理相关内容，包括虚拟内存与地址空间、物理内存与拓扑、页面与映射机制等。
+
+### 5\. concurrent 目录规范
 
 收录CPU架构、流水线、乱序执行、指令重排、分支预测、CPU缓存、缓存行、伪共享、内存屏障等硬件并发机制内容。
 
-### 5\. io 目录规范
+### 6\. io 目录规范
 
 收录阻塞/非阻塞IO、select/poll/epoll、文件IO、网络IO底层、Socket内核原理、TCP/IP底层机制等IO相关原理内容。
 
-### 6\. algo 目录规范
+### 7\. algo 目录规范
 
 收录基础数据结构、经典算法、复杂度分析、刷题思路、解题模板，下设 algo\-book 存放算法书籍笔记。
 
-### 7\. linux 目录规范
+### 8\. linux 目录规范
 
 收录Linux文件/权限/进程/网络命令、Shell脚本、系统配置、运维实操，下设 linux\-book 存放Linux相关书籍笔记、linux\-project 存放Linux落地项目。
 
-### 8\. ic 目录规范
+### 9\. ic 目录规范
 
 收录IC设计、EDA工具、芯片理论、EDA专用TCL脚本，下设 ic\-book 存放IC/EDA相关书籍笔记、ic\-project 存放IC/EDA工程实战项目。
 
-### 9\. project 目录规范
+### 10\. project 目录规范
 
 收录跨领域、综合性大型落地项目、全局工程架构、整体项目复盘。各领域单一独立项目，统一存放对应领域 xxx\-project 子目录。
 
-### 10\. site 目录规范
+### 11\. site 目录规范
 
 收录Hexo及个人网站搭建、环境部署、主题配置、插件使用、网站优化、博客日常运维等站点相关实操内容。
 
-### 11\. study 目录规范
+### 12\. study 目录规范
 
 收录英语学习相关内容，包含词汇、语法、句式、刷题、备考、电影台词、影视词汇、学习复盘等所有英语类笔记。
 
@@ -336,7 +344,7 @@ source
 
 - 适配范围：tech 下 cpp 全部三级业务目录、study 全部二级子目录，全额镜像
 
-- 冗余规避：无三级子目录的领域（io/process/thread/linux等），不强行新建空目录，保持简洁
+- 冗余规避：无三级子目录的领域（io/process/thread/memory/linux等），不强行新建空目录，保持简洁
 
 - 命名规则不变：所有笔记配套代码统一`笔记名-序号.后缀`，多碎片有序区分，精准归属对应镜像目录
 
@@ -366,7 +374,7 @@ source
 
 - cpp、compile\-link、cmake、assembly、debug、performance\-optimize
 
-- process、signal、ipc、thread、concurrent、cpu\-cache、memory\-barrier
+- process、signal、ipc、thread、memory、concurrent、cpu\-cache、memory\-barrier
 
 - io、epoll、socket、tcp、network
 

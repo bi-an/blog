@@ -1,10 +1,10 @@
 ---
 title: Introduction to memory
 date: 2024-01-29 14:25:24
-categories: linux
+categories: memory
 tags:
+ - memory
  - linux
- - shell
 ---
 
 

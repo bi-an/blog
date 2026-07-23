@@ -34,7 +34,7 @@ code_dir: downloads/code
 示例：
 
 ```text
-{% include_code lang:c title:示例 mallc-failure-analysis-01.cpp %}
+{% include_code lang:c title:示例 malloc-failure-analysis-01.cpp %}
 ```
 
 配套代码的目录与命名规范见 [`CONTENT.md`](CONTENT.md)。
