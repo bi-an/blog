@@ -3,8 +3,8 @@ title: DMTCP 之内存管理 (jalib)
 date: 2025-08-21 09:59:55
 categories: dmtcp
 tags:
+ - dmtcp
  - checkpoint
- - restart
 ---
 
 
