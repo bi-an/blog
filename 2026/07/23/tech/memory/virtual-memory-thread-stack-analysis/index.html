@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="现象 同一多线程工具、同一版本、同一份输入，在两台机器上跑完后，日志里的峰值内存对不上：    机器 Peak RSS Peak Virt Virt &#x2F; RSS     机器 A 473 GB 518 GB 1.09   机器 B 478 GB 5485 GB 11.5    RSS 只差约 5 GB，Virt 却差约 4967 GB（近 5 TB）。两次运行都正常结束（exit status 0">
+<meta property="og:type" content="article">
+<meta property="og:title" content="为什么同一个多线程程序在两台机器上 Virtual Memory 差了 10 倍？">
+<meta property="og:url" content="https://bi-an.github.io/blog/2026/07/23/tech/memory/virtual-memory-thread-stack-analysis/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="现象 同一多线程工具、同一版本、同一份输入，在两台机器上跑完后，日志里的峰值内存对不上：    机器 Peak RSS Peak Virt Virt &#x2F; RSS     机器 A 473 GB 518 GB 1.09   机器 B 478 GB 5485 GB 11.5    RSS 只差约 5 GB，Virt 却差约 4967 GB（近 5 TB）。两次运行都正常结束（exit status 0">
+<meta property="og:locale">
+<meta property="article:published_time" content="2026-07-23T15:03:18.000Z">
+<meta property="article:modified_time" content="2026-07-23T08:45:55.022Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="thread">
+<meta property="article:tag" content="memory">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2026/07/23/tech/memory/virtual-memory-thread-stack-analysis/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>为什么同一个多线程程序在两台机器上 Virtual Memory 差了 10 倍？ | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/07/23/tech/memory/virtual-memory-thread-stack-analysis/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          为什么同一个多线程程序在两台机器上 Virtual Memory 差了 10 倍？
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2026-07-23 15:03:18 / Modified: 08:45:55" itemprop="dateCreated datePublished" datetime="2026-07-23T15:03:18+00:00">2026-07-23</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/memory/" itemprop="url" rel="index"><span itemprop="name">memory</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="现象">现象</h2>
+<p>同一多线程工具、同一版本、同一份输入，在两台机器上跑完后，日志里的峰值内存对不上：</p>
+<table>
+<thead>
+<tr>
+<th>机器</th>
+<th>Peak RSS</th>
+<th>Peak Virt</th>
+<th>Virt / RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>机器 A</td>
+<td>473 GB</td>
+<td>518 GB</td>
+<td>1.09</td>
+</tr>
+<tr>
+<td>机器 B</td>
+<td>478 GB</td>
+<td>5485 GB</td>
+<td>11.5</td>
+</tr>
+</tbody>
+</table>
+<p>RSS 只差约 5 GB，Virt 却差约 4967 GB（近 5 TB）。两次运行都正常结束（exit status 0），结果也正确。机器 B 多带了 <code>-mc</code>，并行度更高，但后文估算表明两机线程数接近（约 144），单凭执行路径解释不了 Virt 差这么多。</p>
+<p>问题变成：日志里的 Virt 异常，是不是真出了内存问题？</p>
+<h2 id="排查">排查</h2>
+<h3 id="排除-OOM-与泄漏">排除 OOM 与泄漏</h3>
+<table>
+<thead>
+<tr>
+<th>机器</th>
+<th>freeSwap / totalSwap</th>
+<th>退出码</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>机器 A</td>
+<td>126 GB / 128 GB</td>
+<td>0</td>
+</tr>
+<tr>
+<td>机器 B</td>
+<td>128 GB / 128 GB</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>RSS 接近、swap 几乎没动、结果正确——更像监控数字异常，而不是进程把物理内存吃爆了。</p>
+<h3 id="对比-ulimit">对比 ulimit</h3>
+<table>
+<thead>
+<tr>
+<th>机器</th>
+<th><code>ulimit -s</code>（kbytes）</th>
+<th>约合每线程栈</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>机器 A</td>
+<td>42768</td>
+<td>~42 MB</td>
+</tr>
+<tr>
+<td>机器 B</td>
+<td>33554432</td>
+<td>32 GB</td>
+</tr>
+</tbody>
+</table>
+<p>栈限制相差约 785 倍。若程序用的是默认线程栈，这条差异值得顺着查。</p>
+<h3 id="定量估算">定量估算</h3>
+<p>输入相同、RSS 接近，可近似认为线程数 (N) 差不多。若线程走默认栈，Virt 差应主要来自「每线程栈预留」之差：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ΔVirt          = 5485 − 518 = 4967 GB</span><br><span class="line">Δstack/thread  = 32.000 − 0.041 = 31.959 GB</span><br><span class="line">N（上界）      = 4967 / 31.959 ≈ 155</span><br></pre></td></tr></table></figure>
+<p>上界假设除线程栈外其余 Virt 完全相同。日志里还有更早的一段：多线程计算启动前、内存库刚加载完时，两机 Virt 已经差约 377 GB（A：Virt 252 GB / RSS 251 GB；B：Virt 629 GB / RSS 251 GB）。差额来源未完全确认，可能是分配器预留，也可能含少量早期线程。从总差里扣掉后再估：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">N（下界）= (4967 − 377) / 31.959 ≈ 144</span><br></pre></td></tr></table></figure>
+<p>(N) 大约在 144～155。两种估法都指向同一方向：<strong>Virt 膨胀的主体，可以用 <code>ulimit -s</code> 造成的栈预留差解释。</strong></p>
+<h2 id="根因">根因</h2>
+<p>未调用 <code>pthread_attr_setstacksize</code> 时，<code>pthread_create</code> 默认取 <code>RLIMIT_STACK</code>（即 <code>ulimit -s</code>）。内核为每个线程预留对应大小的虚拟地址区间：</p>
+<ol>
+<li>预留立刻计入进程 VSZ（日志里的 Virt）</li>
+<li>不立即分配物理页，故不计入 RSS</li>
+<li>线程真正写入栈时，才缺页映射物理页</li>
+</ol>
+<p>按约 144 线程估算：</p>
+<table>
+<thead>
+<tr>
+<th>机器</th>
+<th>每线程栈</th>
+<th>线程栈合计计入 Virt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>机器 A</td>
+<td>42 MB</td>
+<td>≈ 6 GB</td>
+</tr>
+<tr>
+<td>机器 B</td>
+<td>32 GB</td>
+<td>≈ 4608 GB</td>
+</tr>
+</tbody>
+</table>
+<p>两机任务量和线程数接近，Virt 差的主因是每线程栈预留差了约 785 倍，而不是「机器 B 多干了很多活」。RSS 可以几乎不变：真正触达的页才进 RSS；未触达的栈预留只抬高 Virt。</p>
+<h3 id="题外话：32-位地址空间下的差异">题外话：32 位地址空间下的差异</h3>
+<p>上面「Virt 很大但仍能正常跑完」主要适用于 64 位进程。x86_64 用户态地址空间约 128 TB，本文约 5 TB 的 Virt 远没顶到天花板。</p>
+<p>32 位用户态通常约 3 GB（Linux 默认约 3 GB / 1 GB 用户/内核分割）。这时过大的 <code>ulimit -s</code> 会很快耗尽地址空间：每多一个线程就多占数百 MB 虚拟地址，线程稍多，<code>pthread_create</code> 就会返回 <code>EAGAIN</code>（errno=11，Resource temporarily unavailable），程序直接失败。</p>
+<p>用 <code>ulimit -v 3145728</code> 把虚拟地址空间限制为 3 GB，模拟 32 位上限，实测如下：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"># 异常场景：ulimit -s 262144（256 MB/线程）</span><br><span class="line">ulimit -v 3145728; ulimit -s 262144; ./thread-stack-32bit-demo</span><br><span class="line"></span><br><span class="line">ulimit -s (stack/thread) = 256 MB</span><br><span class="line">ulimit -v (virtual addr) = 3072 MB</span><br><span class="line">理论最大线程数 ≈ 3072 / 256 = 12</span><br><span class="line"></span><br><span class="line">  [  0 threads]  Virt =      2 MB   RSS =     1 MB</span><br><span class="line">  [  1 threads]  Virt =    258 MB   RSS =     1 MB   ← 每线程 +256 MB Virt</span><br><span class="line">  [  2 threads]  Virt =    514 MB   RSS =     1 MB   ← RSS 始终只有 1 MB</span><br><span class="line">  [  3 threads]  Virt =    770 MB   RSS =     1 MB</span><br><span class="line">  ...</span><br><span class="line">  [ 11 threads]  Virt =   2818 MB   RSS =     1 MB</span><br><span class="line"></span><br><span class="line">pthread_create 在第 12 个线程时失败: Resource temporarily unavailable (errno=11, EAGAIN)</span><br><span class="line">                                                                     ^^^^^^^^^^^^^^^^^^^^</span><br><span class="line">                         虚拟地址空间耗尽，内核无法为新线程栈执行 mmap，返回 EAGAIN</span><br><span class="line">成功创建线程数: 11</span><br><span class="line"></span><br><span class="line"># 对照组：ulimit -s 8192（8 MB/线程，正常值）</span><br><span class="line">ulimit -v 3145728; ulimit -s 8192; ./thread-stack-32bit-demo</span><br><span class="line"></span><br><span class="line">  [  1 threads]  Virt =     10 MB   RSS =     1 MB   ← 每线程仅 +8 MB Virt</span><br><span class="line">  [  2 threads]  Virt =     18 MB   RSS =     1 MB</span><br><span class="line">  ...（可正常创建 300+ 个线程）</span><br></pre></td></tr></table></figure>
+<p>两组对比很清楚：RSS 全程只有约 1 MB（栈几乎没真正用起来），Virt 却按 <code>ulimit -s</code> 的步长往上加，直到地址空间耗尽报错。对 32 位程序，过大的 <code>ulimit -s</code> 是实质故障；对 64 位程序，同类配置多半只让日志里的 Virt「看起来吓人」。复现程序：</p>
+<figure class="highlight c"><figcaption><span> title:thread-stack-32bit-demo.c</span><a href="/blog/downloads/code/tech/memory/virtual-memory-thread-stack-analysis-01.c">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * thread-stack-32bit-demo.c</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * 演示：ulimit -s 过大时，有限虚拟地址空间内线程创建失败的过程。</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * ============================================================</span></span><br><span class="line"><span class="comment"> * 测试 32-bit 虚拟地址受限场景的两种方法</span></span><br><span class="line"><span class="comment"> * ============================================================</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * 【方法一】真正编译为 32-bit 二进制（最真实）</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *   前提：需安装 32-bit 开发库</span></span><br><span class="line"><span class="comment"> *     RHEL/CentOS:  sudo yum install glibc-devel.i686 libgcc.i686</span></span><br><span class="line"><span class="comment"> *     Ubuntu/Debian: sudo apt install gcc-multilib</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *   编译：</span></span><br><span class="line"><span class="comment"> *     gcc -m32 -o thread-stack-32bit-demo thread-stack-32bit-demo.c -lpthread</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *   运行：进程天然受 32-bit 用户态 ~3 GB 地址空间限制，无需 ulimit -v</span></span><br><span class="line"><span class="comment"> *     ulimit -s 262144    # 每线程栈 256 MB</span></span><br><span class="line"><span class="comment"> *     ./thread-stack-32bit-demo</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * ------------------------------------------------------------</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * 【方法二】64-bit 二进制 + ulimit -v 模拟（无需额外依赖）</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *   ulimit -v 限制进程的最大虚拟地址空间（RLIMIT_AS），</span></span><br><span class="line"><span class="comment"> *   效果与 32-bit 地址空间受限完全等价：mmap 超出上限时同样返回 EAGAIN，</span></span><br><span class="line"><span class="comment"> *   pthread_create 因无法为新线程栈分配地址而失败。</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *   编译：</span></span><br><span class="line"><span class="comment"> *     gcc -o thread-stack-32bit-demo thread-stack-32bit-demo.c -lpthread</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *   运行：</span></span><br><span class="line"><span class="comment"> *     ulimit -v 3145728   # 限制虚拟地址空间为 3 GB（模拟 32-bit 用户态上限）</span></span><br><span class="line"><span class="comment"> *     ulimit -s 262144    # 每线程栈 256 MB</span></span><br><span class="line"><span class="comment"> *     ./thread-stack-32bit-demo</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * ============================================================</span></span><br><span class="line"><span class="comment"> * 对照组（正常 ulimit -s，两种方法均适用）</span></span><br><span class="line"><span class="comment"> * ============================================================</span></span><br><span class="line"><span class="comment"> *   ulimit -v 3145728</span></span><br><span class="line"><span class="comment"> *   ulimit -s 8192      # 正常值：8 MB/线程，同样地址空间可创建 300+ 线程</span></span><br><span class="line"><span class="comment"> *   ./thread-stack-32bit-demo</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;errno.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/resource.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="keyword">volatile</span> <span class="type">int</span> keep_running = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 从 /proc/self/status 读取 VmSize 和 VmRSS，单位 MB */</span></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">print_mem</span><span class="params">(<span class="type">int</span> n_threads)</span> {</span><br><span class="line">    FILE *f = fopen(<span class="string">&quot;/proc/self/status&quot;</span>, <span class="string">&quot;r&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span> (!f) <span class="keyword">return</span>;</span><br><span class="line">    <span class="type">char</span> line[<span class="number">256</span>];</span><br><span class="line">    <span class="type">long</span> vmsize_kb = <span class="number">-1</span>, vmrss_kb = <span class="number">-1</span>;</span><br><span class="line">    <span class="keyword">while</span> (fgets(line, <span class="keyword">sizeof</span>(line), f)) {</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">strncmp</span>(line, <span class="string">&quot;VmSize:&quot;</span>, <span class="number">7</span>) == <span class="number">0</span>) <span class="built_in">sscanf</span>(line + <span class="number">7</span>, <span class="string">&quot;%ld&quot;</span>, &amp;vmsize_kb);</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">strncmp</span>(line, <span class="string">&quot;VmRSS:&quot;</span>,  <span class="number">6</span>) == <span class="number">0</span>) <span class="built_in">sscanf</span>(line + <span class="number">6</span>, <span class="string">&quot;%ld&quot;</span>, &amp;vmrss_kb);</span><br><span class="line">    }</span><br><span class="line">    fclose(f);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;  [%3d threads]  Virt = %6ld MB   RSS = %5ld MB\n&quot;</span>,</span><br><span class="line">           n_threads, vmsize_kb / <span class="number">1024</span>, vmrss_kb / <span class="number">1024</span>);</span><br><span class="line">    fflush(<span class="built_in">stdout</span>);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> *<span class="title function_">thread_func</span><span class="params">(<span class="type">void</span> *arg)</span> {</span><br><span class="line">    (<span class="type">void</span>)arg;</span><br><span class="line">    <span class="keyword">while</span> (keep_running)</span><br><span class="line">        sleep(<span class="number">1</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span> {</span><br><span class="line">    <span class="comment">/* 读取当前 ulimit 设置 */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">rlimit</span> <span class="title">rl_stack</span>, <span class="title">rl_as</span>;</span></span><br><span class="line">    getrlimit(RLIMIT_STACK, &amp;rl_stack);</span><br><span class="line">    getrlimit(RLIMIT_AS,    &amp;rl_as);</span><br><span class="line"></span><br><span class="line">    <span class="type">long</span> stack_mb = (<span class="type">long</span>)(rl_stack.rlim_cur / <span class="number">1024</span> / <span class="number">1024</span>);</span><br><span class="line">    <span class="type">long</span> as_mb    = (rl_as.rlim_cur == RLIM_INFINITY)</span><br><span class="line">                    ? <span class="number">-1</span></span><br><span class="line">                    : (<span class="type">long</span>)(rl_as.rlim_cur / <span class="number">1024</span> / <span class="number">1024</span>);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;========================================\n&quot;</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;ulimit -s (stack/thread) = %ld MB\n&quot;</span>, stack_mb);</span><br><span class="line">    <span class="keyword">if</span> (as_mb &lt; <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;ulimit -v (virtual addr) = unlimited\n&quot;</span>);</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;ulimit -v (virtual addr) = %ld MB\n&quot;</span>, as_mb);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (as_mb &gt; <span class="number">0</span> &amp;&amp; stack_mb &gt; <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;理论最大线程数 ≈ %ld / %ld = %ld\n&quot;</span>,</span><br><span class="line">               as_mb, stack_mb, as_mb / stack_mb);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;========================================\n\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">    print_mem(<span class="number">0</span>);   <span class="comment">/* 基线 */</span></span><br><span class="line"></span><br><span class="line">    <span class="type">pthread_t</span> threads[<span class="number">1024</span>];</span><br><span class="line">    <span class="type">int</span> i;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; <span class="number">1024</span>; i++) {</span><br><span class="line">        <span class="type">int</span> ret = pthread_create(&amp;threads[i], <span class="literal">NULL</span>, thread_func, <span class="literal">NULL</span>);</span><br><span class="line">        <span class="keyword">if</span> (ret != <span class="number">0</span>) {</span><br><span class="line">            <span class="type">const</span> <span class="type">char</span> *meaning = (ret == EAGAIN) ? <span class="string">&quot;EAGAIN: 虚拟地址空间耗尽，无法为线程栈执行 mmap&quot;</span></span><br><span class="line">                                : (ret == ENOMEM) ? <span class="string">&quot;ENOMEM: 物理内存不足&quot;</span></span><br><span class="line">                                :                   <span class="string">&quot;其他错误&quot;</span>;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;\npthread_create 在第 %d 个线程时失败\n&quot;</span>, i + <span class="number">1</span>);</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;  errno = %d (%s)\n&quot;</span>, ret, strerror(ret));</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;  含义 : %s\n&quot;</span>, meaning);</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;成功创建线程数: %d\n&quot;</span>, i);</span><br><span class="line">            print_mem(i);</span><br><span class="line">            keep_running = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; i; j++)</span><br><span class="line">                pthread_join(threads[j], <span class="literal">NULL</span>);</span><br><span class="line">            <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">        }</span><br><span class="line">        print_mem(i + <span class="number">1</span>);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;达到测试上限 1024 个线程，未触发失败。\n&quot;</span>);</span><br><span class="line">    keep_running = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; i; j++)</span><br><span class="line">        pthread_join(threads[j], <span class="literal">NULL</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h2 id="定位方法">定位方法</h2>
+<p>这次是日志对比触发的个案。若以后再看到 Virt 远大于 RSS，仍建议先定位最大的映射段，再归因（文件 <code>mmap</code>、分配器预留、共享内存等都可能）。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> /proc/&lt;PID&gt;/status | grep -E <span class="string">&#x27;VmSize|VmRSS|VmSwap&#x27;</span></span><br><span class="line">pmap -x &lt;PID&gt; | <span class="built_in">sort</span> -k3 -rn | <span class="built_in">head</span> -10</span><br></pre></td></tr></table></figure>
+<p><code>pmap -x</code> 里：Kbytes 是段的虚拟大小（进 Virt），RSS 是驻留页，Mapping 标明类型（<code>[stack:TID]</code>、<code>[heap]</code>、路径、<code>[anon]</code> 等）。</p>
+<p>本次这类场景下，<code>ulimit -s</code> 为 32 GB 时，排序结果通常类似：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Address           Kbytes       RSS   Dirty Mode  Mapping</span><br><span class="line">00007f1200000000  33554432      128       0 rw--- [stack:4312]</span><br><span class="line">00007f2200000000  33554432       64       0 rw--- [stack:4313]</span><br><span class="line">...（约 144 行 [stack:*]）</span><br><span class="line">0000000001a00000   524288   263144   263144 rw--- [heap]</span><br></pre></td></tr></table></figure>
+<p>单段 Kbytes = 33554432 即约 32 GB 虚拟预留，RSS 往往只有几十到几百 KB。</p>
+<ul>
+<li><code>[stack:N]</code> → 查 <code>ulimit -s</code> 和线程数</li>
+<li>大块 <code>[anon]</code> → 查分配器或显式 <code>mmap</code></li>
+<li>具名路径 → 查映射文件大小</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">awk <span class="string">&#x27;/\[stack/&#123;s=1&#125; s &amp;&amp; /^Size/&#123;sum+=$2; s=0&#125; END&#123;print sum/1024 &quot; MB&quot;&#125;&#x27;</span> \</span><br><span class="line">    /proc/&lt;PID&gt;/smaps</span><br><span class="line"><span class="built_in">ulimit</span> -s</span><br><span class="line"><span class="built_in">cat</span> /proc/&lt;PID&gt;/status | grep Threads</span><br></pre></td></tr></table></figure>
+<h2 id="结论">结论</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>机器 A</th>
+<th>机器 B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ulimit -s</code></td>
+<td>42 MB</td>
+<td>32 GB</td>
+</tr>
+<tr>
+<td>线程数（默认栈）</td>
+<td>~144</td>
+<td>~144</td>
+</tr>
+<tr>
+<td>线程栈合计 Virt</td>
+<td>~6 GB</td>
+<td>~4608 GB</td>
+</tr>
+<tr>
+<td>Peak RSS</td>
+<td>473 GB</td>
+<td>478 GB</td>
+</tr>
+<tr>
+<td>Peak Virt</td>
+<td>518 GB</td>
+<td>5485 GB</td>
+</tr>
+<tr>
+<td>运行是否正常</td>
+<td>是</td>
+<td>是</td>
+</tr>
+</tbody>
+</table>
+<p><strong>这次日志里的 Virt「异常」，不是泄漏，也不是跑挂了。</strong> 两机默认线程栈都绑在 <code>RLIMIT_STACK</code> 上，而 <code>ulimit -s</code> 差了约 785 倍，多线程一叠加，Virt 就被放大到近 10 倍；RSS 与正确性可以保持正常。</p>
+<p>可落地的收尾：</p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>做法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>程序内工作线程</td>
+<td>用 <code>pthread_attr_setstacksize</code> 设明确栈大小（如 8 MB）</td>
+</tr>
+<tr>
+<td>机器 / 集群默认</td>
+<td><code>ulimit -s</code> 建议 8～64 MB，避免对多线程负载设 <code>unlimited</code></td>
+</tr>
+<tr>
+<td>看日志 / 告警</td>
+<td>多线程进程优先看 RSS（和 swap），不要单凭 Virt 判内存异常</td>
+</tr>
+<tr>
+<td>跨机对比</td>
+<td>同二进制 Virt 差很多时，先比双方 <code>ulimit -a</code></td>
+</tr>
+</tbody>
+</table>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/thread/" rel="tag"># thread</a>
+              <a href="/blog/tags/memory/" rel="tag"># memory</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2026/07/16/tech/ic/pn-semiconductor/" rel="prev" title="P型与N型半导体导电原理">
+      <i class="fa fa-chevron-left"></i> P型与N型半导体导电原理
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%B0%E8%B1%A1"><span class="nav-text">现象</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8E%92%E6%9F%A5"><span class="nav-text">排查</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%92%E9%99%A4-OOM-%E4%B8%8E%E6%B3%84%E6%BC%8F"><span class="nav-text">排除 OOM 与泄漏</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AF%B9%E6%AF%94-ulimit"><span class="nav-text">对比 ulimit</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9A%E9%87%8F%E4%BC%B0%E7%AE%97"><span class="nav-text">定量估算</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%B9%E5%9B%A0"><span class="nav-text">根因</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%98%E5%A4%96%E8%AF%9D%EF%BC%9A32-%E4%BD%8D%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E4%B8%8B%E7%9A%84%E5%B7%AE%E5%BC%82"><span class="nav-text">题外话：32 位地址空间下的差异</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9A%E4%BD%8D%E6%96%B9%E6%B3%95"><span class="nav-text">定位方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AE%BA"><span class="nav-text">结论</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">127</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">44</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://cuda-doc.readthedocs.io/" title="https:&#x2F;&#x2F;cuda-doc.readthedocs.io" rel="noopener" target="_blank">CUDA中文手册</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://infiniband-doc.readthedocs.io/" title="https:&#x2F;&#x2F;infiniband-doc.readthedocs.io&#x2F;" rel="noopener" target="_blank">InfiniBand中文手册</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

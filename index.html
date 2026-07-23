@@ -188,6 +188,274 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/07/23/tech/memory/virtual-memory-thread-stack-analysis/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2026/07/23/tech/memory/virtual-memory-thread-stack-analysis/" class="post-title-link" itemprop="url">为什么同一个多线程程序在两台机器上 Virtual Memory 差了 10 倍？</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2026-07-23 15:03:18 / Modified: 08:45:55" itemprop="dateCreated datePublished" datetime="2026-07-23T15:03:18+00:00">2026-07-23</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/memory/" itemprop="url" rel="index"><span itemprop="name">memory</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="现象">现象</h2>
+<p>同一多线程工具、同一版本、同一份输入，在两台机器上跑完后，日志里的峰值内存对不上：</p>
+<table>
+<thead>
+<tr>
+<th>机器</th>
+<th>Peak RSS</th>
+<th>Peak Virt</th>
+<th>Virt / RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>机器 A</td>
+<td>473 GB</td>
+<td>518 GB</td>
+<td>1.09</td>
+</tr>
+<tr>
+<td>机器 B</td>
+<td>478 GB</td>
+<td>5485 GB</td>
+<td>11.5</td>
+</tr>
+</tbody>
+</table>
+<p>RSS 只差约 5 GB，Virt 却差约 4967 GB（近 5 TB）。两次运行都正常结束（exit status 0），结果也正确。机器 B 多带了 <code>-mc</code>，并行度更高，但后文估算表明两机线程数接近（约 144），单凭执行路径解释不了 Virt 差这么多。</p>
+<p>问题变成：日志里的 Virt 异常，是不是真出了内存问题？</p>
+<h2 id="排查">排查</h2>
+<h3 id="排除-OOM-与泄漏">排除 OOM 与泄漏</h3>
+<table>
+<thead>
+<tr>
+<th>机器</th>
+<th>freeSwap / totalSwap</th>
+<th>退出码</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>机器 A</td>
+<td>126 GB / 128 GB</td>
+<td>0</td>
+</tr>
+<tr>
+<td>机器 B</td>
+<td>128 GB / 128 GB</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>RSS 接近、swap 几乎没动、结果正确——更像监控数字异常，而不是进程把物理内存吃爆了。</p>
+<h3 id="对比-ulimit">对比 ulimit</h3>
+<table>
+<thead>
+<tr>
+<th>机器</th>
+<th><code>ulimit -s</code>（kbytes）</th>
+<th>约合每线程栈</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>机器 A</td>
+<td>42768</td>
+<td>~42 MB</td>
+</tr>
+<tr>
+<td>机器 B</td>
+<td>33554432</td>
+<td>32 GB</td>
+</tr>
+</tbody>
+</table>
+<p>栈限制相差约 785 倍。若程序用的是默认线程栈，这条差异值得顺着查。</p>
+<h3 id="定量估算">定量估算</h3>
+<p>输入相同、RSS 接近，可近似认为线程数 (N) 差不多。若线程走默认栈，Virt 差应主要来自「每线程栈预留」之差：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ΔVirt          = 5485 − 518 = 4967 GB</span><br><span class="line">Δstack/thread  = 32.000 − 0.041 = 31.959 GB</span><br><span class="line">N（上界）      = 4967 / 31.959 ≈ 155</span><br></pre></td></tr></table></figure>
+<p>上界假设除线程栈外其余 Virt 完全相同。日志里还有更早的一段：多线程计算启动前、内存库刚加载完时，两机 Virt 已经差约 377 GB（A：Virt 252 GB / RSS 251 GB；B：Virt 629 GB / RSS 251 GB）。差额来源未完全确认，可能是分配器预留，也可能含少量早期线程。从总差里扣掉后再估：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">N（下界）= (4967 − 377) / 31.959 ≈ 144</span><br></pre></td></tr></table></figure>
+<p>(N) 大约在 144～155。两种估法都指向同一方向：<strong>Virt 膨胀的主体，可以用 <code>ulimit -s</code> 造成的栈预留差解释。</strong></p>
+<h2 id="根因">根因</h2>
+<p>未调用 <code>pthread_attr_setstacksize</code> 时，<code>pthread_create</code> 默认取 <code>RLIMIT_STACK</code>（即 <code>ulimit -s</code>）。内核为每个线程预留对应大小的虚拟地址区间：</p>
+<ol>
+<li>预留立刻计入进程 VSZ（日志里的 Virt）</li>
+<li>不立即分配物理页，故不计入 RSS</li>
+<li>线程真正写入栈时，才缺页映射物理页</li>
+</ol>
+<p>按约 144 线程估算：</p>
+<table>
+<thead>
+<tr>
+<th>机器</th>
+<th>每线程栈</th>
+<th>线程栈合计计入 Virt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>机器 A</td>
+<td>42 MB</td>
+<td>≈ 6 GB</td>
+</tr>
+<tr>
+<td>机器 B</td>
+<td>32 GB</td>
+<td>≈ 4608 GB</td>
+</tr>
+</tbody>
+</table>
+<p>两机任务量和线程数接近，Virt 差的主因是每线程栈预留差了约 785 倍，而不是「机器 B 多干了很多活」。RSS 可以几乎不变：真正触达的页才进 RSS；未触达的栈预留只抬高 Virt。</p>
+<h3 id="题外话：32-位地址空间下的差异">题外话：32 位地址空间下的差异</h3>
+<p>上面「Virt 很大但仍能正常跑完」主要适用于 64 位进程。x86_64 用户态地址空间约 128 TB，本文约 5 TB 的 Virt 远没顶到天花板。</p>
+<p>32 位用户态通常约 3 GB（Linux 默认约 3 GB / 1 GB 用户/内核分割）。这时过大的 <code>ulimit -s</code> 会很快耗尽地址空间：每多一个线程就多占数百 MB 虚拟地址，线程稍多，<code>pthread_create</code> 就会返回 <code>EAGAIN</code>（errno=11，Resource temporarily unavailable），程序直接失败。</p>
+<p>用 <code>ulimit -v 3145728</code> 把虚拟地址空间限制为 3 GB，模拟 32 位上限，实测如下：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"># 异常场景：ulimit -s 262144（256 MB/线程）</span><br><span class="line">ulimit -v 3145728; ulimit -s 262144; ./thread-stack-32bit-demo</span><br><span class="line"></span><br><span class="line">ulimit -s (stack/thread) = 256 MB</span><br><span class="line">ulimit -v (virtual addr) = 3072 MB</span><br><span class="line">理论最大线程数 ≈ 3072 / 256 = 12</span><br><span class="line"></span><br><span class="line">  [  0 threads]  Virt =      2 MB   RSS =     1 MB</span><br><span class="line">  [  1 threads]  Virt =    258 MB   RSS =     1 MB   ← 每线程 +256 MB Virt</span><br><span class="line">  [  2 threads]  Virt =    514 MB   RSS =     1 MB   ← RSS 始终只有 1 MB</span><br><span class="line">  [  3 threads]  Virt =    770 MB   RSS =     1 MB</span><br><span class="line">  ...</span><br><span class="line">  [ 11 threads]  Virt =   2818 MB   RSS =     1 MB</span><br><span class="line"></span><br><span class="line">pthread_create 在第 12 个线程时失败: Resource temporarily unavailable (errno=11, EAGAIN)</span><br><span class="line">                                                                     ^^^^^^^^^^^^^^^^^^^^</span><br><span class="line">                         虚拟地址空间耗尽，内核无法为新线程栈执行 mmap，返回 EAGAIN</span><br><span class="line">成功创建线程数: 11</span><br><span class="line"></span><br><span class="line"># 对照组：ulimit -s 8192（8 MB/线程，正常值）</span><br><span class="line">ulimit -v 3145728; ulimit -s 8192; ./thread-stack-32bit-demo</span><br><span class="line"></span><br><span class="line">  [  1 threads]  Virt =     10 MB   RSS =     1 MB   ← 每线程仅 +8 MB Virt</span><br><span class="line">  [  2 threads]  Virt =     18 MB   RSS =     1 MB</span><br><span class="line">  ...（可正常创建 300+ 个线程）</span><br></pre></td></tr></table></figure>
+<p>两组对比很清楚：RSS 全程只有约 1 MB（栈几乎没真正用起来），Virt 却按 <code>ulimit -s</code> 的步长往上加，直到地址空间耗尽报错。对 32 位程序，过大的 <code>ulimit -s</code> 是实质故障；对 64 位程序，同类配置多半只让日志里的 Virt「看起来吓人」。复现程序：</p>
+<figure class="highlight c"><figcaption><span> title:thread-stack-32bit-demo.c</span><a href="/blog/downloads/code/tech/memory/virtual-memory-thread-stack-analysis-01.c">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * thread-stack-32bit-demo.c</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * 演示：ulimit -s 过大时，有限虚拟地址空间内线程创建失败的过程。</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * ============================================================</span></span><br><span class="line"><span class="comment"> * 测试 32-bit 虚拟地址受限场景的两种方法</span></span><br><span class="line"><span class="comment"> * ============================================================</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * 【方法一】真正编译为 32-bit 二进制（最真实）</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *   前提：需安装 32-bit 开发库</span></span><br><span class="line"><span class="comment"> *     RHEL/CentOS:  sudo yum install glibc-devel.i686 libgcc.i686</span></span><br><span class="line"><span class="comment"> *     Ubuntu/Debian: sudo apt install gcc-multilib</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *   编译：</span></span><br><span class="line"><span class="comment"> *     gcc -m32 -o thread-stack-32bit-demo thread-stack-32bit-demo.c -lpthread</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *   运行：进程天然受 32-bit 用户态 ~3 GB 地址空间限制，无需 ulimit -v</span></span><br><span class="line"><span class="comment"> *     ulimit -s 262144    # 每线程栈 256 MB</span></span><br><span class="line"><span class="comment"> *     ./thread-stack-32bit-demo</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * ------------------------------------------------------------</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * 【方法二】64-bit 二进制 + ulimit -v 模拟（无需额外依赖）</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *   ulimit -v 限制进程的最大虚拟地址空间（RLIMIT_AS），</span></span><br><span class="line"><span class="comment"> *   效果与 32-bit 地址空间受限完全等价：mmap 超出上限时同样返回 EAGAIN，</span></span><br><span class="line"><span class="comment"> *   pthread_create 因无法为新线程栈分配地址而失败。</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *   编译：</span></span><br><span class="line"><span class="comment"> *     gcc -o thread-stack-32bit-demo thread-stack-32bit-demo.c -lpthread</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *   运行：</span></span><br><span class="line"><span class="comment"> *     ulimit -v 3145728   # 限制虚拟地址空间为 3 GB（模拟 32-bit 用户态上限）</span></span><br><span class="line"><span class="comment"> *     ulimit -s 262144    # 每线程栈 256 MB</span></span><br><span class="line"><span class="comment"> *     ./thread-stack-32bit-demo</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * ============================================================</span></span><br><span class="line"><span class="comment"> * 对照组（正常 ulimit -s，两种方法均适用）</span></span><br><span class="line"><span class="comment"> * ============================================================</span></span><br><span class="line"><span class="comment"> *   ulimit -v 3145728</span></span><br><span class="line"><span class="comment"> *   ulimit -s 8192      # 正常值：8 MB/线程，同样地址空间可创建 300+ 线程</span></span><br><span class="line"><span class="comment"> *   ./thread-stack-32bit-demo</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;errno.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/resource.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="keyword">volatile</span> <span class="type">int</span> keep_running = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 从 /proc/self/status 读取 VmSize 和 VmRSS，单位 MB */</span></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">print_mem</span><span class="params">(<span class="type">int</span> n_threads)</span> {</span><br><span class="line">    FILE *f = fopen(<span class="string">&quot;/proc/self/status&quot;</span>, <span class="string">&quot;r&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span> (!f) <span class="keyword">return</span>;</span><br><span class="line">    <span class="type">char</span> line[<span class="number">256</span>];</span><br><span class="line">    <span class="type">long</span> vmsize_kb = <span class="number">-1</span>, vmrss_kb = <span class="number">-1</span>;</span><br><span class="line">    <span class="keyword">while</span> (fgets(line, <span class="keyword">sizeof</span>(line), f)) {</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">strncmp</span>(line, <span class="string">&quot;VmSize:&quot;</span>, <span class="number">7</span>) == <span class="number">0</span>) <span class="built_in">sscanf</span>(line + <span class="number">7</span>, <span class="string">&quot;%ld&quot;</span>, &amp;vmsize_kb);</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">strncmp</span>(line, <span class="string">&quot;VmRSS:&quot;</span>,  <span class="number">6</span>) == <span class="number">0</span>) <span class="built_in">sscanf</span>(line + <span class="number">6</span>, <span class="string">&quot;%ld&quot;</span>, &amp;vmrss_kb);</span><br><span class="line">    }</span><br><span class="line">    fclose(f);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;  [%3d threads]  Virt = %6ld MB   RSS = %5ld MB\n&quot;</span>,</span><br><span class="line">           n_threads, vmsize_kb / <span class="number">1024</span>, vmrss_kb / <span class="number">1024</span>);</span><br><span class="line">    fflush(<span class="built_in">stdout</span>);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> *<span class="title function_">thread_func</span><span class="params">(<span class="type">void</span> *arg)</span> {</span><br><span class="line">    (<span class="type">void</span>)arg;</span><br><span class="line">    <span class="keyword">while</span> (keep_running)</span><br><span class="line">        sleep(<span class="number">1</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span> {</span><br><span class="line">    <span class="comment">/* 读取当前 ulimit 设置 */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">rlimit</span> <span class="title">rl_stack</span>, <span class="title">rl_as</span>;</span></span><br><span class="line">    getrlimit(RLIMIT_STACK, &amp;rl_stack);</span><br><span class="line">    getrlimit(RLIMIT_AS,    &amp;rl_as);</span><br><span class="line"></span><br><span class="line">    <span class="type">long</span> stack_mb = (<span class="type">long</span>)(rl_stack.rlim_cur / <span class="number">1024</span> / <span class="number">1024</span>);</span><br><span class="line">    <span class="type">long</span> as_mb    = (rl_as.rlim_cur == RLIM_INFINITY)</span><br><span class="line">                    ? <span class="number">-1</span></span><br><span class="line">                    : (<span class="type">long</span>)(rl_as.rlim_cur / <span class="number">1024</span> / <span class="number">1024</span>);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;========================================\n&quot;</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;ulimit -s (stack/thread) = %ld MB\n&quot;</span>, stack_mb);</span><br><span class="line">    <span class="keyword">if</span> (as_mb &lt; <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;ulimit -v (virtual addr) = unlimited\n&quot;</span>);</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;ulimit -v (virtual addr) = %ld MB\n&quot;</span>, as_mb);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (as_mb &gt; <span class="number">0</span> &amp;&amp; stack_mb &gt; <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;理论最大线程数 ≈ %ld / %ld = %ld\n&quot;</span>,</span><br><span class="line">               as_mb, stack_mb, as_mb / stack_mb);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;========================================\n\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">    print_mem(<span class="number">0</span>);   <span class="comment">/* 基线 */</span></span><br><span class="line"></span><br><span class="line">    <span class="type">pthread_t</span> threads[<span class="number">1024</span>];</span><br><span class="line">    <span class="type">int</span> i;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; <span class="number">1024</span>; i++) {</span><br><span class="line">        <span class="type">int</span> ret = pthread_create(&amp;threads[i], <span class="literal">NULL</span>, thread_func, <span class="literal">NULL</span>);</span><br><span class="line">        <span class="keyword">if</span> (ret != <span class="number">0</span>) {</span><br><span class="line">            <span class="type">const</span> <span class="type">char</span> *meaning = (ret == EAGAIN) ? <span class="string">&quot;EAGAIN: 虚拟地址空间耗尽，无法为线程栈执行 mmap&quot;</span></span><br><span class="line">                                : (ret == ENOMEM) ? <span class="string">&quot;ENOMEM: 物理内存不足&quot;</span></span><br><span class="line">                                :                   <span class="string">&quot;其他错误&quot;</span>;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;\npthread_create 在第 %d 个线程时失败\n&quot;</span>, i + <span class="number">1</span>);</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;  errno = %d (%s)\n&quot;</span>, ret, strerror(ret));</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;  含义 : %s\n&quot;</span>, meaning);</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;成功创建线程数: %d\n&quot;</span>, i);</span><br><span class="line">            print_mem(i);</span><br><span class="line">            keep_running = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; i; j++)</span><br><span class="line">                pthread_join(threads[j], <span class="literal">NULL</span>);</span><br><span class="line">            <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">        }</span><br><span class="line">        print_mem(i + <span class="number">1</span>);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;达到测试上限 1024 个线程，未触发失败。\n&quot;</span>);</span><br><span class="line">    keep_running = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; i; j++)</span><br><span class="line">        pthread_join(threads[j], <span class="literal">NULL</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<h2 id="定位方法">定位方法</h2>
+<p>这次是日志对比触发的个案。若以后再看到 Virt 远大于 RSS，仍建议先定位最大的映射段，再归因（文件 <code>mmap</code>、分配器预留、共享内存等都可能）。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> /proc/&lt;PID&gt;/status | grep -E <span class="string">&#x27;VmSize|VmRSS|VmSwap&#x27;</span></span><br><span class="line">pmap -x &lt;PID&gt; | <span class="built_in">sort</span> -k3 -rn | <span class="built_in">head</span> -10</span><br></pre></td></tr></table></figure>
+<p><code>pmap -x</code> 里：Kbytes 是段的虚拟大小（进 Virt），RSS 是驻留页，Mapping 标明类型（<code>[stack:TID]</code>、<code>[heap]</code>、路径、<code>[anon]</code> 等）。</p>
+<p>本次这类场景下，<code>ulimit -s</code> 为 32 GB 时，排序结果通常类似：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Address           Kbytes       RSS   Dirty Mode  Mapping</span><br><span class="line">00007f1200000000  33554432      128       0 rw--- [stack:4312]</span><br><span class="line">00007f2200000000  33554432       64       0 rw--- [stack:4313]</span><br><span class="line">...（约 144 行 [stack:*]）</span><br><span class="line">0000000001a00000   524288   263144   263144 rw--- [heap]</span><br></pre></td></tr></table></figure>
+<p>单段 Kbytes = 33554432 即约 32 GB 虚拟预留，RSS 往往只有几十到几百 KB。</p>
+<ul>
+<li><code>[stack:N]</code> → 查 <code>ulimit -s</code> 和线程数</li>
+<li>大块 <code>[anon]</code> → 查分配器或显式 <code>mmap</code></li>
+<li>具名路径 → 查映射文件大小</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">awk <span class="string">&#x27;/\[stack/&#123;s=1&#125; s &amp;&amp; /^Size/&#123;sum+=$2; s=0&#125; END&#123;print sum/1024 &quot; MB&quot;&#125;&#x27;</span> \</span><br><span class="line">    /proc/&lt;PID&gt;/smaps</span><br><span class="line"><span class="built_in">ulimit</span> -s</span><br><span class="line"><span class="built_in">cat</span> /proc/&lt;PID&gt;/status | grep Threads</span><br></pre></td></tr></table></figure>
+<h2 id="结论">结论</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>机器 A</th>
+<th>机器 B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ulimit -s</code></td>
+<td>42 MB</td>
+<td>32 GB</td>
+</tr>
+<tr>
+<td>线程数（默认栈）</td>
+<td>~144</td>
+<td>~144</td>
+</tr>
+<tr>
+<td>线程栈合计 Virt</td>
+<td>~6 GB</td>
+<td>~4608 GB</td>
+</tr>
+<tr>
+<td>Peak RSS</td>
+<td>473 GB</td>
+<td>478 GB</td>
+</tr>
+<tr>
+<td>Peak Virt</td>
+<td>518 GB</td>
+<td>5485 GB</td>
+</tr>
+<tr>
+<td>运行是否正常</td>
+<td>是</td>
+<td>是</td>
+</tr>
+</tbody>
+</table>
+<p><strong>这次日志里的 Virt「异常」，不是泄漏，也不是跑挂了。</strong> 两机默认线程栈都绑在 <code>RLIMIT_STACK</code> 上，而 <code>ulimit -s</code> 差了约 785 倍，多线程一叠加，Virt 就被放大到近 10 倍；RSS 与正确性可以保持正常。</p>
+<p>可落地的收尾：</p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>做法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>程序内工作线程</td>
+<td>用 <code>pthread_attr_setstacksize</code> 设明确栈大小（如 8 MB）</td>
+</tr>
+<tr>
+<td>机器 / 集群默认</td>
+<td><code>ulimit -s</code> 建议 8～64 MB，避免对多线程负载设 <code>unlimited</code></td>
+</tr>
+<tr>
+<td>看日志 / 告警</td>
+<td>多线程进程优先看 RSS（和 swap），不要单凭 Virt 判内存异常</td>
+</tr>
+<tr>
+<td>跨机对比</td>
+<td>同二进制 Virt 差很多时，先比双方 <code>ulimit -a</code></td>
+</tr>
+</tbody>
+</table>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/07/16/tech/ic/pn-semiconductor/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -219,7 +487,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-20 08:37:52" itemprop="dateModified" datetime="2026-07-20T08:37:52+00:00">2026-07-20</time>
+                <time title="Modified: 2026-07-23 08:45:55" itemprop="dateModified" datetime="2026-07-23T08:45:55+00:00">2026-07-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -373,7 +641,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/07/14/tech/cpp/basic/mallc-failure-analysis/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/07/14/tech/memory/malloc-failure-analysis/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -387,7 +655,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2026/07/14/tech/cpp/basic/mallc-failure-analysis/" class="post-title-link" itemprop="url">malloc(64 GiB) 返回 NULL 排查记录</a>
+            <a href="/blog/2026/07/14/tech/memory/malloc-failure-analysis/" class="post-title-link" itemprop="url">malloc(64 GiB) 返回 NULL 排查记录</a>
         </h2>
 
         <div class="post-meta">
@@ -404,7 +672,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-20 08:37:52" itemprop="dateModified" datetime="2026-07-20T08:37:52+00:00">2026-07-20</time>
+                <time title="Modified: 2026-07-23 08:45:55" itemprop="dateModified" datetime="2026-07-23T08:45:55+00:00">2026-07-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -412,7 +680,7 @@
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
+                  <a href="/blog/categories/memory/" itemprop="url" rel="index"><span itemprop="name">memory</span></a>
                 </span>
             </span>
 
@@ -479,7 +747,7 @@
 <h2 id="三、排查过程">三、排查过程</h2>
 <h3 id="3-1-确认失败发生在哪一层：malloc-还是-mmap？">3.1 确认失败发生在哪一层：<code>malloc</code> 还是 <code>mmap</code>？</h3>
 <p><code>malloc</code> 失败可能有两种情况：glibc 内部逻辑拒绝，或底层 <code>mmap</code> 系统调用已失败。先分层确认：</p>
-<figure class="highlight cpp"><figcaption><span>probe_malloc_failure.cpp:32-48</span><a href="/blog/downloads/code/tech/cpp/basic/mallc-failure-analysis-01.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// §3.1：确认失败发生在 mmap 层而非 malloc 层</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">probe_mmap_vs_malloc</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="type">size_t</span> sz = <span class="number">64</span> * kGiB;</span><br><span class="line">    errno = <span class="number">0</span>;</span><br><span class="line">    <span class="type">void</span>* mp = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz, PROT_READ | PROT_WRITE,</span><br><span class="line">                    MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;mmap(64 GiB):   %s errno=%d (%s)\n&quot;</span>,</span><br><span class="line">           mp == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, errno, <span class="built_in">strerror</span>(errno));</span><br><span class="line">    <span class="keyword">if</span> (mp != MAP_FAILED) <span class="built_in">munmap</span>(mp, sz); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line"></span><br><span class="line">    errno = <span class="number">0</span>;</span><br><span class="line">    <span class="type">void</span>* p = <span class="built_in">malloc</span>(sz);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;malloc(64 GiB): %s errno=%d (%s)\n&quot;</span>,</span><br><span class="line">           p ? <span class="string">&quot;OK&quot;</span> : <span class="string">&quot;NULL&quot;</span>, errno, <span class="built_in">strerror</span>(errno));</span><br><span class="line">    <span class="keyword">if</span> (p) <span class="built_in">free</span>(p); <span class="comment">// 释放本次 malloc 申请的内存</span></span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><figcaption><span>probe_malloc_failure.cpp:32-48</span><a href="/blog/downloads/code/tech/memory/malloc-failure-analysis-01.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// §3.1：确认失败发生在 mmap 层而非 malloc 层</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">probe_mmap_vs_malloc</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="type">size_t</span> sz = <span class="number">64</span> * kGiB;</span><br><span class="line">    errno = <span class="number">0</span>;</span><br><span class="line">    <span class="type">void</span>* mp = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz, PROT_READ | PROT_WRITE,</span><br><span class="line">                    MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;mmap(64 GiB):   %s errno=%d (%s)\n&quot;</span>,</span><br><span class="line">           mp == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, errno, <span class="built_in">strerror</span>(errno));</span><br><span class="line">    <span class="keyword">if</span> (mp != MAP_FAILED) <span class="built_in">munmap</span>(mp, sz); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line"></span><br><span class="line">    errno = <span class="number">0</span>;</span><br><span class="line">    <span class="type">void</span>* p = <span class="built_in">malloc</span>(sz);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;malloc(64 GiB): %s errno=%d (%s)\n&quot;</span>,</span><br><span class="line">           p ? <span class="string">&quot;OK&quot;</span> : <span class="string">&quot;NULL&quot;</span>, errno, <span class="built_in">strerror</span>(errno));</span><br><span class="line">    <span class="keyword">if</span> (p) <span class="built_in">free</span>(p); <span class="comment">// 释放本次 malloc 申请的内存</span></span><br><span class="line">}</span><br></pre></td></tr></table></figure>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 配套测试程序见第六节，编译：</span></span><br><span class="line"><span class="comment"># g++ -O0 -o probe_malloc_failure probe_malloc_failure.cpp</span></span><br><span class="line">./probe_malloc_failure mmap</span><br></pre></td></tr></table></figure>
 <table>
 <thead>
@@ -608,7 +876,7 @@
 </table>
 <p>这直接解释了两台主机的差异。</p>
 <p><strong>用实验验证边界：</strong></p>
-<figure class="highlight cpp"><figcaption><span>probe_malloc_failure.cpp:71-85</span><a href="/blog/downloads/code/tech/cpp/basic/mallc-failure-analysis-01.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// §3.3：探测 overcommit 检查的边界（RAM+Swap 附近逐步测试）</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">probe_threshold</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="comment">// 15360 MiB=15 GiB；15872 MiB=15.5 GiB；15880 MiB=15.5078125 GiB；</span></span><br><span class="line">    <span class="comment">// 16384 MiB=16 GiB；65536 MiB=64 GiB</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> mb : {<span class="number">15360</span>, <span class="number">15872</span>, <span class="number">15880</span>, <span class="number">16384</span>, <span class="number">65536</span>}) {</span><br><span class="line">        <span class="type">size_t</span> sz = <span class="built_in">static_cast</span>&lt;<span class="type">size_t</span>&gt;(mb) * <span class="number">1024</span> * <span class="number">1024</span>;</span><br><span class="line">        errno = <span class="number">0</span>;</span><br><span class="line">        <span class="type">void</span>* p = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz, PROT_READ | PROT_WRITE,</span><br><span class="line">                       MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%5d MiB: %s errno=%d\n&quot;</span>,</span><br><span class="line">               mb, p == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, errno);</span><br><span class="line">        <span class="keyword">if</span> (p != MAP_FAILED) <span class="built_in">munmap</span>(p, sz); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><figcaption><span>probe_malloc_failure.cpp:71-85</span><a href="/blog/downloads/code/tech/memory/malloc-failure-analysis-01.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// §3.3：探测 overcommit 检查的边界（RAM+Swap 附近逐步测试）</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">probe_threshold</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="comment">// 15360 MiB=15 GiB；15872 MiB=15.5 GiB；15880 MiB=15.5078125 GiB；</span></span><br><span class="line">    <span class="comment">// 16384 MiB=16 GiB；65536 MiB=64 GiB</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> mb : {<span class="number">15360</span>, <span class="number">15872</span>, <span class="number">15880</span>, <span class="number">16384</span>, <span class="number">65536</span>}) {</span><br><span class="line">        <span class="type">size_t</span> sz = <span class="built_in">static_cast</span>&lt;<span class="type">size_t</span>&gt;(mb) * <span class="number">1024</span> * <span class="number">1024</span>;</span><br><span class="line">        errno = <span class="number">0</span>;</span><br><span class="line">        <span class="type">void</span>* p = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz, PROT_READ | PROT_WRITE,</span><br><span class="line">                       MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%5d MiB: %s errno=%d\n&quot;</span>,</span><br><span class="line">               mb, p == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, errno);</span><br><span class="line">        <span class="keyword">if</span> (p != MAP_FAILED) <span class="built_in">munmap</span>(p, sz); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./probe_malloc_failure threshold</span><br></pre></td></tr></table></figure>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">15360 MiB: OK errno=0</span><br><span class="line">15872 MiB: OK errno=0</span><br><span class="line">15880 MiB: FAIL errno=12</span><br><span class="line">16384 MiB: FAIL errno=12</span><br><span class="line">65536 MiB: FAIL errno=12</span><br></pre></td></tr></table></figure>
 <table>
@@ -662,7 +930,7 @@
 <li><strong>不超过 mode 0 的拒绝条件</strong>——即请求 ≤ RAM + Swap（主机 A 为 4,064,672 页 / 15.5 GiB），否则会先被 mode 0 拦下，看不清 mode 2</li>
 </ol>
 <p>§3.3 实测 <strong>15872 MiB（=15.5 GiB）</strong> 正好落在该区间内（&gt; 11.75 GiB 且 ≤ 15.5 GiB），用作本实验的主探测点。另用 <strong>16 GiB（=16384 MiB）</strong>（&gt; 15.5 GiB）作对照，确认超 mode 0 边界时拒绝且不记账。</p>
-<figure class="highlight cpp"><figcaption><span>probe_malloc_failure.cpp:87-121</span><a href="/blog/downloads/code/tech/cpp/basic/mallc-failure-analysis-01.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// §3.4：观察 Committed_AS 变化，排除 mode 2 累计限制</span></span><br><span class="line"><span class="comment">// 主探测：15872 MiB（&gt; CommitLimit 且 ≤ RAM+Swap）；对照：16 GiB（&gt; RAM+Swap）</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">probe_committed</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">auto</span> kib_to_gib = [](<span class="type">long</span> kib) {</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">static_cast</span>&lt;<span class="type">double</span>&gt;(kib) / (<span class="number">1024.0</span> * <span class="number">1024.0</span>);</span><br><span class="line">    };</span><br><span class="line">    <span class="comment">// Committed_AS：AS = Address Space（地址空间承诺量），随 mmap/munmap 等动态升降</span></span><br><span class="line">    <span class="keyword">auto</span> committed = []() { <span class="keyword">return</span> <span class="built_in">read_meminfo_kb</span>(<span class="string">&quot;Committed_AS:&quot;</span>); };</span><br><span class="line"></span><br><span class="line">    <span class="type">long</span> limit = <span class="built_in">read_meminfo_kb</span>(<span class="string">&quot;CommitLimit:&quot;</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;CommitLimit: %ld KiB (%.2f GiB)\n&quot;</span>, limit, <span class="built_in">kib_to_gib</span>(limit));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ① 15872 MiB = 15.5 GiB：&gt; CommitLimit 且 ≤ RAM+Swap → 应通过；若 Committed_AS 超过 CommitLimit 仍成功 → 非 mode 2</span></span><br><span class="line">    <span class="type">long</span> c0 = <span class="built_in">committed</span>();</span><br><span class="line">    <span class="type">size_t</span> sz_ok = kPassCapMiB * <span class="number">1024ULL</span> * <span class="number">1024</span>; <span class="comment">// 15872 MiB = 15.5 GiB</span></span><br><span class="line">    <span class="type">void</span>* p_ok = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz_ok, PROT_READ | PROT_WRITE,</span><br><span class="line">                      MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="type">long</span> c1 = <span class="built_in">committed</span>();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;mmap(15872 MiB / 15.5 GiB): %s  Committed_AS %ld KiB (%.2f GiB) -&gt; %ld KiB (%.2f GiB)\n&quot;</span>,</span><br><span class="line">           p_ok == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>,</span><br><span class="line">           c0, <span class="built_in">kib_to_gib</span>(c0), c1, <span class="built_in">kib_to_gib</span>(c1));</span><br><span class="line">    <span class="keyword">if</span> (p_ok != MAP_FAILED) <span class="built_in">munmap</span>(p_ok, sz_ok); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// ② 16 GiB = 16384 MiB：&gt; RAM+Swap → mode 0 拒绝，且 Committed_AS 应不变</span></span><br><span class="line">    c0 = <span class="built_in">committed</span>();</span><br><span class="line">    <span class="type">size_t</span> sz_fail = kFailCapGiB * kGiB; <span class="comment">// 16 GiB = 16384 MiB</span></span><br><span class="line">    <span class="type">void</span>* p_fail = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz_fail, PROT_READ | PROT_WRITE,</span><br><span class="line">                        MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">    c1 = <span class="built_in">committed</span>();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;mmap(16384 MiB / 16 GiB): %s  Committed_AS %ld KiB (%.2f GiB) -&gt; %ld KiB (%.2f GiB)\n&quot;</span>,</span><br><span class="line">           p_fail == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>,</span><br><span class="line">           c0, <span class="built_in">kib_to_gib</span>(c0), c1, <span class="built_in">kib_to_gib</span>(c1));</span><br><span class="line">    <span class="keyword">if</span> (p_fail != MAP_FAILED) <span class="built_in">munmap</span>(p_fail, sz_fail); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><figcaption><span>probe_malloc_failure.cpp:87-121</span><a href="/blog/downloads/code/tech/memory/malloc-failure-analysis-01.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// §3.4：观察 Committed_AS 变化，排除 mode 2 累计限制</span></span><br><span class="line"><span class="comment">// 主探测：15872 MiB（&gt; CommitLimit 且 ≤ RAM+Swap）；对照：16 GiB（&gt; RAM+Swap）</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">probe_committed</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">auto</span> kib_to_gib = [](<span class="type">long</span> kib) {</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">static_cast</span>&lt;<span class="type">double</span>&gt;(kib) / (<span class="number">1024.0</span> * <span class="number">1024.0</span>);</span><br><span class="line">    };</span><br><span class="line">    <span class="comment">// Committed_AS：AS = Address Space（地址空间承诺量），随 mmap/munmap 等动态升降</span></span><br><span class="line">    <span class="keyword">auto</span> committed = []() { <span class="keyword">return</span> <span class="built_in">read_meminfo_kb</span>(<span class="string">&quot;Committed_AS:&quot;</span>); };</span><br><span class="line"></span><br><span class="line">    <span class="type">long</span> limit = <span class="built_in">read_meminfo_kb</span>(<span class="string">&quot;CommitLimit:&quot;</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;CommitLimit: %ld KiB (%.2f GiB)\n&quot;</span>, limit, <span class="built_in">kib_to_gib</span>(limit));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ① 15872 MiB = 15.5 GiB：&gt; CommitLimit 且 ≤ RAM+Swap → 应通过；若 Committed_AS 超过 CommitLimit 仍成功 → 非 mode 2</span></span><br><span class="line">    <span class="type">long</span> c0 = <span class="built_in">committed</span>();</span><br><span class="line">    <span class="type">size_t</span> sz_ok = kPassCapMiB * <span class="number">1024ULL</span> * <span class="number">1024</span>; <span class="comment">// 15872 MiB = 15.5 GiB</span></span><br><span class="line">    <span class="type">void</span>* p_ok = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz_ok, PROT_READ | PROT_WRITE,</span><br><span class="line">                      MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="type">long</span> c1 = <span class="built_in">committed</span>();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;mmap(15872 MiB / 15.5 GiB): %s  Committed_AS %ld KiB (%.2f GiB) -&gt; %ld KiB (%.2f GiB)\n&quot;</span>,</span><br><span class="line">           p_ok == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>,</span><br><span class="line">           c0, <span class="built_in">kib_to_gib</span>(c0), c1, <span class="built_in">kib_to_gib</span>(c1));</span><br><span class="line">    <span class="keyword">if</span> (p_ok != MAP_FAILED) <span class="built_in">munmap</span>(p_ok, sz_ok); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// ② 16 GiB = 16384 MiB：&gt; RAM+Swap → mode 0 拒绝，且 Committed_AS 应不变</span></span><br><span class="line">    c0 = <span class="built_in">committed</span>();</span><br><span class="line">    <span class="type">size_t</span> sz_fail = kFailCapGiB * kGiB; <span class="comment">// 16 GiB = 16384 MiB</span></span><br><span class="line">    <span class="type">void</span>* p_fail = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz_fail, PROT_READ | PROT_WRITE,</span><br><span class="line">                        MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">    c1 = <span class="built_in">committed</span>();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;mmap(16384 MiB / 16 GiB): %s  Committed_AS %ld KiB (%.2f GiB) -&gt; %ld KiB (%.2f GiB)\n&quot;</span>,</span><br><span class="line">           p_fail == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>,</span><br><span class="line">           c0, <span class="built_in">kib_to_gib</span>(c0), c1, <span class="built_in">kib_to_gib</span>(c1));</span><br><span class="line">    <span class="keyword">if</span> (p_fail != MAP_FAILED) <span class="built_in">munmap</span>(p_fail, sz_fail); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line">}</span><br></pre></td></tr></table></figure>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./probe_malloc_failure commit</span><br></pre></td></tr></table></figure>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">CommitLimit: 12323644 KiB (11.75 GiB)</span><br><span class="line">mmap(15872 MiB / 15.5 GiB): OK  Committed_AS 6953140 KiB (6.63 GiB) -&gt; 23206068 KiB (22.13 GiB)</span><br><span class="line">mmap(16384 MiB / 16 GiB): FAIL  Committed_AS 6953140 KiB (6.63 GiB) -&gt; 6953140 KiB (6.63 GiB)</span><br></pre></td></tr></table></figure>
 <table>
@@ -712,7 +980,7 @@
 <li>加了 <code>MAP_NORESERVE</code> 后 <code>mmap</code> <strong>成功</strong> → 连续区域是有的，失败只因承诺检查</li>
 <li>加了 <code>MAP_NORESERVE</code> 后 <code>mmap</code> <strong>仍失败</strong> → 可能确实找不到连续区域</li>
 </ul>
-<figure class="highlight cpp"><figcaption><span>probe_malloc_failure.cpp:50-69</span><a href="/blog/downloads/code/tech/cpp/basic/mallc-failure-analysis-01.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// §3.5：MAP_NORESERVE 绕过承诺检查，确认失败不是地址碎片化</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">probe_noreserve</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">size_t</span> gb : {<span class="number">16ULL</span>, <span class="number">64ULL</span>}) {</span><br><span class="line">        <span class="type">size_t</span> sz = gb * kGiB;</span><br><span class="line">        errno = <span class="number">0</span>;</span><br><span class="line">        <span class="type">void</span>* d = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz, PROT_READ | PROT_WRITE,</span><br><span class="line">                       MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%zu GiB default:   %s errno=%d\n&quot;</span>,</span><br><span class="line">               gb, d == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, errno);</span><br><span class="line">        <span class="keyword">if</span> (d != MAP_FAILED) <span class="built_in">munmap</span>(d, sz); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line"></span><br><span class="line">        errno = <span class="number">0</span>;</span><br><span class="line">        <span class="type">void</span>* n = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz, PROT_READ | PROT_WRITE,</span><br><span class="line">                       MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%zu GiB NORESERVE: %s errno=%d\n&quot;</span>,</span><br><span class="line">               gb, n == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, errno);</span><br><span class="line">        <span class="keyword">if</span> (n != MAP_FAILED) <span class="built_in">munmap</span>(n, sz); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><figcaption><span>probe_malloc_failure.cpp:50-69</span><a href="/blog/downloads/code/tech/memory/malloc-failure-analysis-01.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// §3.5：MAP_NORESERVE 绕过承诺检查，确认失败不是地址碎片化</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">probe_noreserve</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">size_t</span> gb : {<span class="number">16ULL</span>, <span class="number">64ULL</span>}) {</span><br><span class="line">        <span class="type">size_t</span> sz = gb * kGiB;</span><br><span class="line">        errno = <span class="number">0</span>;</span><br><span class="line">        <span class="type">void</span>* d = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz, PROT_READ | PROT_WRITE,</span><br><span class="line">                       MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%zu GiB default:   %s errno=%d\n&quot;</span>,</span><br><span class="line">               gb, d == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, errno);</span><br><span class="line">        <span class="keyword">if</span> (d != MAP_FAILED) <span class="built_in">munmap</span>(d, sz); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line"></span><br><span class="line">        errno = <span class="number">0</span>;</span><br><span class="line">        <span class="type">void</span>* n = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz, PROT_READ | PROT_WRITE,</span><br><span class="line">                       MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%zu GiB NORESERVE: %s errno=%d\n&quot;</span>,</span><br><span class="line">               gb, n == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, errno);</span><br><span class="line">        <span class="keyword">if</span> (n != MAP_FAILED) <span class="built_in">munmap</span>(n, sz); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./probe_malloc_failure noreserve</span><br></pre></td></tr></table></figure>
 <table>
 <thead>
@@ -813,7 +1081,7 @@
 </tbody>
 </table>
 <h3 id="源码">源码</h3>
-<figure class="highlight cpp"><figcaption><span>probe_malloc_failure.cpp</span><a href="/blog/downloads/code/tech/cpp/basic/mallc-failure-analysis-01.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cerrno&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstdio&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstdlib&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstring&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fstream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> {</span><br><span class="line"></span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">size_t</span> kGiB = <span class="number">1024ULL</span> * <span class="number">1024</span> * <span class="number">1024</span>;</span><br><span class="line"><span class="comment">// §3.4 主探测点：&gt; CommitLimit 且 ≤ RAM+Swap（mode 0 不拒绝）→ 15872 MiB = 15.5 GiB</span></span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">size_t</span> kPassCapMiB = <span class="number">15872</span>;</span><br><span class="line"><span class="comment">// 对照：&gt; RAM+Swap，由 mode 0 拒绝</span></span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">size_t</span> kFailCapGiB = <span class="number">16</span>; <span class="comment">// 16 GiB = 16384 MiB</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">long</span> <span class="title">read_meminfo_kb</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* key)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="function">std::ifstream <span class="title">f</span><span class="params">(<span class="string">&quot;/proc/meminfo&quot;</span>)</span></span>;</span><br><span class="line">    std::string line;</span><br><span class="line">    <span class="keyword">while</span> (std::<span class="built_in">getline</span>(f, line)) {</span><br><span class="line">        <span class="keyword">if</span> (line.<span class="built_in">find</span>(key) == <span class="number">0</span>) {</span><br><span class="line">            <span class="type">long</span> v = <span class="number">0</span>;</span><br><span class="line">            <span class="built_in">sscanf</span>(line.<span class="built_in">c_str</span>(), <span class="string">&quot;%*s %ld&quot;</span>, &amp;v);</span><br><span class="line">            <span class="keyword">return</span> v;</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// §3.1：确认失败发生在 mmap 层而非 malloc 层</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">probe_mmap_vs_malloc</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="type">size_t</span> sz = <span class="number">64</span> * kGiB;</span><br><span class="line">    errno = <span class="number">0</span>;</span><br><span class="line">    <span class="type">void</span>* mp = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz, PROT_READ | PROT_WRITE,</span><br><span class="line">                    MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;mmap(64 GiB):   %s errno=%d (%s)\n&quot;</span>,</span><br><span class="line">           mp == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, errno, <span class="built_in">strerror</span>(errno));</span><br><span class="line">    <span class="keyword">if</span> (mp != MAP_FAILED) <span class="built_in">munmap</span>(mp, sz); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line"></span><br><span class="line">    errno = <span class="number">0</span>;</span><br><span class="line">    <span class="type">void</span>* p = <span class="built_in">malloc</span>(sz);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;malloc(64 GiB): %s errno=%d (%s)\n&quot;</span>,</span><br><span class="line">           p ? <span class="string">&quot;OK&quot;</span> : <span class="string">&quot;NULL&quot;</span>, errno, <span class="built_in">strerror</span>(errno));</span><br><span class="line">    <span class="keyword">if</span> (p) <span class="built_in">free</span>(p); <span class="comment">// 释放本次 malloc 申请的内存</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// §3.5：MAP_NORESERVE 绕过承诺检查，确认失败不是地址碎片化</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">probe_noreserve</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">size_t</span> gb : {<span class="number">16ULL</span>, <span class="number">64ULL</span>}) {</span><br><span class="line">        <span class="type">size_t</span> sz = gb * kGiB;</span><br><span class="line">        errno = <span class="number">0</span>;</span><br><span class="line">        <span class="type">void</span>* d = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz, PROT_READ | PROT_WRITE,</span><br><span class="line">                       MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%zu GiB default:   %s errno=%d\n&quot;</span>,</span><br><span class="line">               gb, d == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, errno);</span><br><span class="line">        <span class="keyword">if</span> (d != MAP_FAILED) <span class="built_in">munmap</span>(d, sz); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line"></span><br><span class="line">        errno = <span class="number">0</span>;</span><br><span class="line">        <span class="type">void</span>* n = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz, PROT_READ | PROT_WRITE,</span><br><span class="line">                       MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%zu GiB NORESERVE: %s errno=%d\n&quot;</span>,</span><br><span class="line">               gb, n == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, errno);</span><br><span class="line">        <span class="keyword">if</span> (n != MAP_FAILED) <span class="built_in">munmap</span>(n, sz); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// §3.3：探测 overcommit 检查的边界（RAM+Swap 附近逐步测试）</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">probe_threshold</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="comment">// 15360 MiB=15 GiB；15872 MiB=15.5 GiB；15880 MiB=15.5078125 GiB；</span></span><br><span class="line">    <span class="comment">// 16384 MiB=16 GiB；65536 MiB=64 GiB</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> mb : {<span class="number">15360</span>, <span class="number">15872</span>, <span class="number">15880</span>, <span class="number">16384</span>, <span class="number">65536</span>}) {</span><br><span class="line">        <span class="type">size_t</span> sz = <span class="built_in">static_cast</span>&lt;<span class="type">size_t</span>&gt;(mb) * <span class="number">1024</span> * <span class="number">1024</span>;</span><br><span class="line">        errno = <span class="number">0</span>;</span><br><span class="line">        <span class="type">void</span>* p = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz, PROT_READ | PROT_WRITE,</span><br><span class="line">                       MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%5d MiB: %s errno=%d\n&quot;</span>,</span><br><span class="line">               mb, p == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, errno);</span><br><span class="line">        <span class="keyword">if</span> (p != MAP_FAILED) <span class="built_in">munmap</span>(p, sz); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// §3.4：观察 Committed_AS 变化，排除 mode 2 累计限制</span></span><br><span class="line"><span class="comment">// 主探测：15872 MiB（&gt; CommitLimit 且 ≤ RAM+Swap）；对照：16 GiB（&gt; RAM+Swap）</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">probe_committed</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">auto</span> kib_to_gib = [](<span class="type">long</span> kib) {</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">static_cast</span>&lt;<span class="type">double</span>&gt;(kib) / (<span class="number">1024.0</span> * <span class="number">1024.0</span>);</span><br><span class="line">    };</span><br><span class="line">    <span class="comment">// Committed_AS：AS = Address Space（地址空间承诺量），随 mmap/munmap 等动态升降</span></span><br><span class="line">    <span class="keyword">auto</span> committed = []() { <span class="keyword">return</span> <span class="built_in">read_meminfo_kb</span>(<span class="string">&quot;Committed_AS:&quot;</span>); };</span><br><span class="line"></span><br><span class="line">    <span class="type">long</span> limit = <span class="built_in">read_meminfo_kb</span>(<span class="string">&quot;CommitLimit:&quot;</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;CommitLimit: %ld KiB (%.2f GiB)\n&quot;</span>, limit, <span class="built_in">kib_to_gib</span>(limit));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ① 15872 MiB = 15.5 GiB：&gt; CommitLimit 且 ≤ RAM+Swap → 应通过；若 Committed_AS 超过 CommitLimit 仍成功 → 非 mode 2</span></span><br><span class="line">    <span class="type">long</span> c0 = <span class="built_in">committed</span>();</span><br><span class="line">    <span class="type">size_t</span> sz_ok = kPassCapMiB * <span class="number">1024ULL</span> * <span class="number">1024</span>; <span class="comment">// 15872 MiB = 15.5 GiB</span></span><br><span class="line">    <span class="type">void</span>* p_ok = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz_ok, PROT_READ | PROT_WRITE,</span><br><span class="line">                      MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="type">long</span> c1 = <span class="built_in">committed</span>();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;mmap(15872 MiB / 15.5 GiB): %s  Committed_AS %ld KiB (%.2f GiB) -&gt; %ld KiB (%.2f GiB)\n&quot;</span>,</span><br><span class="line">           p_ok == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>,</span><br><span class="line">           c0, <span class="built_in">kib_to_gib</span>(c0), c1, <span class="built_in">kib_to_gib</span>(c1));</span><br><span class="line">    <span class="keyword">if</span> (p_ok != MAP_FAILED) <span class="built_in">munmap</span>(p_ok, sz_ok); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// ② 16 GiB = 16384 MiB：&gt; RAM+Swap → mode 0 拒绝，且 Committed_AS 应不变</span></span><br><span class="line">    c0 = <span class="built_in">committed</span>();</span><br><span class="line">    <span class="type">size_t</span> sz_fail = kFailCapGiB * kGiB; <span class="comment">// 16 GiB = 16384 MiB</span></span><br><span class="line">    <span class="type">void</span>* p_fail = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz_fail, PROT_READ | PROT_WRITE,</span><br><span class="line">                        MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">    c1 = <span class="built_in">committed</span>();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;mmap(16384 MiB / 16 GiB): %s  Committed_AS %ld KiB (%.2f GiB) -&gt; %ld KiB (%.2f GiB)\n&quot;</span>,</span><br><span class="line">           p_fail == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>,</span><br><span class="line">           c0, <span class="built_in">kib_to_gib</span>(c0), c1, <span class="built_in">kib_to_gib</span>(c1));</span><br><span class="line">    <span class="keyword">if</span> (p_fail != MAP_FAILED) <span class="built_in">munmap</span>(p_fail, sz_fail); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">} <span class="comment">// namespace</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span>* argv[])</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>* mode = argc &gt; <span class="number">1</span> ? argv[<span class="number">1</span>] : <span class="string">&quot;all&quot;</span>;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">strcmp</span>(mode, <span class="string">&quot;mmap&quot;</span>)      || !<span class="built_in">strcmp</span>(mode, <span class="string">&quot;all&quot;</span>)) <span class="built_in">probe_mmap_vs_malloc</span>();</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">strcmp</span>(mode, <span class="string">&quot;threshold&quot;</span>) || !<span class="built_in">strcmp</span>(mode, <span class="string">&quot;all&quot;</span>)) <span class="built_in">probe_threshold</span>();</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">strcmp</span>(mode, <span class="string">&quot;commit&quot;</span>)    || !<span class="built_in">strcmp</span>(mode, <span class="string">&quot;all&quot;</span>)) <span class="built_in">probe_committed</span>();</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">strcmp</span>(mode, <span class="string">&quot;noreserve&quot;</span>) || !<span class="built_in">strcmp</span>(mode, <span class="string">&quot;all&quot;</span>)) <span class="built_in">probe_noreserve</span>();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><figcaption><span>probe_malloc_failure.cpp</span><a href="/blog/downloads/code/tech/memory/malloc-failure-analysis-01.cpp">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cerrno&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstdio&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstdlib&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstring&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fstream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> {</span><br><span class="line"></span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">size_t</span> kGiB = <span class="number">1024ULL</span> * <span class="number">1024</span> * <span class="number">1024</span>;</span><br><span class="line"><span class="comment">// §3.4 主探测点：&gt; CommitLimit 且 ≤ RAM+Swap（mode 0 不拒绝）→ 15872 MiB = 15.5 GiB</span></span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">size_t</span> kPassCapMiB = <span class="number">15872</span>;</span><br><span class="line"><span class="comment">// 对照：&gt; RAM+Swap，由 mode 0 拒绝</span></span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">size_t</span> kFailCapGiB = <span class="number">16</span>; <span class="comment">// 16 GiB = 16384 MiB</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">long</span> <span class="title">read_meminfo_kb</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* key)</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="function">std::ifstream <span class="title">f</span><span class="params">(<span class="string">&quot;/proc/meminfo&quot;</span>)</span></span>;</span><br><span class="line">    std::string line;</span><br><span class="line">    <span class="keyword">while</span> (std::<span class="built_in">getline</span>(f, line)) {</span><br><span class="line">        <span class="keyword">if</span> (line.<span class="built_in">find</span>(key) == <span class="number">0</span>) {</span><br><span class="line">            <span class="type">long</span> v = <span class="number">0</span>;</span><br><span class="line">            <span class="built_in">sscanf</span>(line.<span class="built_in">c_str</span>(), <span class="string">&quot;%*s %ld&quot;</span>, &amp;v);</span><br><span class="line">            <span class="keyword">return</span> v;</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// §3.1：确认失败发生在 mmap 层而非 malloc 层</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">probe_mmap_vs_malloc</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="type">size_t</span> sz = <span class="number">64</span> * kGiB;</span><br><span class="line">    errno = <span class="number">0</span>;</span><br><span class="line">    <span class="type">void</span>* mp = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz, PROT_READ | PROT_WRITE,</span><br><span class="line">                    MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;mmap(64 GiB):   %s errno=%d (%s)\n&quot;</span>,</span><br><span class="line">           mp == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, errno, <span class="built_in">strerror</span>(errno));</span><br><span class="line">    <span class="keyword">if</span> (mp != MAP_FAILED) <span class="built_in">munmap</span>(mp, sz); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line"></span><br><span class="line">    errno = <span class="number">0</span>;</span><br><span class="line">    <span class="type">void</span>* p = <span class="built_in">malloc</span>(sz);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;malloc(64 GiB): %s errno=%d (%s)\n&quot;</span>,</span><br><span class="line">           p ? <span class="string">&quot;OK&quot;</span> : <span class="string">&quot;NULL&quot;</span>, errno, <span class="built_in">strerror</span>(errno));</span><br><span class="line">    <span class="keyword">if</span> (p) <span class="built_in">free</span>(p); <span class="comment">// 释放本次 malloc 申请的内存</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// §3.5：MAP_NORESERVE 绕过承诺检查，确认失败不是地址碎片化</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">probe_noreserve</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">size_t</span> gb : {<span class="number">16ULL</span>, <span class="number">64ULL</span>}) {</span><br><span class="line">        <span class="type">size_t</span> sz = gb * kGiB;</span><br><span class="line">        errno = <span class="number">0</span>;</span><br><span class="line">        <span class="type">void</span>* d = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz, PROT_READ | PROT_WRITE,</span><br><span class="line">                       MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%zu GiB default:   %s errno=%d\n&quot;</span>,</span><br><span class="line">               gb, d == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, errno);</span><br><span class="line">        <span class="keyword">if</span> (d != MAP_FAILED) <span class="built_in">munmap</span>(d, sz); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line"></span><br><span class="line">        errno = <span class="number">0</span>;</span><br><span class="line">        <span class="type">void</span>* n = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz, PROT_READ | PROT_WRITE,</span><br><span class="line">                       MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%zu GiB NORESERVE: %s errno=%d\n&quot;</span>,</span><br><span class="line">               gb, n == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, errno);</span><br><span class="line">        <span class="keyword">if</span> (n != MAP_FAILED) <span class="built_in">munmap</span>(n, sz); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// §3.3：探测 overcommit 检查的边界（RAM+Swap 附近逐步测试）</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">probe_threshold</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="comment">// 15360 MiB=15 GiB；15872 MiB=15.5 GiB；15880 MiB=15.5078125 GiB；</span></span><br><span class="line">    <span class="comment">// 16384 MiB=16 GiB；65536 MiB=64 GiB</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> mb : {<span class="number">15360</span>, <span class="number">15872</span>, <span class="number">15880</span>, <span class="number">16384</span>, <span class="number">65536</span>}) {</span><br><span class="line">        <span class="type">size_t</span> sz = <span class="built_in">static_cast</span>&lt;<span class="type">size_t</span>&gt;(mb) * <span class="number">1024</span> * <span class="number">1024</span>;</span><br><span class="line">        errno = <span class="number">0</span>;</span><br><span class="line">        <span class="type">void</span>* p = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz, PROT_READ | PROT_WRITE,</span><br><span class="line">                       MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%5d MiB: %s errno=%d\n&quot;</span>,</span><br><span class="line">               mb, p == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>, errno);</span><br><span class="line">        <span class="keyword">if</span> (p != MAP_FAILED) <span class="built_in">munmap</span>(p, sz); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// §3.4：观察 Committed_AS 变化，排除 mode 2 累计限制</span></span><br><span class="line"><span class="comment">// 主探测：15872 MiB（&gt; CommitLimit 且 ≤ RAM+Swap）；对照：16 GiB（&gt; RAM+Swap）</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">probe_committed</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="keyword">auto</span> kib_to_gib = [](<span class="type">long</span> kib) {</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">static_cast</span>&lt;<span class="type">double</span>&gt;(kib) / (<span class="number">1024.0</span> * <span class="number">1024.0</span>);</span><br><span class="line">    };</span><br><span class="line">    <span class="comment">// Committed_AS：AS = Address Space（地址空间承诺量），随 mmap/munmap 等动态升降</span></span><br><span class="line">    <span class="keyword">auto</span> committed = []() { <span class="keyword">return</span> <span class="built_in">read_meminfo_kb</span>(<span class="string">&quot;Committed_AS:&quot;</span>); };</span><br><span class="line"></span><br><span class="line">    <span class="type">long</span> limit = <span class="built_in">read_meminfo_kb</span>(<span class="string">&quot;CommitLimit:&quot;</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;CommitLimit: %ld KiB (%.2f GiB)\n&quot;</span>, limit, <span class="built_in">kib_to_gib</span>(limit));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ① 15872 MiB = 15.5 GiB：&gt; CommitLimit 且 ≤ RAM+Swap → 应通过；若 Committed_AS 超过 CommitLimit 仍成功 → 非 mode 2</span></span><br><span class="line">    <span class="type">long</span> c0 = <span class="built_in">committed</span>();</span><br><span class="line">    <span class="type">size_t</span> sz_ok = kPassCapMiB * <span class="number">1024ULL</span> * <span class="number">1024</span>; <span class="comment">// 15872 MiB = 15.5 GiB</span></span><br><span class="line">    <span class="type">void</span>* p_ok = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz_ok, PROT_READ | PROT_WRITE,</span><br><span class="line">                      MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="type">long</span> c1 = <span class="built_in">committed</span>();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;mmap(15872 MiB / 15.5 GiB): %s  Committed_AS %ld KiB (%.2f GiB) -&gt; %ld KiB (%.2f GiB)\n&quot;</span>,</span><br><span class="line">           p_ok == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>,</span><br><span class="line">           c0, <span class="built_in">kib_to_gib</span>(c0), c1, <span class="built_in">kib_to_gib</span>(c1));</span><br><span class="line">    <span class="keyword">if</span> (p_ok != MAP_FAILED) <span class="built_in">munmap</span>(p_ok, sz_ok); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// ② 16 GiB = 16384 MiB：&gt; RAM+Swap → mode 0 拒绝，且 Committed_AS 应不变</span></span><br><span class="line">    c0 = <span class="built_in">committed</span>();</span><br><span class="line">    <span class="type">size_t</span> sz_fail = kFailCapGiB * kGiB; <span class="comment">// 16 GiB = 16384 MiB</span></span><br><span class="line">    <span class="type">void</span>* p_fail = <span class="built_in">mmap</span>(<span class="literal">NULL</span>, sz_fail, PROT_READ | PROT_WRITE,</span><br><span class="line">                        MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">    c1 = <span class="built_in">committed</span>();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;mmap(16384 MiB / 16 GiB): %s  Committed_AS %ld KiB (%.2f GiB) -&gt; %ld KiB (%.2f GiB)\n&quot;</span>,</span><br><span class="line">           p_fail == MAP_FAILED ? <span class="string">&quot;FAIL&quot;</span> : <span class="string">&quot;OK&quot;</span>,</span><br><span class="line">           c0, <span class="built_in">kib_to_gib</span>(c0), c1, <span class="built_in">kib_to_gib</span>(c1));</span><br><span class="line">    <span class="keyword">if</span> (p_fail != MAP_FAILED) <span class="built_in">munmap</span>(p_fail, sz_fail); <span class="comment">// 释放本次 mmap 申请的虚拟内存</span></span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">} <span class="comment">// namespace</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span>* argv[])</span></span></span><br><span class="line"><span class="function"></span>{</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>* mode = argc &gt; <span class="number">1</span> ? argv[<span class="number">1</span>] : <span class="string">&quot;all&quot;</span>;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">strcmp</span>(mode, <span class="string">&quot;mmap&quot;</span>)      || !<span class="built_in">strcmp</span>(mode, <span class="string">&quot;all&quot;</span>)) <span class="built_in">probe_mmap_vs_malloc</span>();</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">strcmp</span>(mode, <span class="string">&quot;threshold&quot;</span>) || !<span class="built_in">strcmp</span>(mode, <span class="string">&quot;all&quot;</span>)) <span class="built_in">probe_threshold</span>();</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">strcmp</span>(mode, <span class="string">&quot;commit&quot;</span>)    || !<span class="built_in">strcmp</span>(mode, <span class="string">&quot;all&quot;</span>)) <span class="built_in">probe_committed</span>();</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">strcmp</span>(mode, <span class="string">&quot;noreserve&quot;</span>) || !<span class="built_in">strcmp</span>(mode, <span class="string">&quot;all&quot;</span>)) <span class="built_in">probe_noreserve</span>();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
 <hr>
 <h2 id="七、参考资料">七、参考资料</h2>
 <table>
@@ -874,7 +1142,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/07/12/tech/ic/semiconductor-manufaturing/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/07/12/tech/ic/semiconductor-manufacturing/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -888,7 +1156,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2026/07/12/tech/ic/semiconductor-manufaturing/" class="post-title-link" itemprop="url">半导体制造：从沙石到芯片封装</a>
+            <a href="/blog/2026/07/12/tech/ic/semiconductor-manufacturing/" class="post-title-link" itemprop="url">半导体制造：从沙石到芯片封装</a>
         </h2>
 
         <div class="post-meta">
@@ -905,7 +1173,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-20 08:37:52" itemprop="dateModified" datetime="2026-07-20T08:37:52+00:00">2026-07-20</time>
+                <time title="Modified: 2026-07-23 08:45:55" itemprop="dateModified" datetime="2026-07-23T08:45:55+00:00">2026-07-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1005,7 +1273,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-20 08:37:52" itemprop="dateModified" datetime="2026-07-20T08:37:52+00:00">2026-07-20</time>
+                <time title="Modified: 2026-07-23 08:45:55" itemprop="dateModified" datetime="2026-07-23T08:45:55+00:00">2026-07-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1055,7 +1323,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/04/22/tech/cpp/debug/reverse-lookup-symbol-from-shared-library-offset/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/04/22/tech/cpp/debug/shared-lib-offset-symbol-lookup/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -1069,7 +1337,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2026/04/22/tech/cpp/debug/reverse-lookup-symbol-from-shared-library-offset/" class="post-title-link" itemprop="url">从共享库偏移反查符号（Linux / ELF）</a>
+            <a href="/blog/2026/04/22/tech/cpp/debug/shared-lib-offset-symbol-lookup/" class="post-title-link" itemprop="url">从共享库偏移反查符号（Linux / ELF）</a>
         </h2>
 
         <div class="post-meta">
@@ -1086,7 +1354,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-20 08:37:52" itemprop="dateModified" datetime="2026-07-20T08:37:52+00:00">2026-07-20</time>
+                <time title="Modified: 2026-07-23 08:45:55" itemprop="dateModified" datetime="2026-07-23T08:45:55+00:00">2026-07-23</time>
               </span>
 
           
@@ -1279,7 +1547,7 @@ PC，落在函数体内）：</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-20 08:37:52" itemprop="dateModified" datetime="2026-07-20T08:37:52+00:00">2026-07-20</time>
+                <time title="Modified: 2026-07-23 08:45:55" itemprop="dateModified" datetime="2026-07-23T08:45:55+00:00">2026-07-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1606,7 +1874,7 @@ PC，落在函数体内）：</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-20 08:37:52" itemprop="dateModified" datetime="2026-07-20T08:37:52+00:00">2026-07-20</time>
+                <time title="Modified: 2026-07-23 08:45:55" itemprop="dateModified" datetime="2026-07-23T08:45:55+00:00">2026-07-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1912,7 +2180,7 @@ PC，落在函数体内）：</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-20 08:37:52" itemprop="dateModified" datetime="2026-07-20T08:37:52+00:00">2026-07-20</time>
+                <time title="Modified: 2026-07-23 08:45:55" itemprop="dateModified" datetime="2026-07-23T08:45:55+00:00">2026-07-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2796,7 +3064,7 @@ PC，落在函数体内）：</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-20 08:37:52" itemprop="dateModified" datetime="2026-07-20T08:37:52+00:00">2026-07-20</time>
+                <time title="Modified: 2026-07-23 08:45:55" itemprop="dateModified" datetime="2026-07-23T08:45:55+00:00">2026-07-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -3183,881 +3451,6 @@ PC，落在函数体内）：</p>
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/12/19/tech/cpp/optimize/dynamic-instrumentation-tools/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/12/19/tech/cpp/optimize/dynamic-instrumentation-tools/" class="post-title-link" itemprop="url">动态插桩工具</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-12-19 17:13:49" itemprop="dateCreated datePublished" datetime="2025-12-19T17:13:49+00:00">2025-12-19</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-07-20 08:37:52" itemprop="dateModified" datetime="2026-07-20T08:37:52+00:00">2026-07-20</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="概述">概述</h2>
-<p>动态插桩（Dynamic Instrumentation）是在程序运行时插入监控代码的技术，无需重新编译程序即可进行性能分析和调试。本文介绍 C/C++ 程序中常用的动态插桩工具，重点关注函数调用次数和耗时统计（平均、最小、最大、总计），以及是否支持 attach 到正在运行的进程。</p>
-<p><strong>重要说明：耗时统计的范围</strong></p>
-<p>不同工具在统计函数耗时时的行为存在重要差异：</p>
-<ul>
-<li><strong>墙上时钟时间（Wall-clock Time）</strong>：包括函数执行期间的所有时间，包括 CPU 执行时间、IO 等待时间、sleep 时间等。这是函数从开始到结束的&quot;真实&quot;耗时。</li>
-<li><strong>CPU 时间（CPU Time）</strong>：只包括函数在 CPU 上实际执行的时间，不包括 IO 等待和 sleep 时间。</li>
-<li><strong>用户态 CPU 时间（User CPU Time）</strong>：只包括在用户态执行的时间，不包括内核态时间。</li>
-</ul>
-<p>大多数动态插桩工具默认统计的是<strong>墙上时钟时间</strong>，这意味着如果函数中包含 IO 操作（如文件读写、网络通信）或 sleep，这些时间也会被计入总耗时。这对于理解函数的&quot;真实&quot;执行时间很有帮助，但需要注意区分 CPU 密集型操作和 IO 密集型操作。</p>
-<h2 id="动态插桩工具对比">动态插桩工具对比</h2>
-<table>
-<thead>
-<tr>
-<th>工具</th>
-<th>插桩方式</th>
-<th>调用次数统计</th>
-<th>耗时统计（avg/min/max/total）</th>
-<th>耗时范围</th>
-<th>Attach 支持</th>
-<th>权限要求</th>
-<th>开销</th>
-<th>适用场景</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>eBPF/BCC</strong></td>
-<td>内核级动态插桩</td>
-<td>✅</td>
-<td>✅</td>
-<td>墙上时钟时间</td>
-<td>✅</td>
-<td>root 或 CAP_BPF</td>
-<td>极低</td>
-<td>Linux 现代系统分析</td>
-</tr>
-<tr>
-<td><strong>bptrace</strong></td>
-<td>内核级动态插桩（eBPF）</td>
-<td>✅</td>
-<td>✅</td>
-<td>墙上时钟时间</td>
-<td>✅</td>
-<td>root 或 CAP_BPF</td>
-<td>极低</td>
-<td>Linux 函数级性能分析</td>
-</tr>
-<tr>
-<td><strong>SystemTap</strong></td>
-<td>内核级动态插桩</td>
-<td>✅</td>
-<td>✅</td>
-<td>墙上时钟时间</td>
-<td>✅</td>
-<td>root 或 stapdev/stapusr 组</td>
-<td>低-中</td>
-<td>Linux 系统级分析</td>
-</tr>
-<tr>
-<td><strong>perf + uprobes</strong></td>
-<td>内核级动态插桩</td>
-<td>✅</td>
-<td>✅</td>
-<td>墙上时钟时间（可配置）</td>
-<td>✅</td>
-<td>root 或 <code>perf_event_paranoid</code></td>
-<td>低</td>
-<td>Linux 系统级分析</td>
-</tr>
-<tr>
-<td><strong>DTrace</strong></td>
-<td>内核级动态插桩</td>
-<td>✅</td>
-<td>✅</td>
-<td>墙上时钟时间</td>
-<td>✅</td>
-<td>root 或特殊权限</td>
-<td>低</td>
-<td>Solaris/FreeBSD/macOS</td>
-</tr>
-<tr>
-<td><strong>Intel Pin</strong></td>
-<td>二进制插桩</td>
-<td>✅</td>
-<td>✅</td>
-<td>墙上时钟时间</td>
-<td>❌</td>
-<td>普通用户权限</td>
-<td>高</td>
-<td>详细分析，需要启动时插桩</td>
-</tr>
-<tr>
-<td><strong>DynamoRIO</strong></td>
-<td>二进制插桩</td>
-<td>✅</td>
-<td>✅</td>
-<td>墙上时钟时间</td>
-<td>❌</td>
-<td>普通用户权限</td>
-<td>高</td>
-<td>跨平台分析，需要启动时插桩</td>
-</tr>
-<tr>
-<td><strong>Valgrind Callgrind</strong></td>
-<td>二进制插桩</td>
-<td>✅</td>
-<td>✅</td>
-<td>CPU 时间（不包括IO/sleep）</td>
-<td>❌</td>
-<td>普通用户权限</td>
-<td>极高</td>
-<td>详细调用图分析</td>
-</tr>
-<tr>
-<td><strong>LD_PRELOAD</strong></td>
-<td>库函数拦截</td>
-<td>✅</td>
-<td>✅</td>
-<td>墙上时钟时间</td>
-<td>❌</td>
-<td>普通用户权限</td>
-<td>低</td>
-<td>简单场景，库函数级别</td>
-</tr>
-<tr>
-<td><strong>ltrace</strong></td>
-<td>库函数跟踪</td>
-<td>✅</td>
-<td>部分</td>
-<td>墙上时钟时间</td>
-<td>✅</td>
-<td>普通用户权限（attach 需 ptrace）</td>
-<td>低</td>
-<td>库函数调用跟踪</td>
-</tr>
-</tbody>
-</table>
-<h2 id="详细工具介绍">详细工具介绍</h2>
-<h3 id="1-eBPF-BCC">1. eBPF/BCC</h3>
-<p><strong>简介</strong>：基于 eBPF（Extended Berkeley Packet Filter）的现代动态跟踪工具集，BCC 提供了高级封装。</p>
-<p><strong>特点</strong>：</p>
-<ul>
-<li>✅ 支持 attach 到正在运行的进程</li>
-<li>✅ 极低开销，内核验证保证安全</li>
-<li>✅ 可以统计函数调用次数和耗时（min/max/avg/total）</li>
-<li>✅ 丰富的工具集（funccount, funclatency, trace 等）</li>
-<li>⏱️ <strong>耗时统计范围</strong>：统计墙上时钟时间（包括 IO、sleep 等所有时间）</li>
-</ul>
-<p><strong>权限要求</strong>：</p>
-<ul>
-<li><strong>root 权限</strong>：拥有所有 eBPF/BCC 功能</li>
-<li><strong>非 root 用户</strong>：需要 <code>CAP_BPF</code> 能力（Linux 5.8+）：<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 授予用户 CAP_BPF 能力</span></span><br><span class="line">sudo <span class="built_in">setcap</span> cap_bpf+ep /usr/bin/python3</span><br><span class="line"><span class="comment"># 或授予特定 BCC 工具</span></span><br><span class="line">sudo <span class="built_in">setcap</span> cap_bpf+ep /usr/share/bcc/tools/funccount</span><br></pre></td></tr></table></figure>
-</li>
-<li><strong>attach 到其他用户的进程</strong>：需要 root 权限或 <code>CAP_SYS_PTRACE</code> 能力</li>
-<li><strong>加载 eBPF 程序</strong>：需要 root 权限或 <code>CAP_BPF</code> 能力（Linux 5.8+）</li>
-<li><strong>读取内核符号</strong>：需要 root 权限或 <code>CAP_SYS_ADMIN</code> 能力</li>
-</ul>
-<p><strong>限制</strong>：</p>
-<ul>
-<li>需要 Linux 4.1+ 内核（eBPF 支持）</li>
-</ul>
-<p><strong>使用示例</strong>：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># funclatency - 统计函数耗时分布</span></span><br><span class="line">funclatency -p &lt;pid&gt; <span class="string">&#x27;target_function&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># funccount - 统计函数调用次数</span></span><br><span class="line">funccount -p &lt;pid&gt; <span class="string">&#x27;target_function&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 自定义 BCC 脚本统计详细指标</span></span><br><span class="line"><span class="keyword">from</span> bcc <span class="keyword">import</span> BPF</span><br><span class="line"></span><br><span class="line">bpf_text = <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">#include &lt;uapi/linux/ptrace.h&gt;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">BPF_HASH(start, u32);</span></span><br><span class="line"><span class="string">BPF_HASH(count, u32);</span></span><br><span class="line"><span class="string">BPF_HASH(total_time, u64);</span></span><br><span class="line"><span class="string">BPF_HASH(min_time, u64);</span></span><br><span class="line"><span class="string">BPF_HASH(max_time, u64);</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">int trace_entry(struct pt_regs *ctx) &#123;</span></span><br><span class="line"><span class="string">    u32 pid = bpf_get_current_pid_tgid();</span></span><br><span class="line"><span class="string">    u64 ts = bpf_ktime_get_ns();</span></span><br><span class="line"><span class="string">    start.update(&amp;pid, &amp;ts);</span></span><br><span class="line"><span class="string">    u64 zero = 0;</span></span><br><span class="line"><span class="string">    count.update(&amp;pid, &amp;zero);</span></span><br><span class="line"><span class="string">    u64 *val = count.lookup(&amp;pid);</span></span><br><span class="line"><span class="string">    if (val) &#123;</span></span><br><span class="line"><span class="string">        (*val)++;</span></span><br><span class="line"><span class="string">        count.update(&amp;pid, val);</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">    return 0;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">int trace_return(struct pt_regs *ctx) &#123;</span></span><br><span class="line"><span class="string">    u32 pid = bpf_get_current_pid_tgid();</span></span><br><span class="line"><span class="string">    u64 *tsp = start.lookup(&amp;pid);</span></span><br><span class="line"><span class="string">    if (tsp == 0) &#123;</span></span><br><span class="line"><span class="string">        return 0;</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">    u64 delta = bpf_ktime_get_ns() - *tsp;</span></span><br><span class="line"><span class="string">    </span></span><br><span class="line"><span class="string">    // 更新统计信息</span></span><br><span class="line"><span class="string">    u64 *total = total_time.lookup(&amp;pid);</span></span><br><span class="line"><span class="string">    u64 *min = min_time.lookup(&amp;pid);</span></span><br><span class="line"><span class="string">    u64 *max = max_time.lookup(&amp;pid);</span></span><br><span class="line"><span class="string">    </span></span><br><span class="line"><span class="string">    if (total) &#123;</span></span><br><span class="line"><span class="string">        *total += delta;</span></span><br><span class="line"><span class="string">    &#125; else &#123;</span></span><br><span class="line"><span class="string">        total_time.update(&amp;pid, &amp;delta);</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">    </span></span><br><span class="line"><span class="string">    if (!min || delta &lt; *min) &#123;</span></span><br><span class="line"><span class="string">        min_time.update(&amp;pid, &amp;delta);</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">    </span></span><br><span class="line"><span class="string">    if (!max || delta &gt; *max) &#123;</span></span><br><span class="line"><span class="string">        max_time.update(&amp;pid, &amp;delta);</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">    </span></span><br><span class="line"><span class="string">    start.delete(&amp;pid);</span></span><br><span class="line"><span class="string">    return 0;</span></span><br><span class="line"><span class="string">&#125;</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># attach 到进程</span></span><br><span class="line">b = BPF(text=bpf_text)</span><br><span class="line">b.attach_uprobe(name=<span class="string">&quot;target_program&quot;</span>, sym=<span class="string">&quot;target_function&quot;</span>, fn_name=<span class="string">&quot;trace_entry&quot;</span>)</span><br><span class="line">b.attach_uretprobe(name=<span class="string">&quot;target_program&quot;</span>, sym=<span class="string">&quot;target_function&quot;</span>, fn_name=<span class="string">&quot;trace_return&quot;</span>)</span><br></pre></td></tr></table></figure>
-<h3 id="2-bptrace">2. bptrace</h3>
-<p><strong>简介</strong>：基于 eBPF 的轻量级动态追踪工具，专门用于监控和分析正在运行的 C/C++ 程序。bptrace 提供了简洁的命令行接口，可以方便地统计函数调用次数和执行时间。</p>
-<p><strong>特点</strong>：</p>
-<ul>
-<li>✅ 支持 attach 到正在运行的进程</li>
-<li>✅ 可以统计函数调用次数和耗时（min/max/avg/total）</li>
-<li>✅ 极低开销，基于 eBPF 技术</li>
-<li>✅ 简洁的命令行接口，易于使用</li>
-<li>✅ 无需修改程序源码或重新编译</li>
-<li>⏱️ <strong>耗时统计范围</strong>：统计墙上时钟时间（包括 IO、sleep 等所有时间）</li>
-</ul>
-<p><strong>权限要求</strong>：</p>
-<ul>
-<li><strong>root 权限</strong>：拥有所有 bptrace 功能</li>
-<li><strong>非 root 用户</strong>：需要 <code>CAP_BPF</code> 能力（Linux 5.8+）：<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 授予用户 CAP_BPF 能力</span></span><br><span class="line">sudo <span class="built_in">setcap</span> cap_bpf+ep /usr/bin/bptrace</span><br></pre></td></tr></table></figure>
-</li>
-<li><strong>attach 到其他用户的进程</strong>：需要 root 权限或 <code>CAP_SYS_PTRACE</code> 能力</li>
-<li><strong>加载 eBPF 程序</strong>：需要 root 权限或 <code>CAP_BPF</code> 能力（Linux 5.8+）</li>
-</ul>
-<p><strong>限制</strong>：</p>
-<ul>
-<li>需要 Linux 内核支持 eBPF（通常 4.1+）</li>
-<li>Linux 5.8+ 才支持非 root 用户使用 CAP_BPF</li>
-<li>主要适用于用户态函数追踪</li>
-<li>需要目标程序包含调试符号信息（或使用地址）</li>
-</ul>
-<p><strong>使用示例</strong>：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 统计函数调用次数</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;target_function&#x27;</span> -c</span><br><span class="line"></span><br><span class="line"><span class="comment"># 统计函数耗时（包括平均、最小、最大、总耗时）</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;target_function&#x27;</span> -t</span><br><span class="line"></span><br><span class="line"><span class="comment"># 同时统计调用次数和耗时</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;target_function&#x27;</span> -c -t</span><br><span class="line"></span><br><span class="line"><span class="comment"># 统计多个函数</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;function1,function2&#x27;</span> -c -t</span><br><span class="line"></span><br><span class="line"><span class="comment"># 指定输出格式</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;target_function&#x27;</span> -t --format json</span><br><span class="line"></span><br><span class="line"><span class="comment"># 持续监控并定期输出统计信息</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;target_function&#x27;</span> -t --interval 5</span><br></pre></td></tr></table></figure>
-<p><strong>输出示例</strong>：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Function: target_function</span><br><span class="line">  Call Count: 1000</span><br><span class="line">  Total Time: 50000 us</span><br><span class="line">  Average Time: 50 us</span><br><span class="line">  Min Time: 10 us</span><br><span class="line">  Max Time: 200 us</span><br></pre></td></tr></table></figure>
-<p><strong>与 eBPF/BCC 的关系</strong>：</p>
-<ul>
-<li>bptrace 可以看作是 BCC 工具集的简化版本，专门针对函数级性能分析</li>
-<li>相比 BCC，bptrace 提供了更简洁的命令行接口，适合快速分析</li>
-<li>如果需要更复杂的自定义逻辑，仍需要使用 BCC 编写 Python/C 脚本</li>
-</ul>
-<h3 id="3-SystemTap">3. SystemTap</h3>
-<p><strong>简介</strong>：Linux 系统级动态跟踪工具，功能强大，支持用户态和内核态插桩。</p>
-<p><strong>特点</strong>：</p>
-<ul>
-<li>✅ 支持 attach 到正在运行的进程</li>
-<li>✅ 可以精确统计函数调用次数和耗时（包括 min/max/avg/total）</li>
-<li>✅ 灵活的脚本语言，可以自定义统计逻辑</li>
-<li>✅ 低开销（取决于脚本复杂度）</li>
-<li>⏱️ <strong>耗时统计范围</strong>：统计墙上时钟时间（包括 IO、sleep 等所有时间）</li>
-</ul>
-<p><strong>权限要求</strong>：</p>
-<ul>
-<li><strong>root 权限</strong>：拥有所有 SystemTap 功能</li>
-<li><strong>非 root 用户</strong>：需要加入特定组：
-<ul>
-<li><code>stapdev</code> 组：可以加载任意 SystemTap 模块（需要 root 权限添加）</li>
-<li><code>stapusr</code> 组：只能使用预编译的 SystemTap 模块（更安全）</li>
-</ul>
-</li>
-<li><strong>attach 到其他用户的进程</strong>：需要 root 权限或 <code>CAP_SYS_PTRACE</code> 能力</li>
-<li><strong>内核模块加载</strong>：需要 root 权限或 <code>CAP_SYS_MODULE</code> 能力</li>
-</ul>
-<p><strong>限制</strong>：</p>
-<ul>
-<li>需要安装 kernel-devel 包（用于编译 SystemTap 模块）</li>
-</ul>
-<p><strong>使用示例</strong>：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"># 统计函数调用次数和耗时</span><br><span class="line">probe process(&quot;/path/to/program&quot;).function(&quot;target_function&quot;) &#123;</span><br><span class="line">    start_time = gettimeofday_us()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">probe process(&quot;/path/to/program&quot;).function(&quot;target_function&quot;).return &#123;</span><br><span class="line">    call_count++</span><br><span class="line">    elapsed = gettimeofday_us() - start_time</span><br><span class="line">    total_time += elapsed</span><br><span class="line">    if (elapsed &lt; min_time || min_time == 0) min_time = elapsed</span><br><span class="line">    if (elapsed &gt; max_time) max_time = elapsed</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">probe end &#123;</span><br><span class="line">    printf(&quot;调用次数: %d\n&quot;, call_count)</span><br><span class="line">    printf(&quot;总耗时: %d us\n&quot;, total_time)</span><br><span class="line">    printf(&quot;平均耗时: %d us\n&quot;, total_time / call_count)</span><br><span class="line">    printf(&quot;最小耗时: %d us\n&quot;, min_time)</span><br><span class="line">    printf(&quot;最大耗时: %d us\n&quot;, max_time)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># attach 到运行中的进程</span><br><span class="line">stap -x &lt;pid&gt; script.stp</span><br></pre></td></tr></table></figure>
-<h3 id="4-perf-uprobes">4. perf + uprobes</h3>
-<p><strong>简介</strong>：Linux 内核自带的性能分析工具，通过 uprobes 机制实现用户态动态插桩。</p>
-<p><strong>特点</strong>：</p>
-<ul>
-<li>✅ 支持 attach 到正在运行的进程</li>
-<li>✅ 低开销，基于采样和事件计数</li>
-<li>✅ 可以统计函数调用次数和耗时</li>
-<li>✅ 无需修改程序源码或重新编译</li>
-<li>⏱️ <strong>耗时统计范围</strong>：默认统计墙上时钟时间（包括 IO、sleep 等），也可配置为统计 CPU 时间</li>
-</ul>
-<p><strong>权限要求</strong>：</p>
-<ul>
-<li><strong>root 权限</strong>：最直接的方式，拥有所有 perf 功能</li>
-<li><strong>非 root 用户</strong>：需要设置 <code>/proc/sys/kernel/perf_event_paranoid</code>：
-<ul>
-<li><code>-1</code>：允许所有用户使用 perf（不推荐，安全风险）</li>
-<li><code>0</code>：允许用户分析自己的进程</li>
-<li><code>1</code>：允许用户分析自己的进程和内核（默认值）</li>
-<li><code>2</code>：只允许 root 使用 perf</li>
-</ul>
-</li>
-<li><strong>attach 到其他用户的进程</strong>：需要 root 权限或 <code>CAP_SYS_PTRACE</code> 能力</li>
-<li><strong>查看内核符号</strong>：需要 root 权限或设置 <code>perf_event_paranoid &lt;= 1</code></li>
-</ul>
-<p><strong>限制</strong>：</p>
-<ul>
-<li>统计详细耗时需要额外脚本处理</li>
-</ul>
-<p><strong>使用示例</strong>：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 统计函数调用次数</span></span><br><span class="line">perf probe -x ./program function_name</span><br><span class="line">perf record -e probe_program:function_name ./program</span><br><span class="line"></span><br><span class="line"><span class="comment"># 统计函数耗时（需要自定义脚本或结合其他工具）</span></span><br><span class="line">perf record -g -p &lt;pid&gt;  <span class="comment"># attach 到运行中的进程</span></span><br><span class="line">perf report</span><br></pre></td></tr></table></figure>
-<h3 id="5-DTrace">5. DTrace</h3>
-<p><strong>简介</strong>：Sun Microsystems 开发的动态跟踪框架，现支持 Solaris、FreeBSD、macOS。</p>
-<p><strong>特点</strong>：</p>
-<ul>
-<li>✅ 支持 attach 到正在运行的进程</li>
-<li>✅ 可以统计函数调用次数和耗时（min/max/avg/total）</li>
-<li>✅ 低开销，功能强大</li>
-<li>✅ 支持聚合统计（aggregations）</li>
-<li>⏱️ <strong>耗时统计范围</strong>：统计墙上时钟时间（包括 IO、sleep 等所有时间）</li>
-</ul>
-<p><strong>权限要求</strong>：</p>
-<ul>
-<li><strong>macOS</strong>：
-<ul>
-<li>需要关闭 SIP（System Integrity Protection）或使用特殊权限</li>
-<li>或者使用 <code>sudo</code> 运行（需要管理员权限）</li>
-</ul>
-</li>
-<li><strong>Solaris/FreeBSD</strong>：
-<ul>
-<li>需要 root 权限或 <code>dtrace_kernel</code> 权限</li>
-</ul>
-</li>
-<li><strong>Linux</strong>：
-<ul>
-<li>支持有限（需要 Oracle Linux 或通过 SystemTap）</li>
-<li>通常需要 root 权限</li>
-</ul>
-</li>
-</ul>
-<p><strong>限制</strong>：</p>
-<ul>
-<li>Linux 上支持有限（需要 Oracle Linux 或通过 SystemTap）</li>
-</ul>
-<p><strong>使用示例</strong>：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">#!/usr/sbin/dtrace -s</span><br><span class="line"></span><br><span class="line">pid$target:target:function_name:entry</span><br><span class="line">&#123;</span><br><span class="line">    self-&gt;start = timestamp;</span><br><span class="line">    @count[probefunc] = count();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">pid$target:target:function_name:return</span><br><span class="line">/self-&gt;start/</span><br><span class="line">&#123;</span><br><span class="line">    this-&gt;elapsed = timestamp - self-&gt;start;</span><br><span class="line">    @time[&quot;total&quot;] = sum(this-&gt;elapsed);</span><br><span class="line">    @time[&quot;avg&quot;] = avg(this-&gt;elapsed);</span><br><span class="line">    @time[&quot;min&quot;] = min(this-&gt;elapsed);</span><br><span class="line">    @time[&quot;max&quot;] = max(this-&gt;elapsed);</span><br><span class="line">    self-&gt;start = 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">END</span><br><span class="line">&#123;</span><br><span class="line">    printa(&quot;调用次数: %@d\n&quot;, @count);</span><br><span class="line">    printa(&quot;总耗时: %@d ns\n&quot;, @time[&quot;total&quot;]);</span><br><span class="line">    printa(&quot;平均耗时: %@d ns\n&quot;, @time[&quot;avg&quot;]);</span><br><span class="line">    printa(&quot;最小耗时: %@d ns\n&quot;, @time[&quot;min&quot;]);</span><br><span class="line">    printa(&quot;最大耗时: %@d ns\n&quot;, @time[&quot;max&quot;]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># 使用方式</span><br><span class="line">dtrace -s script.d -p &lt;pid&gt;</span><br></pre></td></tr></table></figure>
-<p><strong>简介</strong>：基于 eBPF 的轻量级动态追踪工具，专门用于监控和分析正在运行的 C/C++ 程序。bptrace 提供了简洁的命令行接口，可以方便地统计函数调用次数和执行时间。</p>
-<p><strong>特点</strong>：</p>
-<ul>
-<li>✅ 支持 attach 到正在运行的进程</li>
-<li>✅ 可以统计函数调用次数和耗时（min/max/avg/total）</li>
-<li>✅ 极低开销，基于 eBPF 技术</li>
-<li>✅ 简洁的命令行接口，易于使用</li>
-<li>✅ 无需修改程序源码或重新编译</li>
-<li>⏱️ <strong>耗时统计范围</strong>：统计墙上时钟时间（包括 IO、sleep 等所有时间）</li>
-</ul>
-<p><strong>权限要求</strong>：</p>
-<ul>
-<li><strong>root 权限</strong>：拥有所有 bptrace 功能</li>
-<li><strong>非 root 用户</strong>：需要 <code>CAP_BPF</code> 能力（Linux 5.8+）：<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 授予用户 CAP_BPF 能力</span></span><br><span class="line">sudo <span class="built_in">setcap</span> cap_bpf+ep /usr/bin/bptrace</span><br></pre></td></tr></table></figure>
-</li>
-<li><strong>attach 到其他用户的进程</strong>：需要 root 权限或 <code>CAP_SYS_PTRACE</code> 能力</li>
-<li><strong>加载 eBPF 程序</strong>：需要 root 权限或 <code>CAP_BPF</code> 能力（Linux 5.8+）</li>
-</ul>
-<p><strong>限制</strong>：</p>
-<ul>
-<li>需要 Linux 内核支持 eBPF（通常 4.1+）</li>
-<li>Linux 5.8+ 才支持非 root 用户使用 CAP_BPF</li>
-<li>主要适用于用户态函数追踪</li>
-<li>需要目标程序包含调试符号信息（或使用地址）</li>
-</ul>
-<p><strong>使用示例</strong>：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 统计函数调用次数</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;target_function&#x27;</span> -c</span><br><span class="line"></span><br><span class="line"><span class="comment"># 统计函数耗时（包括平均、最小、最大、总耗时）</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;target_function&#x27;</span> -t</span><br><span class="line"></span><br><span class="line"><span class="comment"># 同时统计调用次数和耗时</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;target_function&#x27;</span> -c -t</span><br><span class="line"></span><br><span class="line"><span class="comment"># 统计多个函数</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;function1,function2&#x27;</span> -c -t</span><br><span class="line"></span><br><span class="line"><span class="comment"># 指定输出格式</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;target_function&#x27;</span> -t --format json</span><br><span class="line"></span><br><span class="line"><span class="comment"># 持续监控并定期输出统计信息</span></span><br><span class="line">bptrace -p &lt;pid&gt; -f <span class="string">&#x27;target_function&#x27;</span> -t --interval 5</span><br></pre></td></tr></table></figure>
-<p><strong>输出示例</strong>：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Function: target_function</span><br><span class="line">  Call Count: 1000</span><br><span class="line">  Total Time: 50000 us</span><br><span class="line">  Average Time: 50 us</span><br><span class="line">  Min Time: 10 us</span><br><span class="line">  Max Time: 200 us</span><br></pre></td></tr></table></figure>
-<p><strong>与 eBPF/BCC 的关系</strong>：</p>
-<ul>
-<li>bptrace 可以看作是 BCC 工具集的简化版本，专门针对函数级性能分析</li>
-<li>相比 BCC，bptrace 提供了更简洁的命令行接口，适合快速分析</li>
-<li>如果需要更复杂的自定义逻辑，仍需要使用 BCC 编写 Python/C 脚本</li>
-</ul>
-<h3 id="6-Intel-Pin">6. Intel Pin</h3>
-<p><strong>简介</strong>：Intel 开发的动态二进制插桩框架，功能强大但开销较高。</p>
-<p><strong>特点</strong>：</p>
-<ul>
-<li>❌ <strong>不支持 attach</strong>，必须在程序启动时插桩</li>
-<li>✅ 可以统计函数调用次数和耗时（min/max/avg/total）</li>
-<li>✅ 支持细粒度插桩（指令级）</li>
-<li>⚠️ 高开销（通常 10-100 倍）</li>
-<li>⏱️ <strong>耗时统计范围</strong>：统计墙上时钟时间（包括 IO、sleep 等所有时间）</li>
-</ul>
-<p><strong>权限要求</strong>：</p>
-<ul>
-<li><strong>普通用户权限</strong>：Intel Pin 不需要特殊权限，普通用户即可使用</li>
-<li><strong>读取目标程序</strong>：需要目标程序的读取权限</li>
-<li><strong>写入输出文件</strong>：需要输出目录的写入权限</li>
-</ul>
-<p><strong>限制</strong>：</p>
-<ul>
-<li>不支持 attach 到运行中的进程</li>
-<li>高开销，不适合生产环境</li>
-<li>主要适用于详细分析和研究</li>
-</ul>
-<p><strong>使用示例</strong>：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用 Pin 工具统计函数调用</span></span><br><span class="line">pin -t <span class="built_in">source</span>/tools/ManualExamples/obj-intel64/inscount0.so -- ./program</span><br><span class="line"></span><br><span class="line"><span class="comment"># 自定义 Pin 工具统计函数耗时</span></span><br><span class="line"><span class="comment"># 需要编写 Pin 工具（C++）</span></span><br></pre></td></tr></table></figure>
-<h3 id="7-DynamoRIO">7. DynamoRIO</h3>
-<p><strong>简介</strong>：跨平台的动态二进制插桩框架，支持 Windows、Linux、macOS。</p>
-<p><strong>特点</strong>：</p>
-<ul>
-<li>❌ <strong>不支持 attach</strong>，必须在程序启动时插桩</li>
-<li>✅ 可以统计函数调用次数和耗时（min/max/avg/total）</li>
-<li>✅ 跨平台支持</li>
-<li>⚠️ 高开销</li>
-<li>⏱️ <strong>耗时统计范围</strong>：统计墙上时钟时间（包括 IO、sleep 等所有时间）</li>
-</ul>
-<p><strong>权限要求</strong>：</p>
-<ul>
-<li><strong>普通用户权限</strong>：DynamoRIO 不需要特殊权限，普通用户即可使用</li>
-<li><strong>读取目标程序</strong>：需要目标程序的读取权限</li>
-<li><strong>写入输出文件</strong>：需要输出目录的写入权限</li>
-<li><strong>Windows</strong>：可能需要管理员权限（取决于目标程序）</li>
-</ul>
-<p><strong>限制</strong>：</p>
-<ul>
-<li>不支持 attach 到运行中的进程</li>
-<li>高开销</li>
-<li>需要编写客户端工具</li>
-</ul>
-<p><strong>使用示例</strong>：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用 DynamoRIO 工具</span></span><br><span class="line">drrun -tool calltrace -- ./program</span><br><span class="line">drrun -tool memtrace -- ./program</span><br><span class="line"></span><br><span class="line"><span class="comment"># 自定义工具统计函数耗时</span></span><br><span class="line"><span class="comment"># 需要编写 DynamoRIO 客户端（C++）</span></span><br></pre></td></tr></table></figure>
-<h3 id="8-Valgrind-Callgrind">8. Valgrind Callgrind</h3>
-<p><strong>简介</strong>：Valgrind 工具集中的调用图分析工具。</p>
-<p><strong>特点</strong>：</p>
-<ul>
-<li>❌ <strong>不支持 attach</strong>，必须在程序启动时插桩</li>
-<li>✅ 可以统计函数调用次数和耗时</li>
-<li>✅ 生成详细的调用图</li>
-<li>⚠️ 极高开销（通常 20-100 倍）</li>
-<li>⏱️ <strong>耗时统计范围</strong>：统计 CPU 时间（<strong>不包括</strong> IO 等待和 sleep 时间），只统计函数在 CPU 上实际执行的时间</li>
-</ul>
-<p><strong>权限要求</strong>：</p>
-<ul>
-<li><strong>普通用户权限</strong>：Valgrind 不需要特殊权限，普通用户即可使用</li>
-<li><strong>读取目标程序</strong>：需要目标程序的读取权限</li>
-<li><strong>写入输出文件</strong>：需要输出目录的写入权限</li>
-<li><strong>内存访问</strong>：Valgrind 需要访问进程内存，但不需要 root 权限</li>
-</ul>
-<p><strong>限制</strong>：</p>
-<ul>
-<li>不支持 attach</li>
-<li>极高开销，不适合生产环境</li>
-<li>主要用于开发阶段的详细分析</li>
-</ul>
-<p><strong>使用示例</strong>：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用 Callgrind 分析</span></span><br><span class="line">valgrind --tool=callgrind ./program</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看结果</span></span><br><span class="line">callgrind_annotate callgrind.out.&lt;pid&gt;</span><br><span class="line">kcachegrind callgrind.out.&lt;pid&gt;  <span class="comment"># GUI 工具</span></span><br></pre></td></tr></table></figure>
-<h3 id="9-LD-PRELOAD-自定义库">9. LD_PRELOAD + 自定义库</h3>
-<p><strong>简介</strong>：通过 LD_PRELOAD 机制拦截库函数调用，实现简单的动态插桩。</p>
-<p><strong>特点</strong>：</p>
-<ul>
-<li>❌ <strong>不支持 attach</strong>，需要在启动时设置环境变量</li>
-<li>✅ 可以统计库函数调用次数和耗时</li>
-<li>✅ 低开销</li>
-<li>⚠️ 只能拦截库函数，不能拦截静态函数</li>
-<li>⏱️ <strong>耗时统计范围</strong>：统计墙上时钟时间（包括 IO、sleep 等所有时间），取决于使用的计时函数（如 <code>gettimeofday()</code>）</li>
-</ul>
-<p><strong>权限要求</strong>：</p>
-<ul>
-<li><strong>普通用户权限</strong>：LD_PRELOAD 不需要特殊权限，普通用户即可使用</li>
-<li><strong>读取目标程序</strong>：需要目标程序的读取权限</li>
-<li><strong>加载共享库</strong>：需要共享库的读取权限</li>
-<li><strong>设置环境变量</strong>：需要设置 <code>LD_PRELOAD</code> 环境变量的权限（通常都有）</li>
-</ul>
-<p><strong>限制</strong>：</p>
-<ul>
-<li>不支持 attach</li>
-<li>只能拦截库函数，不能拦截静态函数或内联函数</li>
-<li>需要手动编写包装代码</li>
-</ul>
-<p><strong>使用示例</strong>：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// wrapper.c - 包装库函数</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> _GNU_SOURCE</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;dlfcn.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;time.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/time.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">unsigned</span> <span class="type">long</span> call_count = <span class="number">0</span>;</span><br><span class="line"><span class="type">static</span> <span class="type">unsigned</span> <span class="type">long</span> total_time = <span class="number">0</span>;</span><br><span class="line"><span class="type">static</span> <span class="type">unsigned</span> <span class="type">long</span> min_time = ULONG_MAX;</span><br><span class="line"><span class="type">static</span> <span class="type">unsigned</span> <span class="type">long</span> max_time = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> __attribute__((constructor)) init() &#123;</span><br><span class="line">    <span class="comment">// 初始化</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> __attribute__((destructor)) fini() &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;调用次数: %lu\n&quot;</span>, call_count);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;总耗时: %lu us\n&quot;</span>, total_time);</span><br><span class="line">    <span class="keyword">if</span> (call_count &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;平均耗时: %lu us\n&quot;</span>, total_time / call_count);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;最小耗时: %lu us\n&quot;</span>, min_time);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;最大耗时: %lu us\n&quot;</span>, max_time);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 包装目标函数</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">target_function</span><span class="params">(<span class="type">int</span> arg)</span> &#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> <span class="title">start</span>, <span class="title">end</span>;</span></span><br><span class="line">    gettimeofday(&amp;start, <span class="literal">NULL</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 调用原始函数</span></span><br><span class="line">    <span class="type">int</span> (*original_func)(<span class="type">int</span>) = dlsym(RTLD_NEXT, <span class="string">&quot;target_function&quot;</span>);</span><br><span class="line">    <span class="type">int</span> result = original_func(arg);</span><br><span class="line">    </span><br><span class="line">    gettimeofday(&amp;end, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> elapsed = (end.tv_sec - start.tv_sec) * <span class="number">1000000</span> + </span><br><span class="line">                           (end.tv_usec - start.tv_usec);</span><br><span class="line">    </span><br><span class="line">    call_count++;</span><br><span class="line">    total_time += elapsed;</span><br><span class="line">    <span class="keyword">if</span> (elapsed &lt; min_time) min_time = elapsed;</span><br><span class="line">    <span class="keyword">if</span> (elapsed &gt; max_time) max_time = elapsed;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 编译包装库</span></span><br><span class="line">gcc -shared -fPIC -o wrapper.so wrapper.c -ldl</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用</span></span><br><span class="line">LD_PRELOAD=./wrapper.so ./program</span><br></pre></td></tr></table></figure>
-<h3 id="10-ltrace">10. ltrace</h3>
-<p><strong>简介</strong>：Linux 库函数调用跟踪工具。</p>
-<p><strong>特点</strong>：</p>
-<ul>
-<li>✅ 支持 attach 到正在运行的进程</li>
-<li>✅ 可以统计库函数调用次数</li>
-<li>⚠️ 只能统计库函数，不能统计自定义函数</li>
-<li>⚠️ 耗时统计功能有限</li>
-<li>⏱️ <strong>耗时统计范围</strong>：统计墙上时钟时间（包括 IO、sleep 等所有时间），但功能有限</li>
-</ul>
-<p><strong>权限要求</strong>：</p>
-<ul>
-<li><strong>跟踪自己的进程</strong>：普通用户权限即可</li>
-<li><strong>attach 到其他用户的进程</strong>：需要 root 权限或 <code>CAP_SYS_PTRACE</code> 能力</li>
-<li><strong>读取目标程序</strong>：需要目标程序的读取权限</li>
-<li><strong>ptrace 系统调用</strong>：attach 功能依赖 ptrace，受 <code>/proc/sys/kernel/yama/ptrace_scope</code> 限制：
-<ul>
-<li><code>0</code>：允许同一用户调试其权限范围内的任意进程</li>
-<li><code>1</code>：只允许调试直接子进程（默认值）</li>
-<li><code>2</code>：只有 root 或具备 <code>CAP_SYS_PTRACE</code> 的进程可以使用 ptrace</li>
-<li><code>3</code>：完全禁用 ptrace</li>
-</ul>
-</li>
-</ul>
-<p><strong>限制</strong>：</p>
-<ul>
-<li>只能跟踪库函数</li>
-<li>耗时统计功能有限</li>
-<li>不适合统计自定义函数</li>
-</ul>
-<p><strong>使用示例</strong>：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 跟踪库函数调用</span></span><br><span class="line">ltrace -p &lt;pid&gt; -c  <span class="comment"># 统计调用次数</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 跟踪特定函数</span></span><br><span class="line">ltrace -p &lt;pid&gt; -e <span class="string">&#x27;malloc+free&#x27;</span></span><br></pre></td></tr></table></figure>
-<h2 id="耗时统计范围详解">耗时统计范围详解</h2>
-<h3 id="墙上时钟时间-vs-CPU-时间">墙上时钟时间 vs CPU 时间</h3>
-<p>理解不同工具统计的耗时范围对于正确解读性能数据至关重要：</p>
-<h4 id="1-墙上时钟时间（Wall-clock-Time）">1. 墙上时钟时间（Wall-clock Time）</h4>
-<p><strong>包括的内容</strong>：</p>
-<ul>
-<li>✅ CPU 执行时间</li>
-<li>✅ IO 等待时间（文件读写、网络通信等）</li>
-<li>✅ sleep 时间（<code>sleep()</code>, <code>usleep()</code>, <code>nanosleep()</code> 等）</li>
-<li>✅ 线程阻塞时间（等待锁、条件变量等）</li>
-<li>✅ 上下文切换时间</li>
-</ul>
-<p><strong>适用场景</strong>：</p>
-<ul>
-<li>了解函数的&quot;真实&quot;执行时间</li>
-<li>分析 IO 密集型函数的性能</li>
-<li>诊断包含阻塞操作的函数</li>
-<li>评估用户体验相关的性能指标</li>
-</ul>
-<p><strong>示例</strong>：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">slow_function</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="comment">// CPU 执行：1ms</span></span><br><span class="line">    do_computation();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// IO 等待：100ms</span></span><br><span class="line">    read_from_disk();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// sleep：50ms</span></span><br><span class="line">    sleep(<span class="number">0.05</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 总墙上时钟时间：~151ms</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><strong>使用墙上时钟时间的工具</strong>：</p>
-<ul>
-<li>SystemTap、DTrace、eBPF/BCC、bptrace</li>
-<li>Intel Pin、DynamoRIO</li>
-<li>LD_PRELOAD（使用 <code>gettimeofday()</code> 等）</li>
-<li>perf（默认配置）</li>
-</ul>
-<h4 id="2-CPU-时间（CPU-Time）">2. CPU 时间（CPU Time）</h4>
-<p><strong>包括的内容</strong>：</p>
-<ul>
-<li>✅ CPU 执行时间</li>
-<li>❌ <strong>不包括</strong> IO 等待时间</li>
-<li>❌ <strong>不包括</strong> sleep 时间</li>
-<li>❌ <strong>不包括</strong> 线程阻塞时间</li>
-</ul>
-<p><strong>适用场景</strong>：</p>
-<ul>
-<li>分析 CPU 密集型函数的性能</li>
-<li>评估算法的计算复杂度</li>
-<li>识别 CPU 热点</li>
-<li>优化计算逻辑</li>
-</ul>
-<p><strong>示例</strong>：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">slow_function</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="comment">// CPU 执行：1ms（计入）</span></span><br><span class="line">    do_computation();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// IO 等待：100ms（不计入）</span></span><br><span class="line">    read_from_disk();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// sleep：50ms（不计入）</span></span><br><span class="line">    sleep(<span class="number">0.05</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// CPU 时间：~1ms（只包括 CPU 执行时间）</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><strong>使用 CPU 时间的工具</strong>：</p>
-<ul>
-<li>Valgrind Callgrind（主要统计 CPU 时间）</li>
-</ul>
-<h4 id="3-实际应用建议">3. 实际应用建议</h4>
-<p><strong>选择统计范围的原则</strong>：</p>
-<ol>
-<li>
-<p><strong>IO 密集型函数</strong>：使用墙上时钟时间</p>
-<ul>
-<li>文件操作、网络通信、数据库查询</li>
-<li>需要了解包括等待时间在内的总耗时</li>
-</ul>
-</li>
-<li>
-<p><strong>CPU 密集型函数</strong>：两种时间都关注</p>
-<ul>
-<li>算法计算、数据处理</li>
-<li>CPU 时间用于评估算法效率</li>
-<li>墙上时钟时间用于评估用户体验</li>
-</ul>
-</li>
-<li>
-<p><strong>混合型函数</strong>：优先使用墙上时钟时间</p>
-<ul>
-<li>大多数实际应用中的函数</li>
-<li>墙上时钟时间更能反映真实性能</li>
-</ul>
-</li>
-</ol>
-<p><strong>注意事项</strong>：</p>
-<ul>
-<li>⚠️ <strong>多线程环境</strong>：墙上时钟时间可能小于 CPU 时间（并行执行）</li>
-<li>⚠️ <strong>IO 操作</strong>：如果函数包含 IO，墙上时钟时间会显著大于 CPU 时间</li>
-<li>⚠️ <strong>sleep 操作</strong>：如果函数包含 sleep，墙上时钟时间会包含 sleep 时间</li>
-<li>⚠️ <strong>上下文切换</strong>：频繁的上下文切换会增加墙上时钟时间</li>
-</ul>
-<p><strong>如何区分 CPU 时间和 IO 时间</strong>：</p>
-<p>如果使用统计墙上时钟时间的工具，可以通过以下方式区分：</p>
-<ol>
-<li><strong>结合系统调用跟踪</strong>：使用 <code>strace</code> 或 <code>perf trace</code> 查看 IO 系统调用</li>
-<li><strong>分析函数内部</strong>：如果函数耗时很长但 CPU 使用率低，可能是 IO 等待</li>
-<li><strong>使用 perf 的 CPU 时间模式</strong>：<code>perf record -e cpu-clock</code> 可以统计 CPU 时间</li>
-</ol>
-<h2 id="权限要求总结">权限要求总结</h2>
-<h3 id="权限类型说明">权限类型说明</h3>
-<h4 id="1-root-权限">1. root 权限</h4>
-<ul>
-<li><strong>含义</strong>：拥有系统最高权限</li>
-<li><strong>获取方式</strong>：使用 <code>sudo</code> 或切换到 root 用户</li>
-<li><strong>适用工具</strong>：perf、SystemTap、DTrace、eBPF/BCC、bptrace（默认需要）</li>
-</ul>
-<h4 id="2-Linux-Capabilities（能力）">2. Linux Capabilities（能力）</h4>
-<p>现代 Linux 系统使用 capabilities 机制，允许非 root 用户执行特定操作：</p>
-<ul>
-<li><strong>CAP_BPF</strong>：加载 eBPF 程序（Linux 5.8+）<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo <span class="built_in">setcap</span> cap_bpf+ep /path/to/tool</span><br></pre></td></tr></table></figure>
-</li>
-<li><strong>CAP_SYS_PTRACE</strong>：使用 ptrace attach 到其他进程<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo <span class="built_in">setcap</span> cap_sys_ptrace+ep /path/to/tool</span><br></pre></td></tr></table></figure>
-</li>
-<li><strong>CAP_SYS_ADMIN</strong>：访问内核符号和系统管理功能</li>
-<li><strong>CAP_SYS_MODULE</strong>：加载内核模块</li>
-</ul>
-<h4 id="3-普通用户权限">3. 普通用户权限</h4>
-<ul>
-<li><strong>含义</strong>：不需要特殊权限，普通用户即可使用</li>
-<li><strong>适用工具</strong>：Intel Pin、DynamoRIO、Valgrind Callgrind、LD_PRELOAD</li>
-</ul>
-<h4 id="4-组权限">4. 组权限</h4>
-<ul>
-<li><strong>stapdev 组</strong>：SystemTap 开发组，可以加载任意模块</li>
-<li><strong>stapusr 组</strong>：SystemTap 用户组，只能使用预编译模块</li>
-</ul>
-<h3 id="权限配置示例">权限配置示例</h3>
-<h4 id="配置-perf-非-root-使用">配置 perf 非 root 使用</h4>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 允许用户分析自己的进程</span></span><br><span class="line"><span class="built_in">echo</span> 0 | sudo <span class="built_in">tee</span> /proc/sys/kernel/perf_event_paranoid</span><br><span class="line"></span><br><span class="line"><span class="comment"># 或永久配置</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;kernel.perf_event_paranoid = 0&quot;</span> | sudo <span class="built_in">tee</span> -a /etc/sysctl.conf</span><br><span class="line">sudo sysctl -p</span><br></pre></td></tr></table></figure>
-<h4 id="配置-eBPF-BCC-非-root-使用（Linux-5-8-）">配置 eBPF/BCC 非 root 使用（Linux 5.8+）</h4>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 授予 Python 解释器 CAP_BPF 能力</span></span><br><span class="line">sudo <span class="built_in">setcap</span> cap_bpf+ep /usr/bin/python3</span><br><span class="line"></span><br><span class="line"><span class="comment"># 或授予特定 BCC 工具</span></span><br><span class="line">sudo <span class="built_in">setcap</span> cap_bpf+ep /usr/share/bcc/tools/funccount</span><br><span class="line">sudo <span class="built_in">setcap</span> cap_bpf+ep /usr/share/bcc/tools/funclatency</span><br></pre></td></tr></table></figure>
-<h4 id="配置-SystemTap-非-root-使用">配置 SystemTap 非 root 使用</h4>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 将用户添加到 stapusr 组</span></span><br><span class="line">sudo usermod -a -G stapusr <span class="variable">$USER</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 需要重新登录使组权限生效</span></span><br></pre></td></tr></table></figure>
-<h4 id="配置-ptrace（用于-attach-功能）">配置 ptrace（用于 attach 功能）</h4>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看当前 ptrace_scope 设置</span></span><br><span class="line"><span class="built_in">cat</span> /proc/sys/kernel/yama/ptrace_scope</span><br><span class="line"></span><br><span class="line"><span class="comment"># 允许同一用户调试其权限范围内的进程（开发环境）</span></span><br><span class="line"><span class="built_in">echo</span> 0 | sudo <span class="built_in">tee</span> /proc/sys/kernel/yama/ptrace_scope</span><br><span class="line"></span><br><span class="line"><span class="comment"># 或永久配置</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;kernel.yama.ptrace_scope = 0&quot;</span> | sudo <span class="built_in">tee</span> -a /etc/sysctl.conf</span><br></pre></td></tr></table></figure>
-<h3 id="权限要求快速参考">权限要求快速参考</h3>
-<table>
-<thead>
-<tr>
-<th>工具</th>
-<th>跟踪自己的进程</th>
-<th>attach 到其他用户的进程</th>
-<th>内核级插桩</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>eBPF/BCC</strong></td>
-<td>CAP_BPF（Linux 5.8+）</td>
-<td>root</td>
-<td>root</td>
-</tr>
-<tr>
-<td><strong>bptrace</strong></td>
-<td>CAP_BPF（Linux 5.8+）</td>
-<td>root</td>
-<td>root</td>
-</tr>
-<tr>
-<td><strong>SystemTap</strong></td>
-<td>stapusr 组</td>
-<td>root</td>
-<td>root</td>
-</tr>
-<tr>
-<td><strong>perf</strong></td>
-<td>普通用户（需配置）</td>
-<td>root</td>
-<td>root</td>
-</tr>
-<tr>
-<td><strong>DTrace</strong></td>
-<td>root</td>
-<td>root</td>
-<td>root</td>
-</tr>
-<tr>
-<td><strong>Intel Pin</strong></td>
-<td>普通用户</td>
-<td>N/A</td>
-<td>N/A</td>
-</tr>
-<tr>
-<td><strong>DynamoRIO</strong></td>
-<td>普通用户</td>
-<td>N/A</td>
-<td>N/A</td>
-</tr>
-<tr>
-<td><strong>Valgrind</strong></td>
-<td>普通用户</td>
-<td>N/A</td>
-<td>N/A</td>
-</tr>
-<tr>
-<td><strong>LD_PRELOAD</strong></td>
-<td>普通用户</td>
-<td>N/A</td>
-<td>N/A</td>
-</tr>
-<tr>
-<td><strong>ltrace</strong></td>
-<td>普通用户</td>
-<td>root 或 CAP_SYS_PTRACE</td>
-<td>N/A</td>
-</tr>
-</tbody>
-</table>
-<h3 id="安全注意事项">安全注意事项</h3>
-<p>⚠️ <strong>生产环境建议</strong>：</p>
-<ul>
-<li>避免使用 <code>perf_event_paranoid = -1</code>（允许所有用户）</li>
-<li>避免将用户添加到 <code>stapdev</code> 组（安全风险）</li>
-<li>谨慎配置 <code>ptrace_scope = 0</code>（允许任意进程调试）</li>
-<li>使用 capabilities 而非 root 权限（最小权限原则）</li>
-<li>定期审查已授予的 capabilities</li>
-</ul>
-<h2 id="工具选择建议">工具选择建议</h2>
-<h3 id="需要-attach-到运行中进程">需要 attach 到运行中进程</h3>
-<ol>
-<li><strong>eBPF/BCC</strong>（推荐）：现代、低开销、功能强大</li>
-<li><strong>bptrace</strong>（推荐）：简洁易用，专门针对函数级性能分析</li>
-<li><strong>SystemTap</strong>：功能强大，脚本灵活</li>
-<li><strong>perf + uprobes</strong>：系统自带，简单易用</li>
-<li><strong>DTrace</strong>：如果使用 Solaris/FreeBSD/macOS</li>
-</ol>
-<h3 id="不需要-attach（可以重新启动程序）">不需要 attach（可以重新启动程序）</h3>
-<ol>
-<li><strong>Intel Pin / DynamoRIO</strong>：需要详细分析时使用</li>
-<li><strong>Valgrind Callgrind</strong>：需要调用图分析时使用</li>
-<li><strong>LD_PRELOAD</strong>：简单场景，只统计库函数</li>
-</ol>
-<h3 id="统计指标对比">统计指标对比</h3>
-<table>
-<thead>
-<tr>
-<th>工具</th>
-<th>调用次数</th>
-<th>平均耗时</th>
-<th>最小耗时</th>
-<th>最大耗时</th>
-<th>总耗时</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>eBPF/BCC</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-</tr>
-<tr>
-<td>bptrace</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-</tr>
-<tr>
-<td>SystemTap</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-</tr>
-<tr>
-<td>perf + uprobes</td>
-<td>✅</td>
-<td>⚠️ 需脚本</td>
-<td>⚠️ 需脚本</td>
-<td>⚠️ 需脚本</td>
-<td>⚠️ 需脚本</td>
-</tr>
-<tr>
-<td>DTrace</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-</tr>
-<tr>
-<td>Intel Pin</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-</tr>
-<tr>
-<td>DynamoRIO</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-</tr>
-<tr>
-<td>Valgrind Callgrind</td>
-<td>✅</td>
-<td>✅</td>
-<td>❌</td>
-<td>❌</td>
-<td>✅</td>
-</tr>
-<tr>
-<td>LD_PRELOAD</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅</td>
-</tr>
-<tr>
-<td>ltrace</td>
-<td>✅</td>
-<td>❌</td>
-<td>❌</td>
-<td>❌</td>
-<td>❌</td>
-</tr>
-</tbody>
-</table>
-<h2 id="总结">总结</h2>
-<p>对于 C/C++ 程序的动态插桩，推荐使用以下工具：</p>
-<ol>
-<li><strong>生产环境 + 需要 attach</strong>：<strong>bptrace</strong>、<strong>eBPF/BCC</strong> 或 <strong>SystemTap</strong></li>
-<li><strong>开发调试 + 详细分析</strong>：<strong>Intel Pin</strong> 或 <strong>DynamoRIO</strong></li>
-<li><strong>简单场景 + 库函数统计</strong>：<strong>LD_PRELOAD</strong></li>
-<li><strong>系统级分析</strong>：<strong>perf + uprobes</strong></li>
-</ol>
-<p>选择工具时需要考虑：</p>
-<ul>
-<li>是否需要 attach 到运行中的进程</li>
-<li>对性能开销的容忍度</li>
-<li>需要统计的详细程度</li>
-<li>系统平台和权限限制</li>
-<li><strong>耗时统计范围</strong>：大多数工具统计墙上时钟时间（包括 IO、sleep），只有 Valgrind Callgrind 统计 CPU 时间（不包括 IO、sleep）</li>
-<li><strong>权限要求</strong>：
-<ul>
-<li>内核级插桩工具（perf、SystemTap、eBPF/BCC、bptrace）通常需要 root 权限或特殊 capabilities</li>
-<li>二进制插桩工具（Intel Pin、DynamoRIO、Valgrind）通常只需要普通用户权限</li>
-<li>attach 到其他用户的进程需要 root 权限或 <code>CAP_SYS_PTRACE</code> 能力</li>
-</ul>
-</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -4129,20 +3522,20 @@ PC，落在函数体内）：</p>
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">126</span>
+          <span class="site-state-item-count">127</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-count">18</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">43</span>
+        <span class="site-state-item-count">44</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
