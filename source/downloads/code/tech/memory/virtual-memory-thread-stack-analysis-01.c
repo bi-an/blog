@@ -1,5 +1,5 @@
 /*
- * thread_virt_demo.c
+ * thread-stack-32bit-demo.c
  *
  * 演示：ulimit -s 过大时，有限虚拟地址空间内线程创建失败的过程。
  *
@@ -14,11 +14,11 @@
  *     Ubuntu/Debian: sudo apt install gcc-multilib
  *
  *   编译：
- *     gcc -m32 -o thread_virt_demo thread_virt_demo.c -lpthread
+ *     gcc -m32 -o thread-stack-32bit-demo thread-stack-32bit-demo.c -lpthread
  *
  *   运行：进程天然受 32-bit 用户态 ~3 GB 地址空间限制，无需 ulimit -v
  *     ulimit -s 262144    # 每线程栈 256 MB
- *     ./thread_virt_demo
+ *     ./thread-stack-32bit-demo
  *
  * ------------------------------------------------------------
  *
@@ -29,19 +29,19 @@
  *   pthread_create 因无法为新线程栈分配地址而失败。
  *
  *   编译：
- *     gcc -o thread_virt_demo thread_virt_demo.c -lpthread
+ *     gcc -o thread-stack-32bit-demo thread-stack-32bit-demo.c -lpthread
  *
  *   运行：
  *     ulimit -v 3145728   # 限制虚拟地址空间为 3 GB（模拟 32-bit 用户态上限）
  *     ulimit -s 262144    # 每线程栈 256 MB
- *     ./thread_virt_demo
+ *     ./thread-stack-32bit-demo
  *
  * ============================================================
  * 对照组（正常 ulimit -s，两种方法均适用）
  * ============================================================
  *   ulimit -v 3145728
  *   ulimit -s 8192      # 正常值：8 MB/线程，同样地址空间可创建 300+ 线程
- *   ./thread_virt_demo
+ *   ./thread-stack-32bit-demo
  */
 
 #include <stdio.h>

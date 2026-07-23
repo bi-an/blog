@@ -7,7 +7,7 @@ tags:
  - thread
 ---
 
-## 日志里看到的异常
+## 现象
 
 同一多线程工具、同一版本、同一份输入，在两台机器上跑完后，日志里的峰值内存对不上：
 
@@ -22,7 +22,7 @@ RSS 只差约 5 GB，Virt 却差约 4967 GB（近 5 TB）。两次运行都正�
 
 ## 排查
 
-### 先排除 OOM / 泄漏
+### 排除 OOM 与泄漏
 
 | 机器 | freeSwap / totalSwap | 退出码 |
 |------|----------------------|--------|
@@ -31,7 +31,7 @@ RSS 只差约 5 GB，Virt 却差约 4967 GB（近 5 TB）。两次运行都正�
 
 RSS 接近、swap 几乎没动、结果正确——更像监控数字异常，而不是进程把物理内存吃爆了。
 
-### 再对比环境：ulimit
+### 对比 ulimit
 
 | 机器 | `ulimit -s`（kbytes） | 约合每线程栈 |
 |------|----------------------|--------------|
@@ -40,7 +40,7 @@ RSS 接近、swap 几乎没动、结果正确——更像监控数字异常，�
 
 栈限制相差约 785 倍。若程序用的是默认线程栈，这条差异值得顺着查。
 
-## 用日志数字反推
+### 定量估算
 
 输入相同、RSS 接近，可近似认为线程数 \(N\) 差不多。若线程走默认栈，Virt 差应主要来自「每线程栈预留」之差：
 
@@ -58,7 +58,7 @@ N（下界）= (4967 − 377) / 31.959 ≈ 144
 
 \(N\) 大约在 144～155。两种估法都指向同一方向：**Virt 膨胀的主体，可以用 `ulimit -s` 造成的栈预留差解释。**
 
-## 原因：默认栈按 ulimit 做虚拟预留
+## 根因
 
 未调用 `pthread_attr_setstacksize` 时，`pthread_create` 默认取 `RLIMIT_STACK`（即 `ulimit -s`）。内核为每个线程预留对应大小的虚拟地址区间：
 
@@ -75,25 +75,47 @@ N（下界）= (4967 − 377) / 31.959 ≈ 144
 
 两机任务量和线程数接近，Virt 差的主因是每线程栈预留差了约 785 倍，而不是「机器 B 多干了很多活」。RSS 可以几乎不变：真正触达的页才进 RSS；未触达的栈预留只抬高 Virt。
 
-### 题外：若是 32 位地址空间
+### 题外话：32 位地址空间下的差异
 
 上面「Virt 很大但仍能正常跑完」主要适用于 64 位进程。x86_64 用户态地址空间约 128 TB，本文约 5 TB 的 Virt 远没顶到天花板。
 
-32 位用户态通常约 3 GB。这时过大的 `ulimit -s` 会很快耗尽地址空间，`pthread_create` 可能直接失败（`EAGAIN`）。用 `ulimit -v` 把地址空间压到约 3 GB 可以复现：
+32 位用户态通常约 3 GB（Linux 默认约 3 GB / 1 GB 用户/内核分割）。这时过大的 `ulimit -s` 会很快耗尽地址空间：每多一个线程就多占数百 MB 虚拟地址，线程稍多，`pthread_create` 就会返回 `EAGAIN`（errno=11，Resource temporarily unavailable），程序直接失败。
+
+用 `ulimit -v 3145728` 把虚拟地址空间限制为 3 GB，模拟 32 位上限，实测如下：
 
 ```text
-ulimit -v 3145728; ulimit -s 262144; ./thread_virt_demo
-# 每线程约 256 MB → 大约第 12 个线程失败，RSS 仍约 1 MB
+# 异常场景：ulimit -s 262144（256 MB/线程）
+ulimit -v 3145728; ulimit -s 262144; ./thread-stack-32bit-demo
 
-ulimit -v 3145728; ulimit -s 8192; ./thread_virt_demo
-# 每线程约 8 MB → 可创建数百线程
+ulimit -s (stack/thread) = 256 MB
+ulimit -v (virtual addr) = 3072 MB
+理论最大线程数 ≈ 3072 / 256 = 12
+
+  [  0 threads]  Virt =      2 MB   RSS =     1 MB
+  [  1 threads]  Virt =    258 MB   RSS =     1 MB   ← 每线程 +256 MB Virt
+  [  2 threads]  Virt =    514 MB   RSS =     1 MB   ← RSS 始终只有 1 MB
+  [  3 threads]  Virt =    770 MB   RSS =     1 MB
+  ...
+  [ 11 threads]  Virt =   2818 MB   RSS =     1 MB
+
+pthread_create 在第 12 个线程时失败: Resource temporarily unavailable (errno=11, EAGAIN)
+                                                                     ^^^^^^^^^^^^^^^^^^^^
+                         虚拟地址空间耗尽，内核无法为新线程栈执行 mmap，返回 EAGAIN
+成功创建线程数: 11
+
+# 对照组：ulimit -s 8192（8 MB/线程，正常值）
+ulimit -v 3145728; ulimit -s 8192; ./thread-stack-32bit-demo
+
+  [  1 threads]  Virt =     10 MB   RSS =     1 MB   ← 每线程仅 +8 MB Virt
+  [  2 threads]  Virt =     18 MB   RSS =     1 MB
+  ...（可正常创建 300+ 个线程）
 ```
 
-对 32 位进程，过大栈限制会变成实质故障；对 64 位进程，同类配置多半只让日志里的 Virt「看起来吓人」。复现程序：
+两组对比很清楚：RSS 全程只有约 1 MB（栈几乎没真正用起来），Virt 却按 `ulimit -s` 的步长往上加，直到地址空间耗尽报错。对 32 位程序，过大的 `ulimit -s` 是实质故障；对 64 位程序，同类配置多半只让日志里的 Virt「看起来吓人」。复现程序：
 
-{% include_code thread_virt_demo.c lang:c tech/memory/virtual-memory-thread-stack-analysis-01.c %}
+{% include_code lang:c title:thread-stack-32bit-demo.c tech/memory/virtual-memory-thread-stack-analysis-01.c %}
 
-## 以后再遇到 Virt ≫ RSS 怎么查
+## 定位方法
 
 这次是日志对比触发的个案。若以后再看到 Virt 远大于 RSS，仍建议先定位最大的映射段，再归因（文件 `mmap`、分配器预留、共享内存等都可能）。
 
