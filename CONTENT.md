@@ -10,7 +10,7 @@
 
 - **勿在 `source/` 下再放 README 或其它规范正文**；全站内容规范仅此一份。
 
-- 层级：最多三级，不深嵌套
+- 层级：最多三级，不深嵌套（**`xxx-book` 书籍笔记除外**，见下文「书籍笔记特例」）
 
 - 交叉内容：物理目录归大类，标签做关联
 
@@ -41,7 +41,7 @@ source
 │       │   ├── cpp/        # 完整镜像 _posts/tech/cpp 二级所有子目录
 │       │   │   ├── basic/
 │       │   │   ├── compile-link/
-│       │   │   ├── make-cmake/
+│       │   │   ├── build-tool/
 │       │   │   ├── assembly/
 │       │   │   ├── debug/
 │       │   │   ├── optimize/
@@ -66,7 +66,7 @@ source
     │   ├── cpp/                    # C/C++ 完整技术栈（应用层）
     │   │   ├── basic               # 语法、STL、新特性、基础编程
     │   │   ├── compile-link        # 编译流程、汇编阶段、链接原理、静态/动态库
-    │   │   ├── make-cmake          # Makefile / CMake 工程构建
+    │   │   ├── build-tool          # Makefile / CMake / Bazel 等构建工具
     │   │   ├── assembly            # 纯汇编指令、反汇编、内联汇编
     │   │   ├── debug               # GDB调试、内存排查、崩溃分析、问题定位
     │   │   ├── optimize            # 代码性能优化、内存优化、调优方法论
@@ -85,7 +85,7 @@ source
     │   │   ├── linux-book          # Linux/系统相关书籍笔记
     │   │   └── linux-project       # Linux 系统/运维落地项目
     │   ├── ic/                     # IC/EDA 专属领域
-    │   │   ├── ic-book             # IC/EDA 相关书籍笔记
+    │   │   ├── ic-book             # IC/EDA 相关书籍笔记（可嵌套书名目录 + 章节序号，见特例）
     │   │   └── ic-project          # IC/EDA 工程实战项目
     │   └── project/                # 全局综合大型跨领域项目
     │
@@ -116,7 +116,7 @@ source
 
 - **TCL脚本**：所有EDA/IC专用TCL脚本、工程脚本，统一归 ic
 
-- **书籍笔记**：各领域书籍学习总结、章节提炼，统一存放对应领域下 xxx\-book 目录，仅留存个人总结，规避版权风险
+- **书籍笔记**：各领域书籍学习总结、章节提炼，统一存放对应领域下 xxx\-book 目录，仅留存个人总结，规避版权风险；目录与章节命名见「书籍笔记特例」（一书一子目录，章节 `01-` 起序）
 
 - **实战项目**：单一领域完整落地工程、项目架构、复盘踩坑记录，存放对应领域下 xxx\-project 目录；跨领域综合大型项目统一归全局 project 目录；零散代码Demo、知识点测试代码归属原技术目录
 
@@ -130,7 +130,7 @@ source
 
 - **compile\-link**：编译流程、链接机制、静态/动态库、符号解析
 
-- **make\-cmake**：Makefile、CMake工程构建与脚本
+- **build\-tool**：Makefile、CMake、Bazel 等工程构建与脚本
 
 - **assembly**：汇编指令、反汇编、内联汇编
 
@@ -199,6 +199,24 @@ source
 ## 全量文件命名规范
 
 全站统一基础规则：全小写、英文连字符 `-` 命名，禁止中文、大写、下划线。合集类使用 `分类-主题.md`，单个内容直接使用原名。
+
+### 书籍笔记特例（`xxx-book`）
+
+`cpp-book` / `algo-book` / `linux-book` / `ic-book` / `concurrent-book` 等书籍目录**不适用**「最多三级」与「单篇扁平命名」的常规约束，以便按原书结构归档与排序：
+
+- **目录**：可在 `xxx-book` 下再嵌套一层「书名」子目录（一书一目录）；书名目录可用英文原书名或课程名（允许保留大写与连字符，便于辨认）
+- **章节文件**：按原书章节顺序命名为 `两位序号-章节主题.md`，例如 `01-...md`、`02-...md`（用 `01` 而非 `1`，保证字典序与章节序一致）
+- **非章节杂项**（书单、下载链接等）：仍直接放在 `xxx-book/` 下，用常规小写连字符命名，不加章节序号
+
+示例（`ic-book`）：
+
+```PlainText
+tech/ic/ic-book/
+├── eda-books-download-links.md
+└── Digital-IC-Design-Intro-Video-Course-Bai-Liyang/
+    ├── 01-digital-ic-design-flow.md
+    └── 02-verilog-based-digital-ic-design.md
+```
 
 ### 网络编程专属命名规范
 
@@ -350,7 +368,7 @@ source
 
 ## 全局强制规则
 
-- Markdown 文件：合集采用 `分类-主题.md`，单内容使用原生名称
+- Markdown 文件：合集采用 `分类-主题.md`，单内容使用原生名称；**书籍章节笔记**按上文「书籍笔记特例」使用 `01-章节主题.md` 形式
 
 - 图片、笔记配套代码统一 `笔记名-序号.后缀`；仅独立工程代码可语义命名
 

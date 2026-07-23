@@ -1,5 +1,5 @@
 ---
-title: GNU Introducation
+title: GNU Introduction
 date: 2024-01-23 21:45:31
 categories: cpp
 tags:
