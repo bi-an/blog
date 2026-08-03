@@ -1,5 +1,5 @@
 ---
-title: 变参函数
+title: C 变长参数函数（va_*）
 date: 2023-11-03 18:52:32
 categories: cpp
 tags:
@@ -7,129 +7,161 @@ tags:
  - basic
 ---
 
+`printf`、`scanf` 这类函数参数个数不固定，靠的是变参函数：形参列表里用 `...` 表示后面还可以跟任意个实参。要在自己的函数里读这些参数，靠的是 `<stdarg.h>`（C++ 里是 `<cstdarg>`）提供的一整套 `va_*` 接口：`va_list`、`va_start`、`va_arg`、`va_end`，以及需要复制状态时用的 `va_copy`。
 
+本文以 **`va_*` 的原理**为主线：它们如何协同工作、背后依赖什么假设，再落到用法、完整示例，以及几个容易卡住的理解点。
 
-## Variadic function in C
+## `va_*` 在解决什么问题？
 
-See more: [Variadic functions in C](https://www.geeksforgeeks.org/variadic-functions-in-c/)
+对普通函数，形参个数、类型在声明里写死，编译器按调用约定为每个参数安排寄存器或栈槽。变参函数多了 `...`：调用方可多传任意个实参，但**被调函数一侧没有名字、没有类型信息**。
 
+`va_*` 就是为此准备的一套「运行时游标」：
 
-### `vprintf`
+1. 用 `va_list` 保存「当前读到哪」的状态  
+2. 用 `va_start` 把状态对准第一个可变参数  
+3. 用 `va_arg` 按你给出的类型取出一个参数，并前进状态  
+4. 用 `va_end` 结束这次遍历、做清理  
+5. 需要同一份参数再扫一遍或交给别人时，用 `va_copy` 复制状态  
 
-```cpp
-#include <stdarg.h>
-#include <stdio.h>
+它们大多是**宏**（现代编译器上常落到 `__builtin_va_*`），不是普通库函数。整套接口要一起看：缺了初始化，后面无法读；读完不清理，在部分 ABI 上是未定义行为。
 
-void myPrintf(const char* format, ...) {
-    va_list args;
-    va_start(args, format);
-    vprintf(format, args);
-    va_end(args);
-}
+还有一点贯穿始终：编译器**不知道** `...` 里有几个参数、各是什么类型。因此业务代码必须另有约定——固定参数里带个数、格式串（如 `"%d%s"`）、或哨兵值（如 `-1` / `NULL`）。`va_*` 只负责「按你的指示往前读」，不负责猜协议。
 
-int main() {
-  long int time = 100;
-  myPrintf("Elapsed time is: %ld seconds.\n", time);
+## 原理：游标如何跟着参数走
 
-  return 0;
-}
+### 经典栈模型
+
+传统 cdecl 一类约定里，参数从右往左压栈，固定参数与可变参数在栈上往往连成一片。此时可以把 `va_*` 想成在这块连续内存上移动指针。
+
+先说清「最后一个固定参数」指什么。变参函数里，写在 `...` **前面**、带名字的形参叫固定参数；`...` 代表的那些没有名字的实参叫可变参数。固定参数里**紧挨着 `...`、排在最末尾的那一个**，就叫最后一个固定参数。例如：
+
+```c
+int printf(const char *format, ...);
+/*          ↑ format 是唯一的固定参数，也是「最后一个固定参数」 */
+
+double calculate_average(int count, ...);
+/*                       ↑ count 是最后一个（也是唯一的）固定参数 */
+
+void log_message(const char *level, const char *format, ...);
+/*                                  ↑ format 才是最后一个固定参数；
+                                     level 也是固定参数，但不是「最后」那个 */
 ```
 
-Output:
+`va_start` 的第二个参数必须写这个名字（如 `format` / `count`），用来标定可变参数从哪开始。
 
-```bash
-$ ./a.out 
-Elapsed time is: 100 seconds.
+```text
+地址由低到高 --->
+
+[ 最后一个固定参数 ] [ 可变参数1 ] [ 可变参数2 ] ...
+         ▲                    ▲
+         │                    └── va_start 之后游标对准这里
+         └── 定位基准（va_start 的第二个参数）
 ```
 
-### `ap_list` + `vsnprintf`
+各接口在这个模型里的分工：
 
-```cpp
-#include <stdarg.h>
-#include <stdio.h>
-#include <sys/time.h> // gettimeofday
-#include <time.h>
-#include <sys/socket.h>
+| 接口 | 原理上在做什么 |
+|------|----------------|
+| `va_list` | 游标本身：保存当前读位置（教学实现里常是 `char*`） |
+| `va_start(ap, last)` | 以 `last`（最后一个固定形参）为基准，算出第一个可变参数的地址，写入 `ap` |
+| `va_arg(ap, type)` | 按 `type` 从当前位置读值，再把游标前进 `sizeof(type)`（含对齐） |
+| `va_end(ap)` | 重置/清空游标，结束本次使用 |
+| `va_copy(dst, src)` | 复制一份游标状态，便于再次遍历或交给别的函数 |
 
-using namespace std;
+概念上的朴素实现（仅用于理解，勿当可移植代码）：
 
-void foo(int id, const char *fmt, ...)
-{
-    constexpr int MAXLEN = 1024;
-    char buf[MAXLEN];
-    int n;
+```c
+typedef char *va_list;
 
-    n = snprintf(buf, MAXLEN, "INFO(%d): ", id);
+#define va_start(ap, last) \
+    (ap = (va_list)&(last) + sizeof(last))
 
-    va_list ap;
-    // ap will be the pointer to the last fixed argument of the variadic function.
-    va_start(ap, fmt);
-    n += vsnprintf(buf + n, MAXLEN - n, fmt, ap);
-    // This ends the traversal of the variadic function arguments.
-    va_end(ap);
+#define va_arg(ap, type) \
+    (*(type *)((ap += sizeof(type)) - sizeof(type)))
 
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    struct tm tm;
-    localtime_r(&tv.tv_sec, &tm);
-    char timebuf[64];
-    // size_t strftime(char *s, size_t max, const char *format, const struct tm *tm);
-    snprintf(timebuf, MAXLEN - n, "%d-%02d-%02d %d:%d:%d.%ld %s",
-             tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-             tm.tm_hour, tm.tm_min, tm.tm_sec, tv.tv_usec, tm.tm_zone);
-
-    printf(buf, timebuf);
-}
-
-int main()
-{
-    const char* name = "Tony";
-    // "%%s" is a placeholder of the timestamp for the vsnprintf function.
-    foo(123, "Hello %s at %%s\n", name);
-    // Will print:
-    // INFO(123): Hello Tony at 2023-10-04 21:25:23.682853 CST
-
-    return 0;
-}
+#define va_end(ap) (ap = (va_list)0)
 ```
 
+读一遍就能看清协作关系：`va_start` 赋初值，`va_arg` 读并前进，`va_end` 收尾。真正实现里对齐、提升类型等细节更复杂，但骨架如此。
 
-### `va_list` + `va_arg`
+### 现代 ABI：寄存器 + 结构体游标
 
-```cpp
-#include <stdarg.h>
-#include <stdio.h>
+x86-64、ARM64 上，不少参数先放进寄存器，装不下的再进栈。此时：
 
-constexpr bool debug = true;
+- `va_list` 往往是带多个字段的结构（或其一元素数组），而不只是 `char*`  
+- 常见字段类似 `gp_offset`、`fp_offset`、`reg_save_area`、`overflow_arg_area`，分别跟踪通用/浮点寄存器保存区与栈上溢出区  
+- `va_start` / `va_arg` / `va_end` 常落到编译器内建，按 ABI 填表、取数、清理  
 
-int printDebugLog(const char* fmt, ...) {
-    if (debug) {
-        // The first argument doesn't need to traverse via va_list.
-        printf("fmt=%s\n", fmt);
-        va_list ap;
-        va_start(ap, fmt);
-        long int t = va_arg(ap, long int);
-        va_end(ap);
-        printf(fmt, t);
-    }
-    return 0;
-}
+**原理没有变**：仍然是一套状态机，记录「下一个参数从哪取」；变的是状态里记的是简单地址，还是寄存器偏移加栈指针。可移植代码应把 `va_list` 当不透明类型，只用 `va_*` 操作。
 
-int main() {
-  long int time = 100;
-  printDebugLog("Elapsed time is: %ld seconds.\n", time);
+## 用法与完整示例
 
-  return 0;
-}
+标准用法（自己解析每一个参数时）：
+
+1. 声明 `va_list ap`  
+2. `va_start(ap, last_named_param)`  
+3. 循环或按协议调用 `va_arg(ap, type)`  
+4. `va_end(ap)`  
+
+### 示例一：固定参数给出个数
+
+{% include_code lang:c title:按 count 求平均 tech/cpp/basic/variadic-functions-01.c %}
+
+### 示例二：哨兵标记结尾
+
+{% include_code lang:c title:以 -1 为结束哨兵 tech/cpp/basic/variadic-functions-02.c %}
+
+### 示例三：不自己解析，整份转交
+
+若本函数只是包装器，可以把已初始化的 `va_list` 交给 `vprintf`、`vsnprintf` 等 `v*` 接口——它们内部会走自己的 `va_arg`。这时你仍需要 `va_start` / `va_end`，但不必手写 `va_arg`：
+
+{% include_code lang:c title:转交 vprintf tech/cpp/basic/variadic-functions-03.c %}
+
+需要把同一份参数交给多个函数、或扫完再扫一遍时，用 `va_copy` 复制状态，并分别 `va_end`。一份 `va_list` 被消费后，一般不能假定还能原样再扫。
+
+## 理解点一：`va_list`（`ap`）到底是什么类型？
+
+`ap` 的类型就是 `va_list`。标准只说它是实现定义类型，用来保存遍历所需信息。
+
+- **简化 / 老平台**：常是 `typedef char *va_list`，`ap` 就是指向参数内存的字节指针；`va_start` 展开后类似 `ap = (va_list)&count + sizeof(count)`。  
+- **现代 x86-64 等**：常是结构体（有的再 typedef 成一元素数组，便于按「数组退化为指针」传递，避免整份状态被错误拷贝）。`va_start` 由内建填好各字段。
+
+两种形态都服务于同一原理：**`va_list` 是游标状态，不是业务数据本身**。想看本机定义，打开系统 `stdarg.h` 或对源文件预处理后搜 `va_list` 即可。
+
+## 理解点二：`va_start` 为何传「名字」而不是指针？
+
+```c
+va_start(ap, last_fix_param);
 ```
 
-Output:
+第二个参数必须是形参列表里 **`...` 前面最后一个固定参数的标识符**（例如 `format`），用来标定可变参数从哪开始。
 
-```bash
-$ ./a.out 
-fmt=Elapsed time is: %ld seconds.
+因为 `va_start` 是宏：内部需要对这个名字做定位（朴素实现里是 `&(last)` 再加 `sizeof`；现代实现里是 `__builtin_va_start` 按 ABI 分析该标识符）。若你传入 `&count`，展开后会对指针再取地址，位置全错。
 
-Elapsed time is: 100 seconds.
-```
+同理，第一个参数写 `ap` 而不是 `&ap`：宏展开后直接对当前作用域的 `ap` 赋值，不必像函数出参那样传指针。
 
+## 理解点三：什么时候可以不写 `va_arg`？
 
+`va_arg` 只是「亲手取下一个参数」这一环。若你不亲手解析，就可以不写它，但通常仍要理解整套 `va_*`：
+
+| 场景 | 仍用哪些 | 可否省 `va_arg` |
+|------|----------|-----------------|
+| 自己逐个解析 | `va_list` + `start` + `arg` + `end` | 否 |
+| 转发给 `vprintf` 等 | `start` + `end`（中间把 `ap` 交出） | 是 |
+| `va_copy` 后整体交给别人 | `start` / `copy` / `end` | 当前函数可以不写 |
+| 协议表明没有额外参数 | 视实现：有时仍 `start`/`end`，逻辑上跳过提取 | 可跳过调用 |
+| 改用 C++ 变参模板 | 不用 `<cstdarg>` | 整套都不需要 |
+
+C++11 起的变参模板（以及 C++17 折叠表达式）是另一条类型安全的路线，与 `va_*` 运行时游标不是同一套机制。
+
+## 常见坑点
+
+- **类型提升**：经 `...` 传入时，`char` / `short` 升为 `int`，`float` 升为 `double`。`va_arg(ap, float)` 错误，应 `va_arg(ap, double)`。  
+- **成对使用**：`va_start`（或 `va_copy`）之后必须 `va_end`；在部分 ABI 上 `va_end` 会做真实清理，省略是未定义行为。  
+- **类型和个数要自己保证正确**：`va_arg` 写的类型必须和调用方实际传入的一致（并考虑上面的类型提升）；循环取参的次数也不能超过真实传入的个数。这些编译器都检查不了，写错了运行时才会表现为读到莫名其妙的值，甚至越界崩溃。
+
+## 小结
+
+`va_*` 是一套围绕「可变参数游标」的协作接口：`va_list` 存状态，`va_start` 定位起点，`va_arg` 按类型读取并前进，`va_end` 收尾，`va_copy` 复制状态。原理上，它们把调用约定里排布好的可变实参，变成函数体内可逐步消费的序列；栈模型用指针加减理解，现代 ABI 用结构体记寄存器与栈位置，骨架相同。
+
+业务侧仍要自己约定个数与类型；需要转发时，把整份 `va_list` 交给 `v*` 即可，不必在每个包装函数里重复 `va_arg`。
