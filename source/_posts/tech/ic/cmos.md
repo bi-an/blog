@@ -60,10 +60,10 @@ mathjax: true
 
 MOSFET 可视为连接源、漏的**压控开关**（voltage-controlled switch）。导通时，电流经栅电容“下极板”形成的导电沟道从漏流向源。关键尺寸：
 
-- **沟道长度** L（channel length）：漏到源电流需跨越的距离
-- **沟道宽度** W（channel width）：可供导电的沟道多少
+- **沟道长度** $L$（channel length）：漏到源电流需跨越的距离
+- **沟道宽度** $W$（channel width）：可供导电的沟道多少
 
-漏–源电流 $I_{\mathrm{DS}}$ 与 W/L 成正比。设计常取尽量短的 L（新闻中“14 nm 工艺”的 14 nm 多指最小允许沟道长度），用 W 设定所需电流。$I_{\mathrm{DS}}$ 大则源/漏节点电压翻转快，但器件物理更大。
+漏–源电流 $I_{\mathrm{DS}}$ 与 $W/L$ 成正比。设计常取尽量短的 $L$（新闻中“14 nm 工艺”的 14 nm 多指最小允许沟道长度），用 $W$ 设定所需电流。$I_{\mathrm{DS}}$ 大则源/漏节点电压翻转快，但器件物理更大。
 
 小结：MOSFET 有四个电学端子——bulk、gate、source、drain；设计者可控尺寸为沟道长度（通常尽量小）与沟道宽度（设定电流）。它是固态开关，无机械运动，由四端相对电压决定的电场控制。
 
@@ -73,17 +73,91 @@ MOSFET 可视为连接源、漏的**压控开关**（voltage-controlled switch�
 
 约定：两侧扩散区中**电位较高**的称为漏（drain），较低的称为源（source）；若有电流，则从漏流向源。
 
-器件有阈值电压（threshold voltage）$V_{\mathrm{TH}}$：开关从**断路**（non-conducting / OFF / OPEN）变为**导通**（conducting / ON / CLOSED，即路径闭合）的分界。现代工艺中 N 沟道 MOSFET 的 $V_{\mathrm{TH}}$ 约 0.5 V。
+器件有阈值电压（threshold voltage）$V_{\mathrm{TH}}$：开关从**断路**（non-conducting / OFF / OPEN）变为**导通**（conducting / ON / CLOSED，即路径闭合）的分界。现代工艺中 N 沟道 MOSFET 的 $V_{\mathrm{TH}}$ 约 $0.5\,\mathrm{V}$。
 
-图左侧的 P+ **端**（terminal）即通往 P 型衬底的**连接**（connection）。正常工作时，衬底电压须始终 ≤ 源、漏电压。
+图左侧的 P+ **端**（terminal）即通往 P 型衬底的**连接**（connection）。正常工作时，衬底电压须始终 $\le$ 源、漏电压。
 
-开关由栅源电压差控制：$V_{\mathrm{GS}} = V_G - V_S$。
+开关由栅源电压差控制：$V_{\mathrm{GS}} = V_{\mathrm{G}} - V_{\mathrm{S}}$。
 
 - 当 $V_{\mathrm{GS}} < V_{\mathrm{TH}}$：开关开路，源漏无电连接。N 型与 P 型材料**物理接触**（physical contact）处形成**耗尽区**（depletion region，图中深红），载流子迁离结区，起到绝缘作用；源/漏相对衬底电压越高，该绝缘层越宽，并填满源漏之间，使二者电隔离。
-- 当 $V_{\mathrm{GS}}$ 增大：栅上正电荷电场吸引衬底电子。达到阈值后，电子从价带进入导带，聚集在薄氧化层下，足够时半导体由 P 型反转为 N 型，形成连接源漏的**反型层**（inversion layer）。开关闭合；电流与漏源电压差 $V_{\mathrm{DS}}$ 成比例。此时反型层近似电阻，遵循欧姆定律 $I_{\mathrm{DS}} = V_{\mathrm{DS}}/R$。过程可逆：$V_{\mathrm{GS}}$ 低于阈值则反型层消失，开关截止。
+- 当 $V_{\mathrm{GS}}$ 增大：栅上正电荷电场吸引衬底电子。达到阈值后，电子从价带进入导带，聚集在薄氧化层下，足够时半导体由 P 型反转为 N 型，形成连接源漏的**反型层**（inversion layer）。开关闭合；电流与漏源电压差 $V_{\mathrm{DS}}$ 成比例。此时反型层近似电阻，遵循欧姆定律 $I_{\mathrm{DS}} = V_{\mathrm{DS}} / R$。过程可逆：$V_{\mathrm{GS}}$ 低于阈值则反型层消失，开关截止。
 - 当 $V_{\mathrm{DS}} > V_{\mathrm{GS}}$：沟道电场几何改变，漏端附近反型层**夹断**（pinch-off）；电子仍可隧穿夹断点到达源侧导电沟道。对 $I_{\mathrm{DS}}$ 的影响见下一节曲线。
 
-## 4. N 沟道 MOSFET：$I_{\mathrm{DS}}$ 与 $V_{\mathrm{DS}}$
+> **反型层里的电子从哪来？**
+>
+> 实际上，栅极吸引的电子绝大部分正是来自源极（N区）和漏极（N区），而不是仅靠衬底（P区）本征激发的少数载流子。
+>
+> 讲义中提及“pull the substrate electrons from the valence band into the conduction band（将衬底电子从价带拉入导带）”，主要是为了从能带结构的角度解释“导电沟道形成/半导体表面反转”的物理机制，但在器件实际运行的动态过程中，源极和漏极才是电子的主要供给源。
+>
+> 具体原因可以从以下几个维度理解：
+>
+> 1. 浓度数量级的巨大悬殊（极度缺乏自由电子）
+> 
+> P型衬底（Substrate）： 主要是空穴（多数载流子），其中的自由电子（少数载流子）数量极少（通常在 $10^{10} \sim 10^{15}\,\mathrm{cm}^{-3}$ 级别）。如果仅靠热激发或电场把 P 区价带上的电子拉到导带，产生的自由电子数量极慢且极少，根本不足以快速形成强导电沟道。
+> 
+> N区（源极 Source / 漏极 Drain）： 经过高浓度重掺杂（N+），内部充满了海量的自由电子（通常在 $10^{19} \sim 10^{20}\,\mathrm{cm}^{-3}$ 级别）。
+>
+> 2. 势垒降低与电子注入（PN结的作用）
+> 
+> 源极（N区）与 P 型衬底之间存在 PN 结。在未加栅极电压时，PN 结的内建电场（势垒）阻止了 N 区的自由电子向 P 区扩散。
+>
+> 当栅极加正电压（$V_{\mathrm{GS}} > V_{\mathrm{TH}}$）时，栅极电场会渗透到硅表面，降低了源极 N 区与 P 型衬底表面之间的势垒（Potential Barrier）。
+>
+> 势垒一旦降低，源极（N区）中海量的自由电子就会在电场吸引下，像“闸门放水”一样迅速扩散并漂移注入到栅极下方的表面区域，迅速填满沟道。
+>
+> 3. 器件响应速度的必然要求（微秒 vs 纳秒）
+> 
+> 如果反转层（沟道）中的电子完全依赖 P 型衬底热激发生成（产生-复合过程），这个过程非常缓慢，通常需要毫秒（ms）到微秒（μs）级别。
+>
+> 但现代 MOSFET（CMOS）的开关速度在皮秒（ps）到纳秒（ns）级别（GHz 频率）。如此高频的开关响应，必须依靠源极和漏极这两个“电子大水库”在瞬间提供大量电子。
+>
+> 4. 总结
+> 
+> 概念层面（能带物理）： 描述“P型衬底表面反转为N型沟道”时，教材/文献常说“衬底表面的能带弯曲，使表面电子从价带跃迁到导带”（即原本的 P 型区在表面变成了 N 型）。
+>
+> 实际物理过程（载流子来源）： 建立沟道所需的海量自由电子，绝大多数都是由源极（和漏极）的高掺杂 N 区瞬间注入供给的。源极正是因此被称为 Source（源极 = 电子的来源）。
+
+> **为什么随着 $V_{\mathrm{DS}}$ 增加，沟道夹断**
+> 
+> 在 MOSFET 中，沟道夹断（Channel Pinch-off） 的本质原因，是栅极到沟道各点之间的“有效垂直电场（$V_{\mathrm{GD}}$）”沿沟道方向不均匀导致的。
+>
+> 我们可以从以下几个关键点逐步拆解其物理原理：
+>
+> 1. 栅电场的真实驱动力：$V_{\mathrm{GC}}(x)$
+> 
+> 下标 $\mathrm{C}$ 表示沟道（channel）；$x$ 为沿沟道位置（源端 $x = 0$，漏端 $x = L$）。$V_{\mathrm{GC}}(x)$ 是栅极到沟道上该点的电压差。下文 $V(x)$ 即该点相对源极的电压 $V_{\mathrm{CS}}(x)$。
+>
+> 当 $V_{\mathrm{DS}} = 0\,\mathrm{V}$ 时，整个沟道从源极（Source）到漏极（Drain）的电势都是 $0\,\mathrm{V}$。此时，栅极对沟道各点的垂直电压差都是固定的 $V_{\mathrm{GS}}$，因此产生的反转层（沟道）厚度是均匀的。
+>
+> 2. $V_{\mathrm{DS}}$ 增加打破了电压分布的均匀性
+> 
+> 当我们在漏极加上正电压 $V_{\mathrm{DS}} > 0\,\mathrm{V}$ 时，电流从漏极流向源极（电子从源极流向漏极）。
+>
+> 由于沟道本身具有电阻，从源极（$x = 0$，$V = 0\,\mathrm{V}$）到漏极（$x = L$，$V = V_{\mathrm{DS}}$），沟道内部的电势 $V(x)$ 沿路径逐渐升高。
+>
+> 此时，沟道上某一点 $x$ 处的实际栅-沟道电压差为：
+>
+> $$V_{\mathrm{GC}}(x) = V_{\mathrm{GS}} - V(x)$$
+>
+> 3. 漏极端的“垂直电场”被削弱
+> 
+> 在源极端（$x = 0$）：$V(0) = 0\,\mathrm{V}$，栅-沟电位差为 $V_{\mathrm{GS}}$（大于开启电压 $V_{\mathrm{TH}}$），保持很强的导电沟道。
+>
+> 在漏极端（$x = L$）：$V(L) = V_{\mathrm{DS}}$，此时漏极附近的栅-沟电位差被削弱为：
+>
+> $$V_{\mathrm{GD}} = V_{\mathrm{GS}} - V_{\mathrm{DS}}$$
+>
+> 随着 $V_{\mathrm{DS}}$ 的增加，$V_{\mathrm{GD}}$ 会越来越小。这意味吸引电子形成反转层的“有效垂直电场”在漏极端急剧减弱，导致靠近漏极端的沟道厚度越来越薄。
+>
+> 4. 临界夹断条件：$V_{\mathrm{DS}} = V_{\mathrm{GS}} - V_{\mathrm{TH}}$
+>
+> 当 $V_{\mathrm{DS}}$ 增加到使漏极端的电位差恰好等于开启电压 $V_{\mathrm{TH}}$ 时，即：
+>
+> $$V_{\mathrm{GS}} - V_{\mathrm{DS}} = V_{\mathrm{TH}} \implies V_{\mathrm{DS}} = V_{\mathrm{GS}} - V_{\mathrm{TH}}$$
+>
+> 此时，漏极极小区域内的垂直电场已经不足以维持该处的电子反转层，沟道在该点厚度变为 0，这就是夹断（Pinch-off）。
+
+## 4. N 沟道 MOSFET：I<sub>DS</sub> 与 V<sub>DS</sub>
 
 ![N-Channel MOSFET IDS vs VDS](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/05e66c788f5ea8de4dafcc2f00668c80_Slide05.png)
 
@@ -96,15 +170,25 @@ MOSFET 可视为连接源、漏的**压控开关**（voltage-controlled switch�
 
 饱和段并非完全水平，$I_{\mathrm{DS}}$ 仍略随 $V_{\mathrm{DS}}$ 上升，称为**沟道长度调制**（channel-length modulation）。
 
-对设计者而言，遵守简单规则后，可用压控开关的简化心智模型，而不必每次展开上述复杂物理。
+> **夹断后为什么还有电流？（进入饱和区）**
+> 
+> 很多初学者会误以为“沟道断了，电流就变成了 0”，其实不然：
+>
+> 强电势差（水平电场）的存在： 夹断只发生在靠近漏极的一个极窄的“耗尽区/夹断区”。在这个极窄的区域两侧，存在巨大的水平电压差（高强度的水平电场）。
+>
+> 电子“漂移/穿隧”过区： 电子从源极出发，沿着未夹断的沟道一路加速到达夹断点；一旦到达夹断点边缘，就会瞬间被该区域极强的水平电场拉（扫）过去，流入漏极。
+>
+> 电流饱和： 即使进一步增大 $V_{\mathrm{DS}}$，夹断点只会稍微向源极方向移动一点点（沟道长度调制效应），但未夹断沟道两端的有效电压差始终被“锁死”在 $V_{\mathrm{GS}} - V_{\mathrm{TH}}$。因此，通过沟道的电子流量不再随 $V_{\mathrm{DS}}$ 的增加而显著增加，电流达到饱和状态（$I_{\mathrm{DS}}$ 保持恒定）。
+
+MOSFET 工作机理相当复杂！好在作为设计者，只要在设计 MOSFET 电路时遵守若干简单规则，就可以改用简单得多的开关模型。
 
 ## 5. 两种 FET（FETs Come in Two Flavors）
 
 ![FETs Come in Two Flavors](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b96ef74b7191d7adb37c08c33f7955ec_Slide06.png)
 
-此前讨论的是：P 型衬底上的 N 型源/漏扩散——**N 沟道 MOSFET**（n-channel MOSFET），反型层为 N 型。电路中常将 bulk 接 GND，保证 P 型衬底电压 ≤ 源漏。
+此前讨论的是：P 型衬底上的 N 型源/漏扩散——**N 沟道 MOSFET**（n-channel MOSFET / **NFET**），反型层为 N 型。电路中将 bulk（B）接 GND，使 $V_{\mathrm{p}} \le V_{\mathrm{n}}$，源漏–衬底 PN 结**反向偏置**（外加电场与内建电场同向，耗尽区变宽），从而源/漏相对衬底保持绝缘。
 
-对调所有材料类型：N 型衬底上的 P 型源/漏——**P 沟道 MOSFET**（p-channel MOSFET）。同样是压控开关，但电位关系相反：使 N 沟道导通的控制电压往往使 P 沟道截止，反之亦然。
+对调所有材料类型：N 型衬底（或 N 阱）上的 P 型源/漏——**P 沟道 MOSFET**（p-channel MOSFET / **PFET**）。同样是压控开关，但电位关系相反：B 接 $V_{\mathrm{DD}}$ 以保持 PN 结反向偏置；使 N 沟道导通的控制电压往往使 P 沟道截止，反之亦然。
 
 两类开关行为互补，故使用二者的电路称为**互补 MOS**（complementary MOS, **CMOS**）。
 
@@ -114,8 +198,8 @@ MOSFET 可视为连接源、漏的**压控开关**（voltage-controlled switch�
 
 用 MOSFET 处理数字编码信息时，遵守两条规则，即可把 MOSFET 抽象为压控开关：
 
-1. **N 沟道 MOSFET（NFET）**仅用于**下拉电路**（pulldown），把信号节点接到电源地（GND）。下拉导通时节点约 0 V，记为数字 0。心智模型：栅为数字 0 → 关；栅为数字 1 → 开。$V_{\mathrm{GS}}$ 越大，有效电阻越小，$I_{\mathrm{DS}}$ 越大。
-2. **P 沟道 MOSFET（PFET）**仅用于**上拉电路**（pullup），把信号节点接到电源电压 $V_{\mathrm{DD}}$。上拉导通时节点为 $V_{\mathrm{DD}}$，记为数字 1。PFET 阈值为负，$V_{\mathrm{GS}}$ 须小于阈值才导通。心智模型与 NFET **相反**：栅为 0 → 开；栅为 1 → 关。
+1. **N 沟道 MOSFET（NFET）**仅用于**下拉电路**（pulldown），把信号节点接到电源地（GND）。下拉导通时节点约 $0\,\mathrm{V}$，记为数字 0。可记作：栅为数字 0 → 关；栅为数字 1 → 开。$V_{\mathrm{GS}}$ 越大，有效电阻越小，$I_{\mathrm{DS}}$ 越大。
+2. **P 沟道 MOSFET（PFET）**仅用于**上拉电路**（pullup），把信号节点接到电源电压 $V_{\mathrm{DD}}$。上拉导通时节点为 $V_{\mathrm{DD}}$，记为数字 1。PFET 阈值为负，$V_{\mathrm{GS}}$ 须小于阈值才导通。与 NFET **相反**：栅为 0 → 开；栅为 1 → 关。
 
 为何不能用 NFET 做上拉、PFET 做下拉？简答：信号电平会退化，噪声容限受损（实验课会展开）。
 
@@ -126,7 +210,7 @@ MOSFET 可视为连接源、漏的**压控开关**（voltage-controlled switch�
 CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下拉（输出到 GND）与一个 PFET 上拉（输出到 $V_{\mathrm{DD}}$）组成，两管栅极同接输入。
 
 - 输入为数字 0：NFET 关、PFET 开，输出充至 $V_{\mathrm{DD}}$（数字 1）；源漏同为 $V_{\mathrm{DD}}$ 后无压差，电流停止
-- 输入为数字 1：NFET 开、PFET 关，输出放至 0 V；达 0 V 后电流停止
+- 输入为数字 1：NFET 开、PFET 关，输出放至 $0\,\mathrm{V}$；达 $0\,\mathrm{V}$ 后电流停止
 - 输入处于中间电平时，视电源与阈值，上拉与下拉可能短暂同时导通。此时输入小变化可引起输出大变化，形成 CMOS 的高增益，从而可选取宽松噪声容限
 
 这是第一个 CMOS 组合逻辑门（combinational logic gate）。
@@ -202,7 +286,7 @@ CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下
 
 两级反相器串联，考察左级翻转时发生什么。$V_{\mathrm{IN}}$ 从 0→1：上拉 PFET 关、下拉 NFET 开，左级输出接到 GND。
 
-电学模型含：连接左右的导线分布电阻/电容，以及右级 MOSFET 栅端电容。电荷经导线与 NFET 沟道电阻泄放到 GND，电压指数趋近 0 V。$V_{\mathrm{IN}}$ 下降时输出向 $V_{\mathrm{DD}}$ 充电，过程类似。
+电学模型含：连接左右的导线分布电阻/电容，以及右级 MOSFET 栅端电容。电荷经导线与 NFET 沟道电阻泄放到 GND，电压指数趋近 $0\,\mathrm{V}$。$V_{\mathrm{IN}}$ 下降时输出向 $V_{\mathrm{DD}}$ 充电，过程类似。
 
 ## 14. 传播延迟（Propagation Delay）
 
@@ -215,7 +299,7 @@ CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下
 - 上升输入：从 $V_{\mathrm{IN}}$ 越过 $V_{\mathrm{IH}}$，到 $V_{\mathrm{OUT}}$ 越过 $V_{\mathrm{OL}}$ 的时间间隔
 - 下降输入：从 $V_{\mathrm{IN}}$ 越过 $V_{\mathrm{IL}}$，到 $V_{\mathrm{OUT}}$ 越过 $V_{\mathrm{OH}}$ 的时间间隔
 
-$t_{\mathrm{PD}}$ 须 ≥ 上述任意测得延迟；厂商还需覆盖工艺、温度、电源等变化，使客户实测延迟不超过该规格。
+$t_{\mathrm{PD}}$ 须 $\ge$ 上述任意测得延迟；厂商还需覆盖工艺、温度、电源等变化，使客户实测延迟不超过该规格。
 
 设计者可用各组件的 $t_{\mathrm{PD}}$ 估算系统延迟。要减小延迟，需减小电阻与电容：加宽 MOSFET 可降有效电阻，但增大栅电容、拖慢驱动该栅的前级——这是晶体管尺寸优化问题。
 
@@ -228,7 +312,7 @@ $t_{\mathrm{PD}}$ 须 ≥ 上述任意测得延迟；厂商还需覆盖工艺、
 - 上升输入：从 $V_{\mathrm{IN}}$ 越过 $V_{\mathrm{IL}}$（不再是有效 0），到 $V_{\mathrm{OUT}}$ 越过 $V_{\mathrm{OH}}$（不再是有效 1）
 - 下降输入：做对称测量
 
-$t_{\mathrm{CD}}$ 须 ≤ 任意测得该间隔。静态纪律并不强制要求 $t_{\mathrm{CD}}$；未给出时，设计者应保守取 $t_{\mathrm{CD}} = 0$（输入一无效，输出即可立即无效）。厂商常称其为“最小传播延迟”（minimum propagation delay）。
+$t_{\mathrm{CD}}$ 须 $\le$ 任意测得该间隔。静态纪律并不强制要求 $t_{\mathrm{CD}}$；未给出时，设计者应保守取 $t_{\mathrm{CD}} = 0$（输入一无效，输出即可立即无效）。厂商常称其为“最小传播延迟”（minimum propagation delay）。
 
 ## 16. 组合契约（The Combinational Contract）
 
@@ -254,7 +338,7 @@ $t_{\mathrm{CD}}$ 须 ≤ 任意测得该间隔。静态纪律并不强制要求
 
 ![One Last Timing Issue](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/028c371b2c5c10a44a097b088b643fcf_Slide19.png)
 
-非 CMOS 的 NOR 组合器件：A、B 初为 0，Z=1；B：0→1 后 Z 最终 1→0，跳变落在 $t_{\mathrm{CD}}$–$t_{\mathrm{PD}}$ 窗口内（图中红阴影表示该区间无保证）。
+非 CMOS 的 NOR 组合器件：A、B 初为 0，Z=1；B：0→1 后 Z 最终 1→0，跳变落在 $(t_{\mathrm{CD}}, t_{\mathrm{PD}})$ 窗口内（图中红阴影表示该区间无保证）。
 
 另一情形：A、B 初为 1，Z=0。真值表显示 A=1 时 Z 恒为 0，与 B 无关。B：1→0 后，经 $t_{\mathrm{PD}}$ 后 Z 仍应为 0；但**一般**在中间区间仍不能假设 Z 的行为——合法组合器件可在该窗口任意表现。
 
