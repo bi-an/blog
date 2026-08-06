@@ -1,6 +1,6 @@
 ---
 title: MIT 6.004：L14 高速缓存与存储层次
-date: 2026-08-11 17:37:00
+date: 2026-08-11 10:14:00
 categories: ic
 tags:
   - ic

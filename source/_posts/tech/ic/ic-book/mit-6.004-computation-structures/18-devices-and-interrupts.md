@@ -1,6 +1,6 @@
 ---
 title: MIT 6.004：L18 设备与中断
-date: 2026-08-11 17:41:00
+date: 2026-08-11 10:18:00
 categories: ic
 tags:
   - ic

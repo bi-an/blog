@@ -1,6 +1,6 @@
 ---
 title: MIT 6.004：L01 信息基础
-date: 2026-08-11 17:30:00
+date: 2026-08-11 10:01:00
 categories: ic
 tags:
   - ic

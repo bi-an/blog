@@ -1,6 +1,6 @@
 ---
 title: MIT 6.004：L13 构建 Beta
-date: 2026-08-11 17:36:00
+date: 2026-08-11 10:13:00
 categories: ic
 tags:
   - ic

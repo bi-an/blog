@@ -1,6 +1,6 @@
 ---
 title: MIT 6.004：L17 处理器虚拟化
-date: 2026-08-11 17:40:00
+date: 2026-08-11 10:17:00
 categories: ic
 tags:
   - ic

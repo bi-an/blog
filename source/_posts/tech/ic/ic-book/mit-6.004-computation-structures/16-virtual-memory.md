@@ -1,6 +1,6 @@
 ---
 title: MIT 6.004：L16 虚拟内存
-date: 2026-08-11 17:39:00
+date: 2026-08-11 10:16:00
 categories: ic
 tags:
   - ic

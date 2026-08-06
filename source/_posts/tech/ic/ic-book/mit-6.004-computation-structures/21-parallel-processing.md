@@ -1,6 +1,6 @@
 ---
 title: MIT 6.004：L21 并行处理
-date: 2026-08-11 17:44:00
+date: 2026-08-11 10:21:00
 categories: ic
 tags:
   - ic

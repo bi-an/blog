@@ -1,6 +1,6 @@
 ---
 title: MIT 6.004：L02 数字抽象
-date: 2026-08-06 15:17:14
+date: 2026-08-11 10:02:00
 categories: ic
 tags:
   - ic

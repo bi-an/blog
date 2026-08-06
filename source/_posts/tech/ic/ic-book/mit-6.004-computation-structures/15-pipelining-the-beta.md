@@ -1,6 +1,6 @@
 ---
 title: MIT 6.004：L15 Beta 流水线
-date: 2026-08-11 17:38:00
+date: 2026-08-11 10:15:00
 categories: ic
 tags:
   - ic

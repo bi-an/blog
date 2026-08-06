@@ -1,6 +1,6 @@
 ---
 title: MIT 6.004：L08 设计折衷
-date: 2026-08-11 17:31:00
+date: 2026-08-11 10:08:00
 categories: ic
 tags:
   - ic

@@ -1,6 +1,6 @@
 ---
 title: MIT 6.004：L06 有限状态机
-date: 2026-08-11 17:20:30
+date: 2026-08-11 10:06:00
 categories: ic
 tags:
   - ic

@@ -1,6 +1,6 @@
 ---
 title: MIT 6.004：L12 过程与栈
-date: 2026-08-11 17:35:00
+date: 2026-08-11 10:12:00
 categories: ic
 tags:
   - ic

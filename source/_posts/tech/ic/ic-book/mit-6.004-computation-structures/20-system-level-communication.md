@@ -1,6 +1,6 @@
 ---
 title: MIT 6.004：L20 系统级通信
-date: 2026-08-11 17:43:00
+date: 2026-08-11 10:20:00
 categories: ic
 tags:
   - ic

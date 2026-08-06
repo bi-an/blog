@@ -1,6 +1,6 @@
 ---
 title: MIT 6.004：L05 时序逻辑
-date: 2026-08-11 17:19:47
+date: 2026-08-11 10:05:00
 categories: ic
 tags:
   - ic

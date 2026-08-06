@@ -1,6 +1,6 @@
 ---
 title: MIT 6.004：L10 汇编语言与计算模型
-date: 2026-08-11 17:33:00
+date: 2026-08-11 10:10:00
 categories: ic
 tags:
   - ic

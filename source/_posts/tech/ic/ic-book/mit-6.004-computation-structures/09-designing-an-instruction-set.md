@@ -1,6 +1,6 @@
 ---
 title: MIT 6.004：L09 指令集设计
-date: 2026-08-11 17:32:00
+date: 2026-08-11 10:09:00
 categories: ic
 tags:
   - ic
