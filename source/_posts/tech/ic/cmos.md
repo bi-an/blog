@@ -1,5 +1,5 @@
 ---
-title: CMOS
+title: MIT 6.004：L03 CMOS 技术
 date: 2026-08-04 15:57:13
 categories: ic
 tags:
@@ -18,7 +18,7 @@ mathjax: true
 
 ## 1. 组合器件愿望清单（Combinational Device Wish List）
 
-![Combinational Device Wish List](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/42e5019be6a79c380e6a8cb9833f028d_Slide02.png)
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/42e5019be6a79c380e6a8cb9833f028d_Slide02.png" alt="Combinational Device Wish List" width="80%"/>
 
 回顾组合器件（combinational device）应具备的特性。上一讲用电压表示信息，并允许信息在处理元件系统中流动时承受一定误差。
 
@@ -43,7 +43,7 @@ mathjax: true
 
 ## 2. N 沟道 MOSFET：物理视角（N-Channel MOSFET: Physical View）
 
-![N-Channel MOSFET Physical View](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d18fcd081f55667ad0111c80b6173df6_Slide03.png)
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d18fcd081f55667ad0111c80b6173df6_Slide03.png" alt="N-Channel MOSFET Physical View" width="80%"/>
 
 主角是**金属–氧化物–半导体场效应晶体管**（metal-oxide-semiconductor field-effect transistor, **MOSFET**）。
 
@@ -69,7 +69,7 @@ MOSFET 可视为连接源、漏的**压控开关**（voltage-controlled switch�
 
 ## 3. N 沟道 MOSFET：电学视角（N-Channel MOSFET: Electrical View）
 
-![N-Channel MOSFET Electrical View](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8ab313bffd2125bf69badbb56dc95c26_Slide04.png)
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8ab313bffd2125bf69badbb56dc95c26_Slide04.png" alt="N-Channel MOSFET Electrical View" width="80%"/>
 
 约定：两侧扩散区中**电位较高**的称为漏（drain），较低的称为源（source）；若有电流，则从漏流向源。
 
@@ -80,86 +80,12 @@ MOSFET 可视为连接源、漏的**压控开关**（voltage-controlled switch�
 开关由栅源电压差控制：$V_{\mathrm{GS}} = V_{\mathrm{G}} - V_{\mathrm{S}}$。
 
 - 当 $V_{\mathrm{GS}} < V_{\mathrm{TH}}$：开关开路，源漏无电连接。N 型与 P 型材料**物理接触**（physical contact）处形成**耗尽区**（depletion region，图中深红），载流子迁离结区，起到绝缘作用；源/漏相对衬底电压越高，该绝缘层越宽，并填满源漏之间，使二者电隔离。
-- 当 $V_{\mathrm{GS}}$ 增大：栅上正电荷电场吸引衬底电子。达到阈值后，电子从价带进入导带，聚集在薄氧化层下，足够时半导体由 P 型反转为 N 型，形成连接源漏的**反型层**（inversion layer）。开关闭合；电流与漏源电压差 $V_{\mathrm{DS}}$ 成比例。此时反型层近似电阻，遵循欧姆定律 $I_{\mathrm{DS}} = V_{\mathrm{DS}} / R$。过程可逆：$V_{\mathrm{GS}}$ 低于阈值则反型层消失，开关截止。
-- 当 $V_{\mathrm{DS}} > V_{\mathrm{GS}}$：沟道电场几何改变，漏端附近反型层**夹断**（pinch-off）；电子仍可隧穿夹断点到达源侧导电沟道。对 $I_{\mathrm{DS}}$ 的影响见下一节曲线。
-
-> **反型层里的电子从哪来？**
->
-> 实际上，栅极吸引的电子绝大部分正是来自源极（N区）和漏极（N区），而不是仅靠衬底（P区）本征激发的少数载流子。
->
-> 讲义中提及“pull the substrate electrons from the valence band into the conduction band（将衬底电子从价带拉入导带）”，主要是为了从能带结构的角度解释“导电沟道形成/半导体表面反转”的物理机制，但在器件实际运行的动态过程中，源极和漏极才是电子的主要供给源。
->
-> 具体原因可以从以下几个维度理解：
->
-> 1. 浓度数量级的巨大悬殊（极度缺乏自由电子）
-> 
-> P型衬底（Substrate）： 主要是空穴（多数载流子），其中的自由电子（少数载流子）数量极少（通常在 $10^{10} \sim 10^{15}\,\mathrm{cm}^{-3}$ 级别）。如果仅靠热激发或电场把 P 区价带上的电子拉到导带，产生的自由电子数量极慢且极少，根本不足以快速形成强导电沟道。
-> 
-> N区（源极 Source / 漏极 Drain）： 经过高浓度重掺杂（N+），内部充满了海量的自由电子（通常在 $10^{19} \sim 10^{20}\,\mathrm{cm}^{-3}$ 级别）。
->
-> 2. 势垒降低与电子注入（PN结的作用）
-> 
-> 源极（N区）与 P 型衬底之间存在 PN 结。在未加栅极电压时，PN 结的内建电场（势垒）阻止了 N 区的自由电子向 P 区扩散。
->
-> 当栅极加正电压（$V_{\mathrm{GS}} > V_{\mathrm{TH}}$）时，栅极电场会渗透到硅表面，降低了源极 N 区与 P 型衬底表面之间的势垒（Potential Barrier）。
->
-> 势垒一旦降低，源极（N区）中海量的自由电子就会在电场吸引下，像“闸门放水”一样迅速扩散并漂移注入到栅极下方的表面区域，迅速填满沟道。
->
-> 3. 器件响应速度的必然要求（微秒 vs 纳秒）
-> 
-> 如果反转层（沟道）中的电子完全依赖 P 型衬底热激发生成（产生-复合过程），这个过程非常缓慢，通常需要毫秒（ms）到微秒（μs）级别。
->
-> 但现代 MOSFET（CMOS）的开关速度在皮秒（ps）到纳秒（ns）级别（GHz 频率）。如此高频的开关响应，必须依靠源极和漏极这两个“电子大水库”在瞬间提供大量电子。
->
-> 4. 总结
-> 
-> 概念层面（能带物理）： 描述“P型衬底表面反转为N型沟道”时，教材/文献常说“衬底表面的能带弯曲，使表面电子从价带跃迁到导带”（即原本的 P 型区在表面变成了 N 型）。
->
-> 实际物理过程（载流子来源）： 建立沟道所需的海量自由电子，绝大多数都是由源极（和漏极）的高掺杂 N 区瞬间注入供给的。源极正是因此被称为 Source（源极 = 电子的来源）。
-
-> **为什么随着 $V_{\mathrm{DS}}$ 增加，沟道夹断**
-> 
-> 在 MOSFET 中，沟道夹断（Channel Pinch-off） 的本质原因，是栅极到沟道各点之间的“有效垂直电场（$V_{\mathrm{GD}}$）”沿沟道方向不均匀导致的。
->
-> 我们可以从以下几个关键点逐步拆解其物理原理：
->
-> 1. 栅电场的真实驱动力：$V_{\mathrm{GC}}(x)$
-> 
-> 下标 $\mathrm{C}$ 表示沟道（channel）；$x$ 为沿沟道位置（源端 $x = 0$，漏端 $x = L$）。$V_{\mathrm{GC}}(x)$ 是栅极到沟道上该点的电压差。下文 $V(x)$ 即该点相对源极的电压 $V_{\mathrm{CS}}(x)$。
->
-> 当 $V_{\mathrm{DS}} = 0\,\mathrm{V}$ 时，整个沟道从源极（Source）到漏极（Drain）的电势都是 $0\,\mathrm{V}$。此时，栅极对沟道各点的垂直电压差都是固定的 $V_{\mathrm{GS}}$，因此产生的反转层（沟道）厚度是均匀的。
->
-> 2. $V_{\mathrm{DS}}$ 增加打破了电压分布的均匀性
-> 
-> 当我们在漏极加上正电压 $V_{\mathrm{DS}} > 0\,\mathrm{V}$ 时，电流从漏极流向源极（电子从源极流向漏极）。
->
-> 由于沟道本身具有电阻，从源极（$x = 0$，$V = 0\,\mathrm{V}$）到漏极（$x = L$，$V = V_{\mathrm{DS}}$），沟道内部的电势 $V(x)$ 沿路径逐渐升高。
->
-> 此时，沟道上某一点 $x$ 处的实际栅-沟道电压差为：
->
-> $$V_{\mathrm{GC}}(x) = V_{\mathrm{GS}} - V(x)$$
->
-> 3. 漏极端的“垂直电场”被削弱
-> 
-> 在源极端（$x = 0$）：$V(0) = 0\,\mathrm{V}$，栅-沟电位差为 $V_{\mathrm{GS}}$（大于开启电压 $V_{\mathrm{TH}}$），保持很强的导电沟道。
->
-> 在漏极端（$x = L$）：$V(L) = V_{\mathrm{DS}}$，此时漏极附近的栅-沟电位差被削弱为：
->
-> $$V_{\mathrm{GD}} = V_{\mathrm{GS}} - V_{\mathrm{DS}}$$
->
-> 随着 $V_{\mathrm{DS}}$ 的增加，$V_{\mathrm{GD}}$ 会越来越小。这意味吸引电子形成反转层的“有效垂直电场”在漏极端急剧减弱，导致靠近漏极端的沟道厚度越来越薄。
->
-> 4. 临界夹断条件：$V_{\mathrm{DS}} = V_{\mathrm{GS}} - V_{\mathrm{TH}}$
->
-> 当 $V_{\mathrm{DS}}$ 增加到使漏极端的电位差恰好等于开启电压 $V_{\mathrm{TH}}$ 时，即：
->
-> $$V_{\mathrm{GS}} - V_{\mathrm{DS}} = V_{\mathrm{TH}} \implies V_{\mathrm{DS}} = V_{\mathrm{GS}} - V_{\mathrm{TH}}$$
->
-> 此时，漏极极小区域内的垂直电场已经不足以维持该处的电子反转层，沟道在该点厚度变为 0，这就是夹断（Pinch-off）。
+- 当 $V_{\mathrm{GS}}$ 增大：栅上正电荷电场吸引衬底电子。达到阈值后，电子从价带进入导带，聚集在薄氧化层下，足够时半导体由 P 型反转为 N 型，形成连接源漏的**反型层**（inversion layer）[^inversion-electrons]。开关闭合；电流与漏源电压差 $V_{\mathrm{DS}}$ 成比例。此时反型层近似电阻，遵循欧姆定律 $I_{\mathrm{DS}} = V_{\mathrm{DS}} / R$。过程可逆：$V_{\mathrm{GS}}$ 低于阈值则反型层消失，开关截止。
+- 当 $V_{\mathrm{DS}} > V_{\mathrm{GS}}$：沟道电场几何改变，漏端附近反型层**夹断**（pinch-off）[^channel-pinch-off]；电子仍可隧穿夹断点到达源侧导电沟道。对 $I_{\mathrm{DS}}$ 的影响见下一节曲线。
 
 ## 4. N 沟道 MOSFET：I<sub>DS</sub> 与 V<sub>DS</sub>
 
-![N-Channel MOSFET IDS vs VDS](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/05e66c788f5ea8de4dafcc2f00668c80_Slide05.png)
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/05e66c788f5ea8de4dafcc2f00668c80_Slide05.png" alt="N-Channel MOSFET IDS vs VDS" width="80%"/>
 
 每条曲线是固定 $V_{\mathrm{GS}}$ 下 $I_{\mathrm{DS}}$ 对 $V_{\mathrm{DS}}$ 的关系。
 
@@ -168,23 +94,13 @@ MOSFET 可视为连接源、漏的**压控开关**（voltage-controlled switch�
 - $V_{\mathrm{DS}}$ 较小时，器件呈电阻特性：曲线左侧线性段斜率与沟道电阻成反比；$V_{\mathrm{GS}}$ 越大斜率越陡、电阻越小
 - $V_{\mathrm{DS}}$ 较大时沟道在漏端夹断，$I_{\mathrm{DS}}$ 近似不再随 $V_{\mathrm{DS}}$ 增加，曲线近乎水平——进入**饱和区**（saturation）
 
-饱和段并非完全水平，$I_{\mathrm{DS}}$ 仍略随 $V_{\mathrm{DS}}$ 上升，称为**沟道长度调制**（channel-length modulation）。
-
-> **夹断后为什么还有电流？（进入饱和区）**
-> 
-> 很多初学者会误以为“沟道断了，电流就变成了 0”，其实不然：
->
-> 强电势差（水平电场）的存在： 夹断只发生在靠近漏极的一个极窄的“耗尽区/夹断区”。在这个极窄的区域两侧，存在巨大的水平电压差（高强度的水平电场）。
->
-> 电子“漂移/穿隧”过区： 电子从源极出发，沿着未夹断的沟道一路加速到达夹断点；一旦到达夹断点边缘，就会瞬间被该区域极强的水平电场拉（扫）过去，流入漏极。
->
-> 电流饱和： 即使进一步增大 $V_{\mathrm{DS}}$，夹断点只会稍微向源极方向移动一点点（沟道长度调制效应），但未夹断沟道两端的有效电压差始终被“锁死”在 $V_{\mathrm{GS}} - V_{\mathrm{TH}}$。因此，通过沟道的电子流量不再随 $V_{\mathrm{DS}}$ 的增加而显著增加，电流达到饱和状态（$I_{\mathrm{DS}}$ 保持恒定）。
+饱和段并非完全水平，$I_{\mathrm{DS}}$ 仍略随 $V_{\mathrm{DS}}$ 上升，称为**沟道长度调制**（channel-length modulation）。[^saturation-current]
 
 MOSFET 工作机理相当复杂！好在作为设计者，只要在设计 MOSFET 电路时遵守若干简单规则，就可以改用简单得多的开关模型。
 
 ## 5. 两种 FET（FETs Come in Two Flavors）
 
-![FETs Come in Two Flavors](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b96ef74b7191d7adb37c08c33f7955ec_Slide06.png)
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b96ef74b7191d7adb37c08c33f7955ec_Slide06.png" alt="FETs Come in Two Flavors" width="80%"/>
 
 此前讨论的是：P 型衬底上的 N 型源/漏扩散——**N 沟道 MOSFET**（n-channel MOSFET / **NFET**），反型层为 N 型。电路中将 bulk（B）接 GND，使 $V_{\mathrm{p}} \le V_{\mathrm{n}}$，源漏–衬底 PN 结**反向偏置**（外加电场与内建电场同向，耗尽区变宽），从而源/漏相对衬底保持绝缘。
 
@@ -192,9 +108,9 @@ MOSFET 工作机理相当复杂！好在作为设计者，只要在设计 MOSFET
 
 两类开关行为互补，故使用二者的电路称为**互补 MOS**（complementary MOS, **CMOS**）。
 
-## 6. CMOS 配方（CMOS Recipe）
+## 6. CMOS 指南（CMOS Recipe）
 
-![CMOS Recipe](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ae0e5e40b7aed5171cf0f5d264d37700_Slide07.png)
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ae0e5e40b7aed5171cf0f5d264d37700_Slide07.png" alt="CMOS Recipe" width="80%"/>
 
 用 MOSFET 处理数字编码信息时，遵守两条规则，即可把 MOSFET 抽象为压控开关：
 
@@ -205,7 +121,7 @@ MOSFET 工作机理相当复杂！好在作为设计者，只要在设计 MOSFET
 
 ## 7. CMOS 反相器 VTC（CMOS Inverter VTC）
 
-![CMOS Inverter VTC](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/800a39e762facfc0efb025112e8d1617_Slide08.png)
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/800a39e762facfc0efb025112e8d1617_Slide08.png" alt="CMOS Inverter VTC" width="80%"/>
 
 CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下拉（输出到 GND）与一个 PFET 上拉（输出到 $V_{\mathrm{DD}}$）组成，两管栅极同接输入。
 
@@ -213,11 +129,11 @@ CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下
 - 输入为数字 1：NFET 开、PFET 关，输出放至 $0\,\mathrm{V}$；达 $0\,\mathrm{V}$ 后电流停止
 - 输入处于中间电平时，视电源与阈值，上拉与下拉可能短暂同时导通。此时输入小变化可引起输出大变化，形成 CMOS 的高增益，从而可选取宽松噪声容限
 
-这是第一个 CMOS 组合逻辑门（combinational logic gate）。
+这是第一个 CMOS 组合逻辑门（combinational logic gate）。[^why-two-mosfets]
 
 ## 8. 超越反相器（Beyond Inverters）
 
-![Beyond Inverters](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/fb14c846b7a09e4e73aee2119a5fa49d_Slide09.png)
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/fb14c846b7a09e4e73aee2119a5fa49d_Slide09.png" alt="Beyond Inverters" width="80%"/>
 
 构建其他逻辑门：设计**互补**的上拉与下拉网络（complementary pullup / pulldown）。“互补”指一个导通时另一个不导通。
 
@@ -230,7 +146,7 @@ CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下
 
 ## 9. CMOS 互补结构（CMOS Complements）
 
-![CMOS Complements](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/746491e8a34a989bc55593c6ce32dde0_Slide10.png)
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/746491e8a34a989bc55593c6ce32dde0_Slide10.png" alt="CMOS Complements" width="80%"/>
 
 最简单互补对：单个 NFET 下拉 + 单个 PFET 上拉，同一信号控制时，一开则另一必关。
 
@@ -239,7 +155,7 @@ CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下
 
 ## 10. 小测验：NAND 门（A Pop Quiz!）
 
-![NAND Gate](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/87d30b72542f201ec57b1b55586de37a_Slide11.png)
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/87d30b72542f201ec57b1b55586de37a_Slide11.png" alt="NAND Gate" width="80%"/>
 
 串联 NFET 下拉 + 并联 PFET 上拉。用**真值表**（truth table）列出所有 A、B 组合下的 Z：
 
@@ -256,9 +172,9 @@ CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下
 
 成本直觉（讲义信封估算）：一块 300 mm 晶圆上约可做 260 亿个 NAND；旧工艺材料与制造约 \$3500，约合每门百纳美元量级——确属又小又便宜。
 
-## 11. 通用 CMOS 门配方（General CMOS Gate Recipe）
+## 11. 通用 CMOS 门指南（General CMOS Gate Recipe）
 
-![General CMOS Gate Recipe](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/395c88f9208e5d84e701893734adab97_Slide12.png)
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/395c88f9208e5d84e701893734adab97_Slide12.png" alt="General CMOS Gate Recipe" width="80%"/>
 
 更复杂逻辑：用串联/并联开关网络实现。
 
@@ -268,21 +184,21 @@ CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下
 2. 构造互补下拉：沿上拉层次结构，PFET→NFET，串联↔并联。例：上拉为“A 控制管并联于 B–C 串联”；下拉则为“A 控制管串联于 B–C 并联”，且全部为 NFET。
 3. 合并上拉与下拉，得到全互补 CMOS 实现。
 
-该配方并非对一切逻辑函数都适用，见下一节。
+该指南并非对一切逻辑函数都适用，见下一节。
 
 ## 12. CMOS 门天然反相（CMOS Gates Are Naturally Inverting）
 
-![CMOS Gates Are Naturally Inverting](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/69620041d8bfc75f7440f53d56a04852_Slide13.png)
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/69620041d8bfc75f7440f53d56a04852_Slide13.png" alt="CMOS Gates Are Naturally Inverting" width="80%"/>
 
 单个 CMOS 门（一个上拉网络 + 一个下拉网络）只能实现**反相函数**（inverting functions）：输入上升导致输出下降，反之亦然。
 
 理由：某输入从 0→1 时，受其控制的 NFET 由关→开（可能接通到 GND 的路径），PFET 由开→关（可能切断到 $V_{\mathrm{DD}}$ 的路径）。若输出因此变化，必是下拉被启用、上拉被禁用，即输出从 1→0。同理，输入下降对应输出上升。
 
-对非常数 CMOS 门：全部输入为 0 时输出必为 1（全部 NFET 关、全部 PFET 开）；全部输入为 1 时输出必为 0。因此**正逻辑**（positive logic，如 AND）不能用单个 CMOS 门实现——AND 真值表在全 0 / 全 1 时与上述结论矛盾，且 A=1、B 从 0→1 时输出上升而非下降。CMOS 设计者需熟练用反相逻辑拼出所需功能。
+对非常数 CMOS 门：全部输入为 0 时输出必为 1（全部 NFET 关、全部 PFET 开）；全部输入为 1 时输出必为 0。因此**正逻辑**（positive logic，如 AND）不能用单个 CMOS 门实现——AND 真值表在全 0 / 全 1 时与上述结论矛盾，且 A=1、B 从 0→1 时输出上升而非下降。CMOS 设计者需熟练用反相逻辑拼出所需功能。[^common-gates]
 
 ## 13. CMOS 时序规格（CMOS Timing Specifications）
 
-![CMOS Timing Specifications](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/127417502caff69dbaa0b1e9764ffad3_Slide14.png)
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/127417502caff69dbaa0b1e9764ffad3_Slide14.png" alt="CMOS Timing Specifications" width="80%"/>
 
 两级反相器串联，考察左级翻转时发生什么。$V_{\mathrm{IN}}$ 从 0→1：上拉 PFET 关、下拉 NFET 开，左级输出接到 GND。
 
@@ -290,7 +206,7 @@ CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下
 
 ## 14. 传播延迟（Propagation Delay）
 
-![Propagation Delay](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/32605907e13d9fe3f9daf48e21474a70_Slide15.png)
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/32605907e13d9fe3f9daf48e21474a70_Slide15.png" alt="Propagation Delay" width="80%"/>
 
 输入/输出波形均非瞬时，如何量延迟？用信号阈值定义。
 
@@ -305,7 +221,7 @@ $t_{\mathrm{PD}}$ 须 $\ge$ 上述任意测得延迟；厂商还需覆盖工艺�
 
 ## 15. 污染延迟（Contamination Delay）
 
-![Contamination Delay](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9e113bf15832689f78707177f411b52f_Slide16.png)
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9e113bf15832689f78707177f411b52f_Slide16.png" alt="Contamination Delay" width="80%"/>
 
 **污染延迟**（contamination delay）$t_{\mathrm{CD}}$：输入开始变化、变为无效之后，输出仍保持原先有效值的时间。技术上是从无效输入到无效输出的延迟**下界**。
 
@@ -316,7 +232,7 @@ $t_{\mathrm{CD}}$ 须 $\le$ 任意测得该间隔。静态纪律并不强制要�
 
 ## 16. 组合契约（The Combinational Contract）
 
-![The Combinational Contract](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/039976353830d78cae70762b3f946063_Slide17.png)
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/039976353830d78cae70762b3f946063_Slide17.png" alt="The Combinational Contract" width="80%"/>
 
 时序规格小结（输入波形 A，输出波形 B）：
 
@@ -327,7 +243,7 @@ $t_{\mathrm{CD}}$ 须 $\le$ 任意测得该间隔。静态纪律并不强制要�
 
 ## 17. 无环组合电路（Acyclic Combinational Circuits）
 
-![Acyclic Combinational Circuits](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ef539cae30e79f7e1ae926a1084faf55_Slide18.png)
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ef539cae30e79f7e1ae926a1084faf55_Slide18.png" alt="Acyclic Combinational Circuits" width="80%"/>
 
 由组件规格推大电路规格的例子：四个 NAND，每个 $t_{\mathrm{PD}} = 4\,\mathrm{ns}$，$t_{\mathrm{CD}} = 1\,\mathrm{ns}$。
 
@@ -336,7 +252,7 @@ $t_{\mathrm{CD}}$ 须 $\le$ 任意测得该间隔。静态纪律并不强制要�
 
 ## 18. 最后一个时序问题（One Last Timing Issue）
 
-![One Last Timing Issue](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/028c371b2c5c10a44a097b088b643fcf_Slide19.png)
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/028c371b2c5c10a44a097b088b643fcf_Slide19.png" alt="One Last Timing Issue" width="80%"/>
 
 非 CMOS 的 NOR 组合器件：A、B 初为 0，Z=1；B：0→1 后 Z 最终 1→0，跳变落在 $(t_{\mathrm{CD}}, t_{\mathrm{PD}})$ 窗口内（图中红阴影表示该区间无保证）。
 
@@ -346,7 +262,7 @@ $t_{\mathrm{CD}}$ 须 $\le$ 任意测得该间隔。静态纪律并不强制要�
 
 ## 19. 宽容门（Lenient Gates）
 
-![Lenient Gates](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f9fc1b89b777631c213831b6d134866f_Slide20.png)
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f9fc1b89b777631c213831b6d134866f_Slide20.png" alt="Lenient Gates" width="80%"/>
 
 CMOS NOR：两输入皆为 1 时，NFET 导通、PFET 截止，Z 接 GND。B：1→0 时 B 控制的开关翻转，但上拉仍不导通，Z 到 GND 仍有路径——只是路径从两条减为一条，Z **全程**保持有效稳定的 0。即：一输入为 1 时，另一输入跳变不影响输出有效性。
 
@@ -356,19 +272,19 @@ CMOS NOR：两输入皆为 1 时，NFET 导通、PFET 截止，Z 接 GND。B：1
 
 ## 20. 小结（Summary）
 
-![Summary](https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a5969ad6a91e420d2418dba308c89306_Slide21.png)
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a5969ad6a91e420d2418dba308c89306_Slide21.png" alt="Summary" width="80%"/>
 
 本讲要点：
 
 - MOSFET 作为压控开关；N/P 沟道互补构成 CMOS
 - 规则：NFET 只做下拉，PFET 只做上拉；上拉与下拉网络互补
-- 单个 CMOS 门天然实现反相逻辑；复杂函数由串并联网络按配方设计
+- 单个 CMOS 门天然实现反相逻辑；复杂函数由串并联网络按指南设计
 - 时序用 $t_{\mathrm{PD}}$（上界）与 $t_{\mathrm{CD}}$（下界，可保守取 0）刻画；大电路取路径最大/最小累加
 - CMOS 门常具宽容性，利于后续存储等设计
 
 可开始自行搭建 CMOS 门了。
 
-[^poly-gate]: **备注：为什么栅极用多晶硅？**
+[^poly-gate]: **为什么栅极用多晶硅？**
 
     1. **为什么多晶硅能当导体？**  
        本征多晶硅导电很差；做成栅极时会**重掺杂**（heavily doped），载流子浓度极高，近似金属般导电。工艺上常再叠一层**硅化物**（silicide，如 Ti/Co/Ni 硅化物，自对准时常称 **salicide**），进一步降低栅电阻，同时仍能承受后续高温步骤。
@@ -378,3 +294,162 @@ CMOS NOR：两输入皆为 1 时，NFET 导通、PFET 截止，Z 接 GND。B：1
 
     3. **现代还用多晶硅吗？**  
        **不完全是。** 约 45 nm 起，逻辑主流程普遍改为 **高 κ 介质 + 金属栅**（high-k / metal gate, **HKMG**）：金属栅消除**多晶硅耗尽**（poly depletion），并更好匹配 high-k。更老的节点、部分模拟/高压/存储等工艺仍可见掺杂多晶硅（或硅化物）栅。讲义示意图画多晶硅，是经典结构，便于理解，不等于最先进逻辑节点仍只用多晶硅。
+
+[^inversion-electrons]: **反型层里的电子从哪来？**
+
+    实际上，栅极吸引的电子绝大部分正是来自源极（N区）和漏极（N区），而不是仅靠衬底（P区）本征激发的少数载流子。
+
+    讲义中提及“pull the substrate electrons from the valence band into the conduction band（将衬底电子从价带拉入导带）”，主要是为了从能带结构的角度解释“导电沟道形成/半导体表面反转”的物理机制，但在器件实际运行的动态过程中，源极和漏极才是电子的主要供给源。
+
+    具体原因可以从以下几个维度理解：
+
+    1. 浓度数量级的巨大悬殊（极度缺乏自由电子）
+
+       P型衬底（Substrate）：主要是空穴（多数载流子），其中的自由电子（少数载流子）数量极少（通常在 $10^{10} \sim 10^{15}\,\mathrm{cm}^{-3}$ 级别）。如果仅靠热激发或电场把 P 区价带上的电子拉到导带，产生的自由电子数量极慢且极少，根本不足以快速形成强导电沟道。
+
+       N区（源极 Source / 漏极 Drain）：经过高浓度重掺杂（N+），内部充满了海量的自由电子（通常在 $10^{19} \sim 10^{20}\,\mathrm{cm}^{-3}$ 级别）。
+
+    2. 势垒降低与电子注入（PN结的作用）
+
+       源极（N区）与 P 型衬底之间存在 PN 结。在未加栅极电压时，PN 结的内建电场（势垒）阻止了 N 区的自由电子向 P 区扩散。
+
+       当栅极加正电压（$V_{\mathrm{GS}} > V_{\mathrm{TH}}$）时，栅极电场会渗透到硅表面，降低了源极 N 区与 P 型衬底表面之间的势垒（Potential Barrier）。
+
+       势垒一旦降低，源极（N区）中海量的自由电子就会在电场吸引下，像“闸门放水”一样迅速扩散并漂移注入到栅极下方的表面区域，迅速填满沟道。
+
+    3. 器件响应速度的必然要求（微秒 vs 纳秒）
+
+       如果反转层（沟道）中的电子完全依赖 P 型衬底热激发生成（产生-复合过程），这个过程非常缓慢，通常需要毫秒（ms）到微秒（μs）级别。
+
+       但现代 MOSFET（CMOS）的开关速度在皮秒（ps）到纳秒（ns）级别（GHz 频率）。如此高频的开关响应，必须依靠源极和漏极这两个“电子大水库”在瞬间提供大量电子。
+
+    4. 总结
+
+       概念层面（能带物理）：描述“P型衬底表面反转为N型沟道”时，教材/文献常说“衬底表面的能带弯曲，使表面电子从价带跃迁到导带”（即原本的 P 型区在表面变成了 N 型）。
+
+       实际物理过程（载流子来源）：建立沟道所需的海量自由电子，绝大多数都是由源极（和漏极）的高掺杂 N 区瞬间注入供给的。源极正是因此被称为 Source（源极 = 电子的来源）。
+
+[^channel-pinch-off]: **为什么随着 $V_{\mathrm{DS}}$ 增加，沟道夹断？**
+
+    在 MOSFET 中，沟道夹断（Channel Pinch-off）的本质原因，是栅极到沟道各点之间的“有效垂直电场（$V_{\mathrm{GD}}$）”沿沟道方向不均匀导致的。
+
+    我们可以从以下几个关键点逐步拆解其物理原理：
+
+    1. 栅电场的真实驱动力：$V_{\mathrm{GC}}(x)$
+
+       下标 $\mathrm{C}$ 表示沟道（channel）；$x$ 为沿沟道位置（源端 $x = 0$，漏端 $x = L$）。$V_{\mathrm{GC}}(x)$ 是栅极到沟道上该点的电压差。下文 $V(x)$ 即该点相对源极的电压 $V_{\mathrm{CS}}(x)$。
+
+       当 $V_{\mathrm{DS}} = 0\,\mathrm{V}$ 时，整个沟道从源极（Source）到漏极（Drain）的电势都是 $0\,\mathrm{V}$。此时，栅极对沟道各点的垂直电压差都是固定的 $V_{\mathrm{GS}}$，因此产生的反转层（沟道）厚度是均匀的。
+
+    2. $V_{\mathrm{DS}}$ 增加打破了电压分布的均匀性
+
+       当我们在漏极加上正电压 $V_{\mathrm{DS}} > 0\,\mathrm{V}$ 时，电流从漏极流向源极（电子从源极流向漏极）。
+
+       由于沟道本身具有电阻，从源极（$x = 0$，$V = 0\,\mathrm{V}$）到漏极（$x = L$，$V = V_{\mathrm{DS}}$），沟道内部的电势 $V(x)$ 沿路径逐渐升高。
+
+       此时，沟道上某一点 $x$ 处的实际栅-沟道电压差为：
+
+       $$V_{\mathrm{GC}}(x) = V_{\mathrm{GS}} - V(x)$$
+
+    3. 漏极端的“垂直电场”被削弱
+
+       在源极端（$x = 0$）：$V(0) = 0\,\mathrm{V}$，栅-沟电位差为 $V_{\mathrm{GS}}$（大于开启电压 $V_{\mathrm{TH}}$），保持很强的导电沟道。
+
+       在漏极端（$x = L$）：$V(L) = V_{\mathrm{DS}}$，此时漏极附近的栅-沟电位差被削弱为：
+
+       $$V_{\mathrm{GD}} = V_{\mathrm{GS}} - V_{\mathrm{DS}}$$
+
+       随着 $V_{\mathrm{DS}}$ 的增加，$V_{\mathrm{GD}}$ 会越来越小。这意味吸引电子形成反转层的“有效垂直电场”在漏极端急剧减弱，导致靠近漏极端的沟道厚度越来越薄。
+
+    4. 临界夹断条件：$V_{\mathrm{DS}} = V_{\mathrm{GS}} - V_{\mathrm{TH}}$
+
+       当 $V_{\mathrm{DS}}$ 增加到使漏极端的电位差恰好等于开启电压 $V_{\mathrm{TH}}$ 时，即：
+
+       $$V_{\mathrm{GS}} - V_{\mathrm{DS}} = V_{\mathrm{TH}} \implies V_{\mathrm{DS}} = V_{\mathrm{GS}} - V_{\mathrm{TH}}$$
+
+       此时，漏极极小区域内的垂直电场已经不足以维持该处的电子反转层，沟道在该点厚度变为 0，这就是夹断（Pinch-off）。
+
+[^saturation-current]: **夹断后为什么还有电流？（进入饱和区）**
+
+    很多初学者会误以为“沟道断了，电流就变成了 0”，其实不然：
+
+    - **强电势差（水平电场）的存在**：夹断只发生在靠近漏极的一个极窄的“耗尽区/夹断区”。在这个极窄的区域两侧，存在巨大的水平电压差（高强度的水平电场）。
+    - **电子“漂移/穿隧”过区**：电子从源极出发，沿着未夹断的沟道一路加速到达夹断点；一旦到达夹断点边缘，就会瞬间被该区域极强的水平电场拉（扫）过去，流入漏极。
+    - **电流饱和**：即使进一步增大 $V_{\mathrm{DS}}$，夹断点只会稍微向源极方向移动一点点（沟道长度调制效应），但未夹断沟道两端的有效电压差始终被“锁死”在 $V_{\mathrm{GS}} - V_{\mathrm{TH}}$。因此，通过沟道的电子流量不再随 $V_{\mathrm{DS}}$ 的增加而显著增加，电流达到饱和状态（$I_{\mathrm{DS}}$ 保持恒定）。
+
+[^why-two-mosfets]: **为什么一定要用两个 MOSFET 做开关？单管不行吗？**
+
+    比如只用 NFET：看起来「$G{=}0$ 时断开、$G{=}1$ 时导通」也像开关。这里先分清两种用法的端子角色——二者的 $V_{\mathrm{in}}$ / $V_{\mathrm{out}}$ **不是**接到同一类引脚：
+
+    | 模式 | 输入信号 $V_{\mathrm{in}}$ | 输出信号 $V_{\mathrm{out}}$ | 控制信号 |
+    |------|---------------------------|-----------------------------|---------|
+    | 单管通路开关（pass transistor） | D（或 S） | S（或 D） | G（栅极） |
+    | CMOS 逻辑门（如反相器） | G（栅极） | D（上/下拉公共漏端） | 内部由电源 / 接地经沟道驱动输出 |
+
+    单管开关里，栅极只作通断控制，信号从源/漏一端传到另一端；CMOS 门里，栅极才是逻辑输入，输出由电源轨经导通管强驱动，并不把输入信号“传”过去。单管开关在特定场景确实存在，但在 CMOS 逻辑中，单管传导存在严重的**电压衰减**，无法满足数字电路对信号恢复与抗噪的要求。
+
+    1. **单管无法传导“强信号”**
+
+       MOSFET 导通取决于 $V_{\mathrm{GS}} = V_{\mathrm{G}} - V_{\mathrm{S}}$ 是否大于阈值 $V_{\mathrm{TH}}$：
+
+       - **NFET** 擅长传导低电平（强 0），不擅长传导高电平：栅为 $V_{\mathrm{DD}}$ 时，输出随充电上升，$V_{\mathrm{GS}} = V_{\mathrm{DD}} - V_{\mathrm{out}}$ 逐渐减小；当 $V_{\mathrm{out}}$ 升至 $V_{\mathrm{DD}} - V_{\mathrm{TH}}$ 时 $V_{\mathrm{GS}} = V_{\mathrm{TH}}$，NFET 关断，停止充电。结果输出最高只能到 $V_{\mathrm{DD}} - V_{\mathrm{TH}}$（**弱 1**）。
+       - **PFET** 擅长传导高电平（强 1），不擅长传导低电平：传导 $0\,\mathrm{V}$ 时，输出降至约 $|V_{\mathrm{TH}}|$ 就会提前关断，最低只能到 $|V_{\mathrm{TH}}|$（**弱 0**）。
+
+       同一结论也可从第 4 节的 $I_{\mathrm{DS}}$–$V_{\mathrm{DS}}$ 曲线直接读出：固定栅压下，$V_{\mathrm{GS}}$ 越接近 $V_{\mathrm{TH}}$，对应曲线越贴近横轴（$I_{\mathrm{DS}} \to 0$）。NFET 上拉充电时，有效 $V_{\mathrm{GS}}$ 随 $V_{\mathrm{out}}$ 升高而下降，工作点不断跳到更“矮”的曲线，直至 $V_{\mathrm{GS}} \le V_{\mathrm{TH}}$ 时电流彻底为 0——曲线上再也没有充电电流，电平卡在 $V_{\mathrm{DD}} - V_{\mathrm{TH}}$。PFET 下拉同理。
+
+    2. **信号衰减与级联失效**
+
+       若只用单管（如 NFET）做开关：第一级输出已从 $V_{\mathrm{DD}}$ 降到 $V_{\mathrm{DD}} - V_{\mathrm{TH}}$；把该“弱 1”再送给下一级，输出可能进一步掉到 $V_{\mathrm{DD}} - 2V_{\mathrm{TH}}$。多级串联后电平迅速塌缩，最终逻辑判决失败。
+
+    3. **噪声裕度被破坏**
+
+       数字电路靠明确的高低电平界限抵御噪声。完整 CMOS 输出可在 $0\,\mathrm{V}$ 与 $V_{\mathrm{DD}}$ 之间轨到轨摆动，噪声容限大；“弱 1 / 弱 0”会大幅压缩噪声裕度，使电路对电源波动与干扰极为敏感——与第 1 节愿望清单及合法 VTC 的要求相悖。
+
+    4. **解法：互补配对**
+
+       - **CMOS 逻辑门（上拉 + 下拉）**：NFET 组只做下拉，把输出接到 GND，提供强 0；PFET 组只做上拉，把输出接到 $V_{\mathrm{DD}}$，提供强 1。二者互补，输出始终是标准的 $0\,\mathrm{V}$ 或 $V_{\mathrm{DD}}$。
+       - **传输门（transmission gate）**：若需要能双向传信号的独立开关，将 NFET 与 PFET **并联**（控制信号互补相位）。导通时低电平靠 NFET（强 0）、高电平靠 PFET（强 1），才接近无阈值损失的“理想开关”。
+
+[^common-gates]: **常见门电路的 MOSFET 实现**
+
+    符号约定：栅极带空心圆者为 **PFET**（接 $V_{\mathrm{DD}}$，上拉），不带圆者为 **NFET**（接 GND，下拉）。单个互补 CMOS 门天然反相；AND / OR / Buffer / XNOR 等需级联。
+
+    **NOT**（反相器）：$Z=\overline{A}$
+
+    ![CMOS NOT inverter MOSFET schematic](/assets/images/tech/ic/cmos-01.svg)
+
+    **NAND2**：$Z=\overline{A\cdot B}$（PFET 并联，NFET 串联）
+
+    ![CMOS NAND2 MOSFET schematic](/assets/images/tech/ic/cmos-02.svg)
+
+    **NOR2**：$Z=\overline{A+B}$（PFET 串联，NFET 并联）
+
+    ![CMOS NOR2 MOSFET schematic](/assets/images/tech/ic/cmos-03.svg)
+
+    **AND2**：$Z=A\cdot B$（NAND 后接反相器）
+
+    ![CMOS AND2 as NAND plus inverter](/assets/images/tech/ic/cmos-04.svg)
+
+    **OR2**：$Z=A+B$（NOR 后接反相器）
+
+    ![CMOS OR2 as NOR plus inverter](/assets/images/tech/ic/cmos-05.svg)
+
+    **Buffer**：$Z=A$（两级反相器）
+
+    ![CMOS buffer two inverters](/assets/images/tech/ic/cmos-06.svg)
+
+    **Transmission Gate**（传输门）：$EN=1$ 时双向传信号
+
+    ![CMOS transmission gate MOSFET schematic](/assets/images/tech/ic/cmos-07.svg)
+
+    **XOR2**：$Z=A\oplus B$（传输门 MUX 示意；另需 $\overline{A}$/$\overline{B}$ 反相器）
+
+    ![CMOS XOR2 transmission-gate schematic](/assets/images/tech/ic/cmos-08.svg)
+
+    **XNOR2**：$Z=\overline{A\oplus B}$（XOR 后接反相器）
+
+    ![CMOS XNOR2 schematic](/assets/images/tech/ic/cmos-09.svg)
+
+    **AOI21**（讲义配方例）：$F=\overline{A+B\cdot C}$（上拉：A 串联于 B∥C；下拉：A 并联于 B–C 串联）
+
+    ![CMOS AOI21 MOSFET schematic](/assets/images/tech/ic/cmos-10.svg)
