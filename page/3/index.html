@@ -188,6 +188,211 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/11/20/tech/cpp/optimize/performance-analysis-metrics/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/11/20/tech/cpp/optimize/performance-analysis-metrics/" class="post-title-link" itemprop="url">性能分析指标和概念</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-11-20 15:54:29" itemprop="dateCreated datePublished" datetime="2025-11-20T15:54:29+00:00">2025-11-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-06 09:53:16" itemprop="dateModified" datetime="2026-08-06T09:53:16+00:00">2026-08-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="CPU-硬件层次概念">CPU 硬件层次概念</h2>
+<ul>
+<li>Package → 整个处理器封装，包含一个或多个 die。</li>
+<li>Socket (S) → 主板上的物理 CPU 插槽</li>
+<li>Die (D) → 封装里的裸片（可能有多个 chiplet/die）</li>
+<li>Core © → die 上的计算核心</li>
+<li>Thread (T) → 核心里的硬件线程（SMT/超线程），即逻辑处理器</li>
+</ul>
+<p>假设一台双路服务器，每个 socket 上的 CPU 封装里有两个 die，每个 die 有 8 个核心：</p>
+<ul>
+<li><code>S0-D0-C0</code> → Socket 0 上 Die 0 的 Core 0</li>
+<li><code>S0-D1-C3</code> → Socket 0 上 Die 1 的 Core 3</li>
+<li><code>S1-D0-C7</code> → Socket 1 上 Die 0 的 Core 7</li>
+</ul>
+<p>如果开启超线程，还可能进一步细分为：</p>
+<ul>
+<li><code>S0-D0-C0-T0</code> → Socket 0, Die 0, Core 0, Thread 0</li>
+<li><code>S0-D0-C0-T1</code> → Socket 0, Die 0, Core 0, Thread 1</li>
+</ul>
+<p>可以用命令 <code>lscpu</code> 或 <code>cat /proc/cpuinfo</code> 来查看逻辑 CPU ID 与 Socket/Core/Thread 的对应关系。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ lscpu</span><br><span class="line">...</span><br><span class="line">    Thread(s) per core:  2</span><br><span class="line">    Core(s) per socket:  4</span><br><span class="line">    Socket(s):           1</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">总逻辑 CPU 数量 = 1 × 4 × 2 = 8</span><br></pre></td></tr></table></figure>
+<p>nproc 输出的是 逻辑 CPU 数</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">nproc</span></span><br><span class="line">8</span><br></pre></td></tr></table></figure>
+<h2 id="CPU-微架构概念">CPU 微架构概念</h2>
+<ul>
+<li>Pipeline：指令执行的分阶段过程（取指、解码、执行、写回）。</li>
+<li>Width：每周期最多能发射多少条 uops（如 4‑wide）。</li>
+<li>Slot：每周期的发射机会，宽度决定 slot 数。</li>
+<li>ROB (Reorder Buffer)：乱序执行的关键结构，保证指令按程序顺序退休。</li>
+<li>Scheduler：调度器，决定哪些 uops 在某周期进入执行端口。</li>
+<li>Execution Ports：后端的执行单元入口，比如整数 ALU、浮点 FPU、Load/Store。</li>
+<li>Branch Predictor：预测分支走向，减少流水线停顿。</li>
+</ul>
+<h2 id="存储与层次结构">存储与层次结构</h2>
+<ul>
+<li>Registers：CPU 内部的寄存器，最快的存储。</li>
+<li>Cache：分层缓存（L1、L2、L3），用于减少访存延迟。</li>
+<li>LLC (Last Level Cache)：最后一级缓存，通常是 L3，多个核心共享。</li>
+<li>Memory Controller：负责和 DRAM 通信。</li>
+<li>NUMA (Non-Uniform Memory Access)：多 socket 系统里，内存访问延迟因位置不同而不同。</li>
+</ul>
+<h2 id="性能分析相关">性能分析相关</h2>
+<ul>
+<li>IPC (Instructions Per Cycle)：每周期平均执行的指令数。</li>
+<li>ILP (Instruction-Level Parallelism)：指令级并行度，程序能提供多少独立指令。</li>
+<li>Topdown Metrics：Retiring、Bad Speculation、Frontend Bound、Backend Bound。</li>
+<li>BE/Core vs BE/Mem：后端瓶颈是算力不足还是访存延迟。</li>
+<li>CPI (Cycles Per Instruction)：每条指令平均耗费的周期数。</li>
+</ul>
+<h2 id="Top-Down-Microarchitecture-Analysis-TMA">Top-Down Microarchitecture Analysis (TMA)</h2>
+<p>这是 Intel 提出的一个 CPU 性能瓶颈分析框架。它的核心思想是：把 CPU 每个周期的 发射机会（slot） 分门<br>
+别类，逐层细分，最终定位到性能瓶颈的根源。</p>
+<p>Topdown 是分层树状结构：</p>
+<ul>
+<li>Level 1：Retiring / Bad Speculation / Frontend Bound / Backend Bound</li>
+<li>Level 2：Backend Bound → BE/Core、BE/Mem</li>
+<li>Level 3：BE/Mem → L1 Bound、L2 Bound、DRAM Bound</li>
+</ul>
+<ol>
+<li>Level 1: 顶层四大分类</li>
+</ol>
+<p>在每个周期的 slot 中，CPU 的工作被划分为四类：</p>
+<ul>
+<li>
+<p>Retiring</p>
+<ul>
+<li>指令成功退休（完成执行并写回结果）。</li>
+<li>这是“有用工作”，比例越高说明 CPU 利用率越好。</li>
+</ul>
+</li>
+<li>
+<p>Bad Speculation</p>
+<ul>
+<li>由于错误预测（如分支预测失败、错误路径执行）导致的浪费。</li>
+<li>这些 slot 最终没有产生有效结果。</li>
+</ul>
+</li>
+<li>
+<p>Frontend Bound (FE)</p>
+<ul>
+<li>前端受限：取指、解码、指令缓存不足。</li>
+<li>CPU 等待指令进入流水线。</li>
+</ul>
+</li>
+<li>
+<p>Backend Bound (BE)</p>
+<ul>
+<li>后端受限：执行单元或数据不可用。</li>
+<li>CPU 等待算力资源或内存数据。</li>
+</ul>
+</li>
+</ul>
+<p>这四类加起来 ≈ 100%，覆盖了所有 slot 的去向。</p>
+<ol start="2">
+<li>Level 2: Backend 的进一步细分</li>
+</ol>
+<ul>
+<li>BE/Core
+<ul>
+<li>后端瓶颈主要来自核心执行资源不足（算术逻辑单元、浮点单元、端口冲突）。</li>
+<li>程序算力密集。</li>
+</ul>
+</li>
+<li>BE/Mem
+<ul>
+<li>后端瓶颈主要来自访存延迟（缓存未命中、DRAM 访问慢）。</li>
+<li>程序内存密集。</li>
+</ul>
+</li>
+</ul>
+<ol start="3">
+<li>Level 3: BE/Mem 的进一步细分</li>
+</ol>
+<ul>
+<li>L1 Bound</li>
+<li>L2 Bound</li>
+<li>L3 Bound</li>
+<li>DRAM Bound</li>
+</ul>
+<h3 id="Roofline">Roofline</h3>
+<h2 id="性能分析工具">性能分析工具</h2>
+<ol>
+<li>perf (Linux)</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/andikleen/pmu-tools">Intel® pmu-tools</a> ：对 perf 的封装</li>
+<li><a target="_blank" rel="noopener" href="https://www.intel.com/content/www/us/en/developer/tools/oneapi/advisor-download.html">Intel Advisor</a></li>
+</ol>
+<h2 id="参考">参考</h2>
+<ol>
+<li>perf-ninja: <a target="_blank" rel="noopener" href="https://github.com/dendibakh/perf-ninja">代码</a> +<br>
+<a target="_blank" rel="noopener" href="https://www.youtube.com/playlist?list=PLRWO2AL1QAV6bJAU2kgB4xfodGID43Y5d">视频</a></li>
+</ol>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/24/tech/concurrent/memory-order-experiment/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -219,7 +424,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-05 10:46:06" itemprop="dateModified" datetime="2026-08-05T10:46:06+00:00">2026-08-05</time>
+                <time title="Modified: 2026-08-06 09:53:16" itemprop="dateModified" datetime="2026-08-06T09:53:16+00:00">2026-08-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -300,7 +505,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-05 10:46:06" itemprop="dateModified" datetime="2026-08-05T10:46:06+00:00">2026-08-05</time>
+                <time title="Modified: 2026-08-06 09:53:16" itemprop="dateModified" datetime="2026-08-06T09:53:16+00:00">2026-08-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -791,7 +996,7 @@ sge_list（sge 数组，多个不同内存区域的 sge 可一起提交）。</l
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-05 10:46:06" itemprop="dateModified" datetime="2026-08-05T10:46:06+00:00">2026-08-05</time>
+                <time title="Modified: 2026-08-06 09:53:16" itemprop="dateModified" datetime="2026-08-06T09:53:16+00:00">2026-08-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1125,7 +1330,7 @@ sge_list（sge 数组，多个不同内存区域的 sge 可一起提交）。</l
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-05 10:46:06" itemprop="dateModified" datetime="2026-08-05T10:46:06+00:00">2026-08-05</time>
+                <time title="Modified: 2026-08-06 09:53:16" itemprop="dateModified" datetime="2026-08-06T09:53:16+00:00">2026-08-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1528,7 +1733,7 @@ sge_list（sge 数组，多个不同内存区域的 sge 可一起提交）。</l
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-05 10:46:06" itemprop="dateModified" datetime="2026-08-05T10:46:06+00:00">2026-08-05</time>
+                <time title="Modified: 2026-08-06 09:53:16" itemprop="dateModified" datetime="2026-08-06T09:53:16+00:00">2026-08-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1624,7 +1829,7 @@ sge_list（sge 数组，多个不同内存区域的 sge 可一起提交）。</l
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-05 10:46:06" itemprop="dateModified" datetime="2026-08-05T10:46:06+00:00">2026-08-05</time>
+                <time title="Modified: 2026-08-06 09:53:16" itemprop="dateModified" datetime="2026-08-06T09:53:16+00:00">2026-08-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1784,7 +1989,7 @@ sge_list（sge 数组，多个不同内存区域的 sge 可一起提交）。</l
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-05 10:46:06" itemprop="dateModified" datetime="2026-08-05T10:46:06+00:00">2026-08-05</time>
+                <time title="Modified: 2026-08-06 09:53:16" itemprop="dateModified" datetime="2026-08-06T09:53:16+00:00">2026-08-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1906,7 +2111,7 @@ GC 是在链表队列里用来避免这种 悬空引用 + ABA 的。</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-05 10:46:06" itemprop="dateModified" datetime="2026-08-05T10:46:06+00:00">2026-08-05</time>
+                <time title="Modified: 2026-08-06 09:53:16" itemprop="dateModified" datetime="2026-08-06T09:53:16+00:00">2026-08-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1999,7 +2204,7 @@ GC 是在链表队列里用来避免这种 悬空引用 + ABA 的。</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-05 10:46:06" itemprop="dateModified" datetime="2026-08-05T10:46:06+00:00">2026-08-05</time>
+                <time title="Modified: 2026-08-06 09:53:16" itemprop="dateModified" datetime="2026-08-06T09:53:16+00:00">2026-08-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2126,136 +2331,6 @@ CAS），前提是在此期间头部块没有发生变化。为了避免 ABA 问
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/13/tech/concurrent/spsc-lock-free-queue/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/09/13/tech/concurrent/spsc-lock-free-queue/" class="post-title-link" itemprop="url">单生产者 - 单消费者 无锁队列</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-09-13 17:09:37" itemprop="dateCreated datePublished" datetime="2025-09-13T17:09:37+00:00">2025-09-13</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-05 10:46:06" itemprop="dateModified" datetime="2026-08-05T10:46:06+00:00">2026-08-05</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/concurrent/" itemprop="url" rel="index"><span itemprop="name">concurrent</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1>前言</h1>
-<p>这是阅读 Cameron Desrochers 的 <a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2013/a-fast-lock-free-queue-for-c++">A Fast Lock-Free Queue for C++</a> 源码的笔记。</p>
-<p>仓库地址：<a target="_blank" rel="noopener" href="https://github.com/cameron314/readerwriterqueue">https://github.com/cameron314/readerwriterqueue</a></p>
-<p>其他参考文献：</p>
-<p><a target="_blank" rel="noopener" href="https://preshing.com/20120612/an-introduction-to-lock-free-programming/">An Introduction to Lock-Free Programming</a><br>
-<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=A8eCGOqgvH4&amp;list=PLjwoip0ltHwHCe0Nw7PDPtzlJP7rUouRL">C++ and Beyond 2012: Herb Sutter - atomic Weapons 1 of 2</a><br>
-<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=KeLBd2EJLOU">C++ and Beyond 2012: Herb Sutter - atomic Weapons 2 of 2</a></p>
-<h2 id="内存屏障">内存屏障</h2>
-<p>约束 memory loads/stores 的顺序。</p>
-<ul>
-<li>releaase 内存屏障：告诉 CPU，如果屏障之后的任何写入变得可见，那么屏障之前的任何写入都应该在其他核心中可见，前提是其他核心在读取 写屏障之后写入的数据 后执行读屏障。<br>
-换句话说，如果线程 B 可以看到在另一个线程 A 上的写屏障之后写入的新值，那么在执行读屏障（在线程 B 上）之后，可以保证在线程 A 上的写屏障之前发生的所有写入在线程 B 上可见。</li>
-</ul>
-<h2 id="实现细节">实现细节</h2>
-<ol>
-<li>block: 一个连续的环形缓冲区，用来存储元素。这样可以预分配内存。</li>
-<li>块过小（这不利于无锁）时，无需将所有现有元素复制到新的块中；多个块（大小独立）以循环链表的形式链接在一起。</li>
-<li>当前插入的块称为 “尾块”，当前消费的块称为 “头块”。</li>
-<li>头索引指向下一个要读取的满槽；尾索引指向下一个要插入的空槽。如果两个索引相等，则块为空（确切地说，当队列已满时，恰好有一个插槽为空，以避免在具有相同头和尾索引的满块和空块之间产生歧义）。</li>
-<li>为了允许队列对任意线程创建 / 析构（独立于生产 / 消费线程），全内存屏障（memory_order_acq_cst）被用在析构函数地最后、析构函数的开头（这会强制所有的 CPU cores 同步 outstanding changes）。显然，在析构函数可以被安全地调用之前，生产者和消费者必须已经停止使用该队列。</li>
-</ol>
-<h2 id="Give-me-the-codes">Give me the codes</h2>
-<ol>
-<li>用户不需要管理内存。</li>
-<li>预分配内存，在连续的块中。</li>
-<li><code>try_enqueue</code>: 保证不会分配内存（队列有初始容量）；</li>
-<li><code>enqueue</code>: 会根据需要动态扩容。</li>
-<li>没有使用 CAS loop；这意味者 enqueue 和 dequeue 是 O(1) 的（没有计入内存分配的时间）。</li>
-<li>因为在 x86 平台，内存屏障是空操作，所以 enqueue 和 dequeue 是一系列简单的 loads 和 stores (and branches) 。</li>
-</ol>
-<p>此代码仅仅适用于以原子方式处理 自然对齐的整型（aligned integer） 和 原生指针大小（native-pointer-size） 的 loads/stores 的 CPU 上；<br>
-幸运的是，这包括了所有的现代处理器（包括 ARM, x86/x86_64 和 PowerPC）。<br>
-它不是为在 DEC Alpha 上运行而设计的（DEC Alpha 似乎具有有史以来最弱的内存排序保证）。</p>
-<p>注：在 x86 上，memory_order_acquire/release 通常不需要额外指令就能实现语义，但仍然能限制编译器的重排。<br>
-fetch_add 不是一个原子操作，而是三个：load, add, store. 所以不适用上述说的 “自然对齐的整型” 或“原生指针大小”的 load/store.</p>
-<h2 id="性能优化点">性能优化点</h2>
-<ol>
-<li>平凡析构：跳过析构，直接释放内存。</li>
-<li><a target="_blank" rel="noopener" href="http://www.cse.cuhk.edu.hk/~pclee/www/pubs/ancs09poster.pdf">MCRingBuffer paper</a>
-<ol>
-<li>cache line padding</li>
-<li>local control variables
-<ol>
-<li>减少对全局 read/write 指针的读取</li>
-</ol>
-</li>
-<li>local block</li>
-</ol>
-</li>
-</ol>
-<h2 id="正确性测试">正确性测试</h2>
-<ol>
-<li>定义不可预测性延时函数，用于模拟线程调度。</li>
-<li>写线程塞入 32 M 个数据；读线程读取 32 M 次。读写线程中使用 unpredDelay() 模拟调度延迟。</li>
-<li>测试能否顺序读取，失败则打印日志，不退出。</li>
-<li>测试程序无限运行，每次使用一个写线程和读线程。直至手动 Ctrl C 关闭。</li>
-</ol>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2327,7 +2402,7 @@ fetch_add 不是一个原子操作，而是三个：load, add, store. 所以不�
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">128</span>
+          <span class="site-state-item-count">129</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

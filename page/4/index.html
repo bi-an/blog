@@ -188,6 +188,136 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/13/tech/concurrent/spsc-lock-free-queue/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/09/13/tech/concurrent/spsc-lock-free-queue/" class="post-title-link" itemprop="url">单生产者 - 单消费者 无锁队列</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-09-13 17:09:37" itemprop="dateCreated datePublished" datetime="2025-09-13T17:09:37+00:00">2025-09-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-06 09:53:16" itemprop="dateModified" datetime="2026-08-06T09:53:16+00:00">2026-08-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/concurrent/" itemprop="url" rel="index"><span itemprop="name">concurrent</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>前言</h1>
+<p>这是阅读 Cameron Desrochers 的 <a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2013/a-fast-lock-free-queue-for-c++">A Fast Lock-Free Queue for C++</a> 源码的笔记。</p>
+<p>仓库地址：<a target="_blank" rel="noopener" href="https://github.com/cameron314/readerwriterqueue">https://github.com/cameron314/readerwriterqueue</a></p>
+<p>其他参考文献：</p>
+<p><a target="_blank" rel="noopener" href="https://preshing.com/20120612/an-introduction-to-lock-free-programming/">An Introduction to Lock-Free Programming</a><br>
+<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=A8eCGOqgvH4&amp;list=PLjwoip0ltHwHCe0Nw7PDPtzlJP7rUouRL">C++ and Beyond 2012: Herb Sutter - atomic Weapons 1 of 2</a><br>
+<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=KeLBd2EJLOU">C++ and Beyond 2012: Herb Sutter - atomic Weapons 2 of 2</a></p>
+<h2 id="内存屏障">内存屏障</h2>
+<p>约束 memory loads/stores 的顺序。</p>
+<ul>
+<li>releaase 内存屏障：告诉 CPU，如果屏障之后的任何写入变得可见，那么屏障之前的任何写入都应该在其他核心中可见，前提是其他核心在读取 写屏障之后写入的数据 后执行读屏障。<br>
+换句话说，如果线程 B 可以看到在另一个线程 A 上的写屏障之后写入的新值，那么在执行读屏障（在线程 B 上）之后，可以保证在线程 A 上的写屏障之前发生的所有写入在线程 B 上可见。</li>
+</ul>
+<h2 id="实现细节">实现细节</h2>
+<ol>
+<li>block: 一个连续的环形缓冲区，用来存储元素。这样可以预分配内存。</li>
+<li>块过小（这不利于无锁）时，无需将所有现有元素复制到新的块中；多个块（大小独立）以循环链表的形式链接在一起。</li>
+<li>当前插入的块称为 “尾块”，当前消费的块称为 “头块”。</li>
+<li>头索引指向下一个要读取的满槽；尾索引指向下一个要插入的空槽。如果两个索引相等，则块为空（确切地说，当队列已满时，恰好有一个插槽为空，以避免在具有相同头和尾索引的满块和空块之间产生歧义）。</li>
+<li>为了允许队列对任意线程创建 / 析构（独立于生产 / 消费线程），全内存屏障（memory_order_acq_cst）被用在析构函数地最后、析构函数的开头（这会强制所有的 CPU cores 同步 outstanding changes）。显然，在析构函数可以被安全地调用之前，生产者和消费者必须已经停止使用该队列。</li>
+</ol>
+<h2 id="Give-me-the-codes">Give me the codes</h2>
+<ol>
+<li>用户不需要管理内存。</li>
+<li>预分配内存，在连续的块中。</li>
+<li><code>try_enqueue</code>: 保证不会分配内存（队列有初始容量）；</li>
+<li><code>enqueue</code>: 会根据需要动态扩容。</li>
+<li>没有使用 CAS loop；这意味者 enqueue 和 dequeue 是 O(1) 的（没有计入内存分配的时间）。</li>
+<li>因为在 x86 平台，内存屏障是空操作，所以 enqueue 和 dequeue 是一系列简单的 loads 和 stores (and branches) 。</li>
+</ol>
+<p>此代码仅仅适用于以原子方式处理 自然对齐的整型（aligned integer） 和 原生指针大小（native-pointer-size） 的 loads/stores 的 CPU 上；<br>
+幸运的是，这包括了所有的现代处理器（包括 ARM, x86/x86_64 和 PowerPC）。<br>
+它不是为在 DEC Alpha 上运行而设计的（DEC Alpha 似乎具有有史以来最弱的内存排序保证）。</p>
+<p>注：在 x86 上，memory_order_acquire/release 通常不需要额外指令就能实现语义，但仍然能限制编译器的重排。<br>
+fetch_add 不是一个原子操作，而是三个：load, add, store. 所以不适用上述说的 “自然对齐的整型” 或“原生指针大小”的 load/store.</p>
+<h2 id="性能优化点">性能优化点</h2>
+<ol>
+<li>平凡析构：跳过析构，直接释放内存。</li>
+<li><a target="_blank" rel="noopener" href="http://www.cse.cuhk.edu.hk/~pclee/www/pubs/ancs09poster.pdf">MCRingBuffer paper</a>
+<ol>
+<li>cache line padding</li>
+<li>local control variables
+<ol>
+<li>减少对全局 read/write 指针的读取</li>
+</ol>
+</li>
+<li>local block</li>
+</ol>
+</li>
+</ol>
+<h2 id="正确性测试">正确性测试</h2>
+<ol>
+<li>定义不可预测性延时函数，用于模拟线程调度。</li>
+<li>写线程塞入 32 M 个数据；读线程读取 32 M 次。读写线程中使用 unpredDelay() 模拟调度延迟。</li>
+<li>测试能否顺序读取，失败则打印日志，不退出。</li>
+<li>测试程序无限运行，每次使用一个写线程和读线程。直至手动 Ctrl C 关闭。</li>
+</ol>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/08/tech/linux/disk-performance-testing/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -219,7 +349,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-05 10:46:06" itemprop="dateModified" datetime="2026-08-05T10:46:06+00:00">2026-08-05</time>
+                <time title="Modified: 2026-08-06 09:53:16" itemprop="dateModified" datetime="2026-08-06T09:53:16+00:00">2026-08-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -637,7 +767,7 @@ psync 是同步写入，每次调用 pwrite()，适合模拟数据库或日志�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-05 10:46:06" itemprop="dateModified" datetime="2026-08-05T10:46:06+00:00">2026-08-05</time>
+                <time title="Modified: 2026-08-06 09:53:16" itemprop="dateModified" datetime="2026-08-06T09:53:16+00:00">2026-08-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -713,7 +843,7 @@ psync 是同步写入，每次调用 pwrite()，适合模拟数据库或日志�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-05 10:46:06" itemprop="dateModified" datetime="2026-08-05T10:46:06+00:00">2026-08-05</time>
+                <time title="Modified: 2026-08-06 09:53:16" itemprop="dateModified" datetime="2026-08-06T09:53:16+00:00">2026-08-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -889,7 +1019,7 @@ psync 是同步写入，每次调用 pwrite()，适合模拟数据库或日志�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-05 10:46:06" itemprop="dateModified" datetime="2026-08-05T10:46:06+00:00">2026-08-05</time>
+                <time title="Modified: 2026-08-06 09:53:16" itemprop="dateModified" datetime="2026-08-06T09:53:16+00:00">2026-08-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1207,7 +1337,7 @@ psync 是同步写入，每次调用 pwrite()，适合模拟数据库或日志�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-05 10:46:06" itemprop="dateModified" datetime="2026-08-05T10:46:06+00:00">2026-08-05</time>
+                <time title="Modified: 2026-08-06 09:53:16" itemprop="dateModified" datetime="2026-08-06T09:53:16+00:00">2026-08-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1934,7 +2064,7 @@ libc 层。</strong></p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-05 10:46:06" itemprop="dateModified" datetime="2026-08-05T10:46:06+00:00">2026-08-05</time>
+                <time title="Modified: 2026-08-06 09:53:16" itemprop="dateModified" datetime="2026-08-06T09:53:16+00:00">2026-08-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2139,7 +2269,7 @@ malloc 需要兼容各种尺寸，碎片和内存抖动不可避免。</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-05 10:46:06" itemprop="dateModified" datetime="2026-08-05T10:46:06+00:00">2026-08-05</time>
+                <time title="Modified: 2026-08-06 09:53:16" itemprop="dateModified" datetime="2026-08-06T09:53:16+00:00">2026-08-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2312,7 +2442,7 @@ Tag字段存储了主存中数据的地址信息，当CPU访问主存时，首�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-05 10:46:06" itemprop="dateModified" datetime="2026-08-05T10:46:06+00:00">2026-08-05</time>
+                <time title="Modified: 2026-08-06 09:53:16" itemprop="dateModified" datetime="2026-08-06T09:53:16+00:00">2026-08-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2394,7 +2524,7 @@ Tag字段存储了主存中数据的地址信息，当CPU访问主存时，首�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-05 10:46:06" itemprop="dateModified" datetime="2026-08-05T10:46:06+00:00">2026-08-05</time>
+                <time title="Modified: 2026-08-06 09:53:16" itemprop="dateModified" datetime="2026-08-06T09:53:16+00:00">2026-08-06</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2821,143 +2951,6 @@ Tag字段存储了主存中数据的地址信息，当CPU访问主存时，首�
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/19/tech/cpp/optimize/memory-management/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/08/19/tech/cpp/optimize/memory-management/" class="post-title-link" itemprop="url">内存管理</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-08-19 20:12:58" itemprop="dateCreated datePublished" datetime="2025-08-19T20:12:58+00:00">2025-08-19</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-05 10:46:06" itemprop="dateModified" datetime="2026-08-05T10:46:06+00:00">2026-08-05</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="线程安全性">线程安全性</h2>
-<p>malloc 是线程安全的，但有一些细节需要注意。</p>
-<ol>
-<li>线程安全含义</li>
-</ol>
-<p>线程安全：多个线程同时调用 malloc/free 不会破坏堆管理结构，也不会导致内存管理崩溃。</p>
-<p>实现方法：</p>
-<p>glibc malloc 在内部使用 锁（mutex 或 spinlock） 保护全局堆管理数据结构</p>
-<p>不同线程同时申请或释放内存，内核保证堆表一致</p>
-<ol start="2">
-<li>限制与注意事项</li>
-</ol>
-<p>性能问题</p>
-<p>多线程频繁 malloc/free，锁竞争可能成为瓶颈</p>
-<p>对性能敏感的程序可能使用：</p>
-<p>线程本地缓存（thread-local cache） 的 jemalloc / tcmalloc</p>
-<p>避免全局锁竞争</p>
-<p>信号处理上下文不安全</p>
-<p>虽然线程安全，但 malloc 在信号处理函数里不安全</p>
-<p>原因：</p>
-<p>信号可能打断正在执行的 malloc</p>
-<p>malloc 内部锁可能被持有 → 再次调用可能死锁</p>
-<p>所以 signal handler 中不能直接调用 malloc/free</p>
-<table>
-<thead>
-<tr>
-<th>特性</th>
-<th>malloc/glibc</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>多线程调用安全</td>
-<td>✅ 是线程安全的</td>
-</tr>
-<tr>
-<td>信号处理函数调用安全</td>
-<td>❌ 不安全</td>
-</tr>
-<tr>
-<td>性能</td>
-<td>可能锁竞争，需要优化（jemalloc/tcmalloc）</td>
-</tr>
-</tbody>
-</table>
-<h2 id="信号安全">信号安全</h2>
-<p>malloc / free 内部会修改全局堆管理结构（如 free list）</p>
-<p>如果信号到达时主程序正在调用 malloc 或 free，信号处理函数里再次调用 malloc/free → 堆数据结构可能被破坏，<br>
-可能导致崩溃或内存泄漏</p>
-<p>虽然线程安全，但 malloc 在信号处理函数里不安全</p>
-<p>原因：</p>
-<ul>
-<li>信号可能打断正在执行的 malloc</li>
-<li>malloc 内部锁可能被持有 → 再次调用可能死锁</li>
-</ul>
-<p>所以 signal handler 中不能直接调用 malloc/free</p>
-<h3 id="安全做法">安全做法</h3>
-<p>信号处理函数里只做：</p>
-<ul>
-<li>设置标志位（sig_atomic_t flag = 1;）</li>
-<li>写入 pipe / eventfd</li>
-<li>调用 async-signal-safe 系统调用（write(), _exit()）</li>
-</ul>
-<p>之后由主程序在安全上下文处理 malloc/free 或其他复杂操作</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -3029,7 +3022,7 @@ Tag字段存储了主存中数据的地址信息，当CPU访问主存时，首�
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">128</span>
+          <span class="site-state-item-count">129</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
