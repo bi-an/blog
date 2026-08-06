@@ -300,7 +300,7 @@ tech/ic/ic-book/
 
 命名格式：`笔记名-序号.后缀`，目录已区分板块，不重复加前缀
 
-引用格式：Hexo 绝对路径引用
+引用格式：Hexo 绝对路径引用（写 `/assets/...`；由 `_config.yml` 中 `markdown.images.prepend_root: true` 自动加站点 `root`）
 
 #### assets/images/study/idiom 示例
 
