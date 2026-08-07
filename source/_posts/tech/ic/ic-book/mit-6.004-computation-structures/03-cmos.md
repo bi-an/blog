@@ -200,15 +200,22 @@ CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下
 
 <img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/127417502caff69dbaa0b1e9764ffad3_Slide14.png" alt="CMOS Timing Specifications" width="80%"/>
 
-两级反相器串联，考察左级翻转时发生什么。$V_{\mathrm{IN}}$ 从 0→1：上拉 PFET 关、下拉 NFET 开，左级输出接到 GND。
+两级 CMOS 反相器串联，用来刻画**左级**反相器的时序。建立改变 $V_{\mathrm{IN}}$ 时的电学模型。
 
-电学模型含：连接左右的导线分布电阻/电容，以及右级 MOSFET 栅端电容。电荷经导线与 NFET 沟道电阻泄放到 GND，电压指数趋近 $0\,\mathrm{V}$。$V_{\mathrm{IN}}$ 下降时输出向 $V_{\mathrm{DD}}$ 充电，过程类似。
+$V_{\mathrm{IN}}$ 从数字 0→1：上拉 PFET 关、下拉 NFET 开，左级输出节点接到 GND。该节点的电学模型包括：连接左级输出与右级输入的**物理导线**的分布电阻与分布电容，以及右级 MOSFET **栅端电容**（图中常标为 $C_W$、$C_P$、$C_N$ 等）。输出接到 GND 后，电容上的电荷经**导线电阻**与导通 NFET 的**沟道电阻**泄放到 GND，导线电压最终达到地电位 $0\,\mathrm{V}$。$V_{\mathrm{IN}}$ 下降时过程对称：上拉 PFET 开、下拉 NFET 关，输出节点经导线与 PFET 沟道电阻向 $V_{\mathrm{DD}}$ 充电。
+
+再看随时间变化的电压波形。上图给出 $V_{\mathrm{IN}}$ 先升后降；输出呈电容经电阻充/放电的典型**指数**形状，由 **R–C 时间常数**刻画：
+
+- 下拉（放电）：$\tau = R_{\mathrm{PD}} \cdot C_L$
+- 上拉（充电）：$\tau = R_{\mathrm{PU}} \cdot C_L$
+
+其中 $R$ 为导线与 MOSFET 沟道的等效总电阻，$C_L$ 为导线与后级栅端的等效总电容。输入、输出翻转都不是瞬时的，量测反相器延迟时需约定起止时刻——信号阈值正好提供这一约定。
 
 ## 14. 传播延迟（Propagation Delay）
 
 <img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/32605907e13d9fe3f9daf48e21474a70_Slide15.png" alt="Propagation Delay" width="80%"/>
 
-输入/输出波形均非瞬时，如何量延迟？用信号阈值定义。
+用信号阈值定义延迟的起止。
 
 **传播延迟**（propagation delay）$t_{\mathrm{PD}}$：从有效输入到有效输出的延迟**上界**。有效输入由 $V_{\mathrm{IL}}$、$V_{\mathrm{IH}}$ 界定；有效输出由 $V_{\mathrm{OL}}$、$V_{\mathrm{OH}}$ 界定。
 
