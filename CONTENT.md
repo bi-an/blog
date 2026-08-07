@@ -204,7 +204,7 @@ source
 
 `cpp-book` / `algo-book` / `linux-book` / `ic-book` / `concurrent-book` 等书籍目录**不适用**「最多三级」与「单篇扁平命名」的常规约束，以便按原书结构归档与排序：
 
-- **目录**：可在 `xxx-book` 下再嵌套一层「书名」子目录（一书一目录）；书名目录可用英文原书名或课程名（允许保留大写与连字符，便于辨认）
+- **目录**：可在 `xxx-book` 下再嵌套一层「书名」子目录（一书一目录）；书名目录同样全小写 + 连字符 `-`（由英文原书名或课程名转写）
 - **章节文件**：按原书章节顺序命名为 `两位序号-章节主题.md`，例如 `01-...md`、`02-...md`（用 `01` 而非 `1`，保证字典序与章节序一致）
 - **非章节杂项**（书单、下载链接等）：仍直接放在 `xxx-book/` 下，用常规小写连字符命名，不加章节序号
 
@@ -213,7 +213,7 @@ source
 ```PlainText
 tech/ic/ic-book/
 ├── eda-books-download-links.md
-└── Digital-IC-Design-Intro-Video-Course-Bai-Liyang/
+└── digital-ic-design-intro-video-course/
     ├── 01-digital-ic-design-flow.md
     └── 02-verilog-based-digital-ic-design.md
 ```

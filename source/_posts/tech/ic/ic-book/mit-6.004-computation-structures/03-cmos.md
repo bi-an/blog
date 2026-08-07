@@ -416,40 +416,40 @@ CMOS NOR：两输入皆为 1 时，NFET 导通、PFET 截止，Z 接 GND。B：1
 
     **NOT**（反相器）：$Z=\overline{A}$
 
-    ![CMOS NOT inverter MOSFET schematic](/assets/images/tech/ic/03-cmos-01.svg)
+    ![CMOS NOT inverter MOSFET schematic](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-01.svg)
 
     **NAND2**：$Z=\overline{A\cdot B}$（PFET 并联，NFET 串联）
 
-    ![CMOS NAND2 MOSFET schematic](/assets/images/tech/ic/03-cmos-02.svg)
+    ![CMOS NAND2 MOSFET schematic](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-02.svg)
 
     **NOR2**：$Z=\overline{A+B}$（PFET 串联，NFET 并联）
 
-    ![CMOS NOR2 MOSFET schematic](/assets/images/tech/ic/03-cmos-03.svg)
+    ![CMOS NOR2 MOSFET schematic](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-03.svg)
 
     **AND2**：$Z=A\cdot B$（NAND 后接反相器）
 
-    ![CMOS AND2 as NAND plus inverter](/assets/images/tech/ic/03-cmos-04.svg)
+    ![CMOS AND2 as NAND plus inverter](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-04.svg)
 
     **OR2**：$Z=A+B$（NOR 后接反相器）
 
-    ![CMOS OR2 as NOR plus inverter](/assets/images/tech/ic/03-cmos-05.svg)
+    ![CMOS OR2 as NOR plus inverter](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-05.svg)
 
     **Buffer**：$Z=A$（两级反相器）
 
-    ![CMOS buffer two inverters](/assets/images/tech/ic/03-cmos-06.svg)
+    ![CMOS buffer two inverters](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-06.svg)
 
     **Transmission Gate**（传输门）：$EN=1$ 时双向传信号
 
-    ![CMOS transmission gate MOSFET schematic](/assets/images/tech/ic/03-cmos-07.svg)
+    ![CMOS transmission gate MOSFET schematic](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-07.svg)
 
     **XOR2**：$Z=A\oplus B$（传输门 MUX 示意；另需 $\overline{A}$/$\overline{B}$ 反相器）
 
-    ![CMOS XOR2 transmission-gate schematic](/assets/images/tech/ic/03-cmos-08.svg)
+    ![CMOS XOR2 transmission-gate schematic](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-08.svg)
 
     **XNOR2**：$Z=\overline{A\oplus B}$（XOR 后接反相器）
 
-    ![CMOS XNOR2 schematic](/assets/images/tech/ic/03-cmos-09.svg)
+    ![CMOS XNOR2 schematic](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-09.svg)
 
     **AOI21**（讲义配方例）：$F=\overline{A+B\cdot C}$（上拉：A 串联于 B∥C；下拉：A 并联于 B–C 串联）
 
-    ![CMOS AOI21 MOSFET schematic](/assets/images/tech/ic/03-cmos-10.svg)
+    ![CMOS AOI21 MOSFET schematic](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-10.svg)
