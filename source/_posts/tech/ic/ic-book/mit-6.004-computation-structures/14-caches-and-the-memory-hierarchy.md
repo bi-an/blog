@@ -59,7 +59,7 @@ SRAM：按地址读写一整行（一个 location）。例：8 行 × 6 列 → 
 
 <img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/eba17048ae25f96b2186907043c3fce8_Slide07.png" alt="SRAM Write" width="80%"/>
 
-先把 bitline 驱动到目标值，再开 wordline；大驱动管压过单元内小逆变器，双稳态翻转到新态。几乎由接 0 的大 nFET 下拉完成（过功率小 pFET）。尺寸须仔细平衡以保证快且可靠——亦是模拟操作。
+先把 bitline 驱动到目标值，再开 wordline；大驱动管压过单元内小逆变器，双稳态翻转到新态。几乎由接 0 的大 nFET 下拉完成（克服单元内小 pFET）。尺寸须仔细平衡以保证快且可靠——亦是模拟操作。
 
 ## 7. 多端口 SRAM（Multiported SRAMs）
 

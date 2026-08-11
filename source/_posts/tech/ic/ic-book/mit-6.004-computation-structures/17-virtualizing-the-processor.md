@@ -159,7 +159,7 @@ OS 还处理“非法”操作码（硬件未直接实现的操作，也称 **UU
 
 `SWAPREG` 交换两寄存器。先让汇编器把 `swapreg(ra,rc)` 编成类似 ADDC 的二进制（literal=0，opcode=2）。仿真：从指令取出 RA/RC，换成 `UserMState` 数组字节偏移，交换暂存中的用户寄存器值；返回时装回 CPU，程序仿佛硬件执行了该指令。
 
-## 21. 与 OS 通信（Communicationg with the OS）
+## 21. 与 OS 通信（Communicating with the OS）
 
 <img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6d120de61ef824b804968c79bb355cf6_Slide22.png" alt="Communicating with the OS" width="80%"/>
 

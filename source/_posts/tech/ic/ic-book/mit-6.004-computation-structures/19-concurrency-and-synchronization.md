@@ -66,7 +66,7 @@ Dijkstra 提出 **semaphore**：共享整数 ≥0；操作：
 
 <img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c7b1ead2c4b41f946a2fcf649fcb15a8_Slide07.png" alt="Semaphores for Precedence" width="80%"/>
 
-配方：semaphore 初值 0；箭头**起点**后放 `signal(s)`，**终点**前放 `wait(s)`。例：A2 后 signal、B4 前 wait → 保证 A2 完成才开始 B4。初值 0 强制第一次 signal 先于第一次 wait。
+指南：semaphore 初值 0；箭头**起点**后放 `signal(s)`，**终点**前放 `wait(s)`。例：A2 后 signal、B4 前 wait → 保证 A2 完成才开始 B4。初值 0 强制第一次 signal 先于第一次 wait。
 
 ## 7. 用信号量做资源分配（Semaphores for Resource Allocation）
 
