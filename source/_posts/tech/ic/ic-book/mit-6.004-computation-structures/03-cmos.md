@@ -194,7 +194,7 @@ CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下
 
 理由：某输入从 0→1 时，受其控制的 NFET 由关→开（可能接通到 GND 的路径），PFET 由开→关（可能切断到 $V_{\mathrm{DD}}$ 的路径）。若输出因此变化，必是下拉被启用、上拉被禁用，即输出从 1→0。同理，输入下降对应输出上升。
 
-对非常数 CMOS 门：全部输入为 0 时输出必为 1（全部 NFET 关、全部 PFET 开）；全部输入为 1 时输出必为 0。因此**正逻辑**（positive logic，如 AND）不能用单个 CMOS 门实现——AND 真值表在全 0 / 全 1 时与上述结论矛盾，且 A=1、B 从 0→1 时输出上升而非下降。CMOS 设计者需熟练用反相逻辑拼出所需功能。[^common-gates]
+对非常数 CMOS 门：全部输入为 0 时输出必为 1（全部 NFET 关、全部 PFET 开）；全部输入为 1 时输出必为 0。因此**正逻辑**（positive logic，如 AND）不能用单个 CMOS 门实现——AND 真值表在全 0 / 全 1 时与上述结论矛盾，且 A=1、B 从 0→1 时输出上升而非下降。CMOS 设计者需熟练用反相逻辑拼出所需功能。
 
 ## 13. CMOS 时序规格（CMOS Timing Specifications）
 
@@ -202,7 +202,8 @@ CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下
 
 两级 CMOS 反相器串联，用来刻画**左级**反相器的时序。建立改变 $V_{\mathrm{IN}}$ 时的电学模型。
 
-$V_{\mathrm{IN}}$ 从数字 0→1：上拉 PFET 关、下拉 NFET 开，左级输出节点接到 GND。该节点的电学模型包括：连接左级输出与右级输入的**物理导线**的分布电阻与分布电容，以及右级 MOSFET **栅端电容**（图中常标为 $C_W$、$C_P$、$C_N$ 等）。输出接到 GND 后，电容上的电荷经**导线电阻**与导通 NFET 的**沟道电阻**泄放到 GND，导线电压最终达到地电位 $0\,\mathrm{V}$。$V_{\mathrm{IN}}$ 下降时过程对称：上拉 PFET 开、下拉 NFET 关，输出节点经导线与 PFET 沟道电阻向 $V_{\mathrm{DD}}$ 充电。
+- $V_{\mathrm{IN}}$ 从数字 0→1：上拉 PFET 关、下拉 NFET 开，左级输出节点接到 GND。该节点的电学模型包括：连接左级输出与右级输入的**物理导线**的分布电阻与分布电容，以及右级 MOSFET **栅端电容**（图中常标为 $C_W$、$C_P$、$C_N$ 等）。输出接到 GND 后，电容上的电荷经**导线电阻**与导通 NFET 的**沟道电阻**泄放到 GND，导线电压最终达到地电位 $0\,\mathrm{V}$。
+- $V_{\mathrm{IN}}$ 下降时过程对称：上拉 PFET 开、下拉 NFET 关，输出节点经导线与 PFET 沟道电阻向 $V_{\mathrm{DD}}$ 充电。
 
 再看随时间变化的电压波形。上图给出 $V_{\mathrm{IN}}$ 先升后降；输出呈电容经电阻充/放电的典型**指数**形状，由 **R–C 时间常数**刻画：
 
@@ -217,7 +218,7 @@ $V_{\mathrm{IN}}$ 从数字 0→1：上拉 PFET 关、下拉 NFET 开，左级�
 
 用信号阈值定义延迟的起止。
 
-**传播延迟**（propagation delay）$t_{\mathrm{PD}}$：从有效输入到有效输出的延迟**上界**。有效输入由 $V_{\mathrm{IL}}$、$V_{\mathrm{IH}}$ 界定；有效输出由 $V_{\mathrm{OL}}$、$V_{\mathrm{OH}}$ 界定。
+**传播延迟**（propagation delay）$t_{\mathrm{PD}}$：从有效输入到有效输出的延迟**上界** [^upper-bound-tpd]。有效输入由 $V_{\mathrm{IL}}$、$V_{\mathrm{IH}}$ 界定；有效输出由 $V_{\mathrm{OL}}$、$V_{\mathrm{OH}}$ 界定。
 
 - 上升输入：从 $V_{\mathrm{IN}}$ 越过 $V_{\mathrm{IH}}$，到 $V_{\mathrm{OUT}}$ 越过 $V_{\mathrm{OL}}$ 的时间间隔
 - 下降输入：从 $V_{\mathrm{IN}}$ 越过 $V_{\mathrm{IL}}$，到 $V_{\mathrm{OUT}}$ 越过 $V_{\mathrm{OH}}$ 的时间间隔
@@ -230,7 +231,7 @@ $t_{\mathrm{PD}}$ 须 $\ge$ 上述任意测得延迟；厂商还需覆盖工艺�
 
 <img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9e113bf15832689f78707177f411b52f_Slide16.png" alt="Contamination Delay" width="80%"/>
 
-**污染延迟**（contamination delay）$t_{\mathrm{CD}}$：输入开始变化、变为无效之后，输出仍保持原先有效值的时间。技术上是从无效输入到无效输出的延迟**下界**。
+**污染延迟**（contamination delay）$t_{\mathrm{CD}}$：输入开始变化、变为无效之后，输出仍保持原先有效值的时间。技术上是从无效输入到无效输出的延迟**下界** [^lower-bound-tcd]。
 
 - 上升输入：从 $V_{\mathrm{IN}}$ 越过 $V_{\mathrm{IL}}$（不再是有效 0），到 $V_{\mathrm{OUT}}$ 越过 $V_{\mathrm{OH}}$（不再是有效 1）
 - 下降输入：做对称测量
@@ -261,7 +262,7 @@ $t_{\mathrm{CD}}$ 须 $\le$ 任意测得该间隔。静态纪律并不强制要�
 
 <img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/028c371b2c5c10a44a097b088b643fcf_Slide19.png" alt="One Last Timing Issue" width="80%"/>
 
-非 CMOS 的 NOR 组合器件：A、B 初为 0，Z=1；B：0→1 后 Z 最终 1→0，跳变落在 $(t_{\mathrm{CD}}, t_{\mathrm{PD}})$ 窗口内（图中红阴影表示该区间无保证）。
+非 CMOS 的 NOR 组合器件：A、B 初为 0，Z=1；B：0→1 后 Z 最终 1→0，跳变落在 $(t_{\mathrm{CD}}, t_{\mathrm{PD}})$ 窗口内（图中红阴影表示该区间无保证）。[^nmos-nor]
 
 另一情形：A、B 初为 1，Z=0。真值表显示 A=1 时 Z 恒为 0，与 B 无关。B：1→0 后，经 $t_{\mathrm{PD}}$ 后 Z 仍应为 0；但**一般**在中间区间仍不能假设 Z 的行为——合法组合器件可在该窗口任意表现。
 
@@ -417,46 +418,14 @@ CMOS NOR：两输入皆为 1 时，NFET 导通、PFET 截止，Z 接 GND。B：1
        - **CMOS 逻辑门（上拉 + 下拉）**：NFET 组只做下拉，把输出接到 GND，提供强 0；PFET 组只做上拉，把输出接到 $V_{\mathrm{DD}}$，提供强 1。二者互补，输出始终是标准的 $0\,\mathrm{V}$ 或 $V_{\mathrm{DD}}$。
        - **传输门（transmission gate）**：若需要能双向传信号的独立开关，将 NFET 与 PFET **并联**（控制信号互补相位）。导通时低电平靠 NFET（强 0）、高电平靠 PFET（强 1），才接近无阈值损失的“理想开关”。
 
-[^common-gates]: **常见门电路的 MOSFET 实现**
+[^upper-bound-tpd]: 译者注：也就是说，在 $t_{\mathrm{PD}}$ 时间后，输出被保证进入新稳态。
 
-    符号约定：栅极带空心圆者为 **PFET**（接 $V_{\mathrm{DD}}$，上拉），不带圆者为 **NFET**（接 GND，下拉）。单个互补 CMOS 门天然反相；AND / OR / Buffer / XNOR 等需级联。
+[^lower-bound-tcd]: 译者注：也就是说，在 $t_{\mathrm{CD}}$ 时间内，输出被保证依然有效（此时段输入已经无效）。
 
-    **NOT**（反相器）：$Z=\overline{A}$
+[^nmos-nor]: 译者注：非 CMOS 的 NMOS 逻辑 NOR 门电路示意如下。
 
-    ![CMOS NOT inverter MOSFET schematic](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-01.svg)
+    ![NMOS 逻辑 NOR 门电路图](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-01.svg)
 
-    **NAND2**：$Z=\overline{A\cdot B}$（PFET 并联，NFET 串联）
-
-    ![CMOS NAND2 MOSFET schematic](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-02.svg)
-
-    **NOR2**：$Z=\overline{A+B}$（PFET 串联，NFET 并联）
-
-    ![CMOS NOR2 MOSFET schematic](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-03.svg)
-
-    **AND2**：$Z=A\cdot B$（NAND 后接反相器）
-
-    ![CMOS AND2 as NAND plus inverter](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-04.svg)
-
-    **OR2**：$Z=A+B$（NOR 后接反相器）
-
-    ![CMOS OR2 as NOR plus inverter](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-05.svg)
-
-    **Buffer**：$Z=A$（两级反相器）
-
-    ![CMOS buffer two inverters](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-06.svg)
-
-    **Transmission Gate**（传输门）：$EN=1$ 时双向传信号
-
-    ![CMOS transmission gate MOSFET schematic](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-07.svg)
-
-    **XOR2**：$Z=A\oplus B$（传输门 MUX 示意；另需 $\overline{A}$/$\overline{B}$ 反相器）
-
-    ![CMOS XOR2 transmission-gate schematic](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-08.svg)
-
-    **XNOR2**：$Z=\overline{A\oplus B}$（XOR 后接反相器）
-
-    ![CMOS XNOR2 schematic](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-09.svg)
-
-    **AOI21**（讲义配方例）：$F=\overline{A+B\cdot C}$（上拉：A 串联于 B∥C；下拉：A 并联于 B–C 串联）
-
-    ![CMOS AOI21 MOSFET schematic](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/03-cmos-10.svg)
+    - **上拉负载**（$M_L$）：使用耗尽型 NMOS（通道为连贯实线），将其栅极与源极短接（Gate-to-Source Short），使其恒定工作在饱和状态，充当一个高阻值的上拉电阻。
+    - **下拉驱动**（$M_A$、$M_B$）：使用两个增强型 NMOS（通道为断开虚线），它们的漏极（D）并联在一起连接到输出端 $Y$，源极（S）并联接地。
+    - **工作机制**：当 $A$ 或 $B$ 任意一个为高电平时，对应的增强型晶体管导通，提供一条低阻抗通路将输出 $Y$ 拉低到 GND（0）；只有当 $A$ 和 $B$ 均输入低电平时，$M_A$ 和 $M_B$ 全部截止，输出 $Y$ 才会被负载管 $M_L$ 上拉至高电平 $V_{\mathrm{DD}}$（1）。
