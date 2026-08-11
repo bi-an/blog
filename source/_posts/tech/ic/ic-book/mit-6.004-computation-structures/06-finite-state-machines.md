@@ -193,7 +193,7 @@ WALL1 中前进并右转后，外角处右触角可能碰不到墙。策略：CO
 
 <img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/65646bfa68276c029273f17c3296906f_Slide23.png" alt="Implementation Details" width="80%"/>
 
-完整表可用 don't-care 压缩行数。再对组合逻辑各输出（2 个下一状态比特 + 3 个运动输出）写布尔方程。下一状态比特用第 4 章 K-map 找质蕴涵覆盖，得最小 SOP；运动控制输出同法。
+完整表可用 don't-care 压缩行数。再对组合逻辑各输出（2 个下一状态比特 + 3 个运动输出）写布尔方程。下一状态比特用第 4 章 K-map 找素蕴涵项覆盖，得最小 SOP；运动控制输出同法。
 
 ## 23. 蚁脑原理图（Ant Schematic）
 

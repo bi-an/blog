@@ -41,9 +41,9 @@ mathjax: true
 
 <img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b98de863ffa12f5f6cc156110401efa1_Slide04.png" alt="CMOS Dynamic Power Dissipation I" width="80%"/>
 
-**动态功耗**：节点翻转充放电电容时消耗。以反相器为例：充/放电时电流经 MOSFET，瞬时功率 $I_{\mathrm{DS}}V_{\mathrm{DS}}$。对 1→0 积分（$I=C\,dV/dt$），若时钟周期 $t_{\mathrm{CLK}}$、每半周期一次翻转，经 pulldown 耗散能量为 $0.5\,f\,C\,V_{\mathrm{DD}}^2$（$f$ 为每秒翻转次数）。
+**动态功耗**：节点翻转充放电电容时消耗。以反相器为例：充/放电时电流经 MOSFET，瞬时功率 $I_{\mathrm{DS}}V_{\mathrm{DS}}$。对 1→0 积分（$I=C\,dV/dt$），若时钟周期 $t_{\mathrm{CLK}}$、每半周期一次翻转，经 pulldown 耗散的功率约为 $0.5\,f\,C\,V_{\mathrm{DD}}^2$（$f$ 为每秒翻转次数）。
 
-完整充→放一周期耗散 $fCV^2$ 焦耳；能量全部来自电源：一半充电容时耗散，一半存于电容后放电耗散。
+完整充→放一周期耗散 $CV_{\mathrm{DD}}^2$ 焦耳；频率 $f$ 时平均功率为 $fCV_{\mathrm{DD}}^2$ 瓦；能量全部来自电源：一半充电容时耗散，一半存于电容后放电耗散。
 
 ## 4. CMOS 动态功耗 II（CMOS Dynamic Power Dissipation II）
 
@@ -51,7 +51,7 @@ mathjax: true
 
 整电路：每周期约 $N$ 个节点翻转时，可据此估算总能耗。信封估算：1 GHz、1 亿内部节点、每节点 $\sim 1\,\mathrm{fF}$、$V_{\mathrm{DD}}\sim 1\,\mathrm{V}$ → 约 **100 W**——接近白炽灯泡，散热困难。笔记本 CPU 远低于此，靠设计技巧压功耗。
 
-降低 $V_{\mathrm{DD}}$（如 3.3 V→1 V） alone 可降功耗一个数量级以上（因 $\propto V^2$）。技术趋势使晶体管更多更快，若不精打细算会撞上功耗墙。
+单独降低 $V_{\mathrm{DD}}$（如 3.3 V→1 V）可降功耗一个数量级以上（因 $\propto V^2$）。技术趋势使晶体管更多更快，若不精打细算会撞上功耗墙。
 
 ## 5. 如何降低功耗？（How Can We Reduce Power?）
 
