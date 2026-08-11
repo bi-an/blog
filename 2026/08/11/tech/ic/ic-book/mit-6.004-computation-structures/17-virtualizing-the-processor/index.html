@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="整理自 MIT OCW 6.004 Computation Structures（Spring 2017）L17 注解幻灯片。 源网页：17.1 Annotated Slides | Virtualizing the Processor 讲师：Chris Terman。图片直接引用 OCW 原站链接。  L17：处理器虚拟化（Virtualizing the Processor） 本讲在虚拟内存">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MIT 6.004：L17 处理器虚拟化">
+<meta property="og:url" content="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/17-virtualizing-the-processor/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="整理自 MIT OCW 6.004 Computation Structures（Spring 2017）L17 注解幻灯片。 源网页：17.1 Annotated Slides | Virtualizing the Processor 讲师：Chris Terman。图片直接引用 OCW 原站链接。  L17：处理器虚拟化（Virtualizing the Processor） 本讲在虚拟内存">
+<meta property="og:locale">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ebe3973c0da509604a394edbd37ee0e4_Slide02.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7d3fc5431fbc939b402cb22d4c985231_Slide03.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/dbef9fc552cafe1f3db2ed4c7a0470bc_Slide04.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6ad8a765f3284bdba65e3b7bd486d584_Slide05.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/25ce2769ddc80e6ff5f423974196a881_Slide06.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ad7cab832e2aecb3b5a867db6c8d474e_Slide07.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d6670fe413417975b9fda1da9bb29dd2_Slide08.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7a3b021599c4998f58012f9ee89a6ce5_Slide09.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ae8664cf9dfb250d4b23116e9ece7ed2_Slide10.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/bb281cd561578935de610a93a0d44148_Slide11.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f1bf8de120b832b3c8669cf9d70b995b_Slide12.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e55cb228555ac05a7c3a0b41934740fc_Slide13.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/51a97449df75ff4c76344c6f4c239e51_Slide14.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b878b7906da283f09b440eed109cbf85_Slide15.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3d22bc6b9aaa3fa0264ceb19c5a3df47_Slide16.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9522bb18e4d72ee1b12b8f1c4a53d3d2_Slide17.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/92d986674ebe1d14073fc3fd6632d153_Slide18.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ae7db9b0d6370c1dd569de0b6e662485_Slide19.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/87c9f660315ff45bd58eaf4257236658_Slide20.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/063af60e32a9c5a351460b64c8f8e5c4_Slide21.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6d120de61ef824b804968c79bb355cf6_Slide22.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c81038573a315480603fe64210cba75b_Slide23.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/caac10bd3f504fcebbac1ce574035f3a_Slide24.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/fe48584cc38c4c9a507537f8f5451ade_Slide25.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8c447300eb481650620c299f41126888_Slide26.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/93391eba1ea88886265bce2a3f5e2ff4_Slide27.png">
+<meta property="article:published_time" content="2026-08-11T17:40:00.000Z">
+<meta property="article:modified_time" content="2026-08-11T09:41:52.784Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="ic">
+<meta property="article:tag" content="semiconductor">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ebe3973c0da509604a394edbd37ee0e4_Slide02.png">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/17-virtualizing-the-processor/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>MIT 6.004：L17 处理器虚拟化 | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/17-virtualizing-the-processor/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MIT 6.004：L17 处理器虚拟化
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2026-08-11 17:40:00 / Modified: 09:41:52" itemprop="dateCreated datePublished" datetime="2026-08-11T17:40:00+00:00">2026-08-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/ic/" itemprop="url" rel="index"><span itemprop="name">ic</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>整理自 MIT OCW <strong>6.004 Computation Structures</strong>（Spring 2017）L17 注解幻灯片。</p>
+<p>源网页：<a target="_blank" rel="noopener" href="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/pages/c17/c17s1/">17.1 Annotated Slides | Virtualizing the Processor</a></p>
+<p>讲师：Chris Terman。图片直接引用 OCW 原站链接。</p>
+</blockquote>
+<h1>L17：处理器虚拟化（Virtualizing the Processor）</h1>
+<p>本讲在虚拟内存之上引入 <strong>process</strong> 与 <strong>虚拟机</strong> 抽象：用定时器中断做 <strong>timesharing</strong>、在 kernel/user 模式间切换保存恢复状态；并用非法指令异常做指令仿真与 <strong>SVC</strong>（supervisor call）系统调用。</p>
+<h2 id="1-回顾：虚拟内存（Review-Virtual-Memory）">1. 回顾：虚拟内存（Review: Virtual Memory）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ebe3973c0da509604a394edbd37ee0e4_Slide02.png" alt="Review Virtual Memory" width="80%"/>
+<p>上讲引入虚拟内存与 <strong>MMU</strong>：CPU 虚地址 → 主存物理地址，多程序可各享独立大地址空间。虚/实空间都按页划分；例：页 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>12</mn></msup></mrow><annotation encoding="application/x-tex">2^{12}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8141em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">12</span></span></span></span></span></span></span></span></span></span></span></span> 字节、32 位地址 → <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>20</mn></msup></mrow><annotation encoding="application/x-tex">2^{20}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8141em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">20</span></span></span></span></span></span></span></span></span></span></span></span> 页，高 20 位页号、低 12 位偏移。</p>
+<p>MMU 用页表把 VPN 映到 PPN（常多层，仅驻留活跃部分）；<strong>TLB</strong> 缓存近期翻译。已分配虚存内容在辅存；不在主存则 <strong>page fault</strong>，OS 装页。实践中每程序仅活跃页驻留主存。</p>
+<h2 id="2-MMU-地址翻译（MMU-Address-Translation）">2. MMU 地址翻译（MMU Address Translation）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7d3fc5431fbc939b402cb22d4c985231_Slide03.png" alt="MMU Address Translation" width="80%"/>
+<p>先查 TLB；未命中再 walk 分层页表；不驻留则 page fault。映射 context 由两寄存器控制：<strong>context-number</strong>（TLB 可见哪些映射）与 <strong>page-directory</strong>（页目录所在物理页）。重载二者即可换 context。</p>
+<p>多 context 需要够大的 TLB 同时缓存各进程热点映射，以及若干物理页存放页目录/页表段。例：两端各约 1024 页的两级页表用 3 页即可覆盖约 8MB 代码/栈/堆——对许多简单程序足够。</p>
+<h2 id="3-Context（Contexts）">3. Context（Contexts）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/dbef9fc552cafe1f3db2ed4c7a0470bc_Slide04.png" alt="Contexts" width="80%"/>
+<p>页表构造虚→实翻译所需的 context。多任务希望支持多 context 并快速切换，从而共享物理内存：两程序都可把虚地址 0 当入口，却落到不同物理页。换程序时做 <strong>context switch</strong>。接下来弄清如何共享 CPU。</p>
+<h2 id="4-构建虚拟机（Building-a-Virtual-Machine-VM-）">4. 构建虚拟机（Building a Virtual Machine (VM)）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6ad8a765f3284bdba65e3b7bd486d584_Slide05.png" alt="Building a Virtual Machine VM" width="80%"/>
+<p>抽象 <strong>process</strong>（进程）= 正在运行的程序及其资源（CPU、MMU、I/O 等）。<strong>进程状态</strong>包括：</p>
+<ul>
+<li>CPU 硬件状态：寄存器与 PC</li>
+<li>虚地址空间内容：代码、数据、栈、堆对象（可在主存或辅存）</li>
+<li>MMU 状态：context-number、page-directory，以及分层页表占用的页</li>
+<li>I/O 相关：文件读写位置、网络缓冲、键盘/鼠标事件等</li>
+</ul>
+<p>特权进程 <strong>OS</strong> 跑在 kernel context，记账并周期调度各进程，提供文件、网络、窗口等服务。换用户进程须保存/恢复<strong>完整</strong>状态（主存中已有部分、内核数据结构、CPU/MMU 硬件）。目标：让每进程以为独占一台独立 <strong>虚拟机</strong>，高效共享一台物理机。</p>
+<h2 id="5-每进程一台-VM（One-VM-For-Each-Process）">5. 每进程一台 VM（One VM For Each Process）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/25ce2769ddc80e6ff5f423974196a881_Slide06.png" alt="One VM For Each Process" width="80%"/>
+<p>底层是物理机：CPU + 主存，外加外设（timer、辅存、USB、网络、显示器/键鼠等）。OS 在特权 kernel context 管理外设与 MMU，为每进程造出虚拟机。</p>
+<p>用户代码直接在物理 CPU 上跑，但可被 timer 打断，使 OS 保存当前进程、切换下一进程。经 MMU，每进程有隔离的虚地址空间。OS 提供的虚拟外设屏蔽共享细节（窗口像素、键盘焦点归属哪个进程等）：进程看到的是 I/O 事件流，而非直接操纵设备。</p>
+<h2 id="6-进程：多路复用-CPU（Processes-Multiplexing-the-CPU）">6. 进程：多路复用 CPU（Processes: Multiplexing the CPU）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ad7cab832e2aecb3b5a867db6c8d474e_Slide07.png" alt="Processes Multiplexing the CPU" width="80%"/>
+<p>从进程 #0 切到 #1：用户态执行被 yield 或更常见的 <strong>timer interrupt</strong> 打断 → 进内核（PC+4 存入 XP）。OS 把 #0 状态写入内核表，再装入先前保存的 #1 状态，<code>JMP</code> 回到用户态——#1 从上次被打断处继续。轮转各进程。</p>
+<p>对进程而言，<strong>虚拟时间</strong>只是指令序列；若不看实时钟，感觉不到偶尔被挂起。从外部看，真实时间在进程间与 OS 切换间穿梭。CPU 时间多路复用称 <strong>timesharing</strong>。</p>
+<h2 id="7-关键技术：定时器中断（Key-Technology-Timer-Interrupts）">7. 关键技术：定时器中断（Key Technology: Timer Interrupts）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d6670fe413417975b9fda1da9bb29dd2_Slide08.png" alt="Key Technology Timer Interrupts" width="80%"/>
+<p>外设断言 Beta 的 <strong>IRQ</strong>。若在 user mode（PC 中 supervisor 位为 0），识别中断的那拍：强制部分控制信号——<code>PCSEL=4</code> 选内核入口（timer 为 <code>0x80000008</code>，同时 PC[31]=1 进入 kernel）；<code>WASEL/WDSEL/WERF</code> 把 PC+4 写入 XP（R30）；<code>MWR=0</code> 以正确中止可能正在进行的 ST。下一拍从中断处理程序第一条指令开始。</p>
+<h2 id="8-Beta-中断处理（Beta-Interrupt-Handling）">8. Beta 中断处理（Beta Interrupt Handling）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7a3b021599c4998f58012f9ee89a6ce5_Slide09.png" alt="Beta Interrupt Handling" width="80%"/>
+<p>硬件极简：存 PC+4 到 XP，并把 PC 设为依中断类型而定的入口。其余由软件完成：把 R0–R30 存入内核结构 <strong>UserMState</strong>，再调 C 处理函数；返回后从 UserMState 恢复，XP 减 4 指向被打断指令，<code>JMP(XP)</code> 回用户态。</p>
+<p>简单 Beta 把各类中断入口放在连续字（reset→0，非法指令→4，timer→8…），第一条常是跳到真正处理代码；PC[31]=1。也可在已知地址放向量表，由硬件取入口——功能等价。因保存/恢复完整状态，中断对用户程序<strong>透明</strong>。</p>
+<h2 id="9-例：定时器中断处理（Example-Timer-Interrupt-Handler）">9. 例：定时器中断处理（Example: Timer Interrupt Handler）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ae8664cf9dfb250d4b23116e9ece7ed2_Slide10.png" alt="Example Timer Interrupt Handler" width="80%"/>
+<p>先用 timer 更新 OS 中的 <strong>TOD</strong>（time of day），设每 1/60 秒中断一次。用户程序无需特殊处理；周期进入内核时钟处理再恢复，宛如未发生。若需 TOD，向 OS 发服务请求。汇编桩负责保存/恢复状态，中间调 C 过程。</p>
+<h2 id="10-中断处理代码（Interrupt-Handler-Coding）">10. 中断处理代码（Interrupt Handler Coding）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/bb281cd561578935de610a93a0d44148_Slide11.png" alt="Interrupt Handler Coding" width="80%"/>
+<p>C 侧声明 TOD、<code>UserMState</code> 与递增 TOD 的过程。地址 8 的 <code>BR</code> 转到 <code>CLOCK_H</code>：保存寄存器（R31 恒 0 可不存）、建内核栈、调 C；返回后恢复寄存器，XP-=4，<code>JMP(XP)</code>。</p>
+<p>与分时的联系：在 timer handler 里每隔若干次（如 <code>QUANTUM</code>）调用 <strong>Scheduler()</strong>——分时魔法发生处。</p>
+<h2 id="11-简单分时调度（Simple-Timesharing-Scheduler）">11. 简单分时调度（Simple Timesharing Scheduler）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f1bf8de120b832b3c8669cf9d70b995b_Slide12.png" alt="Simple Timesharing Scheduler" width="80%"/>
+<p><code>UserMState</code> 暂存中断期间的用户寄存器；<strong>PCB</strong>（process control block）数组为每进程长期保存完整状态：寄存器副本、MMU 状态、I/O（如虚拟控制台编号）等。<code>CUR</code> 指向当前进程。</p>
+<p><code>Scheduler()</code>：把暂存状态写入当前 PCB → <code>CUR</code> 轮转到下一进程（到尾回 0）→ 从新 PCB 装入暂存区并配置 MMU → 返回后 clock handler 把更新后的状态装回 CPU 并恢复执行。于是换到新进程。</p>
+<h2 id="12-OS-组织：进程（OS-Organization-Processes）">12. OS 组织：进程（OS Organization: Processes）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e55cb228555ac05a7c3a0b41934740fc_Slide13.png" alt="OS Organization Processes" width="80%"/>
+<p>再走一遍：timer 打断用户程序 → 进 clock handler → 寄存器进 <code>UserMState</code> →（若调用）<code>Scheduler</code> 写入当前 PCB、装入下一进程暂存 → handler 装回 CPU → 从新进程继续。</p>
+<h2 id="13-一次一个中断（One-Interrupt-at-a-Time）">13. 一次一个中断（One Interrupt at a Time）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/51a97449df75ff4c76344c6f4c239e51_Slide14.png" alt="One Interrupt at a Time" width="80%"/>
+<p>内核 supervisor 位为 1 时<strong>关中断</strong>，避免嵌套中断覆盖 <code>UserMState</code>。因此 OS 代码须极度小心：死循环无法被打断，机器像“冻住”，只能断电重启。用户态允许中断，失控程序仍可被键盘等打断；OS 常有热键挂起当前进程并可选保存现场供调试。</p>
+<h2 id="14-异常硬件（Exception-Hardware）">14. 异常硬件（Exception Hardware）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b878b7906da283f09b440eed109cbf85_Slide15.png" alt="Exception Hardware" width="80%"/>
+<p>OS 还处理“非法”操作码（硬件未直接实现的操作，也称 <strong>UUO</strong>）。行为类似中断，但是 CPU 自身触发：挂起当前指令，把 PC+4 写入 XP，PC←<code>0x80000004</code>（含 supervisor 位），进入内核处理。可用软件<strong>仿真</strong>扩展指令集。</p>
+<h2 id="15-异常处理（Exception-Handling）">15. 异常处理（Exception Handling）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3d22bc6b9aaa3fa0264ceb19c5a3df47_Slide16.png" alt="Exception Handling" width="80%"/>
+<p>类似实验用 TinyOS：地址 0 起是各类中断/异常的分支；非法指令走位置 4 的 <code>BR(I_IllOp)</code>。其后分配 OS 栈、<code>UserMState</code>、进程表等数据结构。</p>
+<h2 id="16-实用宏（Useful-Macros）">16. 实用宏（Useful Macros）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9522bb18e4d72ee1b12b8f1c4a53d3d2_Slide17.png" alt="Useful Macros" width="80%"/>
+<p>汇编里用宏展开重复序列。例：从 32 位数提取比特域 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">[</mo><mi>N</mi><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mi>M</mi><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[N..M]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord mathnormal" style="margin-right:0.109em;">N</span><span class="mord">..</span><span class="mord mathnormal" style="margin-right:0.109em;">M</span><span class="mclose">]</span></span></span></span>（bit 31 为 MSB）。另有宏把 CPU 寄存器批量保存到 / 从 <code>UserMState</code> 恢复。</p>
+<h2 id="17-IllOp-处理（Illop-Handler）">17. IllOp 处理（Illop Handler）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/92d986674ebe1d14073fc3fd6632d153_Slide18.png" alt="Illop Handler" width="80%"/>
+<p>标准开头：保存用户寄存器、初始化 OS 栈。取出非法指令——保存的 PC+4 是<strong>用户虚地址</strong>，须经 MMU 例程换成物理地址再读。用 opcode 索引 <strong>dispatch table</strong>（64 项）跳到对应处理：多数进 <code>UUOError</code>；opcode 1 作 <strong>supervisor call</strong>；opcode 2 仿真 <code>SWAPREG</code>。表驱动分派通常比长串比较更省时省空间。</p>
+<h2 id="18-访问用户地址（Accessing-User-Locations）">18. 访问用户地址（Accessing User Locations）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ae7db9b0d6370c1dd569de0b6e662485_Slide19.png" alt="Accessing User Locations" width="80%"/>
+<p>基于上讲 <strong>VtoP</strong>：把 VPN 与偏移按约定压栈，返回物理地址于 R0，再以物理地址读主存中的用户位置。</p>
+<h2 id="19-真正非法操作码（Handler-for-Actual-Illops）">19. 真正非法操作码（Handler for Actual Illops）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/87c9f660315ff45bd58eaf4257236658_Slide20.png" alt="Handler for Actual Illops" width="80%"/>
+<p>对真正非法的 opcode：打印错误信息并崩溃（如 Windows “蓝屏”）。更好做法：把进程状态写入调试文件（历史称 <strong>core dump</strong>），终止该进程并提示用户，稍后再用调试器查 dump——而非拖垮整机。</p>
+<h2 id="20-仿真指令：swapreg（Emulated-Instruction-swapreg-Ra-Rc-）">20. 仿真指令：swapreg（Emulated Instruction: swapreg(Ra,Rc)）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/063af60e32a9c5a351460b64c8f8e5c4_Slide21.png" alt="Emulated Instruction swapreg" width="80%"/>
+<p><code>SWAPREG</code> 交换两寄存器。先让汇编器把 <code>swapreg(ra,rc)</code> 编成类似 ADDC 的二进制（literal=0，opcode=2）。仿真：从指令取出 RA/RC，换成 <code>UserMState</code> 数组字节偏移，交换暂存中的用户寄存器值；返回时装回 CPU，程序仿佛硬件执行了该指令。</p>
+<h2 id="21-与-OS-通信（Communicationg-with-the-OS）">21. 与 OS 通信（Communicationg with the OS）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6d120de61ef824b804968c79bb355cf6_Slide22.png" alt="Communicating with the OS" width="80%"/>
+<p>用户与 OS 不同 MMU context，不能直接碰 OS 代码/数据（也不应绕过安全策略）。需要在明确入口调用 OS，经寄存器或用户虚存传参——即 <strong>supervisor call / SVC</strong>，构成受控 API（如 POSIX）。</p>
+<p>约定：opcode=1 的非法指令作 SVC，低位字段索引具体服务。</p>
+<h2 id="22-OS-组织：SVC（OS-Organization-Supervisor-Calls）">22. OS 组织：SVC（OS Organization: Supervisor Calls）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c81038573a315480603fe64210cba75b_Slide23.png" alt="OS Organization Supervisor Calls" width="80%"/>
+<p>用户程序执行不同索引的 SVC → 硬件当非法指令进 IllOp → 保存状态 → 按 opcode 分派；SVC 子处理可读用户寄存器或用户虚地址，返回值可写回暂存（如覆盖保存的 R0）→ 恢复寄存器，从 SVC <strong>下一条</strong>继续。</p>
+<h2 id="23-SVC-处理（Handler-for-SVCs）">23. SVC 处理（Handler for SVCs）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/caac10bd3f504fcebbac1ce574035f3a_Slide24.png" alt="Handler for SVCs" width="80%"/>
+<p>opcode=1 的子处理再用指令低位索引第二张 dispatch 表（TinyOS 仅少数简单服务）。真实 OS 会有文件、网络、虚存、创建进程等大量 SVC。</p>
+<h2 id="24-返回用户态（Returning-to-User-mode）">24. 返回用户态（Returning to User-mode）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/fe48584cc38c4c9a507537f8f5451ade_Slide25.png" alt="Returning to User-mode" width="80%"/>
+<p>完成则恢复寄存器并对 XP 指向的下一条 <code>JMP</code>。若暂时无法完成（如 <code>ReadCh</code> 尚无字符）→ 转 <code>I_Wait</code>：安排下次再执行该 SVC，并 <code>Scheduler()</code> 让其他进程跑。</p>
+<p>同套代码也实现：<code>Yield()</code> 主动放弃本时间片；<code>Halt()</code> 名不副实——每次被调度到都重做 Halt SVC 再调度别人，后续指令永不执行，表现为停机。</p>
+<h2 id="25-添加新-SVC（Adding-New-SVCs）">25. 添加新 SVC（Adding New SVCs）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8c447300eb481650620c299f41126888_Slide26.png" alt="Adding New SVCs" width="80%"/>
+<p>步骤：为用户程序定义新 SVC 宏（如 get/set TOD）；微调 SVC 分派范围；在 dispatch 表末尾加项。</p>
+<h2 id="26-新-SVC-处理程序（New-SVC-Handlers）">26. 新 SVC 处理程序（New SVC Handlers）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/93391eba1ea88886265bce2a3f5e2ff4_Slide27.png" alt="New SVC Handlers" width="80%"/>
+<p>处理程序经 <code>UserMState</code> 读写用户 R0 等，几条指令即可完成。SVC 提供受控的 OS 服务入口；且在 supervisor 模式关中断，处理程序<strong>不可被打断</strong>——若需 <code>LD/ADDC/ST</code> 原子递增主存变量，可封装为 SVC。本讲为简单分时 OS 打下基础；下讲继续看 OS 如何与外部 I/O 设备交互。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/ic/" rel="tag"># ic</a>
+              <a href="/blog/tags/semiconductor/" rel="tag"># semiconductor</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/16-virtual-memory/" rel="prev" title="MIT 6.004：L16 虚拟内存">
+      <i class="fa fa-chevron-left"></i> MIT 6.004：L16 虚拟内存
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/18-devices-and-interrupts/" rel="next" title="MIT 6.004：L18 设备与中断">
+      MIT 6.004：L18 设备与中断 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-text">L17：处理器虚拟化（Virtualizing the Processor）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E5%9B%9E%E9%A1%BE%EF%BC%9A%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%EF%BC%88Review-Virtual-Memory%EF%BC%89"><span class="nav-text">1. 回顾：虚拟内存（Review: Virtual Memory）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-MMU-%E5%9C%B0%E5%9D%80%E7%BF%BB%E8%AF%91%EF%BC%88MMU-Address-Translation%EF%BC%89"><span class="nav-text">2. MMU 地址翻译（MMU Address Translation）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Context%EF%BC%88Contexts%EF%BC%89"><span class="nav-text">3. Context（Contexts）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E6%9E%84%E5%BB%BA%E8%99%9A%E6%8B%9F%E6%9C%BA%EF%BC%88Building-a-Virtual-Machine-VM-%EF%BC%89"><span class="nav-text">4. 构建虚拟机（Building a Virtual Machine (VM)）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-%E6%AF%8F%E8%BF%9B%E7%A8%8B%E4%B8%80%E5%8F%B0-VM%EF%BC%88One-VM-For-Each-Process%EF%BC%89"><span class="nav-text">5. 每进程一台 VM（One VM For Each Process）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-%E8%BF%9B%E7%A8%8B%EF%BC%9A%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8-CPU%EF%BC%88Processes-Multiplexing-the-CPU%EF%BC%89"><span class="nav-text">6. 进程：多路复用 CPU（Processes: Multiplexing the CPU）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-%E5%85%B3%E9%94%AE%E6%8A%80%E6%9C%AF%EF%BC%9A%E5%AE%9A%E6%97%B6%E5%99%A8%E4%B8%AD%E6%96%AD%EF%BC%88Key-Technology-Timer-Interrupts%EF%BC%89"><span class="nav-text">7. 关键技术：定时器中断（Key Technology: Timer Interrupts）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#8-Beta-%E4%B8%AD%E6%96%AD%E5%A4%84%E7%90%86%EF%BC%88Beta-Interrupt-Handling%EF%BC%89"><span class="nav-text">8. Beta 中断处理（Beta Interrupt Handling）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#9-%E4%BE%8B%EF%BC%9A%E5%AE%9A%E6%97%B6%E5%99%A8%E4%B8%AD%E6%96%AD%E5%A4%84%E7%90%86%EF%BC%88Example-Timer-Interrupt-Handler%EF%BC%89"><span class="nav-text">9. 例：定时器中断处理（Example: Timer Interrupt Handler）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#10-%E4%B8%AD%E6%96%AD%E5%A4%84%E7%90%86%E4%BB%A3%E7%A0%81%EF%BC%88Interrupt-Handler-Coding%EF%BC%89"><span class="nav-text">10. 中断处理代码（Interrupt Handler Coding）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#11-%E7%AE%80%E5%8D%95%E5%88%86%E6%97%B6%E8%B0%83%E5%BA%A6%EF%BC%88Simple-Timesharing-Scheduler%EF%BC%89"><span class="nav-text">11. 简单分时调度（Simple Timesharing Scheduler）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#12-OS-%E7%BB%84%E7%BB%87%EF%BC%9A%E8%BF%9B%E7%A8%8B%EF%BC%88OS-Organization-Processes%EF%BC%89"><span class="nav-text">12. OS 组织：进程（OS Organization: Processes）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#13-%E4%B8%80%E6%AC%A1%E4%B8%80%E4%B8%AA%E4%B8%AD%E6%96%AD%EF%BC%88One-Interrupt-at-a-Time%EF%BC%89"><span class="nav-text">13. 一次一个中断（One Interrupt at a Time）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#14-%E5%BC%82%E5%B8%B8%E7%A1%AC%E4%BB%B6%EF%BC%88Exception-Hardware%EF%BC%89"><span class="nav-text">14. 异常硬件（Exception Hardware）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#15-%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%EF%BC%88Exception-Handling%EF%BC%89"><span class="nav-text">15. 异常处理（Exception Handling）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#16-%E5%AE%9E%E7%94%A8%E5%AE%8F%EF%BC%88Useful-Macros%EF%BC%89"><span class="nav-text">16. 实用宏（Useful Macros）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#17-IllOp-%E5%A4%84%E7%90%86%EF%BC%88Illop-Handler%EF%BC%89"><span class="nav-text">17. IllOp 处理（Illop Handler）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#18-%E8%AE%BF%E9%97%AE%E7%94%A8%E6%88%B7%E5%9C%B0%E5%9D%80%EF%BC%88Accessing-User-Locations%EF%BC%89"><span class="nav-text">18. 访问用户地址（Accessing User Locations）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#19-%E7%9C%9F%E6%AD%A3%E9%9D%9E%E6%B3%95%E6%93%8D%E4%BD%9C%E7%A0%81%EF%BC%88Handler-for-Actual-Illops%EF%BC%89"><span class="nav-text">19. 真正非法操作码（Handler for Actual Illops）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#20-%E4%BB%BF%E7%9C%9F%E6%8C%87%E4%BB%A4%EF%BC%9Aswapreg%EF%BC%88Emulated-Instruction-swapreg-Ra-Rc-%EF%BC%89"><span class="nav-text">20. 仿真指令：swapreg（Emulated Instruction: swapreg(Ra,Rc)）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#21-%E4%B8%8E-OS-%E9%80%9A%E4%BF%A1%EF%BC%88Communicationg-with-the-OS%EF%BC%89"><span class="nav-text">21. 与 OS 通信（Communicationg with the OS）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#22-OS-%E7%BB%84%E7%BB%87%EF%BC%9ASVC%EF%BC%88OS-Organization-Supervisor-Calls%EF%BC%89"><span class="nav-text">22. OS 组织：SVC（OS Organization: Supervisor Calls）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#23-SVC-%E5%A4%84%E7%90%86%EF%BC%88Handler-for-SVCs%EF%BC%89"><span class="nav-text">23. SVC 处理（Handler for SVCs）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#24-%E8%BF%94%E5%9B%9E%E7%94%A8%E6%88%B7%E6%80%81%EF%BC%88Returning-to-User-mode%EF%BC%89"><span class="nav-text">24. 返回用户态（Returning to User-mode）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#25-%E6%B7%BB%E5%8A%A0%E6%96%B0-SVC%EF%BC%88Adding-New-SVCs%EF%BC%89"><span class="nav-text">25. 添加新 SVC（Adding New SVCs）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#26-%E6%96%B0-SVC-%E5%A4%84%E7%90%86%E7%A8%8B%E5%BA%8F%EF%BC%88New-SVC-Handlers%EF%BC%89"><span class="nav-text">26. 新 SVC 处理程序（New SVC Handlers）</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">148</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">44</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://cuda-doc.readthedocs.io/" title="https:&#x2F;&#x2F;cuda-doc.readthedocs.io" rel="noopener" target="_blank">CUDA中文手册</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://infiniband-doc.readthedocs.io/" title="https:&#x2F;&#x2F;infiniband-doc.readthedocs.io&#x2F;" rel="noopener" target="_blank">InfiniBand中文手册</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+      
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.css">
+
+
+  
+
+</body>
+</html>

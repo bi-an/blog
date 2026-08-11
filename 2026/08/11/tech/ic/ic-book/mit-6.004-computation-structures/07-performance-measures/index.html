@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="整理自 MIT OCW 6.004 Computation Structures（Spring 2017）L07 注解幻灯片。 源网页：7.1 Annotated Slides | Performance Measures 讲师：Chris Terman。图片直接引用 OCW 原站链接。  L07：性能度量（Performance Measures） 本讲引入电路性能的两个核心指标——延迟（la">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MIT 6.004：L07 性能度量">
+<meta property="og:url" content="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/07-performance-measures/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="整理自 MIT OCW 6.004 Computation Structures（Spring 2017）L07 注解幻灯片。 源网页：7.1 Annotated Slides | Performance Measures 讲师：Chris Terman。图片直接引用 OCW 原站链接。  L07：性能度量（Performance Measures） 本讲引入电路性能的两个核心指标——延迟（la">
+<meta property="og:locale">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d6582155063b1c16b910994c85863d39_Slide02.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e811412181958549fbd020ffc7112bdd_Slide03.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/87a4ef9b1ec887d44fdd397ec4b8d8d4_Slide04.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/18fb620ed12f44707f03bbc0c2e86907_Slide05.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/304cac088dc2ec2d71b1dea906bc6cff_Slide06.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1865d06fbffabb7ed55d3495e6e3fc49_Slide07.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3c49942983b8923bf8468502c767cb90_Slide08.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6ea4cc61191c176d87723be128e03557_Slide09.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3a00e78ac07876065860e2558dca63e2_Slide10.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d4554aabe86a12a8bf6916fd9aa4343e_Slide11.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1c6066766cac53e2989193aea6d86ad8_Slide12.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f3bac46be064881fff7c90377f866a7d_Slide13.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a03876c64c760542b04daac6d68d952c_Slide14.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/51a7b346cc008492b2fe858bbc87aa2d_Slide15.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/0ff3be50c93f8a0bdae7377a59c50003_Slide16.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a9bbd6a9fb3ac12430d195d6ab2acb52_Slide17.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ecff151361dc49a6385d43586a4206be_Slide18.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2268c55549658764fca3a121f8f01ae5_Slide19.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c6174e7cedd15d7a8e92944c4f1e39db_Slide20.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/de7bb56a3ba1632bf184be09d64917e5_Slide21.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ea6e83a9fb0166ece1d8f4be16600645_Slide22.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/386f6b54bc5a9d726f41408893285d29_Slide23.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3fc94c91527edd265a92dd065d445713_Slide24.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a993459f2f9be5250c436968bbc8c192_Slide25.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/0f5d1622c5859b68fac7a42454648c48_Slide26.png">
+<meta property="article:published_time" content="2026-08-11T17:22:06.000Z">
+<meta property="article:modified_time" content="2026-08-11T09:41:52.784Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="ic">
+<meta property="article:tag" content="semiconductor">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d6582155063b1c16b910994c85863d39_Slide02.png">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/07-performance-measures/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>MIT 6.004：L07 性能度量 | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/07-performance-measures/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MIT 6.004：L07 性能度量
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2026-08-11 17:22:06 / Modified: 09:41:52" itemprop="dateCreated datePublished" datetime="2026-08-11T17:22:06+00:00">2026-08-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/ic/" itemprop="url" rel="index"><span itemprop="name">ic</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>整理自 MIT OCW <strong>6.004 Computation Structures</strong>（Spring 2017）L07 注解幻灯片。</p>
+<p>源网页：<a target="_blank" rel="noopener" href="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/pages/c7/c7s1/">7.1 Annotated Slides | Performance Measures</a></p>
+<p>讲师：Chris Terman。图片直接引用 OCW 原站链接。</p>
+</blockquote>
+<h1>L07：性能度量（Performance Measures）</h1>
+<p>本讲引入电路性能的两个核心指标——<strong>延迟</strong>（latency）与<strong>吞吐</strong>（throughput），并用洗衣店类比说明流水线如何用略增延迟换取更高吞吐；随后给出构造良构 <strong>K 级流水线</strong>（K-pipeline）的系统方法，以及用<strong>交错</strong>（interleaving）与<strong>并行</strong>突破瓶颈；最后对比同步全局定时、握手与自定时等控制结构。</p>
+<h2 id="1-先放下电路…-解决一个真实问题（Forget-Circuits…-Let’s-Solve-a-Real-Problem）">1. 先放下电路… 解决一个真实问题（Forget Circuits… Let’s Solve a Real Problem）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d6582155063b1c16b910994c85863d39_Slide02.png" alt="Forget Circuits Let's Solve a Real Problem" width="80%"/>
+<p>目标：提出衡量电路性能的指标，并研究如何提升。先放下电路，用日常例子帮助理解这些指标。</p>
+<p>洗衣是人人都会遇到的“处理任务”。系统输入是若干篮脏衣，输出是洗净、烘干并叠好的同批衣物。两个部件：洗衣机 30 分钟洗一篮，烘干机 60 分钟烘一篮。路径简单：先洗后烘；假设尽快推进，一步能走就走下一步。攒多篮再洗往往更划算——下面说明原因。</p>
+<h2 id="2-一次一篮（One-Load-at-a-Time）">2. 一次一篮（One Load at a Time）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e811412181958549fbd020ffc7112bdd_Slide03.png" alt="One Load at a Time" width="80%"/>
+<p>单篮：洗 30 分钟 + 烘 60 分钟 = 从输入到输出共 90 分钟。若比作组合逻辑，传播延迟就是 90 分钟。接着考虑 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 篮。</p>
+<h2 id="3-洗-N-篮：哈佛式（Doing-N-Loads-of-Laundry）">3. 洗 N 篮：哈佛式（Doing N Loads of Laundry）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/87a4ef9b1ec887d44fdd397ec4b8d8d4_Slide04.png" alt="Doing N Loads of Laundry Harvard way" width="80%"/>
+<p>想象“哈佛式”做法：严格按组合逻辑节奏——上一组输入算完、输出有效后，才喂下一组。步骤 1 洗第一篮，步骤 2 烘第一篮，共 90 分钟；再进入步骤 3 处理第二篮……总时间 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>×</mo><mn>90</mn></mrow><annotation encoding="application/x-tex">N\times 90</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">90</span></span></span></span> 分钟。</p>
+<p>类比清晰：烘干时洗衣机空闲，吞吐受拖累。</p>
+<h2 id="4-洗-N-篮：6-004-式（Doing-N-Loads…-The-6-004-Way）">4. 洗 N 篮：6.004 式（Doing N Loads… The 6.004 Way）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/18fb620ed12f44707f03bbc0c2e86907_Slide05.png" alt="Doing N Loads the 6.004 Way" width="80%"/>
+<p>重叠洗与烘：步骤 1 洗第一篮；步骤 2 烘第一篮的同时开始洗第二篮。步骤时长由烘干机决定为 60 分钟；洗衣机虽提早完成，但只有一台烘干机，系统节拍由最慢级决定。</p>
+<p>这种重叠处理输入序列的系统叫<strong>流水线</strong>（pipelined system），每步叫一级（stage）。洗衣是 2 级流水线，每级处理时间 60 分钟。稳态下每 60 分钟开一篮洗、出一篮干——有效吞吐为每 60 分钟一篮；<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 篮约 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>×</mo><mn>60</mn></mrow><annotation encoding="application/x-tex">N\times 60</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">60</span></span></span></span> 分钟。某一篮要经两级，约 120 分钟（首篮略不同；流水线性能分析关心有无穷输入的稳态）。</p>
+<h2 id="5-性能度量（Performance-Measures）">5. 性能度量（Performance Measures）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/304cac088dc2ec2d71b1dea906bc6cff_Slide06.png" alt="Performance Measures" width="80%"/>
+<p>两个指标：</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>含义</th>
+<th>哈佛洗衣</th>
+<th>6.004 洗衣</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>延迟</strong>（latency）</td>
+<td>某一输入从进到出的时间</td>
+<td>90 min</td>
+<td>120 min（非首篮）</td>
+</tr>
+<tr>
+<td><strong>吞吐</strong>（throughput）</td>
+<td>系统产生输出的速率</td>
+<td>每 90 min 一篮</td>
+<td>每 60 min 一篮</td>
+</tr>
+</tbody>
+</table>
+<p>一入一出系统中，吞吐也等于输入被消耗的速率。哪个更好取决于目标：洗 100 篮要高吞吐；约会前 90 分钟内要干净内衣则更关心延迟。用流水线提吞吐时，各级需锁步，节拍由最慢级决定，延迟通常上升——这是常见的延迟–吞吐权衡。</p>
+<h2 id="6-回到电路（Okay-Back-to-Circuits…）">6. 回到电路（Okay, Back to Circuits…）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1865d06fbffabb7ed55d3495e6e3fc49_Slide07.png" alt="Okay Back to Circuits" width="80%"/>
+<p>组合电路：延迟 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>=</mo><msub><mi>t</mi><mrow><mi mathvariant="normal">P</mi><mi mathvariant="normal">D</mi></mrow></msub></mrow><annotation encoding="application/x-tex">= t_{\mathrm{PD}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.3669em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">PD</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，吞吐 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>=</mo><mn>1</mn><mi mathvariant="normal">/</mi><msub><mi>t</mi><mrow><mi mathvariant="normal">P</mi><mi mathvariant="normal">D</mi></mrow></msub></mrow><annotation encoding="application/x-tex">= 1/t_{\mathrm{PD}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.3669em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1/</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">PD</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>（算完当前才开下一组）。</p>
+<p>例：F、G 并行，结果再进 H。输入 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi></mrow><annotation encoding="application/x-tex">X</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0785em;">X</span></span></span></span> 稳定后，F、G 出 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>F</mi><mo stretchy="false">(</mo><mi>X</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">F(X)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.1389em;">F</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.0785em;">X</span><span class="mclose">)</span></span></span></span>、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>G</mi><mo stretchy="false">(</mo><mi>X</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">G(X)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">G</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.0785em;">X</span><span class="mclose">)</span></span></span></span>，再经 H 的 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">P</mi><mi mathvariant="normal">D</mi></mrow></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{PD}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">PD</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 得 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><mi>X</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">P(X)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.1389em;">P</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.0785em;">X</span><span class="mclose">)</span></span></span></span>。模块不变则延迟难再压；但 F、G 出结果后空闲等 H——能否让 F、G 处理下一输入，同时 H 仍在算上一拍？即把电路拆成两级：第一级算 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>F</mi><mo stretchy="false">(</mo><mi>X</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">F(X)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.1389em;">F</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.0785em;">X</span><span class="mclose">)</span></span></span></span>、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>G</mi><mo stretchy="false">(</mo><mi>X</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">G(X)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">G</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.0785em;">X</span><span class="mclose">)</span></span></span></span>，第二级算 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>H</mi></mrow><annotation encoding="application/x-tex">H</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0813em;">H</span></span></span></span>。</p>
+<h2 id="7-流水线电路（Pipelined-Circuits）">7. 流水线电路（Pipelined Circuits）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3c49942983b8923bf8468502c767cb90_Slide08.png" alt="Pipelined Circuits" width="80%"/>
+<p>用寄存器锁住 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>F</mi><mo stretchy="false">(</mo><mi>X</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">F(X)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.1389em;">F</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.0785em;">X</span><span class="mclose">)</span></span></span></span>、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>G</mi><mo stretchy="false">(</mo><mi>X</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">G(X)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">G</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.0785em;">X</span><span class="mclose">)</span></span></span></span> 供 H 使用，同时让 F、G 开下一输入。分析时先假定流水寄存器 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">P</mi><mi mathvariant="normal">D</mi></mrow></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{PD}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">PD</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>、建立时间为 0。</p>
+<p>时钟周期由最慢级决定：含 F、G 的级至少需 20 ns；含 H 的级需 25 ns → 系统 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">C</mi><mi mathvariant="normal">L</mi><mi mathvariant="normal">K</mi></mrow></msub><mo>=</mo><mn>25</mn><mtext> </mtext><mrow><mi mathvariant="normal">n</mi><mi mathvariant="normal">s</mi></mrow></mrow><annotation encoding="application/x-tex">t_{\mathrm{CLK}}=25\,\mathrm{ns}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">CLK</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">25</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathrm">ns</span></span></span></span></span>。一般做法：寄存器把组合逻辑切成若干级，每拍推进一级。本例 2 级、周期 25 ns → 延迟 50 ns（略高于未流水），吞吐每 25 ns 一个输出——吞吐明显提升，延迟略增。</p>
+<h2 id="8-流水线时序图（Pipeline-Diagrams）">8. 流水线时序图（Pipeline Diagrams）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6ea4cc61191c176d87723be128e03557_Slide09.png" alt="Pipeline Diagrams" width="80%"/>
+<p>行表示各级，列表示连续时钟周期。周期 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> 初输入 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>X</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">X_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0785em;">X</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0785em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 有效；该周期内 F、G 处理，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> 末结果写入级间寄存器。周期 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">i+1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7429em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> 中 H 处理 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>X</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">X_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0785em;">X</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0785em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，同时 F、G 处理 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>X</mi><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow></msub></mrow><annotation encoding="application/x-tex">X_{i+1}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8917em;vertical-align:-0.2083em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0785em;">X</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0785em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mbin mtight">+</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2083em;"><span></span></span></span></span></span></span></span></span></span>。某一输入沿对角线每拍下移一级；<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">i+1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7429em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> 末 H 结果写入末级寄存器，于 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mo>+</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">i+2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7429em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">2</span></span></span></span> 可用。总延迟两拍；之后每拍出一个结果。</p>
+<h2 id="9-流水线约定（Pipeline-Conventions）">9. 流水线约定（Pipeline Conventions）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3a00e78ac07876065860e2558dca63e2_Slide10.png" alt="Pipeline Conventions" width="80%"/>
+<p><strong>K 级流水线</strong>（K-pipeline）：无环电路，从输入到输出<strong>每条路径恰有 K 个寄存器</strong>。未流水的组合电路是 0 级流水线。</p>
+<p>约定：每一级（因而每个 K-pipeline）在<strong>输出端</strong>有寄存器，便于把流水部件拼成更大流水系统。用时序电路计时方法：对每条寄存器→寄存器、输入→寄存器路径，求输入寄存器 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">P</mi><mi mathvariant="normal">D</mi></mrow></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{PD}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">PD</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> + 组合 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">P</mi><mi mathvariant="normal">D</mi></mrow></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{PD}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">PD</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> + 输出寄存器建立时间，取最大者作为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">C</mi><mi mathvariant="normal">L</mi><mi mathvariant="normal">K</mi></mrow></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{CLK}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">CLK</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 下界。时钟正确且每条路径恰 K 个寄存器时，K-pipeline 与原组合电路功能等价。</p>
+<ul>
+<li>延迟：<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>⋅</mo><msub><mi>t</mi><mrow><mi mathvariant="normal">C</mi><mi mathvariant="normal">L</mi><mi mathvariant="normal">K</mi></mrow></msub></mrow><annotation encoding="application/x-tex">K\cdot t_{\mathrm{CLK}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0715em;">K</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">CLK</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></li>
+<li>吞吐：<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><msub><mi>t</mi><mrow><mi mathvariant="normal">C</mi><mi mathvariant="normal">L</mi><mi mathvariant="normal">K</mi></mrow></msub></mrow><annotation encoding="application/x-tex">1/t_{\mathrm{CLK}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1/</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">CLK</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></li>
+</ul>
+<h2 id="10-病态流水线（Ill-Formed-Pipelines）">10. 病态流水线（Ill-Formed Pipelines）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d4554aabe86a12a8bf6916fd9aa4343e_Slide11.png" alt="Ill-Formed Pipelines" width="80%"/>
+<p>反例：经 A、C 的上路径 2 个寄存器，经 B、C 的下路径 2 个，经 A、B、C 的中路径只有 1 个——不是良构 K-pipeline。后果：不同“代”的输入混算（如周期 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">i+1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7429em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> 中 B 用当前 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi></mrow><annotation encoding="application/x-tex">X</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0785em;">X</span></span></span></span> 与上一拍 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Y</mi></mrow><annotation encoding="application/x-tex">Y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.2222em;">Y</span></span></span></span>），结果与未流水电路不同。需要一种方法：在一条路径加寄存器时，保证所有路径同步加。</p>
+<h2 id="11-流水线方法论（A-Pipelining-Methodology）">11. 流水线方法论（A Pipelining Methodology）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1c6066766cac53e2989193aea6d86ad8_Slide12.png" alt="A Pipelining Methodology" width="80%"/>
+<p>步骤：</p>
+<ol>
+<li>画一条穿过所有<strong>输出</strong>的等高线，两端记为后续等高线的端点。</li>
+<li>继续在模块间信号上画等高线，两端仍落在同一对端点；每条信号同向穿越等高线（输入一侧、输出另一侧）。等高线划分流水级。</li>
+<li>在信号与等高线交点放置流水寄存器。</li>
+</ol>
+<p>端点到端点保证每条输入–输出路径都被穿过 → 良构。再找最长寄存器→寄存器或输入→寄存器延迟定 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">C</mi><mi mathvariant="normal">L</mi><mi mathvariant="normal">K</mi></mrow></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{CLK}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">CLK</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>。例：理想零延迟寄存器时，C 模块要求 8 ns → 吞吐每 8 ns 一个；3 条等高线 → 3-pipeline，延迟 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn><mo>×</mo><mn>8</mn><mo>=</mo><mn>24</mn><mtext> </mtext><mrow><mi mathvariant="normal">n</mi><mi mathvariant="normal">s</mi></mrow></mrow><annotation encoding="application/x-tex">3\times 8=24\,\mathrm{ns}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">3</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">8</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">24</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathrm">ns</span></span></span></span></span>。</p>
+<p>通常目标：用尽量少的寄存器达到最大吞吐——找出最慢部件（如 C），在其输入输出两侧画等高线，把 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">C</mi><mi mathvariant="normal">L</mi><mi mathvariant="normal">K</mi></mrow></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{CLK}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">CLK</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 钉在该延迟，再布置其余等高线使级间最长路径不超过此时钟。同吞吐/延迟下画法可有多种（如 E 可与 F 同级）。</p>
+<h2 id="12-流水线示例（Pipeline-Example）">12. 流水线示例（Pipeline Example）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f3bac46be064881fff7c90377f866a7d_Slide13.png" alt="Pipeline Example" width="80%"/>
+<p>复习：先过全部输出 → 1-pipeline，吞吐/延迟与原组合相同。再画线隔离最慢件 → 2-pipeline，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">C</mi><mi mathvariant="normal">L</mi><mi mathvariant="normal">K</mi></mrow></msub><mo>=</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">t_{\mathrm{CLK}}=2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">CLK</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">2</span></span></span></span>，吞吐翻倍。再加等高线只会加级数、增延迟，不提吞吐（合法但不划算）。路径长短不一时会出现背靠背寄存器，正常。</p>
+<p>策略：流水通常提吞吐、增延迟；各级完美平衡时延迟可不增。流水电路的延迟<strong>不会</strong>低于未流水电路。隔离最慢件后吞吐无法再靠加级提升——瓶颈在该部件本身。</p>
+<h2 id="13-流水线部件（Pipelined-Components）">13. 流水线部件（Pipelined Components）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a03876c64c760542b04daac6d68d952c_Slide14.png" alt="Pipelined Components" width="80%"/>
+<p>若有流水版部件可用：把 A 换成 2 级流水的 A′，重画等高线时须让 <strong>2 条</strong>等高线穿过 A′（计入内部寄存器），从而在系统其余处补上对齐两拍延迟的寄存器。例中各级最大 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">P</mi><mi mathvariant="normal">D</mi></mrow></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{PD}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">PD</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 降到 1 ns，吞吐从 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><mn>2</mn></mrow><annotation encoding="application/x-tex">1/2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1/2</span></span></span></span> 升到 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><mn>1</mn></mrow><annotation encoding="application/x-tex">1/1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1/1</span></span></span></span>；4-pipeline，延迟 4 ns。若瓶颈无流水替代品，见下一节。</p>
+<h2 id="14-6-004-学生怎么洗衣？（How-Do-6-004-Students-Do-Laundry-）">14. 6.004 学生怎么洗衣？（How Do 6.004 Students Do Laundry?）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/51a7b346cc008492b2fe858bbc87aa2d_Slide15.png" alt="How Do 6.004 Students Do Laundry" width="80%"/>
+<p>绕过烘干机瓶颈：找“一台洗衣机配两台烘干机”的店。时间轴按 30 分钟一步：洗衣机每步都在用，每 30 分钟出一篮湿衣；烘干机交错——#1 烘奇数篮、#2 烘偶数篮，各烘两步（60 分钟）。整体每 30 分钟出一篮干净干衣。稳态吞吐每 30 分钟一篮，单篮延迟仍 90 分钟。</p>
+<p>要点：烘干机本身未流水，但两台交错表现得像周期 30 分钟、延迟 60 分钟的 2 级流水线——用两份未流水部件交错，可等效 2 级流水。</p>
+<h2 id="15-回到瓶颈（Back-to-Our-Bottleneck…）">15. 回到瓶颈（Back to Our Bottleneck…）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/0ff3be50c93f8a0bdae7377a59c50003_Slide16.png" alt="Back to Our Bottleneck" width="80%"/>
+<p>前例吞吐卡在 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><mn>8</mn><mtext> </mtext><mrow><mi mathvariant="normal">n</mi><mi mathvariant="normal">s</mi></mrow></mrow><annotation encoding="application/x-tex">1/8\,\mathrm{ns}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1/8</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathrm">ns</span></span></span></span></span>（C 的 8 ns 延迟定最小时钟）。要再提吞吐：要么找 C 的流水版，要么用两份未流水 C 做交错等效 2 级流水。</p>
+<h2 id="16-电路交错-I（Circuit-Interleaving-I）">16. 电路交错 I（Circuit Interleaving I）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a9bbd6a9fb3ac12430d195d6ab2acb52_Slide17.png" alt="Circuit Interleaving I" width="80%"/>
+<p>通用双路交错：两份 C（<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>C</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">C_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0715em;">C</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0715em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>C</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">C_1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0715em;">C</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0715em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>）。各输入来自 D 锁存器（捕获并保持输入）；MUX 选哪路 C 输出写入输出寄存器。左下角极简 2 状态 FSM：下一状态为单反相器，状态在 0/1 间交替；状态位在上升沿后翻转。</p>
+<h2 id="17-电路交错-II（Circuit-Interleaving-II）">17. 电路交错 II（Circuit Interleaving II）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ecff151361dc49a6385d43586a4206be_Slide18.png" alt="Circuit Interleaving II" width="80%"/>
+<p>波形：新 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi></mrow><annotation encoding="application/x-tex">X</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0785em;">X</span></span></span></span> 在时钟上升沿后到达。FSM <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi></mrow><annotation encoding="application/x-tex">Q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span></span></span></span> 为低时 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>C</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">C_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0715em;">C</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0715em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 输入锁存打开，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>X</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">X_1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0785em;">X</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0785em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 进入，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>C</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">C_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0715em;">C</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0715em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 在约第 2 拍末出结果；第 2 拍初锁存关闭，保持 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>X</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">X_1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0785em;">X</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0785em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 稳定，使 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>C</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">C_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0715em;">C</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0715em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 有近两拍时间计算。<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>C</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">C_1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0715em;">C</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0715em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 类似，错开一拍。MUX：<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi></mrow><annotation encoding="application/x-tex">Q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span></span></span></span> 高选 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>C</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">C_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0715em;">C</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0715em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，低选 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>C</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">C_1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0715em;">C</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0715em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>；上升沿时输出寄存器采样。行为像 2 级流水：周期 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> 到达的输入经两拍，于 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mo>+</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">i+2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7429em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">2</span></span></span></span> 可用。</p>
+<h2 id="18-电路交错-III（Circuit-Interleaving-III）">18. 电路交错 III（Circuit Interleaving III）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2268c55549658764fca3a121f8f01ae5_Slide19.png" alt="Circuit Interleaving III" width="80%"/>
+<p>时钟周期：上游流水寄存器、内部锁存与 MUX 的传播延迟，以及输出寄存器建立时间，使 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">C</mi><mi mathvariant="normal">L</mi><mi mathvariant="normal">K</mi></mrow></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{CLK}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">CLK</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 须略大于 C 的 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">P</mi><mi mathvariant="normal">D</mi></mrow></msub><mi mathvariant="normal">/</mi><mn>2</mn></mrow><annotation encoding="application/x-tex">t_{\mathrm{PD}}/2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">PD</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord">/2</span></span></span></span>。可把交错电路当作 2 级流水：每拍吃一个输入，两拍后出结果。</p>
+<h2 id="19-组合技巧（Combine-Techniques）">19. 组合技巧（Combine Techniques）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c6174e7cedd15d7a8e92944c4f1e39db_Slide20.png" alt="Combine Techniques" width="80%"/>
+<p>在流水图中，N 路交错部件当作 N 级流水，须有 N 条等高线穿过它。用 2 路交错的 C′ 替换慢 C：先过全部输出，再保证两条等高线穿过 C′，在交点加寄存器——穿过 C′ 的等高线会在 F 的其他输入上多加寄存器，以匹配 C′ 的两拍延迟。乐观设 C′ 最小 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">C</mi><mi mathvariant="normal">L</mi><mi mathvariant="normal">K</mi></mrow></msub><mo>=</mo><mn>4</mn><mtext> </mtext><mrow><mi mathvariant="normal">n</mi><mi mathvariant="normal">s</mi></mrow></mrow><annotation encoding="application/x-tex">t_{\mathrm{CLK}}=4\,\mathrm{ns}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">CLK</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">4</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathrm">ns</span></span></span></span></span>，则系统时钟由 F 的 5 ns 决定 → 吞吐每 5 ns 一个；5 条等高线 → 5-pipeline，延迟 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>5</mn><mo>×</mo><mn>5</mn><mo>=</mo><mn>25</mn><mtext> </mtext><mrow><mi mathvariant="normal">n</mi><mi mathvariant="normal">s</mi></mrow></mrow><annotation encoding="application/x-tex">5\times 5=25\,\mathrm{ns}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">5</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">5</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">25</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathrm">ns</span></span></span></span></span>。</p>
+<h2 id="20-再加一点并行（And-Add-a-Little-Parallelism…）">20. 再加一点并行（And Add a Little Parallelism…）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/de7bb56a3ba1632bf184be09d64917e5_Slide21.png" alt="And Add a Little Parallelism" width="80%"/>
+<p>流水系统再并行：两台洗衣机 + 四台烘干机 ≈ 两份“1 洗 2 烘”。每步消耗/产出两篮 → 吞吐 2 篮 / 30 min，等效每 15 分钟一篮；单篮延迟仍 90 分钟。</p>
+<p>即便部件慢，也可靠交错与并行继续提吞吐。上界存在：流水寄存器与交错逻辑的时序开销给出最小可行 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">C</mi><mi mathvariant="normal">L</mi><mi mathvariant="normal">K</mi></mrow></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{CLK}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">CLK</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，从而限制最大吞吐——现实世界没有无限加速。</p>
+<h2 id="21-控制结构备选（Control-Structure-Alternatives）">21. 控制结构备选（Control Structure Alternatives）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ea6e83a9fb0166ece1d8f4be16600645_Slide22.png" alt="Control Structure Alternatives" width="80%"/>
+<p>此前流水各级锁步，时钟按各级最坏情况选取——<strong>同步、全局定时</strong>系统。</p>
+<p>若处理时间有数据相关性（某些输入某级可更快）？一种做法：仍用单一系统时钟，但各级用握手表明“准备好要新输入 / 有新输出给下级”。两信号协议：上游 <code>HERE-IS-X</code> 表示下一上升沿将有新数据；下游 <code>GOT-X</code> 表示愿意在上升沿取数。仅在上升沿检查信号：两边同时看到两者为真则握手完成、该沿完成传输；任一方仍在忙可推迟。</p>
+<p>也可做无全局时钟的异步自定时：四相握手——(1) 上游有新输出且 <code>GOT-X</code> 已撤时断言 <code>HERE-IS-X</code>；(2) 下游消费后断言 <code>GOT-X</code>；(3) 下游等 <code>HERE-IS-X</code> 变低；(4) 下游撤 <code>GOT-X</code>，准备下一轮。时序由握手边沿决定，无需全局时钟。</p>
+<h2 id="22-自定时示例（Self-Timed-Example）">22. 自定时示例（Self-Timed Example）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/386f6b54bc5a9d726f41408893285d29_Slide23.png" alt="Self-Timed Example" width="80%"/>
+<p>多下游时：A 的输出同时给 B、C。黄色组合块合并 B、C 的 <code>GOT-X</code>，汇总给 A——两边都断言 <code>GOT-X</code> 后才向 A 断言；两边都撤消后才向 A 撤消。</p>
+<h2 id="23-自定时示例（续）（Self-Timed-Example-continued）">23. 自定时示例（续）（Self-Timed Example continued）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3fc94c91527edd265a92dd065d445713_Slide24.png" alt="Self-Timed Example continued" width="80%"/>
+<p>动画式时序：上游向 A 传输入 → A 回 <code>GOT-X</code> → 完成四相。A 向 B、C 发 <code>HERE-IS-X</code>；B 先就绪断言 <code>GOT-X</code>，C 尚等第二输入。B 算完再给 C 第二输入；C 两边都收到后断言，黄盒才让 A 知道传输完成。整系统纯靠翻转信令：各模块自主决定消费/产出时刻，可按实际速度跑，而不必等全局最坏延迟。</p>
+<h2 id="24-控制结构分类（Control-Structure-Taxonomy）">24. 控制结构分类（Control Structure Taxonomy）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a993459f2f9be5250c436968bbc8c192_Slide25.png" alt="Control Structure Taxonomy" width="80%"/>
+<table>
+<thead>
+<tr>
+<th>方式</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>同步全局定时</strong></td>
+<td>时钟按最坏情况；易设计；无法利用数据相关加速</td>
+</tr>
+<tr>
+<td><strong>同步 + 握手</strong></td>
+<td>仍在时钟上升沿通信；具体哪一拍传输由级间握手决定</td>
+</tr>
+<tr>
+<td><strong>调节全局时钟</strong></td>
+<td>理论上可跟数据相关提速；大系统定时器极复杂，通常不如局部通信</td>
+</tr>
+<tr>
+<td><strong>局部定时异步</strong></td>
+<td>每代工程师都会被吸引；大系统（如现代 CPU）难做出可证明可靠的设计；特殊场景（如整数除法）数据相关加速值得额外投入</td>
+</tr>
+</tbody>
+</table>
+<h2 id="25-小结（Summary）">25. 小结（Summary）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/0f5d1622c5859b68fac7a42454648c48_Slide26.png" alt="Summary" width="80%"/>
+<ul>
+<li>用<strong>延迟</strong>与<strong>吞吐</strong>刻画性能；组合电路延迟 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>=</mo><msub><mi>t</mi><mrow><mi mathvariant="normal">P</mi><mi mathvariant="normal">D</mi></mrow></msub></mrow><annotation encoding="application/x-tex">= t_{\mathrm{PD}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.3669em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">PD</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，吞吐 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>=</mo><mn>1</mn><mi mathvariant="normal">/</mi><mtext>latency</mtext></mrow><annotation encoding="application/x-tex">= 1/\text{latency}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.3669em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1/</span><span class="mord text"><span class="mord">latency</span></span></span></span></span>。</li>
+<li><strong>K-pipeline</strong>：每级输出有寄存器；输入到输出每条路径恰 K 个寄存器；<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">C</mi><mi mathvariant="normal">L</mi><mi mathvariant="normal">K</mi></mrow></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{CLK}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">CLK</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 由最慢级决定；吞吐 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>=</mo><mn>1</mn><mi mathvariant="normal">/</mi><msub><mi>t</mi><mrow><mi mathvariant="normal">C</mi><mi mathvariant="normal">L</mi><mi mathvariant="normal">K</mi></mrow></msub></mrow><annotation encoding="application/x-tex">= 1/t_{\mathrm{CLK}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.3669em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1/</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">CLK</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，延迟 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>=</mo><mi>K</mi><mtext> </mtext><msub><mi>t</mi><mrow><mi mathvariant="normal">C</mi><mi mathvariant="normal">L</mi><mi mathvariant="normal">K</mi></mrow></msub></mrow><annotation encoding="application/x-tex">= K\, t_{\mathrm{CLK}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.3669em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord mathnormal" style="margin-right:0.0715em;">K</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">CLK</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>。</li>
+<li>流水线是多数高性能数字系统提升吞吐的关键；交错与并行可在慢部件存在时继续推高吞吐，但受寄存器/交错开销限制。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/ic/" rel="tag"># ic</a>
+              <a href="/blog/tags/semiconductor/" rel="tag"># semiconductor</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/06-finite-state-machines/" rel="prev" title="MIT 6.004：L06 有限状态机">
+      <i class="fa fa-chevron-left"></i> MIT 6.004：L06 有限状态机
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/01-basics-of-information/" rel="next" title="MIT 6.004：L01 信息基础">
+      MIT 6.004：L01 信息基础 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-text">L07：性能度量（Performance Measures）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E5%85%88%E6%94%BE%E4%B8%8B%E7%94%B5%E8%B7%AF%E2%80%A6-%E8%A7%A3%E5%86%B3%E4%B8%80%E4%B8%AA%E7%9C%9F%E5%AE%9E%E9%97%AE%E9%A2%98%EF%BC%88Forget-Circuits%E2%80%A6-Let%E2%80%99s-Solve-a-Real-Problem%EF%BC%89"><span class="nav-text">1. 先放下电路… 解决一个真实问题（Forget Circuits… Let’s Solve a Real Problem）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E4%B8%80%E6%AC%A1%E4%B8%80%E7%AF%AE%EF%BC%88One-Load-at-a-Time%EF%BC%89"><span class="nav-text">2. 一次一篮（One Load at a Time）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E6%B4%97-N-%E7%AF%AE%EF%BC%9A%E5%93%88%E4%BD%9B%E5%BC%8F%EF%BC%88Doing-N-Loads-of-Laundry%EF%BC%89"><span class="nav-text">3. 洗 N 篮：哈佛式（Doing N Loads of Laundry）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E6%B4%97-N-%E7%AF%AE%EF%BC%9A6-004-%E5%BC%8F%EF%BC%88Doing-N-Loads%E2%80%A6-The-6-004-Way%EF%BC%89"><span class="nav-text">4. 洗 N 篮：6.004 式（Doing N Loads… The 6.004 Way）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-%E6%80%A7%E8%83%BD%E5%BA%A6%E9%87%8F%EF%BC%88Performance-Measures%EF%BC%89"><span class="nav-text">5. 性能度量（Performance Measures）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-%E5%9B%9E%E5%88%B0%E7%94%B5%E8%B7%AF%EF%BC%88Okay-Back-to-Circuits%E2%80%A6%EF%BC%89"><span class="nav-text">6. 回到电路（Okay, Back to Circuits…）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-%E6%B5%81%E6%B0%B4%E7%BA%BF%E7%94%B5%E8%B7%AF%EF%BC%88Pipelined-Circuits%EF%BC%89"><span class="nav-text">7. 流水线电路（Pipelined Circuits）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#8-%E6%B5%81%E6%B0%B4%E7%BA%BF%E6%97%B6%E5%BA%8F%E5%9B%BE%EF%BC%88Pipeline-Diagrams%EF%BC%89"><span class="nav-text">8. 流水线时序图（Pipeline Diagrams）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#9-%E6%B5%81%E6%B0%B4%E7%BA%BF%E7%BA%A6%E5%AE%9A%EF%BC%88Pipeline-Conventions%EF%BC%89"><span class="nav-text">9. 流水线约定（Pipeline Conventions）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#10-%E7%97%85%E6%80%81%E6%B5%81%E6%B0%B4%E7%BA%BF%EF%BC%88Ill-Formed-Pipelines%EF%BC%89"><span class="nav-text">10. 病态流水线（Ill-Formed Pipelines）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#11-%E6%B5%81%E6%B0%B4%E7%BA%BF%E6%96%B9%E6%B3%95%E8%AE%BA%EF%BC%88A-Pipelining-Methodology%EF%BC%89"><span class="nav-text">11. 流水线方法论（A Pipelining Methodology）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#12-%E6%B5%81%E6%B0%B4%E7%BA%BF%E7%A4%BA%E4%BE%8B%EF%BC%88Pipeline-Example%EF%BC%89"><span class="nav-text">12. 流水线示例（Pipeline Example）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#13-%E6%B5%81%E6%B0%B4%E7%BA%BF%E9%83%A8%E4%BB%B6%EF%BC%88Pipelined-Components%EF%BC%89"><span class="nav-text">13. 流水线部件（Pipelined Components）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#14-6-004-%E5%AD%A6%E7%94%9F%E6%80%8E%E4%B9%88%E6%B4%97%E8%A1%A3%EF%BC%9F%EF%BC%88How-Do-6-004-Students-Do-Laundry-%EF%BC%89"><span class="nav-text">14. 6.004 学生怎么洗衣？（How Do 6.004 Students Do Laundry?）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#15-%E5%9B%9E%E5%88%B0%E7%93%B6%E9%A2%88%EF%BC%88Back-to-Our-Bottleneck%E2%80%A6%EF%BC%89"><span class="nav-text">15. 回到瓶颈（Back to Our Bottleneck…）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#16-%E7%94%B5%E8%B7%AF%E4%BA%A4%E9%94%99-I%EF%BC%88Circuit-Interleaving-I%EF%BC%89"><span class="nav-text">16. 电路交错 I（Circuit Interleaving I）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#17-%E7%94%B5%E8%B7%AF%E4%BA%A4%E9%94%99-II%EF%BC%88Circuit-Interleaving-II%EF%BC%89"><span class="nav-text">17. 电路交错 II（Circuit Interleaving II）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#18-%E7%94%B5%E8%B7%AF%E4%BA%A4%E9%94%99-III%EF%BC%88Circuit-Interleaving-III%EF%BC%89"><span class="nav-text">18. 电路交错 III（Circuit Interleaving III）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#19-%E7%BB%84%E5%90%88%E6%8A%80%E5%B7%A7%EF%BC%88Combine-Techniques%EF%BC%89"><span class="nav-text">19. 组合技巧（Combine Techniques）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#20-%E5%86%8D%E5%8A%A0%E4%B8%80%E7%82%B9%E5%B9%B6%E8%A1%8C%EF%BC%88And-Add-a-Little-Parallelism%E2%80%A6%EF%BC%89"><span class="nav-text">20. 再加一点并行（And Add a Little Parallelism…）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#21-%E6%8E%A7%E5%88%B6%E7%BB%93%E6%9E%84%E5%A4%87%E9%80%89%EF%BC%88Control-Structure-Alternatives%EF%BC%89"><span class="nav-text">21. 控制结构备选（Control Structure Alternatives）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#22-%E8%87%AA%E5%AE%9A%E6%97%B6%E7%A4%BA%E4%BE%8B%EF%BC%88Self-Timed-Example%EF%BC%89"><span class="nav-text">22. 自定时示例（Self-Timed Example）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#23-%E8%87%AA%E5%AE%9A%E6%97%B6%E7%A4%BA%E4%BE%8B%EF%BC%88%E7%BB%AD%EF%BC%89%EF%BC%88Self-Timed-Example-continued%EF%BC%89"><span class="nav-text">23. 自定时示例（续）（Self-Timed Example continued）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#24-%E6%8E%A7%E5%88%B6%E7%BB%93%E6%9E%84%E5%88%86%E7%B1%BB%EF%BC%88Control-Structure-Taxonomy%EF%BC%89"><span class="nav-text">24. 控制结构分类（Control Structure Taxonomy）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#25-%E5%B0%8F%E7%BB%93%EF%BC%88Summary%EF%BC%89"><span class="nav-text">25. 小结（Summary）</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">148</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">44</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://cuda-doc.readthedocs.io/" title="https:&#x2F;&#x2F;cuda-doc.readthedocs.io" rel="noopener" target="_blank">CUDA中文手册</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://infiniband-doc.readthedocs.io/" title="https:&#x2F;&#x2F;infiniband-doc.readthedocs.io&#x2F;" rel="noopener" target="_blank">InfiniBand中文手册</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+      
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.css">
+
+
+  
+
+</body>
+</html>

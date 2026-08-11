@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="整理自 MIT OCW 6.004 Computation Structures（Spring 2017）L10 注解幻灯片。 源网页：10.1 Annotated Slides | Assembly Language, Models of Computation 讲师：Chris Terman。图片直接引用 OCW 原站链接。  L10：汇编语言与计算模型（Assembly Language,">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MIT 6.004：L10 汇编语言与计算模型">
+<meta property="og:url" content="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/10-assembly-language-models-of-computation/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="整理自 MIT OCW 6.004 Computation Structures（Spring 2017）L10 注解幻灯片。 源网页：10.1 Annotated Slides | Assembly Language, Models of Computation 讲师：Chris Terman。图片直接引用 OCW 原站链接。  L10：汇编语言与计算模型（Assembly Language,">
+<meta property="og:locale">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9e9d921dc3a0f185b7cec60c0d37525a_Slide02.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c0a9e5b7818c1d14c9a1f7e305eeb81d_Slide03.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/803258193101fa7ce91495c7d30f09b0_Slide04.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/eccce1b7cf0085d41432db93e6f56524_Slide05.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/098b9b899d278695ac1f1632d6cde100_Slide06.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c34de41b21bc8ff905a222d5e7cd4a0f_Slide07.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ae8ce5295a2799e81f3a5866ea4ee9f3_Slide08.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2f7b5a04d7c97e3d25610f5dbc905867_Slide09.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/05d247e1135be2a33849801c6b34b8a0_Slide10.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f422757219fc2842a7d647b2bf5866cc_Slide11.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8516efbb264d4ad0d7997803c2d48680_Slide12.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/65e400955a1b5b4895381a58f06fc610_Slide13.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/857deedf5de26daff99d1f03ecc9811e_Slide14.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/0b60eaa46fdf228d08013f5feb045bea_Slide15.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/035604ee11225a633969f53fcbb57b2d_Slide16.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/613eedef9d85df82875095b9c774ac69_Slide17.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e83fbfbf84ebbf1ca81bd369302a9383_Slide18.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1a65599ea4c3afa548260678f83ad3c3_Slide19.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a495352d18e5d088dee2facf98155a6c_Slide20.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e12185e24dfe7c3f9267fd7cf08f029d_Slide21.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/71d314029f6449c597a42380c7a383c1_Slide22.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/fe8ca2961d2c0971aa4be57e6057a2f5_Slide23.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/95a9079735c92bc2f872124cd1ed99e4_Slide24.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6354befe84e3d03feae8ffdf6f3e66bd_Slide25.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/45b7e7afe667521b9394434a076a3aed_Slide26.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1d35275217e5f639a6b93e67cedf1af2_Slide27.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/fca78e4837f83e1311ef1233555c19e1_Slide28.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a8ad6ba1913bf75c84feb13ca9621039_Slide29.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8f25fca4a51591b03276d60411d27f63_Slide30.png">
+<meta property="article:published_time" content="2026-08-11T17:33:00.000Z">
+<meta property="article:modified_time" content="2026-08-11T09:41:52.784Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="ic">
+<meta property="article:tag" content="semiconductor">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9e9d921dc3a0f185b7cec60c0d37525a_Slide02.png">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/10-assembly-language-models-of-computation/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>MIT 6.004：L10 汇编语言与计算模型 | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/10-assembly-language-models-of-computation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MIT 6.004：L10 汇编语言与计算模型
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2026-08-11 17:33:00 / Modified: 09:41:52" itemprop="dateCreated datePublished" datetime="2026-08-11T17:33:00+00:00">2026-08-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/ic/" itemprop="url" rel="index"><span itemprop="name">ic</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>整理自 MIT OCW <strong>6.004 Computation Structures</strong>（Spring 2017）L10 注解幻灯片。</p>
+<p>源网页：<a target="_blank" rel="noopener" href="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/pages/c10/c10s1/">10.1 Annotated Slides | Assembly Language, Models of Computation</a></p>
+<p>讲师：Chris Terman。图片直接引用 OCW 原站链接。</p>
+</blockquote>
+<h1>L10：汇编语言与计算模型（Assembly Language, Models of Computation）</h1>
+<p>本讲介绍 Beta 的 <strong>UASM</strong> 汇编（符号、标号、宏、伪指令），再上升到计算模型：FSM 局限、图灵机、Church 论题、通用机与不可计算性（停机问题），说明 Beta ISA 的图灵完备性。</p>
+<h2 id="1-Beta-ISA-回顾（Beta-ISA-Summary）">1. Beta ISA 回顾（Beta ISA Summary）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9e9d921dc3a0f185b7cec60c0d37525a_Slide02.png" alt="Beta ISA Summary" width="80%"/>
+<p>回顾：32 个通用寄存器 + PC；主存最多 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>32</mn></msup></mrow><annotation encoding="application/x-tex">2^{32}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8141em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">32</span></span></span></span></span></span></span></span></span></span></span></span> 字节（<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>30</mn></msup></mrow><annotation encoding="application/x-tex">2^{30}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8141em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">30</span></span></span></span></span></span></span></span></span></span></span></span> 个 32 bit 字），指令与数据同存。指令 32 bit：6 bit OPCODE，5 bit Ra/Rb/Rc；两种格式（三寄存器 / 两寄存器+16 bit 常数）。三类：ALU、Load/Store、分支与跳转。</p>
+<h2 id="2-编程语言（Programming-Languages）">2. 编程语言（Programming Languages）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c0a9e5b7818c1d14c9a1f7e305eeb81d_Slide03.png" alt="Programming Languages" width="80%"/>
+<p>手写二进制编码不现实 → <strong>汇编</strong>用符号写 opcode 与操作数；仍需管寄存器与指令序列。<strong>高级语言</strong>再升一层：变量与数学运算。本讲 UASM；下讲 C→汇编。还可再叠解释器（如 C 实现 Python）——选合适语言表达，经多层翻译落到 Beta 指令。</p>
+<h2 id="3-汇编语言（Assembly-Language）">3. 汇编语言（Assembly Language）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/803258193101fa7ce91495c7d30f09b0_Slide04.png" alt="Assembly Language" width="80%"/>
+<p><strong>汇编器</strong>读文本 → 产出初始化主存的 32 bit 字数组。BSim 内建 <strong>UASM</strong>：实质是花哨计算器——求值算术表达式得字节，依次填入字节数组。支持符号/标号命名值与地址，宏封装指令/数据的字段拼装。</p>
+<h2 id="4-UASM-源文件例子（Example-UASM-Source-File）">4. UASM 源文件例子（Example UASM Source File）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/eccce1b7cf0085d41432db93e6f56524_Slide05.png" alt="Example UASM Source File" width="80%"/>
+<p>通常一行一条语句。注释：<code>//</code> 至行末，或 <code>/* … */</code> 跨行。</p>
+<ul>
+<li><strong>符号（symbol）</strong>：常量的名字，如 <code>N=12</code>；改一处即可。R0–R31 预定义为 0–31，便于区分寄存器与立即数</li>
+<li><strong>标号（label）</strong>：某内存地址的名字（如下文 <code>loop</code>）</li>
+</ul>
+<h2 id="5-如何汇编？（How-Does-It-Get-Assembled-）">5. 如何汇编？（How Does It Get Assembled?）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/098b9b899d278695ac1f1632d6cde100_Slide06.png" alt="How Does It Get Assembled" width="80%"/>
+<p>维护<strong>符号表</strong>（初含寄存器符号）。逐行：定义符号/标号、展开宏、求值写字节。例：<code>N=12</code> 入表；<code>ADDC(r31,N,r1)</code> 展开为地址 0 的 32 bit 字；<code>loop:</code> 记下当前地址后展开 MUL。</p>
+<p><strong>两遍扫描</strong>：第一遍收齐符号/标号；第二遍生成二进制 → 支持前向引用（如向前分支）。</p>
+<h2 id="6-寄存器是预定义符号（Registers-Are-Predefined-Symbols）">6. 寄存器是预定义符号（Registers Are Predefined Symbols）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c34de41b21bc8ff905a222d5e7cd4a0f_Slide07.png" alt="Registers Are Predefined Symbols" width="80%"/>
+<p>寄存器无魔法：只是 0–31 的符号。<code>ADDC(r31,N,r1)</code> 实际变成 <code>ADDC(31,12,1)</code>。若把寄存器符号用在期望立即数处（或反之），UASM 仍按数值解释——<strong>操作数含义由 opcode 宏决定，不由写法直觉决定</strong>，写汇编须清醒。</p>
+<h2 id="7-标号与偏移（Labels-and-Offsets）">7. 标号与偏移（Labels and Offsets）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ae8ce5295a2799e81f3a5866ea4ee9f3_Slide08.png" alt="Labels and Offsets" width="80%"/>
+<p>分支用相对<strong>下一条指令</strong>的字偏移（<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">-1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">−</span><span class="mord">1</span></span></span></span> 指向分支自身）。宏内嵌偏移公式：程序员写目标标号，UASM 算 16 bit 补码。例：BNE 回跳 3 条 → 偏移 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mn>3</mn></mrow><annotation encoding="application/x-tex">-3</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">−</span><span class="mord">3</span></span></span></span>。</p>
+<h2 id="8-强大的宏指令（Mighty-Macroinstructions）">8. 强大的宏指令（Mighty Macroinstructions）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2f7b5a04d7c97e3d25610f5dbc905867_Slide09.png" alt="Mighty Macroinstructions" width="80%"/>
+<p>宏：参数替换后当原文再处理，可嵌套。<code>WORD</code>/<code>LONG</code> 把值拆成 2/4 字节。Beta 为 <strong>little-endian</strong>：最低有效字节在最低地址（如 <code>0xDEADBEEF</code> 在 <code>0x100</code> 处先存 <code>0xEF</code>）。亦有 big-endian；跨 ISA 传多字节值常需转换。名称源自《格列佛游记》大小端之争。</p>
+<h2 id="9-指令的汇编（Assembly-of-Instructions）">9. 指令的汇编（Assembly of Instructions）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/05d247e1135be2a33849801c6b34b8a0_Slide10.png" alt="Assembly of Instructions" width="80%"/>
+<p>辅助宏 <code>BETAOP</code>：三寄存器格式；<code>.align 4</code> 保证字对齐；<code>LONG</code> 拼字段：各域 <code>%</code> 截断再 <code>&lt;&lt;</code> 到位。<code>BETAOPC</code> 处理含 16 bit 常数的格式。例：ADDC 把 opcode <code>0x30</code>、RA、常数、Rc 移位或运算拼成一字——“assemble” 字面义。</p>
+<h2 id="10-汇编例子（Example-Assembly）">10. 汇编例子（Example Assembly）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f422757219fc2842a7d647b2bf5866cc_Slide11.png" alt="Example Assembly" width="80%"/>
+<p>一次 ADDC 的完整宏展开链：格式与 opcode 知识封在宏体里。换一套宏定义，UASM 可服务几乎任意 ISA。</p>
+<h2 id="11-Beta-指令的-UASM-宏（UASM-Macros-for-Beta-Instructions）">11. Beta 指令的 UASM 宏（UASM Macros for Beta Instructions）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8516efbb264d4ad0d7997803c2d48680_Slide12.png" alt="UASM Macros for Beta Instructions" width="80%"/>
+<p>定义在 <code>beta.uasm</code>（实验会 include）。便利宏：分支常丢弃 PC+4 → 两参数形式默认 Rc=R31，少打字、更易读。</p>
+<h2 id="12-伪指令（Pseudoinstructions）">12. 伪指令（Pseudoinstructions）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/65e400955a1b5b4895381a58f06fc610_Slide13.png" alt="Pseudoinstructions" width="80%"/>
+<p>可读性宏：<code>BR()</code> 代替 <code>BEQ(R31,…)</code>；<code>BF</code>/<code>BT</code> 配合比较结果；<code>PUSH</code>/<code>POP</code> 展开为多指令操作 SP 栈。称 <strong>pseudoinstructions</strong>：表面上更大指令集，底层仍是 L09 那套。</p>
+<h2 id="13-用伪指令写阶乘（Factorial-with-Pseudoinstructions）">13. 用伪指令写阶乘（Factorial with Pseudoinstructions）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/857deedf5de26daff99d1f03ecc9811e_Slide14.png" alt="Factorial with Pseudoinstructions" width="80%"/>
+<p>例：<code>CMOVE</code> 表示“装小常数”，比展开后的 <code>ADDC</code>（加到 0）更易懂。减少认知噪音长期受益。</p>
+<h2 id="14-原始数据（Raw-Data）">14. 原始数据（Raw Data）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/0b60eaa46fdf228d08013f5feb045bea_Slide15.png" alt="Raw Data" width="80%"/>
+<p><code>LONG</code> 分配并初始化数据；标号记地址（如 N→0，factN→4）。<code>LD</code> 便利宏默认 Ra=R31：地址 = 0 + 常数（标号值）→ 把该处字装入寄存器。</p>
+<h2 id="15-UASM-表达式与布局（UASM-Expressions-and-Layout）">15. UASM 表达式与布局（UASM Expressions and Layout）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/035604ee11225a633969f53fcbb57b2d_Slide16.png" alt="UASM Expressions and Layout" width="80%"/>
+<p>表达式在<strong>汇编时</strong>求值，不生成运行时 ADD/MUL。特殊符号 <strong><code>.</code>（dot）</strong> = 下一个将填充的地址；初值 0，每写一字节递增。可赋 <code>.</code> 指定放置位置；<code>k:</code> 等价 <code>k=.</code>；也可增大 <code>.</code> 预留未初始化数组空间。</p>
+<h2 id="16-小结：汇编语言（Summary-Assembly-Language）">16. 小结：汇编语言（Summary: Assembly Language）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/613eedef9d85df82875095b9c774ac69_Slide17.png" alt="Summary: Assembly Language" width="80%"/>
+<p>汇编 = 方便生成指令/数据二进制并跟踪地址。UASM：值、符号、标号、宏、<code>.</code>。鸡生蛋：第一个汇编器靠<strong>手工</strong>汇编二进制，再逐步加符号/宏等特性——且务必备份二进制。</p>
+<h2 id="17-通用性？（Universality-）">17. 通用性？（Universality?）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e83fbfbf84ebbf1ca81bd369302a9383_Slide18.png" alt="Universality" width="80%"/>
+<p>NAND 对布尔函数通用。ISA 是否通用？能解 FSM 能解的问题吗？有 FSM 不能解的吗？Beta 能否解？答案依赖计算的数学模型。</p>
+<h2 id="18-计算模型（Models-of-Computation）">18. 计算模型（Models of Computation）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1a65599ea4c3afa548260678f83ad3c3_Slide19.png" alt="Models of Computation" width="80%"/>
+<p>CS 根源之一：比较各模型能表示的计算类，寻找<strong>通用模型</strong>——凡其它良构模型能描述的，通用模型也能。候选：<strong>FSM</strong>（时序逻辑可建；可用布尔与转移图 100% 预测行为）。FSM 是否万能数字计算装置？</p>
+<h2 id="19-FSM-的局限（FSM-Limitations）">19. FSM 的局限（FSM Limitations）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a495352d18e5d088dee2facf98155a6c_Slide20.png" alt="FSM Limitations" width="80%"/>
+<p>括号匹配：判定括号串是否良构（每个开括号有对应闭括号）。FSM 用有限状态记历史——括号检查需计数未匹配开括号，但状态数有上限 → 输入开括号过多则无法正确判定。</p>
+<p><strong>有限性</strong>限制了需<strong>无界计数</strong>的问题。转向 Alan Turing 的模型。</p>
+<h2 id="20-图灵机（Turing-Machines）">20. 图灵机（Turing Machines）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e12185e24dfe7c3f9267fd7cf08f029d_Slide21.png" alt="Turing Machines" width="80%"/>
+<p>1930 年代 Turing 提出：FSM + <strong>无限纸带</strong>（可读写）。输入编码在带上；FSM 读写、改态、写答案后停机 → <strong>图灵机（TM）</strong>。</p>
+<p>有限非空白输入可编码成大整数；TM 实现整数到整数的函数。FSM 真值表可枚举并赋索引 → 谈“TM 347 在输入 51 上得 42”。</p>
+<h2 id="21-其它计算模型（Other-Models-of-Computation）">21. 其它计算模型（Other Models of Computation）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/71d314029f6449c597a42380c7a383c1_Slide22.png" alt="Other Models of Computation" width="80%"/>
+<p>Kleene、Post、Turing 等（Church 学生）探索递归函数、字符串重写、λ 演算等，并关注<strong>不可实现机解决的问题</strong>——亦即刻画可解决类。</p>
+<h2 id="22-可计算性？（Computability-）">22. 可计算性？（Computability?）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/fe8ca2961d2c0971aa4be57e6057a2f5_Slide23.png" alt="Computability" width="80%"/>
+<p>各模型能算的整数函数集相同（可互译）。<strong>Church 论题</strong>：凡可实现机可算的离散函数，皆可由某 TM 计算。尚无严格证明，但被普遍接受。“可计算”≈“某 TM 可计算”。不可计算函数见本讲可选视频。</p>
+<h2 id="23-众多图灵机！（Turing-Machines-Galore-）">23. 众多图灵机！（Turing Machines Galore!）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/95a9079735c92bc2f872124cd1ed99e4_Slide24.png" alt="Turing Machines Galore" width="80%"/>
+<p>每种想做的计算对应一台（不同）TM。这对通用计算机设计有何启示？是否有些计算永远需要专用机？</p>
+<h2 id="24-通用函数（The-Universal-Function）">24. 通用函数（The Universal Function）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6354befe84e3d03feae8ffdf6f3e66bd_Slide25.png" alt="The Universal Function" width="80%"/>
+<p>希望有 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>U</mi><mo stretchy="false">(</mo><mi>k</mi><mo separator="true">,</mo><mi>j</mi><mo stretchy="false">)</mo><mo>=</mo></mrow><annotation encoding="application/x-tex">U(k,j)=</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">U</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.0315em;">k</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.0572em;">j</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span></span></span></span> 运行 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>T</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">T_k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0315em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 于输入 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi></mrow><annotation encoding="application/x-tex">j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.854em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0572em;">j</span></span></span></span> 的结果。<strong><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>U</mi></mrow><annotation encoding="application/x-tex">U</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">U</span></span></span></span> 可计算</strong>：存在通用图灵机 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>T</mi><mi>U</mi></msub></mrow><annotation encoding="application/x-tex">T_U</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.109em;">U</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>（且有无穷多；已知最小者约 4 态、6 带符号）。一台通用机可完成任意 TM 能做的计算。</p>
+<h2 id="25-通用性（Universality）">25. 通用性（Universality）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/45b7e7afe667521b9394434a076a3aed_Slide26.png" alt="Universality" width="80%"/>
+<p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.0315em;">k</span></span></span></span> 编码“程序”（某 TM 描述），<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi></mrow><annotation encoding="application/x-tex">j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.854em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0572em;">j</span></span></span></span> 编码数据；<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>T</mi><mi>U</mi></msub></mrow><annotation encoding="application/x-tex">T_U</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.109em;">U</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> <strong>解释</strong>程序、模拟 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>T</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">T_k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0315em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>。解释编码计算 = 存储程序计算机的核心思想。</p>
+<h2 id="26-图灵通用性（Turing-Universality）">26. 图灵通用性（Turing Universality）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1d35275217e5f639a6b93e67cedf1af2_Slide27.png" alt="Turing Universality" width="80%"/>
+<p>通用 TM 是现代通用计算机的范式。证明 ISA 图灵通用：展示能模拟某已知通用 TM。实际机器内存有限 → 仅对放得下的输入等价。门槛不高：<strong>有条件分支 + 简单算术</strong> 通常即足够。</p>
+<h2 id="27-编码算法：CS-关键（Coded-Algorithms-Key-to-CS）">27. 编码算法：CS 关键（Coded Algorithms: Key to CS）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/fca78e4837f83e1311ef1233555c19e1_Slide28.png" alt="Coded Algorithms: Key to CS" width="80%"/>
+<p>程序可作为另一程序的数据 → <strong>编译</strong>（高级语言→汇编）、软件组件复用、设计面向任务的语言。结论：拟建引擎能做任意可实现机上的计算；通用 TM 为存储程序机铺路 → <strong>Beta ISA 够用</strong>。</p>
+<h2 id="28-不可计算！（Uncomputability-）">28. 不可计算！（Uncomputability!）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a8ad6ba1913bf75c84feb13ca9621039_Slide29.png" alt="Uncomputability" width="80%"/>
+<p>存在良定义离散函数，<strong>无任何 TM</strong> 能在有限步对任意有限输入算出 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.1076em;">f</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span>——可证明算法不存在。最著名：<strong>停机函数</strong>——给定 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><mi>k</mi><mo separator="true">,</mo><mi>j</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(k,j)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.0315em;">k</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.0572em;">j</span><span class="mclose">)</span></span></span></span>，判定第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.0315em;">k</span></span></span></span> 个 TM 在输入 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi></mrow><annotation encoding="application/x-tex">j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.854em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0572em;">j</span></span></span></span> 上是停机还是永远循环。</p>
+<h2 id="29-为何-f-H-不可计算（Why-fH-is-Uncomputable）">29. 为何 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>f</mi><mi>H</mi></msub></mrow><annotation encoding="application/x-tex">f_H</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1076em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1076em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0813em;">H</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 不可计算（Why fH is Uncomputable）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8f25fca4a51591b03276d60411d27f63_Slide30.png" alt="Why fH is Uncomputable" width="80%"/>
+<p>反证：若停机函数可算，则有 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>T</mi><mi>H</mi></msub></mrow><annotation encoding="application/x-tex">T_H</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0813em;">H</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>。构造“nasty”机 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>T</mi><mi>N</mi></msub></mrow><annotation encoding="application/x-tex">T_N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.109em;">N</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>：<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>T</mi><mi>N</mi></msub><mo stretchy="false">[</mo><mi>X</mi><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">T_N[X]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.109em;">N</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">[</span><span class="mord mathnormal" style="margin-right:0.0785em;">X</span><span class="mclose">]</span></span></span></span> 在 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>T</mi><mi>X</mi></msub><mo stretchy="false">[</mo><mi>X</mi><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">T_X[X]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0785em;">X</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">[</span><span class="mord mathnormal" style="margin-right:0.0785em;">X</span><span class="mclose">]</span></span></span></span> 停机时循环，在 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>T</mi><mi>X</mi></msub><mo stretchy="false">[</mo><mi>X</mi><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">T_X[X]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0785em;">X</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">[</span><span class="mord mathnormal" style="margin-right:0.0785em;">X</span><span class="mclose">]</span></span></span></span> 循环时停机（靠 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>T</mi><mi>H</mi></msub></mrow><annotation encoding="application/x-tex">T_H</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0813em;">H</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 查询）。再喂 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 给 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>T</mi><mi>N</mi></msub></mrow><annotation encoding="application/x-tex">T_N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.109em;">N</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>：<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>T</mi><mi>N</mi></msub><mo stretchy="false">[</mo><mi>N</mi><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">T_N[N]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.109em;">N</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">[</span><span class="mord mathnormal" style="margin-right:0.109em;">N</span><span class="mclose">]</span></span></span></span> 必须既停又不停 → 矛盾。故 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>T</mi><mi>H</mi></msub></mrow><annotation encoding="application/x-tex">T_H</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0813em;">H</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 不存在，停机函数不可计算。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/ic/" rel="tag"># ic</a>
+              <a href="/blog/tags/semiconductor/" rel="tag"># semiconductor</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/09-designing-an-instruction-set/" rel="prev" title="MIT 6.004：L09 指令集设计">
+      <i class="fa fa-chevron-left"></i> MIT 6.004：L09 指令集设计
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/11-compilers/" rel="next" title="MIT 6.004：L11 编译器">
+      MIT 6.004：L11 编译器 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-text">L10：汇编语言与计算模型（Assembly Language, Models of Computation）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-Beta-ISA-%E5%9B%9E%E9%A1%BE%EF%BC%88Beta-ISA-Summary%EF%BC%89"><span class="nav-text">1. Beta ISA 回顾（Beta ISA Summary）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80%EF%BC%88Programming-Languages%EF%BC%89"><span class="nav-text">2. 编程语言（Programming Languages）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E6%B1%87%E7%BC%96%E8%AF%AD%E8%A8%80%EF%BC%88Assembly-Language%EF%BC%89"><span class="nav-text">3. 汇编语言（Assembly Language）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-UASM-%E6%BA%90%E6%96%87%E4%BB%B6%E4%BE%8B%E5%AD%90%EF%BC%88Example-UASM-Source-File%EF%BC%89"><span class="nav-text">4. UASM 源文件例子（Example UASM Source File）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-%E5%A6%82%E4%BD%95%E6%B1%87%E7%BC%96%EF%BC%9F%EF%BC%88How-Does-It-Get-Assembled-%EF%BC%89"><span class="nav-text">5. 如何汇编？（How Does It Get Assembled?）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-%E5%AF%84%E5%AD%98%E5%99%A8%E6%98%AF%E9%A2%84%E5%AE%9A%E4%B9%89%E7%AC%A6%E5%8F%B7%EF%BC%88Registers-Are-Predefined-Symbols%EF%BC%89"><span class="nav-text">6. 寄存器是预定义符号（Registers Are Predefined Symbols）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-%E6%A0%87%E5%8F%B7%E4%B8%8E%E5%81%8F%E7%A7%BB%EF%BC%88Labels-and-Offsets%EF%BC%89"><span class="nav-text">7. 标号与偏移（Labels and Offsets）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#8-%E5%BC%BA%E5%A4%A7%E7%9A%84%E5%AE%8F%E6%8C%87%E4%BB%A4%EF%BC%88Mighty-Macroinstructions%EF%BC%89"><span class="nav-text">8. 强大的宏指令（Mighty Macroinstructions）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#9-%E6%8C%87%E4%BB%A4%E7%9A%84%E6%B1%87%E7%BC%96%EF%BC%88Assembly-of-Instructions%EF%BC%89"><span class="nav-text">9. 指令的汇编（Assembly of Instructions）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#10-%E6%B1%87%E7%BC%96%E4%BE%8B%E5%AD%90%EF%BC%88Example-Assembly%EF%BC%89"><span class="nav-text">10. 汇编例子（Example Assembly）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#11-Beta-%E6%8C%87%E4%BB%A4%E7%9A%84-UASM-%E5%AE%8F%EF%BC%88UASM-Macros-for-Beta-Instructions%EF%BC%89"><span class="nav-text">11. Beta 指令的 UASM 宏（UASM Macros for Beta Instructions）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#12-%E4%BC%AA%E6%8C%87%E4%BB%A4%EF%BC%88Pseudoinstructions%EF%BC%89"><span class="nav-text">12. 伪指令（Pseudoinstructions）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#13-%E7%94%A8%E4%BC%AA%E6%8C%87%E4%BB%A4%E5%86%99%E9%98%B6%E4%B9%98%EF%BC%88Factorial-with-Pseudoinstructions%EF%BC%89"><span class="nav-text">13. 用伪指令写阶乘（Factorial with Pseudoinstructions）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#14-%E5%8E%9F%E5%A7%8B%E6%95%B0%E6%8D%AE%EF%BC%88Raw-Data%EF%BC%89"><span class="nav-text">14. 原始数据（Raw Data）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#15-UASM-%E8%A1%A8%E8%BE%BE%E5%BC%8F%E4%B8%8E%E5%B8%83%E5%B1%80%EF%BC%88UASM-Expressions-and-Layout%EF%BC%89"><span class="nav-text">15. UASM 表达式与布局（UASM Expressions and Layout）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#16-%E5%B0%8F%E7%BB%93%EF%BC%9A%E6%B1%87%E7%BC%96%E8%AF%AD%E8%A8%80%EF%BC%88Summary-Assembly-Language%EF%BC%89"><span class="nav-text">16. 小结：汇编语言（Summary: Assembly Language）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#17-%E9%80%9A%E7%94%A8%E6%80%A7%EF%BC%9F%EF%BC%88Universality-%EF%BC%89"><span class="nav-text">17. 通用性？（Universality?）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#18-%E8%AE%A1%E7%AE%97%E6%A8%A1%E5%9E%8B%EF%BC%88Models-of-Computation%EF%BC%89"><span class="nav-text">18. 计算模型（Models of Computation）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#19-FSM-%E7%9A%84%E5%B1%80%E9%99%90%EF%BC%88FSM-Limitations%EF%BC%89"><span class="nav-text">19. FSM 的局限（FSM Limitations）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#20-%E5%9B%BE%E7%81%B5%E6%9C%BA%EF%BC%88Turing-Machines%EF%BC%89"><span class="nav-text">20. 图灵机（Turing Machines）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#21-%E5%85%B6%E5%AE%83%E8%AE%A1%E7%AE%97%E6%A8%A1%E5%9E%8B%EF%BC%88Other-Models-of-Computation%EF%BC%89"><span class="nav-text">21. 其它计算模型（Other Models of Computation）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#22-%E5%8F%AF%E8%AE%A1%E7%AE%97%E6%80%A7%EF%BC%9F%EF%BC%88Computability-%EF%BC%89"><span class="nav-text">22. 可计算性？（Computability?）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#23-%E4%BC%97%E5%A4%9A%E5%9B%BE%E7%81%B5%E6%9C%BA%EF%BC%81%EF%BC%88Turing-Machines-Galore-%EF%BC%89"><span class="nav-text">23. 众多图灵机！（Turing Machines Galore!）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#24-%E9%80%9A%E7%94%A8%E5%87%BD%E6%95%B0%EF%BC%88The-Universal-Function%EF%BC%89"><span class="nav-text">24. 通用函数（The Universal Function）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#25-%E9%80%9A%E7%94%A8%E6%80%A7%EF%BC%88Universality%EF%BC%89"><span class="nav-text">25. 通用性（Universality）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#26-%E5%9B%BE%E7%81%B5%E9%80%9A%E7%94%A8%E6%80%A7%EF%BC%88Turing-Universality%EF%BC%89"><span class="nav-text">26. 图灵通用性（Turing Universality）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#27-%E7%BC%96%E7%A0%81%E7%AE%97%E6%B3%95%EF%BC%9ACS-%E5%85%B3%E9%94%AE%EF%BC%88Coded-Algorithms-Key-to-CS%EF%BC%89"><span class="nav-text">27. 编码算法：CS 关键（Coded Algorithms: Key to CS）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#28-%E4%B8%8D%E5%8F%AF%E8%AE%A1%E7%AE%97%EF%BC%81%EF%BC%88Uncomputability-%EF%BC%89"><span class="nav-text">28. 不可计算！（Uncomputability!）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#29-%E4%B8%BA%E4%BD%95-f-H-%E4%B8%8D%E5%8F%AF%E8%AE%A1%E7%AE%97%EF%BC%88Why-fH-is-Uncomputable%EF%BC%89"><span class="nav-text">29. 为何 fHf_HfH​ 不可计算（Why fH is Uncomputable）</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">148</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">44</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://cuda-doc.readthedocs.io/" title="https:&#x2F;&#x2F;cuda-doc.readthedocs.io" rel="noopener" target="_blank">CUDA中文手册</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://infiniband-doc.readthedocs.io/" title="https:&#x2F;&#x2F;infiniband-doc.readthedocs.io&#x2F;" rel="noopener" target="_blank">InfiniBand中文手册</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+      
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.css">
+
+
+  
+
+</body>
+</html>

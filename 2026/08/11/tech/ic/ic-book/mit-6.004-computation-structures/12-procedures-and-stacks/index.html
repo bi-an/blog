@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="整理自 MIT OCW 6.004 Computation Structures（Spring 2017）L12 注解幻灯片。 源网页：12.1 Annotated Slides | Procedures and Stacks 讲师：Chris Terman。图片直接引用 OCW 原站链接。  L12：过程与栈（Procedures and Stacks） 本讲讲清过程（procedure）抽象">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MIT 6.004：L12 过程与栈">
+<meta property="og:url" content="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/12-procedures-and-stacks/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="整理自 MIT OCW 6.004 Computation Structures（Spring 2017）L12 注解幻灯片。 源网页：12.1 Annotated Slides | Procedures and Stacks 讲师：Chris Terman。图片直接引用 OCW 原站链接。  L12：过程与栈（Procedures and Stacks） 本讲讲清过程（procedure）抽象">
+<meta property="og:locale">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/081188ef0c971ba238cf6ded49cc0a7d_Slide02.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6a84e14f318c22650c320f431c84f184_Slide03.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e8368b14ef6b223abc134f1abf2ee017_Slide04.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ef241e01bd813c73246098ac1b13fa15_Slide05.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a0d9b41751d20e538b786320403c9202_Slide06.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e8f40467996e7889aca7f27091a7ee21_Slide07.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3f3a061f766688454036eb06a2074f3c_Slide08.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7b5f6f95568e4daa6939dfe7bd74a57f_Slide09.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/374ddee69cd65875183554a38608aa5d_Slide10.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c4ede911868c94e358b88a4dc9b0a43b_Slide11.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/85312ef5c5bdb8f889237146690ae312_Slide12.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1e894bddaceae105583a4892749d98fc_Slide13.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4aeaa59687e58fda07a9f0fc046e7264_Slide14.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9242020b05e48fd662c3c4127ac8e13e_Slide15.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/49fb4e5d5e1d900a34a02445f27bde2a_Slide16.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3728697745d5f935b536dde97faeec40_Slide17.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1d68a1469af72f47a3a0d7def3bebbc7_Slide18.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d86e5032f8ec023288fddaef8f2f7fad_Slide19.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d093fadfb09cb864306359f4572f6c87_Slide20.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a65ff319444a8e484792c1b5dd6fddfa_Slide21.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/019cee61090a93d9f856a5cfbaba9f1a_Slide22.png">
+<meta property="article:published_time" content="2026-08-11T17:35:00.000Z">
+<meta property="article:modified_time" content="2026-08-11T09:41:52.784Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="ic">
+<meta property="article:tag" content="semiconductor">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/081188ef0c971ba238cf6ded49cc0a7d_Slide02.png">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/12-procedures-and-stacks/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>MIT 6.004：L12 过程与栈 | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/12-procedures-and-stacks/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MIT 6.004：L12 过程与栈
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2026-08-11 17:35:00 / Modified: 09:41:52" itemprop="dateCreated datePublished" datetime="2026-08-11T17:35:00+00:00">2026-08-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/ic/" itemprop="url" rel="index"><span itemprop="name">ic</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>整理自 MIT OCW <strong>6.004 Computation Structures</strong>（Spring 2017）L12 注解幻灯片。</p>
+<p>源网页：<a target="_blank" rel="noopener" href="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/pages/c12/c12s1/">12.1 Annotated Slides | Procedures and Stacks</a></p>
+<p>讲师：Chris Terman。图片直接引用 OCW 原站链接。</p>
+</blockquote>
+<h1>L12：过程与栈（Procedures and Stacks）</h1>
+<p>本讲讲清过程（procedure）抽象为何需要<strong>激活记录</strong>（activation record），以及为何 LIFO <strong>栈</strong>能自然支持嵌套与递归；随后给出 Beta 上的 SP/LP/BP 约定、栈帧布局、callee-saves 契约，并用阶乘与“栈侦探”题目串起整套调用约定。</p>
+<h2 id="1-过程：软件抽象（Procedures-A-Software-Abstraction）">1. 过程：软件抽象（Procedures: A Software Abstraction）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/081188ef0c971ba238cf6ded49cc0a7d_Slide02.png" alt="Procedures A Software Abstraction" width="80%"/>
+<p>过程/子程序：完成特定任务的指令序列，有唯一命名入口。可有形式参数（formal parameters）；调用时实参（arguments）与之对应。过程体可定义仅在执行期间存在的<strong>局部变量</strong>；可返回值，也可只为副作用而执行。</p>
+<p>例：<code>COPRIMES</code> 只需知道 <code>GCD</code> 的入参/返回类型即可调用——实现被封装成黑盒。标准库提供大量预建过程（数学、容器、文件等）。过程抽象是高级语言表达力的核心。</p>
+<h2 id="2-实现过程（Implementing-Procedures）">2. 实现过程（Implementing Procedures）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6a84e14f318c22650c320f431c84f184_Slide03.png" alt="Implementing Procedures" width="80%"/>
+<p>两种思路：</p>
+<ol>
+<li><strong>内联</strong>（inline）：用过程体副本替换调用，实参代入形参（类似宏）。短过程有时值得；长过程多次调用会膨胀代码。递归在编译期无法终止展开 → 内联失败。</li>
+<li><strong>链接</strong>（link）：过程代码只保留一份；调用方求实参、存约定位置，<code>BR</code> 到入口并保存<strong>返回地址</strong>（return address）；过程算完把结果放约定位置，再 <code>JMP</code> 回返回地址。</li>
+</ol>
+<h2 id="3-过程调用约定（Procedure-Calling-Convention）">3. 过程调用约定（Procedure Calling Convention）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e8368b14ef6b223abc134f1abf2ee017_Slide04.png" alt="Procedure Calling Convention" width="80%"/>
+<p>需约定：实参放哪、返回值放哪。可尝试用寄存器：如 R1 起传参、R28 存返回地址（<strong>linkage pointer</strong>）、R0 返回值。<code>BR</code>/<code>JMP</code> 正好对应 call/return。</p>
+<p>目标：所有调用与过程体用同一约定——含递归 <code>fact(n-1)</code> 与顶层 <code>fact(3)</code>。</p>
+<h2 id="4-过程链接：初试（Procedure-Linkage-First-Try）">4. 过程链接：初试（Procedure Linkage: First Try）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ef241e01bd813c73246098ac1b13fa15_Slide05.png" alt="Procedure Linkage First Try" width="80%"/>
+<p>按上述约定编译 <code>fact()</code>：入参进 R1，<code>BR</code> 保存返回地址到 R28；递归时又把 <code>n-1</code> 写入 R1、新返回地址写入 R28——<strong>覆盖</strong>外层还需要的 <code>n</code> 与返回地址。深度为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi></mrow><annotation encoding="application/x-tex">d</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span></span></span></span> 时需要约 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mi>d</mi></mrow><annotation encoding="application/x-tex">2d</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6944em;"></span><span class="mord">2</span><span class="mord mathnormal">d</span></span></span></span> 个存储槽，寄存器不够。禁止递归可绕过，但语言通常允许递归 → 必须动态为每次活跃调用分配存储。</p>
+<h2 id="5-过程的存储需求（Procedure-Storage-Needs）">5. 过程的存储需求（Procedure Storage Needs）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a0d9b41751d20e538b786320403c9202_Slide06.png" alt="Procedure Storage Needs" width="80%"/>
+<p>每次活跃调用需要：实参、返回地址、返回值、局部变量、以及调用方寄存器现场。不想限制参数/局部变量个数 → 每次调用一块存储，即<strong>激活记录</strong>。不能静态只为某过程留一块（递归有多份同时活跃）→ 调用时分配、返回时回收。</p>
+<h2 id="6-激活记录（Activation-Records）">6. 激活记录（Activation Records）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e8f40467996e7889aca7f27091a7ee21_Slide07.png" alt="Activation Records" width="80%"/>
+<p><code>fact(3)</code>→<code>fact(2)</code>→<code>fact(1)</code>→<code>fact(0)</code>：每层调用创建自己的激活记录；嵌套调用返回后其记录先丢弃。LIFO：被调方记录总在调用方之前释放——调用方必须等被调返回才能结束。需要高效支持这种分配/释放的结构。</p>
+<h2 id="7-洞察：需要栈！（Insight-We-Need-a-Stack-）">7. 洞察：需要栈！（Insight: We Need a Stack!）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3f3a061f766688454036eb06a2074f3c_Slide08.png" alt="Insight We Need a Stack" width="80%"/>
+<p>激活记录按 LIFO 进出 → <strong>栈</strong>（stack）：<code>PUSH</code> 加顶、<code>POP</code> 去顶。C 过程通常只访问栈顶记录；Java 等可访问其他活跃帧。闭包 / continuation（如 Python <code>yield</code>）需在返回后仍保留帧 → 纯栈不够，属更高级课程话题。</p>
+<h2 id="8-栈实现（Stack-Implementation）">8. 栈实现（Stack Implementation）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7b5f6f95568e4daa6939dfe7bd74a57f_Slide09.png" alt="Stack Implementation" width="80%"/>
+<p>Beta：专用 <strong>R29 = SP</strong>（stack pointer）。<code>PUSH</code> 时递增 SP，栈向高地址生长。约定：SP 指向<strong>下一个未用</strong>字；低于 SP 的地址是已分配内容。</p>
+<p><strong>栈纪律</strong>（stack discipline）：一段代码 <code>PUSH</code> 的内容必须在结束前 <code>POP</code> 掉，使 SP 恢复原值。栈放在大块内存区，系统常设最大栈长，溢出报错。Beta 用现有指令实现栈，纯软件约定；有的 ISA 有专用栈指令。</p>
+<h2 id="9-栈管理宏（Stack-Management-Macros）">9. 栈管理宏（Stack Management Macros）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/374ddee69cd65875183554a38608aa5d_Slide10.png" alt="Stack Management Macros" width="80%"/>
+<p>UASM 宏：</p>
+<ul>
+<li><code>PUSH</code>：先 <code>ADDC</code> 分配栈顶，再 <code>ST</code> 初始化（顺序重要：中断可能夹在两指令之间；先分配再写更安全）</li>
+<li><code>POP</code>：先 <code>LD</code> 取值，再 <code>SUBC</code> 释放</li>
+<li><code>ALLOCATE</code> / <code>DEALLOCATE</code>：预留/释放 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 个字（不必初始化）</li>
+</ul>
+<p>见 <code>PUSH</code>/<code>ALLOCATE</code> 应能找到配对的 <code>POP</code>/<code>DEALLOCATE</code>。</p>
+<h2 id="10-玩转栈（Fun-With-Stacks）">10. 玩转栈（Fun With Stacks）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c4ede911868c94e358b88a4dc9b0a43b_Slide11.png" alt="Fun With Stacks" width="80%"/>
+<p>临时占用寄存器前可 <code>PUSH</code> 旧值，用完按相反顺序 <code>POP</code> 恢复（LIFO）。有了栈，即可解决激活记录的分配/释放问题。</p>
+<h2 id="11-解决过程链接问题（Solving-Procedure-Linkage-Problems）">11. 解决过程链接问题（Solving Procedure Linkage Problems）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/85312ef5c5bdb8f889237146690ae312_Slide12.png" alt="Solving Procedure Linkage Problems" width="80%"/>
+<p>栈上放激活记录：实参、局部变量、以及保存的 LP（以便嵌套调用）。职责分摊：</p>
+<ul>
+<li><strong>调用方（caller）</strong>：求实参并<strong>逆序</strong> <code>PUSH</code>（第一实参最后压栈）；<code>BR</code> 到入口，返回地址进 LP=R28；返回后 <code>DEALLOCATE</code> 去掉实参。</li>
+<li>被调方完成帧的其余部分（下页）。</li>
+</ul>
+<p>逆序原因后文说明（可变参数）。</p>
+<h2 id="12-栈帧作激活记录（Stack-Frames-as-Activation-Records）">12. 栈帧作激活记录（Stack Frames as Activation Records）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1e894bddaceae105583a4892749d98fc_Slide13.png" alt="Stack Frames as Activation Records" width="80%"/>
+<p>入口序列完成帧（也称 <strong>stack frame</strong>）：保存 LP；再保存调用方的 <strong>BP=R27</strong>，并用当前 SP 设本帧 BP；<code>ALLOCATE</code> 局部变量；再 <code>PUSH</code> 本过程将破坏的寄存器（<strong>callee saves</strong>：除 R0 外寄存器跨调用保持）。</p>
+<p>有了 BP，帧内访问用相对 BP 的固定偏移，比相对 SP 更稳（SP 会随 PUSH/POP 变）。</p>
+<h2 id="13-栈帧细节（Stack-Frame-Details）">13. 栈帧细节（Stack Frame Details）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4aeaa59687e58fda07a9f0fc046e7264_Slide14.png" alt="Stack Frame Details" width="80%"/>
+<p>回到问题：为何实参<strong>逆序</strong>压栈？</p>
+<h2 id="14-实参顺序与-BP（Argument-Order-BP-Usage）">14. 实参顺序与 BP（Argument Order &amp; BP Usage）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9242020b05e48fd662c3c4127ac8e13e_Slide15.png" alt="Argument Order and BP Usage" width="80%"/>
+<p>逆序后，第一实参（arg 0）相对 BP 偏移固定（如 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mn>12</mn></mrow><annotation encoding="application/x-tex">-12</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">−</span><span class="mord">12</span></span></span></span>），与共压几个实参无关；第二参 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mn>16</mn></mrow><annotation encoding="application/x-tex">-16</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">−</span><span class="mord">16</span></span></span></span>…… C 的可变参数（如 <code>printf</code>：格式串在第一个实参）依赖这一点。局部变量亦固定偏移：第一局部 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0</mn></mrow><annotation encoding="application/x-tex">0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span>，第二 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>+</mo><mn>4</mn></mrow><annotation encoding="application/x-tex">+4</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">+</span><span class="mord">4</span></span></span></span>…… 帧上更高地址可用于嵌套调用建新帧。</p>
+<h2 id="15-过程链接契约（Procedure-Linkage-The-Contract）">15. 过程链接契约（Procedure Linkage: The Contract）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/49fb4e5d5e1d900a34a02445f27bde2a_Slide16.png" alt="Procedure Linkage The Contract" width="80%"/>
+<p><strong>Caller</strong>：逆序压实参 → <code>BR</code> 到入口（返回地址→LP）→ 返回后卸掉实参。</p>
+<p><strong>Callee</strong>：计算结果放 R0 → <code>JMP</code> 返回地址 → 卸掉自己压上的内容，栈恢复入口时模样 → 除 R0 外保持所有寄存器。</p>
+<h2 id="16-过程链接模板（Procedure-Linkage-Templates）">16. 过程链接模板（Procedure Linkage Templates）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3728697745d5f935b536dde97faeec40_Slide17.png" alt="Procedure Linkage Templates" width="80%"/>
+<p>入口：保存 LP、BP；<code>MOVE(SP,BP)</code>；<code>ALLOCATE</code> 局部；<code>PUSH</code> 将用寄存器。出口：按相反顺序 <code>POP</code> 恢复；<code>MOVE(BP,SP)</code> 隐式撤销 <code>ALLOCATE</code>；最后 <code>JMP(LP)</code> 回调用方。</p>
+<h2 id="17-综合：阶乘（Putting-It-All-Together-Factorial）">17. 综合：阶乘（Putting It All Together: Factorial）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1d68a1469af72f47a3a0d7def3bebbc7_Slide18.png" alt="Putting It All Together Factorial" width="80%"/>
+<p>C 版 <code>fact</code> 的编译结果：入口/出口序列清晰；嵌套调用栈上传参并在返回后 <code>DEALLOCATE</code>；体用上讲模板。链接开销约十余条指令；对极短非递归过程，优化器可能选择内联。</p>
+<h2 id="18-递归？（Recursion-）">18. 递归？（Recursion?）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d86e5032f8ec023288fddaef8f2f7fad_Slide19.png" alt="Recursion" width="80%"/>
+<p>已解决：每次调用新栈帧；返回按逆序释放。沿 BP 链可读出活跃调用、实参、局部变量 → <strong>stack trace</strong>（运行时出错时常打印）。能解读栈帧 ≈ 理解调用约定（测验常见题）。</p>
+<h2 id="19-栈侦探（Stack-Detective）">19. 栈侦探（Stack Detective）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d093fadfb09cb864306359f4572f6c87_Slide20.png" alt="Stack Detective" width="80%"/>
+<p>练习：已知 PC=0x40、栈转储，推断：</p>
+<ul>
+<li>当前 <code>fact</code> 实参为 3；沿保存的 BP/LP 找到原始调用实参为 6</li>
+<li>原始调用的 <code>BR</code> 在 0x7C（保存的 LP=0x80 为下一指令）</li>
+<li>即将执行的是 <code>DEALLOCATE(1)</code>（递归返回后的指令）</li>
+<li>BP 等可由帧布局与十六进制地址推出</li>
+</ul>
+<p>关键：会读帧布局、十六进制算术、区分递归返回地址与外部返回地址。</p>
+<h2 id="20-专用寄存器小结（Summary-of-Dedicated-Registers）">20. 专用寄存器小结（Summary of Dedicated Registers）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a65ff319444a8e484792c1b5dd6fddfa_Slide21.png" alt="Summary of Dedicated Registers" width="80%"/>
+<table>
+<thead>
+<tr>
+<th>寄存器</th>
+<th>角色</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R31</td>
+<td>ISA 规定恒为 0</td>
+</tr>
+<tr>
+<td>R30</td>
+<td>留给下讲 Beta 实现（XP）；用户代码勿用</td>
+</tr>
+<tr>
+<td>R29 (SP)</td>
+<td>栈指针</td>
+</tr>
+<tr>
+<td>R28 (LP)</td>
+<td>链接指针（返回地址）</td>
+</tr>
+<tr>
+<td>R27 (BP)</td>
+<td>基址指针（当前帧）</td>
+</tr>
+</tbody>
+</table>
+<h2 id="21-小结（Summary）">21. 小结（Summary）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/019cee61090a93d9f856a5cfbaba9f1a_Slide22.png" alt="Summary" width="80%"/>
+<p>激活记录由 caller/callee 共同建造，返回时丢弃；含实参、保存的 LP/BP、其他被保存寄存器、局部变量。BP 指向当前帧；<strong>callee saves</strong>（除 R0）保证嵌套与递归安全。至此可编译并执行任意 C 程序（在约定意义下）。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/ic/" rel="tag"># ic</a>
+              <a href="/blog/tags/semiconductor/" rel="tag"># semiconductor</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/11-compilers/" rel="prev" title="MIT 6.004：L11 编译器">
+      <i class="fa fa-chevron-left"></i> MIT 6.004：L11 编译器
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/13-building-the-beta/" rel="next" title="MIT 6.004：L13 构建 Beta">
+      MIT 6.004：L13 构建 Beta <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-text">L12：过程与栈（Procedures and Stacks）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E8%BF%87%E7%A8%8B%EF%BC%9A%E8%BD%AF%E4%BB%B6%E6%8A%BD%E8%B1%A1%EF%BC%88Procedures-A-Software-Abstraction%EF%BC%89"><span class="nav-text">1. 过程：软件抽象（Procedures: A Software Abstraction）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E5%AE%9E%E7%8E%B0%E8%BF%87%E7%A8%8B%EF%BC%88Implementing-Procedures%EF%BC%89"><span class="nav-text">2. 实现过程（Implementing Procedures）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E8%BF%87%E7%A8%8B%E8%B0%83%E7%94%A8%E7%BA%A6%E5%AE%9A%EF%BC%88Procedure-Calling-Convention%EF%BC%89"><span class="nav-text">3. 过程调用约定（Procedure Calling Convention）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E8%BF%87%E7%A8%8B%E9%93%BE%E6%8E%A5%EF%BC%9A%E5%88%9D%E8%AF%95%EF%BC%88Procedure-Linkage-First-Try%EF%BC%89"><span class="nav-text">4. 过程链接：初试（Procedure Linkage: First Try）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-%E8%BF%87%E7%A8%8B%E7%9A%84%E5%AD%98%E5%82%A8%E9%9C%80%E6%B1%82%EF%BC%88Procedure-Storage-Needs%EF%BC%89"><span class="nav-text">5. 过程的存储需求（Procedure Storage Needs）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-%E6%BF%80%E6%B4%BB%E8%AE%B0%E5%BD%95%EF%BC%88Activation-Records%EF%BC%89"><span class="nav-text">6. 激活记录（Activation Records）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-%E6%B4%9E%E5%AF%9F%EF%BC%9A%E9%9C%80%E8%A6%81%E6%A0%88%EF%BC%81%EF%BC%88Insight-We-Need-a-Stack-%EF%BC%89"><span class="nav-text">7. 洞察：需要栈！（Insight: We Need a Stack!）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#8-%E6%A0%88%E5%AE%9E%E7%8E%B0%EF%BC%88Stack-Implementation%EF%BC%89"><span class="nav-text">8. 栈实现（Stack Implementation）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#9-%E6%A0%88%E7%AE%A1%E7%90%86%E5%AE%8F%EF%BC%88Stack-Management-Macros%EF%BC%89"><span class="nav-text">9. 栈管理宏（Stack Management Macros）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#10-%E7%8E%A9%E8%BD%AC%E6%A0%88%EF%BC%88Fun-With-Stacks%EF%BC%89"><span class="nav-text">10. 玩转栈（Fun With Stacks）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#11-%E8%A7%A3%E5%86%B3%E8%BF%87%E7%A8%8B%E9%93%BE%E6%8E%A5%E9%97%AE%E9%A2%98%EF%BC%88Solving-Procedure-Linkage-Problems%EF%BC%89"><span class="nav-text">11. 解决过程链接问题（Solving Procedure Linkage Problems）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#12-%E6%A0%88%E5%B8%A7%E4%BD%9C%E6%BF%80%E6%B4%BB%E8%AE%B0%E5%BD%95%EF%BC%88Stack-Frames-as-Activation-Records%EF%BC%89"><span class="nav-text">12. 栈帧作激活记录（Stack Frames as Activation Records）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#13-%E6%A0%88%E5%B8%A7%E7%BB%86%E8%8A%82%EF%BC%88Stack-Frame-Details%EF%BC%89"><span class="nav-text">13. 栈帧细节（Stack Frame Details）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#14-%E5%AE%9E%E5%8F%82%E9%A1%BA%E5%BA%8F%E4%B8%8E-BP%EF%BC%88Argument-Order-BP-Usage%EF%BC%89"><span class="nav-text">14. 实参顺序与 BP（Argument Order &amp; BP Usage）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#15-%E8%BF%87%E7%A8%8B%E9%93%BE%E6%8E%A5%E5%A5%91%E7%BA%A6%EF%BC%88Procedure-Linkage-The-Contract%EF%BC%89"><span class="nav-text">15. 过程链接契约（Procedure Linkage: The Contract）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#16-%E8%BF%87%E7%A8%8B%E9%93%BE%E6%8E%A5%E6%A8%A1%E6%9D%BF%EF%BC%88Procedure-Linkage-Templates%EF%BC%89"><span class="nav-text">16. 过程链接模板（Procedure Linkage Templates）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#17-%E7%BB%BC%E5%90%88%EF%BC%9A%E9%98%B6%E4%B9%98%EF%BC%88Putting-It-All-Together-Factorial%EF%BC%89"><span class="nav-text">17. 综合：阶乘（Putting It All Together: Factorial）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#18-%E9%80%92%E5%BD%92%EF%BC%9F%EF%BC%88Recursion-%EF%BC%89"><span class="nav-text">18. 递归？（Recursion?）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#19-%E6%A0%88%E4%BE%A6%E6%8E%A2%EF%BC%88Stack-Detective%EF%BC%89"><span class="nav-text">19. 栈侦探（Stack Detective）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#20-%E4%B8%93%E7%94%A8%E5%AF%84%E5%AD%98%E5%99%A8%E5%B0%8F%E7%BB%93%EF%BC%88Summary-of-Dedicated-Registers%EF%BC%89"><span class="nav-text">20. 专用寄存器小结（Summary of Dedicated Registers）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#21-%E5%B0%8F%E7%BB%93%EF%BC%88Summary%EF%BC%89"><span class="nav-text">21. 小结（Summary）</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">148</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">44</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://cuda-doc.readthedocs.io/" title="https:&#x2F;&#x2F;cuda-doc.readthedocs.io" rel="noopener" target="_blank">CUDA中文手册</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://infiniband-doc.readthedocs.io/" title="https:&#x2F;&#x2F;infiniband-doc.readthedocs.io&#x2F;" rel="noopener" target="_blank">InfiniBand中文手册</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+      
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.css">
+
+
+  
+
+</body>
+</html>

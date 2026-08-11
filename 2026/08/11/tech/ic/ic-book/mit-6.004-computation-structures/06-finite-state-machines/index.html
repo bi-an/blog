@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="整理自 MIT OCW 6.004 Computation Structures（Spring 2017）L06 注解幻灯片。 源网页：6.1 Annotated Slides | Finite State Machines 讲师：Chris Terman。图片直接引用 OCW 原站链接。  L06：有限状态机（Finite State Machines） 本讲在时序逻辑之上引入 FSM 抽象：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MIT 6.004：L06 有限状态机">
+<meta property="og:url" content="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/06-finite-state-machines/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="整理自 MIT OCW 6.004 Computation Structures（Spring 2017）L06 注解幻灯片。 源网页：6.1 Annotated Slides | Finite State Machines 讲师：Chris Terman。图片直接引用 OCW 原站链接。  L06：有限状态机（Finite State Machines） 本讲在时序逻辑之上引入 FSM 抽象：">
+<meta property="og:locale">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/68c02542c606a9dfbeb43171bcbb9d61_Slide02.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/88e72bf365ab07be625d0296d1c76110_Slide03.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/cf9238cb993345df80ba1e4ad7babb25_Slide04.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c5025083ffedf14759dbfd3c0cdc6162_Slide05.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a2facbc7f2e330d15206a52d1768bfb5_Slide06.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f5faf7a3e0e141813e04bb647c77cd0e_Slide07.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4ecfb54f0d10a8e59b284a051b168b81_Slide08.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f998b521ccfef242b7272405810c45f6_Slide09.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7c5e289f2e4746879908ce5b6d79983c_Slide10.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/82a022e1f682dee47837bf697d8240c2_Slide11.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8b48eff61d9a84c762164b8d480a7dd3_Slide12.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4b74e046d7d92fd6b1e17a59dbb1b0a2_Slide13.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/58f824dca5002a86498e553135c0c9fb_Slide14.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/03a01995c5d440e95efed6fbf6e7a4fb_Slide15.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d7b3405b48b09dd27733e759ffc5f9a4_Slide16.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7519e2a0b7df45b60ec57efd12d772b3_Slide17.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6344748c19c9c4768d902ae21a7134cf_Slide18.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6ff1c0db62000b3af3fb1483b3626e57_Slide19.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b0e06d16783d8e49a9b1ceccf3f9ea54_Slide20.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/16fdf264e95bd81906069a2aa3373373_Slide21.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6e40d4cd92520f1af527e8c0964d17c4_Slide22.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/65646bfa68276c029273f17c3296906f_Slide23.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4c8bbf23e8daa24b235a3cad0f14b88e_Slide24.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a6b5790d1f81c2149319f5752970fb6d_Slide25.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b352897db8dac2d547ef777b639a9ac5_Slide26.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ed3ede13bf7e4e098ad023b0c54878b9_Slide27.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d71eb3e955c76f9e811471341b102aba_Slide28.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ae392b52efca848a9a3d845be454cf9f_Slide29.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e46b265de4434246dc780c15ba83e737_Slide30.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/72c72ab553043ba0ce3ce2597ec0585c_Slide31.png">
+<meta property="article:published_time" content="2026-08-11T17:20:30.000Z">
+<meta property="article:modified_time" content="2026-08-11T09:41:52.784Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="ic">
+<meta property="article:tag" content="semiconductor">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/68c02542c606a9dfbeb43171bcbb9d61_Slide02.png">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/06-finite-state-machines/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>MIT 6.004：L06 有限状态机 | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/06-finite-state-machines/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MIT 6.004：L06 有限状态机
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2026-08-11 17:20:30 / Modified: 09:41:52" itemprop="dateCreated datePublished" datetime="2026-08-11T17:20:30+00:00">2026-08-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/ic/" itemprop="url" rel="index"><span itemprop="name">ic</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>整理自 MIT OCW <strong>6.004 Computation Structures</strong>（Spring 2017）L06 注解幻灯片。</p>
+<p>源网页：<a target="_blank" rel="noopener" href="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/pages/c6/c6s1/">6.1 Annotated Slides | Finite State Machines</a></p>
+<p>讲师：Chris Terman。图片直接引用 OCW 原站链接。</p>
+</blockquote>
+<h1>L06：有限状态机（Finite State Machines）</h1>
+<p>本讲在时序逻辑之上引入 <strong>FSM</strong> 抽象：状态转移图、Moore/Mealy、ROM/门级实现、等价状态化简，以及异步输入与亚稳态、同步器隔离策略。</p>
+<h2 id="1-我们的新机器（Our-New-Machine）">1. 我们的新机器（Our New Machine）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/68c02542c606a9dfbeb43171bcbb9d61_Slide02.png" alt="Our New Machine" width="80%"/>
+<p>上一章得到时序逻辑：组合逻辑云 + 状态寄存器。</p>
+<ul>
+<li><strong>组合逻辑</strong>：无环图，服从静态纪律——合法且稳定的数字输入 → 在最后一次输入跳变后的规定时间内得到合法且稳定的数字输出；功能规格给出每种输入组合的输出。图中有 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>+</mo><mi>m</mi></mrow><annotation encoding="application/x-tex">k+m</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7778em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.0315em;">k</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal">m</span></span></span></span> 个输入、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>+</mo><mi>n</mi></mrow><annotation encoding="application/x-tex">k+n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7778em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.0315em;">k</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal">n</span></span></span></span> 个输出，真值表有 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mrow><mi>k</mi><mo>+</mo><mi>m</mi></mrow></msup></mrow><annotation encoding="application/x-tex">2^{k+m}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8491em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.0315em;">k</span><span class="mbin mtight">+</span><span class="mord mathnormal mtight">m</span></span></span></span></span></span></span></span></span></span></span></span> 行、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>+</mo><mi>n</mi></mrow><annotation encoding="application/x-tex">k+n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7778em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.0315em;">k</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal">n</span></span></span></span> 列输出。</li>
+<li><strong>状态寄存器</strong>：记住当前状态，用 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.0315em;">k</span></span></span></span> 比特编码，最多 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mi>k</mi></msup></mrow><annotation encoding="application/x-tex">2^k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8491em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0315em;">k</span></span></span></span></span></span></span></span></span></span></span> 个互异状态。状态以合适方式捕获输入序列中<strong>相关历史</strong>；过去输入若影响后续行为，正是通过这些状态比特。典型地，周期时钟上升沿触发 LOAD，把组合逻辑算出的新状态写入寄存器。</li>
+</ul>
+<p>设计任务：决定期望输入序列应对应怎样的输出序列（一次输入可能引出一长串输出，或输出暂不变、靠内部状态逐步记住信息）→ 写出计算输出与下一状态的功能规格 → 画出实际电路。</p>
+<h2 id="2-一个简单的时序电路（A-Simple-Sequential-Circuit）">2. 一个简单的时序电路（A Simple Sequential Circuit）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/88e72bf365ab07be625d0296d1c76110_Slide03.png" alt="A Simple Sequential Circuit" width="80%"/>
+<p>例：密码锁。1 比特输入按位串入口令；输出 UNLOCK 仅当最近四位输入为 <code>0-1-1-0</code> 时为 1。</p>
+<p>是否必须记住最近四位（4 个状态比特）？不必。只需知道“最近输入是否构成正确口令的某个前缀”——输入不对时，不必记录“错成什么样”，只需知道“不对”。由此引入描述时序行为的抽象。</p>
+<h2 id="3-今日抽象：有限状态机（Abstraction-du-jour-Finite-State-Machines）">3. 今日抽象：有限状态机（Abstraction du jour: Finite State Machines）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/cf9238cb993345df80ba1e4ad7babb25_Slide04.png" alt="Finite State Machines" width="80%"/>
+<p><strong>FSM</strong> 描述时序逻辑的输入/输出行为，与具体实现无关。要素：</p>
+<ul>
+<li><strong>周期 CLOCK</strong>：上升沿触发当前状态 → 下一状态</li>
+<li><strong>有限个状态</strong>，上电有一个初始/起始状态。状态数本身是设计题：状态比特数与计算下一状态/输出的组合逻辑复杂度常有折衷</li>
+<li><strong>输入</strong>：传送外部信息。100 比特信息可一次并行送入，也可单线串行 100 拍——时序逻辑远快于被控物理过程时，常选<strong>比特串行</strong>以省互连，代价是传输时间</li>
+<li><strong>输出</strong>：同理可串行/并行编码</li>
+<li><strong>转移规则</strong>：由当前状态 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0576em;">S</span></span></span></span> 与输入 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>I</mi></mrow><annotation encoding="application/x-tex">I</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0785em;">I</span></span></span></span> 定下一状态 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>S</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup></mrow><annotation encoding="application/x-tex">S&#x27;</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7519em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0576em;">S</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7519em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span></span></span></span>，须对所有 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi><mo separator="true">,</mo><mi>I</mi></mrow><annotation encoding="application/x-tex">S,I</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0576em;">S</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.0785em;">I</span></span></span></span> 组合穷尽</li>
+<li><strong>输出规则</strong>：常可仅是 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0576em;">S</span></span></span></span> 的函数（更简单）；一般也可是 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0576em;">S</span></span></span></span> 与当前输入的函数</li>
+</ul>
+<h2 id="4-状态转移图（State-Transition-Diagram）">4. 状态转移图（State Transition Diagram）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c5025083ffedf14759dbfd3c0cdc6162_Slide05.png" alt="State Transition Diagram" width="80%"/>
+<p>用状态转移图描述密码锁 FSM。初始状态 SX：尚未收到任何口令位；圆圈表示状态，符号名提醒“记住了什么历史”。本例解锁输出 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>U</mi></mrow><annotation encoding="application/x-tex">U</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">U</span></span></span></span> 仅依赖当前状态，写在圆内；SX 中 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>U</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">U=0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">U</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span>。初始态用粗边框标出。</p>
+<p>收到 0 → 转到 S0（已见口令首位）。箭头标转移条件；时钟上升沿触发转移。继续补全正确口令路径，最右态 S0110 表示已检出 <code>0-1-1-0</code>，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>U</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">U=1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">U</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>。从 SX 输入 <code>0-1-1-0</code> 会停在 S0110。</p>
+<p>输入不是期望下一位时：例如 SX 收到 1，仍无正确前缀，留在 SX。错误输入<strong>不一定</strong>回到 SX——若在 S0110 再收 1，最近四位变成 <code>1-1-0-1</code>，但末两位 <code>0-1</code> 可能是合法口令前缀，故转到 S01。</p>
+<p>输出仅是当前状态的函数 → <strong>Moore 机</strong>（输出写在状态圆内）。输出还依赖当前输入 → <strong>Mealy 机</strong>：转移箭头上用 <code>/</code> 分隔输入与输出，如 <code>0/1</code>。</p>
+<h2 id="5-合法的状态图（Valid-State-Diagrams）">5. 合法的状态图（Valid State Diagrams）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a2facbc7f2e330d15206a52d1768bfb5_Slide06.png" alt="Valid State Diagrams" width="80%"/>
+<p>良构规则：</p>
+<ul>
+<li><strong>互斥</strong>（mutually exclusive）：同一状态下不能有两条转移带相同输入标签——否则下一状态有歧义，行为不一致</li>
+<li><strong>穷尽</strong>（collectively exhaustive）：每个可能输入值都应有转移；若某输入下应停留，画指向自身的自环</li>
+</ul>
+<p>于是对每一对（当前状态，输入）恰选一条转移。</p>
+<h2 id="6-状态转移图即真值表（State-Transition-Diagram-as-a-Truth-Table）">6. 状态转移图即真值表（State Transition Diagram as a Truth Table）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f5faf7a3e0e141813e04bb647c77cd0e_Slide07.png" alt="State Transition Diagram as a Truth Table" width="80%"/>
+<p>转移图可写成真值表：行 = 当前状态 + 输入的所有组合；输出列 = 下一状态与输出。用二进制替换符号状态名后，即第 4 章那种真值表。<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0715em;">K</span></span></span></span> 个状态需 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">⌈</mo><msub><mrow><mi>log</mi><mo>⁡</mo></mrow><mn>2</mn></msub><mi>K</mi><mo stretchy="false">⌉</mo></mrow><annotation encoding="application/x-tex">\lceil\log_2 K\rceil</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">⌈</span><span class="mop"><span class="mop">lo<span style="margin-right:0.0139em;">g</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.207em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2441em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.0715em;">K</span><span class="mclose">⌉</span></span></span></span> 个状态比特（本例 5 态 → 3 比特）。</p>
+<p>编码可任意（000、001…），但<strong>状态编码</strong>会强烈影响实现逻辑复杂度——找最简逻辑的编码本身很有趣。有了真值表，可用第 4 章方法做组合逻辑，或干脆用 ROM。</p>
+<h2 id="7-落到硬件（Now-Put-It-in-Hardware）">7. 落到硬件（Now Put It in Hardware）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4ecfb54f0d10a8e59b284a051b168b81_Slide08.png" alt="Now Put It in Hardware" width="80%"/>
+<p>ROM 由当前状态与输入计算下一状态与输出。5 态用 3 比特编码 → 3 比特状态寄存器（边沿触发矩形为多比特寄存器的示意；线上斜杠 + 数字表示位宽）。</p>
+<p>ROM 共 4 根地址输入（3 状态 + 1 输入）→ <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>4</mn></msup><mo>=</mo><mn>16</mn></mrow><annotation encoding="application/x-tex">2^4=16</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8141em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">4</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">16</span></span></span></span> 个单元，对应真值表 16 行；每单元 4 比特（3 下一状态 + 1 输出）→ <strong>16×4 ROM</strong>。状态寄存器仍须服从动态纪律（第 5 章末时序分析）；暂假定输入跳变已与时钟上升沿正确同步。</p>
+<h2 id="8-离散状态、离散时间（Discrete-State-Discrete-Time）">8. 离散状态、离散时间（Discrete State, Discrete Time）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f998b521ccfef242b7272405810c45f6_Slide09.png" alt="Discrete State, Discrete Time" width="80%"/>
+<p>回顾设计选择：输出仅依赖状态 → Moore；依赖状态+输入 → Mealy。<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0576em;">S</span></span></span></span> 个状态比特可编码 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mi>S</mi></msup></mrow><annotation encoding="application/x-tex">2^S</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8413em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0576em;">S</span></span></span></span></span></span></span></span></span></span></span> 态。<strong>每多 1 个状态比特，ROM 容量翻倍</strong>——用 ROM 实现时极想减少状态比特。</p>
+<p>波形：时钟上升沿 → 状态寄存器输出更新 → ROM 算出下一状态（本周期某时刻稳定）→ 下一上升沿装入。周而复始，跟随转移图。</p>
+<h2 id="9-杂务问题（Housekeeping-Issues…）">9. 杂务问题（Housekeeping Issues…）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7c5e289f2e4746879908ce5b6d79983c_Slide10.png" alt="Housekeeping Issues" width="80%"/>
+<ul>
+<li><strong>复位</strong>：上电需把状态寄存器置为初始态编码；常用 RESET=1 强制初态，再置 0 开始运行</li>
+<li><strong>未用编码</strong>：3 比特最多 8 态，本例只用 5 个——可改用门级逻辑；若寄存器误入未用编码，可在 ROM 中令未用态一律指向初态，避免未知行为</li>
+<li><strong>编码优化</strong>：CAD 可帮找使组合逻辑最简的状态编码</li>
+<li><strong>另一实现</strong>：移位寄存器记住最近四位，再比较是否匹配口令——无需复杂的下一状态逻辑</li>
+<li><strong>异步输入</strong>：如何保证输入跳变不破坏状态寄存器的动态纪律——本章末节讨论</li>
+</ul>
+<h2 id="10-FSM-的状态（FSM-States）">10. FSM 的状态（FSM States）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/82a022e1f682dee47837bf697d8240c2_Slide11.png" alt="FSM States" width="80%"/>
+<ul>
+<li>用 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0715em;">K</span></span></span></span> 个状态比特的 FSM，转移图中状态数至多 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mi>K</mi></msup></mrow><annotation encoding="application/x-tex">2^K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8413em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0715em;">K</span></span></span></span></span></span></span></span></span></span></span></li>
+<li>两台 FSM 串联（第一台输出 = 第二台输入）：整体仍是 FSM；不知内部细节时，状态数上界为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi><mo>×</mo><mi>N</mi></mrow><annotation encoding="application/x-tex">M\times N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">M</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span>（第一台可在任一 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">M</span></span></span></span> 态，同时第二台在任一 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 态）。上界与输入位宽 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi><mo separator="true">,</mo><mi>Y</mi></mrow><annotation encoding="application/x-tex">X,Y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0785em;">X</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.2222em;">Y</span></span></span></span> 无关——更宽输入只让转移标签更长，不直接告诉内部状态数</li>
+</ul>
+<h2 id="11-我的转移图是什么？（What’s-My-Transition-Diagram-）">11. 我的转移图是什么？（What’s My Transition Diagram?）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8b48eff61d9a84c762164b8d480a7dd3_Slide12.png" alt="What's My Transition Diagram" width="80%"/>
+<p>黑盒 FSM：按钮 0/1，灯输出。实验一小时：按 0 灯灭，按 1 灯亮。能否确定转移图？</p>
+<p>两个图都能匹配“短时间”观察；第二个要连按 1 四次才暴露差异。<strong>若状态数无上界，永远无法确认已穷尽全部行为。</strong> 若知上界为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0715em;">K</span></span></span></span>，并每次从初态复位：可达态都能在少于 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0715em;">K</span></span></span></span> 步到达，枚举所有长度 ≤<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0715em;">K</span></span></span></span> 的输入序列即可保证访问全部状态。</p>
+<h2 id="12-FSM-等价（FSM-Equivalence）">12. FSM 等价（FSM Equivalence）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4b74e046d7d92fd6b1e17a59dbb1b0a2_Slide13.png" alt="FSM Equivalence" width="80%"/>
+<p>不同状态数的 FSM 可能等价：对外不可区分即可互换。定义：当且仅当<strong>任意输入序列</strong>在两机上产生<strong>相同输出序列</strong>时，两 FSM 等价。工程上希望找最简（最便宜）的等价机——下一例说明如何化简。</p>
+<h2 id="13-造一只机器蚁（Let’s-Build-a-RoboAnt）">13. 造一只机器蚁（Let’s Build a RoboAnt）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/58f824dca5002a86498e553135c0c9fb_Slide14.png" alt="Let's Build a RoboAnt" width="80%"/>
+<p>机器蚁以 FSM 为脑：触角 L、R（触碰为 1）；输出 F 前进、TL/TR 左转/右转。同时请求转向与前进时先转向。触角贴墙时可转，但无法前进。任务：在无孤岛墙的迷宫中用<strong>右手定则</strong>逃出。</p>
+<h2 id="14-迷失太空（Lost-in-Space）">14. 迷失太空（Lost in Space）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/03a01995c5d440e95efed6fbf6e7a4fb_Slide15.png" alt="Lost in Space" width="80%"/>
+<p>初态 LOST：断言 F，一直前进直到至少一根触角碰到墙（<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi></mrow><annotation encoding="application/x-tex">L</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal">L</span></span></span></span> 或 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>R</mi></mrow><annotation encoding="application/x-tex">R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0077em;">R</span></span></span></span> 为 1）。</p>
+<h2 id="15-撞上了！（Bonk-）">15. 撞上了！（Bonk!）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d7b3405b48b09dd27733e759ffc5f9a4_Slide16.png" alt="Bonk" width="80%"/>
+<p>碰到墙后的三种姿态：为实现右手定则，逆时针左转直到两触角都离开墙 → 增加 rotate-counterclockwise 态，断言 TL，直到 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mo>=</mo><mi>R</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">L=R=0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal">L</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0077em;">R</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span>。</p>
+<h2 id="16-稍向右转…（A-Little-to-the-Right…）">16. 稍向右转…（A Little to the Right…）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7519e2a0b7df45b60ec57efd12d772b3_Slide17.png" alt="A Little to the Right" width="80%"/>
+<p>墙已在右侧，开始用右触角沿墙走：WALL1 断言 TR+F，然后看右触角决定下一步（期望立刻再碰到墙）。</p>
+<h2 id="17-再稍向左转…（Then-a-Little-to-the-Left…）">17. 再稍向左转…（Then a Little to the Left…）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6344748c19c9c4768d902ae21a7134cf_Slide18.png" alt="Then a Little to the Left" width="80%"/>
+<p>右触角如期碰到 → WALL2：TL+F，再检查触角。右触角仍碰 → 继续转；左触角碰 → 内角，回到 rotate-counterclockwise 把新墙放到右侧；两触角都空 → 回到 WALL1（与墙平行）。期望沿墙时 WALL1/WALL2 交替；遇内角则旋转后继续。</p>
+<h2 id="18-处理外角（Dealing-With-Outside-Corners）">18. 处理外角（Dealing With Outside Corners）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6ff1c0db62000b3af3fb1483b3626e57_Slide19.png" alt="Dealing With Outside Corners" width="80%"/>
+<p>WALL1 中前进并右转后，外角处右触角可能碰不到墙。策略：CORNER 态继续右转并前进，直到右触角再次碰到拐角后的墙，再转入 WALL2。</p>
+<h2 id="19-等价状态化简（Equivalent-State-Reduction）">19. 等价状态化简（Equivalent State Reduction）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b0e06d16783d8e49a9b1ceccf3f9ea54_Slide20.png" alt="Equivalent State Reduction" width="80%"/>
+<p>找可合并、对外不可区分的状态对。两态等价当且仅当：</p>
+<ol>
+<li><strong>输出相同</strong>（输出对外可见）</li>
+<li>对每种输入组合，二者转到<strong>等价</strong>的下一状态</li>
+</ol>
+<p>策略：反复找等价对并合并，直到不能再合并。</p>
+<h2 id="20-进化一步（An-Evolutionary-Step）">20. 进化一步（An Evolutionary Step）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/16fdf264e95bd81906069a2aa3373373_Slide21.png" alt="An Evolutionary Step" width="80%"/>
+<p>蚁 FSM 中仅 WALL1 与 CORNER 输出相同（皆 TR+F）。二者转移只依赖 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>R</mi></mrow><annotation encoding="application/x-tex">R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0077em;">R</span></span></span></span>：<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>R</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">R=0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0077em;">R</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span> 都到 CORNER，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>R</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">R=1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0077em;">R</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> 都到 WALL2 → 等价，可合并为 WALL1。</p>
+<p>5 态 → 4 态；实现从 3 状态比特降到 2 比特——<strong>少 1 比特，ROM 减半</strong>。与布尔化简类似，合并等价态可省时序硬件。</p>
+<h2 id="21-建转移表（Building-the-Transition-Table）">21. 建转移表（Building the Transition Table）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6e40d4cd92520f1af527e8c0964d17c4_Slide22.png" alt="Building the Transition Table" width="80%"/>
+<p>不用 ROM、改用门实现时：把转移图逐条写入真值表。LOST（编码 00）：<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>F</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">F=1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.1389em;">F</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>；<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mo>=</mo><mi>R</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">L=R=0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal">L</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0077em;">R</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span> 则下一态仍 LOST；任一触角碰 → 转到 rotate-counterclockwise（01），对应 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mo separator="true">,</mo><mi>R</mi></mrow><annotation encoding="application/x-tex">L,R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">L</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.0077em;">R</span></span></span></span> 的三种组合各占一行。再类似地填完其余状态的转移。</p>
+<h2 id="22-实现细节（Implementation-Details）">22. 实现细节（Implementation Details）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/65646bfa68276c029273f17c3296906f_Slide23.png" alt="Implementation Details" width="80%"/>
+<p>完整表可用 don’t-care 压缩行数。再对组合逻辑各输出（2 个下一状态比特 + 3 个运动输出）写布尔方程。下一状态比特用第 4 章 K-map 找质蕴涵覆盖，得最小 SOP；运动控制输出同法。</p>
+<h2 id="23-蚁脑原理图（Ant-Schematic）">23. 蚁脑原理图（Ant Schematic）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4c8bbf23e8daa24b235a3cad0f14b88e_Slide24.png" alt="Ant Schematic" width="80%"/>
+<p>各 SOP 用 AND/OR 直接实现，即得蚁脑原理图：几个 D 寄存器 + 一把逻辑门就能走出迷宫。</p>
+<h2 id="24-一路都是-FSM？（FSMs-All-the-Way-Down-）">24. 一路都是 FSM？（FSMs All the Way Down?）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a6b5790d1f81c2149319f5752970fb6d_Slide25.png" alt="FSMs All the Way Down" width="80%"/>
+<p>简单 FSM 可产生复杂群体行为（群集、鸟群、鱼群）；电影大战场面可想成大量并行 FSM。元胞自动机（通信 FSM 阵列）有时比解 PDE 更易建模分子约束。若允许 FSM 改自身转移表——或许可作进化的粗糙模型。FSM 无处不在。</p>
+<h2 id="25-世界不跟我们的时钟跑！（The-World-Doesn’t-Run-on-Our-Clock-）">25. 世界不跟我们的时钟跑！（The World Doesn’t Run on Our Clock!）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b352897db8dac2d547ef777b639a9ac5_Slide26.png" alt="The World Doesn't Run on Our Clock" width="80%"/>
+<p><strong>异步输入</strong>：跳变时刻与系统时钟完全无关（来自外界）。第 5 讲末：状态寄存器要求相对时钟上升沿满足建立/保持时间；随时可变的输入必可能违反。思路：对每个异步输入加<strong>同步器</strong>，使输出只在时钟上升沿后不久才改变。</p>
+<h2 id="26-有界时间同步器（The-Bounded-Time-Synchronizer）">26. 有界时间同步器（The Bounded-Time Synchronizer）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ed3ede13bf7e4e098ad023b0c54878b9_Slide27.png" alt="The Bounded-Time Synchronizer" width="80%"/>
+<p>规格：输入 IN、CLK，跳变时刻 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">I</mi><mi mathvariant="normal">N</mi></mrow></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{IN}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">IN</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mi mathvariant="normal">C</mi></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{C}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathrm mtight">C</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>。</p>
+<ul>
+<li>IN 充分早于 CLK → 在 CLK 后有界时间 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mi mathvariant="normal">D</mi></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{D}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathrm mtight">D</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 内输出 1</li>
+<li>CLK 充分早于 IN → 在 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mi mathvariant="normal">D</mi></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{D}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathrm mtight">D</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 内输出 0</li>
+<li>两者间隔小于 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mi mathvariant="normal">E</mi></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{E}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathrm mtight">E</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> → <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mi mathvariant="normal">D</mi></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{D}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathrm mtight">D</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 内输出 0 或 1 皆可，但须是稳定的数字电平</li>
+</ul>
+<p>结论：<strong>对任意有限的 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mi mathvariant="normal">E</mi></msub><mo separator="true">,</mo><msub><mi>t</mi><mi mathvariant="normal">D</mi></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{E}},t_{\mathrm{D}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8095em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathrm mtight">E</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathrm mtight">D</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，即使元件 100% 可靠，也无法造出保证满足该规格的同步器</strong>——问题不可解。</p>
+<h2 id="27-不可解？那不可能…（Unsolvable-That-Can’t-Be-True…）">27. 不可解？那不可能…（Unsolvable? That Can’t Be True…）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d71eb3e955c76f9e811471341b102aba_Slide28.png" alt="Unsolvable" width="80%"/>
+<p>能否用一个 D 寄存器当同步器？取 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mi mathvariant="normal">D</mi></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{D}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathrm mtight">D</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> = 寄存器传播延迟，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mi mathvariant="normal">E</mi></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{E}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathrm mtight">E</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> = setup/hold 中较大者。满足动态纪律时输出确定；违纪时规格允许 0 或 1——看似搞定。</p>
+<p>陷阱：数字抽象诱使我们以为违纪后 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi></mrow><annotation encoding="application/x-tex">Q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span></span></span></span> 在传播延迟后仍必为 0 或 1。看主锁存：当 B、C 几乎同时变时未必如此。</p>
+<h2 id="28-神秘的亚稳态（The-Mysterious-Metastable-State）">28. 神秘的亚稳态（The Mysterious Metastable State）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ae392b52efca848a9a3d845be454cf9f_Slide29.png" alt="The Mysterious Metastable State" width="80%"/>
+<p>主锁存是宽容 MUX，用正反馈构成双稳态。存储模式 ≈ 两门环路：约束为两门电路的 VTC（绿）以及 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>V</mi><mrow><mi mathvariant="normal">I</mi><mi mathvariant="normal">N</mi></mrow></msub><mo>=</mo><msub><mi>V</mi><mrow><mi mathvariant="normal">O</mi><mi mathvariant="normal">U</mi><mi mathvariant="normal">T</mi></mrow></msub></mrow><annotation encoding="application/x-tex">V_{\mathrm{IN}}=V_{\mathrm{OUT}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.2222em;">V</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.2222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">IN</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.2222em;">V</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.2222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">OUT</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>（红）。两曲线交于三点；中间交点是问题所在。</p>
+<p>IN 与 CLK 同时变时，MUX 关闭启用反馈时 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi></mrow><annotation encoding="application/x-tex">Q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">Q</span></span></span></span> 可能正处过渡，环路初值恰在或极近中间交点电压 → <strong>亚稳态</strong>（metastable state）：不稳定平衡。理论上可无限停留；微小扰动会推向稳定平衡。关键：<strong>无法给系统停留在亚稳态的时间设上界</strong>。</p>
+<h2 id="29-亚稳态性质（Metastable-State-Properties）">29. 亚稳态性质（Metastable State: Properties）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e46b265de4434246dc780c15ba83e737_Slide30.png" alt="Metastable State Properties" width="80%"/>
+<ul>
+<li>落在数字信令的禁止区 → <strong>非法逻辑电平</strong>；违纪后寄存器不再保证有界时间内给出数字输出</li>
+<li><strong>逻辑危害</strong>：组合门对非法输入输出不可预测，可污染状态与输出</li>
+<li><strong>电气危害</strong>：CMOS 输入在亚稳电压时 PFET/NFET 可同时导通，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>V</mi><mrow><mi mathvariant="normal">D</mi><mi mathvariant="normal">D</mi></mrow></msub></mrow><annotation encoding="application/x-tex">V_{\mathrm{DD}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.2222em;">V</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.2222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">DD</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>–GND 直通，功耗尖峰</li>
+<li>终将落到两稳定点之一；亚稳电压在 VTC 高增益区，一旦偏离会快速走向 0 或 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>V</mi><mrow><mi mathvariant="normal">D</mi><mi mathvariant="normal">D</mi></mrow></msub></mrow><annotation encoding="application/x-tex">V_{\mathrm{DD}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.2222em;">V</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.2222em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">DD</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></li>
+<li>分辨时间取决于初值离亚稳点有多近——无下界 → 分辨时间<strong>无上界</strong>；给定 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mi mathvariant="normal">D</mi></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{D}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathrm mtight">D</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，总有一段初值区间在时限内分不开</li>
+<li>任一有限 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi></mrow><annotation encoding="application/x-tex">T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.1389em;">T</span></span></span></span> 后仍亚稳的概率 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>&gt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">&gt;0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span>；好消息：该概率随 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi></mrow><annotation encoding="application/x-tex">T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.1389em;">T</span></span></span></span> <strong>指数下降</strong></li>
+<li>每个双稳态系统至少有一个亚稳态——正反馈存储的代价</li>
+</ul>
+<p>更细的数学见课程笔记第 10 章。</p>
+<h2 id="30-解法：延迟提高可靠性（Solution-Delay-Increases-Reliability）">30. 解法：延迟提高可靠性（Solution: Delay Increases Reliability）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/72c72ab553043ba0ce3ce2597ec0585c_Slide31.png" alt="Solution: Delay Increases Reliability" width="80%"/>
+<p>做法：D 寄存器同步后再加<strong>第二级寄存器</strong>，把可能亚稳的值<strong>隔离（quarantine）</strong>。第一级违纪亚稳时，第二级挡住；半周期内第二级主锁存关闭，完全不看该值。要到下一时钟边沿（整周期后）第二级才需要合法稳定输入。整周期后仍亚稳的概率可通过加长时钟周期压到任意低——不是 100% 保证，但失效间隔可达年/十年量级；无第二级可能每几小时就失败一次。</p>
+<p>时钟周期短却要长隔离时间：可串多级隔离寄存器——决定失败概率的是“第一级亚稳 → 内部逻辑使用该信号”的总延迟。</p>
+<p><strong>结论</strong>：用同步寄存器隔离可能亚稳的信号；仍亚稳概率随隔离时间指数下降，可把失败率压到任意低。非绝对保证，但配合隔离策略时，亚稳态在实践中不再是问题。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/ic/" rel="tag"># ic</a>
+              <a href="/blog/tags/semiconductor/" rel="tag"># semiconductor</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/05-sequential-logic/" rel="prev" title="MIT 6.004：L05 时序逻辑">
+      <i class="fa fa-chevron-left"></i> MIT 6.004：L05 时序逻辑
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/07-performance-measures/" rel="next" title="MIT 6.004：L07 性能度量">
+      MIT 6.004：L07 性能度量 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-text">L06：有限状态机（Finite State Machines）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E6%88%91%E4%BB%AC%E7%9A%84%E6%96%B0%E6%9C%BA%E5%99%A8%EF%BC%88Our-New-Machine%EF%BC%89"><span class="nav-text">1. 我们的新机器（Our New Machine）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84%E6%97%B6%E5%BA%8F%E7%94%B5%E8%B7%AF%EF%BC%88A-Simple-Sequential-Circuit%EF%BC%89"><span class="nav-text">2. 一个简单的时序电路（A Simple Sequential Circuit）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E4%BB%8A%E6%97%A5%E6%8A%BD%E8%B1%A1%EF%BC%9A%E6%9C%89%E9%99%90%E7%8A%B6%E6%80%81%E6%9C%BA%EF%BC%88Abstraction-du-jour-Finite-State-Machines%EF%BC%89"><span class="nav-text">3. 今日抽象：有限状态机（Abstraction du jour: Finite State Machines）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E7%8A%B6%E6%80%81%E8%BD%AC%E7%A7%BB%E5%9B%BE%EF%BC%88State-Transition-Diagram%EF%BC%89"><span class="nav-text">4. 状态转移图（State Transition Diagram）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-%E5%90%88%E6%B3%95%E7%9A%84%E7%8A%B6%E6%80%81%E5%9B%BE%EF%BC%88Valid-State-Diagrams%EF%BC%89"><span class="nav-text">5. 合法的状态图（Valid State Diagrams）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-%E7%8A%B6%E6%80%81%E8%BD%AC%E7%A7%BB%E5%9B%BE%E5%8D%B3%E7%9C%9F%E5%80%BC%E8%A1%A8%EF%BC%88State-Transition-Diagram-as-a-Truth-Table%EF%BC%89"><span class="nav-text">6. 状态转移图即真值表（State Transition Diagram as a Truth Table）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-%E8%90%BD%E5%88%B0%E7%A1%AC%E4%BB%B6%EF%BC%88Now-Put-It-in-Hardware%EF%BC%89"><span class="nav-text">7. 落到硬件（Now Put It in Hardware）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#8-%E7%A6%BB%E6%95%A3%E7%8A%B6%E6%80%81%E3%80%81%E7%A6%BB%E6%95%A3%E6%97%B6%E9%97%B4%EF%BC%88Discrete-State-Discrete-Time%EF%BC%89"><span class="nav-text">8. 离散状态、离散时间（Discrete State, Discrete Time）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#9-%E6%9D%82%E5%8A%A1%E9%97%AE%E9%A2%98%EF%BC%88Housekeeping-Issues%E2%80%A6%EF%BC%89"><span class="nav-text">9. 杂务问题（Housekeeping Issues…）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#10-FSM-%E7%9A%84%E7%8A%B6%E6%80%81%EF%BC%88FSM-States%EF%BC%89"><span class="nav-text">10. FSM 的状态（FSM States）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#11-%E6%88%91%E7%9A%84%E8%BD%AC%E7%A7%BB%E5%9B%BE%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F%EF%BC%88What%E2%80%99s-My-Transition-Diagram-%EF%BC%89"><span class="nav-text">11. 我的转移图是什么？（What’s My Transition Diagram?）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#12-FSM-%E7%AD%89%E4%BB%B7%EF%BC%88FSM-Equivalence%EF%BC%89"><span class="nav-text">12. FSM 等价（FSM Equivalence）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#13-%E9%80%A0%E4%B8%80%E5%8F%AA%E6%9C%BA%E5%99%A8%E8%9A%81%EF%BC%88Let%E2%80%99s-Build-a-RoboAnt%EF%BC%89"><span class="nav-text">13. 造一只机器蚁（Let’s Build a RoboAnt）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#14-%E8%BF%B7%E5%A4%B1%E5%A4%AA%E7%A9%BA%EF%BC%88Lost-in-Space%EF%BC%89"><span class="nav-text">14. 迷失太空（Lost in Space）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#15-%E6%92%9E%E4%B8%8A%E4%BA%86%EF%BC%81%EF%BC%88Bonk-%EF%BC%89"><span class="nav-text">15. 撞上了！（Bonk!）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#16-%E7%A8%8D%E5%90%91%E5%8F%B3%E8%BD%AC%E2%80%A6%EF%BC%88A-Little-to-the-Right%E2%80%A6%EF%BC%89"><span class="nav-text">16. 稍向右转…（A Little to the Right…）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#17-%E5%86%8D%E7%A8%8D%E5%90%91%E5%B7%A6%E8%BD%AC%E2%80%A6%EF%BC%88Then-a-Little-to-the-Left%E2%80%A6%EF%BC%89"><span class="nav-text">17. 再稍向左转…（Then a Little to the Left…）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#18-%E5%A4%84%E7%90%86%E5%A4%96%E8%A7%92%EF%BC%88Dealing-With-Outside-Corners%EF%BC%89"><span class="nav-text">18. 处理外角（Dealing With Outside Corners）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#19-%E7%AD%89%E4%BB%B7%E7%8A%B6%E6%80%81%E5%8C%96%E7%AE%80%EF%BC%88Equivalent-State-Reduction%EF%BC%89"><span class="nav-text">19. 等价状态化简（Equivalent State Reduction）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#20-%E8%BF%9B%E5%8C%96%E4%B8%80%E6%AD%A5%EF%BC%88An-Evolutionary-Step%EF%BC%89"><span class="nav-text">20. 进化一步（An Evolutionary Step）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#21-%E5%BB%BA%E8%BD%AC%E7%A7%BB%E8%A1%A8%EF%BC%88Building-the-Transition-Table%EF%BC%89"><span class="nav-text">21. 建转移表（Building the Transition Table）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#22-%E5%AE%9E%E7%8E%B0%E7%BB%86%E8%8A%82%EF%BC%88Implementation-Details%EF%BC%89"><span class="nav-text">22. 实现细节（Implementation Details）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#23-%E8%9A%81%E8%84%91%E5%8E%9F%E7%90%86%E5%9B%BE%EF%BC%88Ant-Schematic%EF%BC%89"><span class="nav-text">23. 蚁脑原理图（Ant Schematic）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#24-%E4%B8%80%E8%B7%AF%E9%83%BD%E6%98%AF-FSM%EF%BC%9F%EF%BC%88FSMs-All-the-Way-Down-%EF%BC%89"><span class="nav-text">24. 一路都是 FSM？（FSMs All the Way Down?）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#25-%E4%B8%96%E7%95%8C%E4%B8%8D%E8%B7%9F%E6%88%91%E4%BB%AC%E7%9A%84%E6%97%B6%E9%92%9F%E8%B7%91%EF%BC%81%EF%BC%88The-World-Doesn%E2%80%99t-Run-on-Our-Clock-%EF%BC%89"><span class="nav-text">25. 世界不跟我们的时钟跑！（The World Doesn’t Run on Our Clock!）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#26-%E6%9C%89%E7%95%8C%E6%97%B6%E9%97%B4%E5%90%8C%E6%AD%A5%E5%99%A8%EF%BC%88The-Bounded-Time-Synchronizer%EF%BC%89"><span class="nav-text">26. 有界时间同步器（The Bounded-Time Synchronizer）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#27-%E4%B8%8D%E5%8F%AF%E8%A7%A3%EF%BC%9F%E9%82%A3%E4%B8%8D%E5%8F%AF%E8%83%BD%E2%80%A6%EF%BC%88Unsolvable-That-Can%E2%80%99t-Be-True%E2%80%A6%EF%BC%89"><span class="nav-text">27. 不可解？那不可能…（Unsolvable? That Can’t Be True…）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#28-%E7%A5%9E%E7%A7%98%E7%9A%84%E4%BA%9A%E7%A8%B3%E6%80%81%EF%BC%88The-Mysterious-Metastable-State%EF%BC%89"><span class="nav-text">28. 神秘的亚稳态（The Mysterious Metastable State）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#29-%E4%BA%9A%E7%A8%B3%E6%80%81%E6%80%A7%E8%B4%A8%EF%BC%88Metastable-State-Properties%EF%BC%89"><span class="nav-text">29. 亚稳态性质（Metastable State: Properties）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#30-%E8%A7%A3%E6%B3%95%EF%BC%9A%E5%BB%B6%E8%BF%9F%E6%8F%90%E9%AB%98%E5%8F%AF%E9%9D%A0%E6%80%A7%EF%BC%88Solution-Delay-Increases-Reliability%EF%BC%89"><span class="nav-text">30. 解法：延迟提高可靠性（Solution: Delay Increases Reliability）</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">148</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">44</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://cuda-doc.readthedocs.io/" title="https:&#x2F;&#x2F;cuda-doc.readthedocs.io" rel="noopener" target="_blank">CUDA中文手册</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://infiniband-doc.readthedocs.io/" title="https:&#x2F;&#x2F;infiniband-doc.readthedocs.io&#x2F;" rel="noopener" target="_blank">InfiniBand中文手册</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+      
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.css">
+
+
+  
+
+</body>
+</html>

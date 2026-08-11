@@ -188,7 +188,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/tech/cpp/basic/cpp-pitfalls/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/26/tech/linux/shell-commands/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -202,7 +202,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2024/01/23/tech/cpp/basic/cpp-pitfalls/" class="post-title-link" itemprop="url">C++ 缺陷</a>
+            <a href="/blog/2024/01/26/tech/linux/shell-commands/" class="post-title-link" itemprop="url">Shell Commands</a>
         </h2>
 
         <div class="post-meta">
@@ -212,332 +212,14 @@
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2024-01-23 21:33:51" itemprop="dateCreated datePublished" datetime="2024-01-23T21:33:51+00:00">2024-01-23</time>
+              <time title="Created: 2024-01-26 15:57:35" itemprop="dateCreated datePublished" datetime="2024-01-26T15:57:35+00:00">2024-01-26</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 07:24:28" itemprop="dateModified" datetime="2026-08-11T07:24:28+00:00">2026-08-11</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="basic-string-M-construct-null-not-valid">basic_string::_M_construct null not valid</h2>
-<p>C++有一个缺陷，请看以下代码：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//cpp defeat: basic_string::_M_construct null not valid</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(string s)</span> </span>&#123;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;fun&quot;</span> &lt;&lt; endl;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">fun</span>(<span class="number">0</span>); <span class="comment">// Run-time error: basic_string::_M_construct null not valid</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>其中，<code>fun(0)</code>的<code>0</code>会被视为<code>const char*</code>类型，也就是<code>nullptr</code>，所以在编译期可以通过。<br>
-但是运行期会触发<code>string</code>对象的构造错误“basic_string::_M_construct null not valid”。</p>
-<p>隐蔽一点的代码：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">char</span> * <span class="title">get_a_string</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Attention: Alaways take care that a parameter to a string should not be NULL!</span></span><br><span class="line">    <span class="built_in">fun</span>(<span class="built_in">get_a_string</span>()); <span class="comment">// Run-time error: basic_string::_M_construct null not valid</span></span><br><span class="line">    <span class="comment">// Better code</span></span><br><span class="line">    <span class="type">char</span> * str = <span class="built_in">get_a_string</span>();</span><br><span class="line">    <span class="built_in">fun</span>(str != <span class="literal">NULL</span>? str : <span class="string">&quot;&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/tech/cpp/debug/cpp-debugging-tools/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/tech/cpp/debug/cpp-debugging-tools/" class="post-title-link" itemprop="url">C++ 调试工具</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 21:27:05" itemprop="dateCreated datePublished" datetime="2024-01-23T21:27:05+00:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 07:24:28" itemprop="dateModified" datetime="2026-08-11T07:24:28+00:00">2026-08-11</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="单元测试框架">单元测试框架</h2>
-<p><a target="_blank" rel="noopener" href="https://cpptest.sourceforge.io/tutorial.html">CppTest</a></p>
-<h2 id="gdb">gdb</h2>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(gdb) breakpoint exit</span><br><span class="line">(gdb) breakpoint _exit</span><br><span class="line">(gdb) breakpoint atexit</span><br><span class="line">(gdb) breakpoint abort</span><br></pre></td></tr></table></figure>
-<p>Enable coredump:<br>
-<a target="_blank" rel="noopener" href="https://medium.com/@sourabhedake/core-dumps-how-to-enable-them-73856a437711">how to do</a></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ulimit</span> -c unlimited</span><br></pre></td></tr></table></figure>
-<p>Where is the core dumped file:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">grep <span class="string">&#x27;kernel.core_pattern&#x27;</span> /etc/sysctl.conf</span><br></pre></td></tr></table></figure>
-<h2 id="strace">strace</h2>
-<p>Example:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">strace -f -o strace.log -tt -y -yy -e trace=desc,process,network</span><br></pre></td></tr></table></figure>
-<p>Refer to <a target="_blank" rel="noopener" href="https://gist.github.com/graste/929bb122c353bdd90c20">here</a></p>
-<blockquote>
-<p>-e trace=ipc – communication between processes (IPC) -e trace=memory – memory syscalls -e<br>
-trace=network – network syscalls -e trace=process – process calls (like fork, exec) -e<br>
-trace=signal – process signal handling (like HUP, exit) -e trace=file – file related syscalls -e<br>
-trace=desc – all file descriptor related system calls</p>
-</blockquote>
-<h2 id="DDT-Distributed-Debugging-Tool-Arm-Forge">DDT (Distributed Debugging Tool, Arm Forge)</h2>
-<ul>
-<li>来源：最初由 Allinea 开发，后来并入 Arm Forge 工具链。</li>
-<li>用途：面向 大规模并行和分布式应用的调试器，广泛用于 HPC (高性能计算)。</li>
-<li>工作方式：
-<ul>
-<li>能 attach 到数千个 MPI 进程或 OpenMP 线程，统一调试。</li>
-<li>支持断点、变量检查、内存错误检测。</li>
-<li>与性能分析工具（如 Arm MAP）结合使用，可以同时做调试和性能分析。</li>
-</ul>
-</li>
-<li>适用场景：超级计算机上的 MPI/OpenMP 程序，科研和工程计算。</li>
-<li>特点：偏向 调试和并行正确性，而不是单纯性能采样。</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/site/mkdocs-configuration/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/site/mkdocs-configuration/" class="post-title-link" itemprop="url">Mkdocs Configuration</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 21:13:02" itemprop="dateCreated datePublished" datetime="2024-01-23T21:13:02+00:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 07:24:28" itemprop="dateModified" datetime="2026-08-11T07:24:28+00:00">2026-08-11</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/site/" itemprop="url" rel="index"><span itemprop="name">site</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Configuration">Configuration</h2>
-<p><code>mkdocs.yml</code> 文件是 MkDocs 文档生成器的配置文件。</p>
-<p>示例：<a target="_blank" rel="noopener" href="https://github.com/squidfunk/mkdocs-material/blob/master/mkdocs.yml"><code>mkdocs.yml</code></a></p>
-<h3 id="theme">theme</h3>
-<p>该文件中的 <code>theme</code> 部分用于指定用于生成文档的主题。</p>
-<p>在这种情况下，使用的主题是 Material。 <code>name</code> 字段指定主题的名称，而 <code>custom_dir</code> 字段指定包含主题自定义内容的目录。 <code>features</code> 字段指定可以为主题启用的可选功能列表。</p>
-<p>以下是在此配置文件中列出的可选功能：</p>
-<ul>
-<li><code>announce.dismiss</code>: 启用可关闭的公告横幅，显示在文档的每个页面顶部。</li>
-<li><code>content.action.edit</code>: 在每个页面上启用“编辑”按钮，以便用户可以轻松编辑页面内容。</li>
-<li><code>content.action.view</code>: 在每个页面上启用“查看源代码”按钮，以便用户可以查看页面的源代码。</li>
-<li><code>content.code.annotate</code>: 启用代码注释功能，使用户可以添加注释以解释代码。</li>
-<li><code>content.code.copy</code>: 启用代码复制功能，使用户可以轻松复制代码。</li>
-<li><code>content.tooltips</code>: 启用工具提示功能，使用户可以在鼠标悬停时查看有关页面元素的信息。</li>
-<li><code>navigation.footer</code>: 在每个页面上启用页脚导航栏。</li>
-<li><code>navigation.indexes</code>: 启用索引导航栏，使用户可以轻松浏览文档中的索引。</li>
-<li><code>navigation.sections</code>: 启用部分导航栏，使用户可以轻松浏览文档中的各个部分。</li>
-<li><code>navigation.tabs</code>: 启用选项卡导航栏，使用户可以轻松浏览文档中的各个选项卡。</li>
-<li><code>navigation.top</code>: 在每个页面上启用顶部导航栏。</li>
-<li><code>navigation.tracking</code>: 启用导航跟踪功能，使用户可以跟踪他们在文档中的位置。</li>
-<li><code>search.highlight</code>: 启用搜索结果高亮显示功能。</li>
-<li><code>search.share</code>: 启用共享搜索结果功能，使用户可以轻松共享搜索结果。</li>
-<li><code>search.suggest</code>: 启用搜索建议功能，使用户可以在输入搜索查询时获得建议。</li>
-<li><code>toc.follow</code>: 启用目录跟随功能，使目录始终保持可见。</li>
-</ul>
-<p><code>palette</code> 字段指定了一个颜色方案，该方案包含以下内容：</p>
-<ul>
-<li><code>scheme</code>: 指定颜色方案的名称。</li>
-<li><code>primary</code>: 指定主要颜色。</li>
-<li><code>accent</code>: 指定强调颜色。</li>
-<li><code>toggle</code>: 指定切换到暗模式时使用的图标和名称。</li>
-</ul>
-<p>第一个方案名为 default，其中主要颜色和强调颜色均为 indigo。切换到暗模式时，使用的图标为 material/brightness-7，名称为“切换到暗模式”。</p>
-<p>第二个方案名为 slate，其中主要颜色和强调颜色均为 indigo。切换到亮模式时，使用的图标为 material/brightness-4，名称为“切换到亮模式”。</p>
-<p>font 字段指定了用于文本和代码的字体。在此配置文件中，文本字体为 Roboto，代码字体为 Roboto Mono。 favicon 字段指定了网站图标的路径。 icon 字段指定了网站标志的路径。</p>
-<p>favicon 和 icon 是网站的两个不同元素。</p>
-<p>favicon 是网站的图标，通常显示在浏览器标签页上。它可以是一个小的图像文件，通常是 .ico 格式。在 mkdocs.yml 文件中，可以使用 favicon 字段来指定网站图标的路径。</p>
-<p>icon 是网站的标志，通常显示在网站的标题栏或页眉中。它可以是一个图像文件，例如 .png 或 .jpg 文件。在 mkdocs.yml 文件中，可以使用 icon 字段来指定网站标志的路径。</p>
-<h3 id="plugin">plugin</h3>
-<p>这里列出了三个插件：blog、search和minify。其中，blog插件用于支持博客功能，search插件用于支持搜索功能，而minify插件用于压缩HTML文件。在search插件中，separator参数指定了搜索时的分隔符，这里的分隔符包括空格、连字符、逗号、冒号、等号、感叹号、方括号、括号、引号、反引号和斜杠等。</p>
-<h3 id="extra">extra</h3>
-<h4 id="analytics">analytics</h4>
-<p>analytics参数用于指定网站分析服务提供商和属性ID，例如衡量网站流量。</p>
-<ul>
-<li><a target="_blank" rel="noopener" href="https://squidfunk.github.io/mkdocs-material/setup/setting-up-site-analytics/">Setting up site analytics</a></li>
-<li><a target="_blank" rel="noopener" href="https://analytics.google.com/analytics/academy/course/6">google免费课程</a></li>
-</ul>
-<h2 id="常见问题">常见问题</h2>
-<p>See <a target="_blank" rel="noopener" href="https://mkdocs.readthedocs.io/en/0.10/user-guide/configuration/">the doc</a>.</p>
-<ol>
-<li>Keep underscore in file name</li>
-</ol>
-<p>refer to:</p>
-<ul>
-<li><a target="_blank" rel="noopener" href="https://pypi.org/project/mkdocs-gen-nav-plugin/">https://pypi.org/project/mkdocs-gen-nav-plugin/</a></li>
-<li><a target="_blank" rel="noopener" href="https://github.com/mkdocs/mkdocs/issues/2017">https://github.com/mkdocs/mkdocs/issues/2017</a></li>
-<li><a target="_blank" rel="noopener" href="https://github.com/squidfunk/mkdocs-material/discussions/5977">https://github.com/squidfunk/mkdocs-material/discussions/5977</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.mkdocs.org/user-guide/writing-your-docs/#meta-data">https://www.mkdocs.org/user-guide/writing-your-docs/#meta-data</a></li>
-<li>No help: <a target="_blank" rel="noopener" href="https://www.mkdocs.org/user-guide/custom-themes/#pagetitle">https://www.mkdocs.org/user-guide/custom-themes/#pagetitle</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/tech/linux/file-system/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/23/tech/linux/file-system/" class="post-title-link" itemprop="url">文件系统</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-23 20:01:02" itemprop="dateCreated datePublished" datetime="2024-01-23T20:01:02+00:00">2024-01-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 07:24:28" itemprop="dateModified" datetime="2026-08-11T07:24:28+00:00">2026-08-11</time>
+                <time title="Modified: 2026-08-11 09:41:52" itemprop="dateModified" datetime="2026-08-11T09:41:52+00:00">2026-08-11</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -560,169 +242,61 @@ trace=desc – all file descriptor related system calls</p>
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="文件示例">文件示例</h2>
-<ul>
-<li>
-<p><code>/proc</code>: 查看手册 <code>man proc</code>。</p>
-</li>
-<li>
-<p><code>/proc/self/exe</code>: 是指向当前进程的程序文件的软链接。</p>
-</li>
-<li>
-<p><code>/proc/&lt;pid&gt;/exe</code>: 是指向进程<code>&lt;pid&gt;</code>的程序文件的软链接。</p>
-<p><a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E19455-01/805-7228/bkuptasks2-78540/index.html">How to Find File System Names</a></p>
-</li>
-<li>
-<p><code>/proc/[pid]/status</code>：可查看进程的内存使用峰值等信息，关键字为&quot;VmHWM&quot;、“VmPeak”、“VmRSS”。</p>
-</li>
-<li>
-<p><code>/proc/[pid]/stat</code>：get current memory</p>
-</li>
-<li>
-<p><code>/dev/shm</code>:</p>
-<p><a target="_blank" rel="noopener" href="https://www.cyberciti.biz/tips/what-is-devshm-and-its-practical-usage.html">What Is /dev/shm And Its Practical Usage</a></p>
-  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">df</span> -h</span><br></pre></td></tr></table></figure>
-<p>Sample outputs:</p>
-  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Filesystem            Size  Used Avail Use% Mounted on</span><br><span class="line">/dev/mapper/wks01-root</span><br><span class="line">                    444G   70G  351G  17% /</span><br><span class="line">tmpfs                 3.9G     0  3.9G   0% /lib/init/rw</span><br><span class="line">udev                  3.9G  332K  3.9G   1% /dev</span><br><span class="line">tmpfs                 3.9G  168K  3.9G   1% /dev/shm</span><br><span class="line">/dev/sda1             228M   32M  184M  15% /boot</span><br></pre></td></tr></table></figure>
-</li>
-<li>
-<p><code>/proc/[pid]/maps</code></p>
-</li>
-</ul>
-<p>可以看到映射的so.</p>
-<h2 id="分区-Partition-和文件系统-Filesystem">分区(Partition)和文件系统(Filesystem)</h2>
-<p>本小节内容来自 <a target="_blank" rel="noopener" href="https://www.linuxfordevices.com/tutorials/linux/partitions-and-filesystems">参考链接</a> 。</p>
-<h3 id="分区：">分区：</h3>
-<p>Linux上的分区指：存储设备中划分出来的一个片段，该片段与其他片段逻辑上分离，好比一个个独立的房间。</p>
-<h3 id="分区表-partition-table-：">分区表(partition table)：</h3>
-<p>分区表存储各个分区的元数据，比如起始位置、终止位置、大小等。<br>
-有两种主要的分区表类型，MBR(older)和GPT(newer)：</p>
-<table>
-<thead>
-<tr>
-<th>Partition tables</th>
-<th>Maximum primary partitions</th>
-<th>Maximum size for each partition</th>
-<th>Security</th>
-<th>Operating system Support</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Master Boot Record (MBR)</td>
-<td>4</td>
-<td>2TB</td>
-<td>No such security features</td>
-<td>Supports most modern OS</td>
-</tr>
-<tr>
-<td>Guid Partition Table (GPT)</td>
-<td>No such limit</td>
-<td>18 Exabytes</td>
-<td>CRC32 checksum mechanism to verify the integrity of files</td>
-<td>Supports most modern OS</td>
-</tr>
-</tbody>
-</table>
-<p>从上表可以很明显地看出，为什么GPT更推荐。</p>
-<h2 id="文件系统">文件系统</h2>
-<p>文件系统是我们在每个分区中管理数据的方式。它负责索引、存储、检索、命名文件和维护文件的元数据（文件所有者、大小、权限等）。存储在分区中。</p>
-<p>一个文件保存在多个连续的 <strong>扇区（sector）</strong> 中，现代每个扇区大约为4096字节。<br>
-文件系统负责组织哪些扇区准备好使用了、一个文件必须存储在哪个扇区、哪个扇区存储了什么文件。<br>
-如果没有这种组织，就无法无法检索任何文件，因为系统无法得知文件的位置（block，块）。</p>
-<p>主要的文件系统分类：</p>
-<ul>
-<li>FAT</li>
-</ul>
-<p>文件分配表（FAT，File Allocation Table）是Microsoft开发的第一个文件系统。<br>
-从1997发布之后，有多个版本，称为FAT12、FAT16、FAT32，连续地增加了最大支持文件大小（file size）和驱动器大小（drive size）。</p>
-<p>FAT32允许的最大文件大小为4Gb。直至WindowsXP，FAT32是默认的文件系统，之后被NTFS取代。<br>
-虽然FAT非常基础，但是它支持几乎所有的设备和操作系统。</p>
-<p><strong>注：</strong> 驱动器（<a target="_blank" rel="noopener" href="https://www.computerhope.com/jargon/d/drive.htm">drive</a>），是一个能存储和读取非易失信息的位置，比如磁盘（disk）或光盘（disc）。</p>
-<p>如下图，驱动器A:是一个软盘（<a target="_blank" rel="noopener" href="https://www.computerhope.com/jargon/f/fdd.htm">floppy drive</a>），<br>
-驱动器C:是主硬盘（primary hard drivce），<br>
-驱动器D:和E:是分区，F:是<a target="_blank" rel="noopener" href="https://www.computerhope.com/jargon/c/cdrom.htm">CD-ROM</a>。<br>
-CD-ROM常常是最后一个盘符（drive letter）。<br>
-在多数情况下，硬盘是C:驱动器，CD-ROM或其他光盘是D:驱动器。</p>
-<p><img src="/blog/assets/images/tech/linux/file-system-01.webp" alt="驱动器示例" title="驱动器示例图"></p>
-<ul>
-<li>NTFS</li>
-</ul>
-<p>新技术文件系统（New Technology File System，NTFS）是FAT的现代替代者。<br>
-除了支持高达16EB（大于170亿GB）的驱动器大小和256TB的单文件大小外，还支持日志系统（<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Journaling_file_system">journaling system</a>）。</p>
-<ul>
-<li>ext/ext2/ext3/ext4</li>
-</ul>
-<p>Linux的扩展文件系统（extended file system）或ext于1992年发布。之后有了3次更新：</p>
-<p>ext2引入了文件属性（文件权限），ext3引入了日志功能（<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Journaling_file_system">journaling</a>）。</p>
-<p>ext4对ext2和ext3向后兼容，增加了存储限制和一些性能调整。<br>
-可以支持高达1EB的卷（volumn），单个文件可以达16TB。</p>
-<p>ext4也引入了延迟内存分配的概念，即在文件被强制刷新到存储设备时才为其分配扇区。<br>
-这提高了CPU的性能并减少了坏的扇区。<br>
-今天几乎所有的现代Linux发行版都使用ext4作为默认的文件系统。</p>
-<ul>
-<li>
-<p>ZFS</p>
-</li>
-<li>
-<p>Btrfs</p>
-</li>
-</ul>
-<h3 id="总结">总结</h3>
-<p>下图是一个分区和文件系统的层次结构示例：</p>
-<p><img src="/blog/assets/images/tech/linux/file-system-02.webp" alt="分区和文件系统的层次结构示例图" title="分区和文件系统的层次结构示例图"></p>
-<p>我有一个500GB的SSD，分成3个分区（boot、home、root），使用GPT作为分区表。</p>
-<p>我没有分出swap分区。所有的分区都跑在ext4文件系统上。</p>
-<p>在一个双启动（dual-booted）存储设备（Windows和Linux）上，还有几个适用于Windwows的NTFS分区。</p>
-<p>你可以使用以下命令在任意存储设备上查看分区：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lsblk</span><br></pre></td></tr></table></figure>
-<p>更多资源请访问：</p>
-<ul>
-<li><a target="_blank" rel="noopener" href="https://www.linuxfordevices.com/tutorials/ubuntu/install-zfs-on-ubuntu">How to install ZFS on Ubuntu – A Setup and Usage Guide</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.linuxfordevices.com/tutorials/linux/ext4-vs-btrfs-filesystem">Ext4 vs Btrfs Filesystems – Which one should you choose?</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.linuxfordevices.com/tutorials/linux/btrfs-on-ubuntu">How to install and format a partition with the Btrfs on Ubuntu?</a></li>
-<li><a target="_blank" rel="noopener" href="https://ext4.wiki.kernel.org/index.php/Frequently_Asked_Questions">Frequently Asked Questions regarding ext4</a></li>
-</ul>
-<h2 id="挂载">挂载</h2>
-<p>挂载：使设备上的文件和目录可以通过文件系统访问的一个过程。见<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/zh-cn/%E6%8C%82%E8%BD%BD">维基百科</a>。</p>
-<p>挂载点：A mount point is a location in the partition used as a root filesystem.</p>
-<h2 id="驱动">驱动</h2>
-<h2 id="相关命令一览表">相关命令一览表</h2>
-<p>lsblk</p>
-<pre><code>lsblk [options] [device...]
+          <h2 id="shuf">shuf</h2>
+<h2 id="cut">cut</h2>
+<h2 id="tr">tr</h2>
+<h2 id="lp">lp</h2>
+<h2 id="sort">sort</h2>
+<p>Options:</p>
+<pre><code>-t, --field-separator=SEP
+    use SEP instead of non-blank to blank transition
 
-list all avaivable or specified block devices.
-Reads the sysfs filesystem to gather information.
-</code></pre>
-<p>df</p>
-<pre><code>df [OPTION]... [FILE]...
+-k, --key=POS1[,POS2]
+    start a key at POS1 (origin 1), end it at POS2 (default end of line)
 
-report file system disk space usage on which each FILE resides.
+-h, --human-numeric-sort
+    compare human readable numbers (e.g., 2K 1G)
 
-df -T 打印文件系统的类型。
+-n, --numeric-sort
+    compare according to string numerical value
 </code></pre>
-<p>du</p>
-<pre><code>du [OPTION]... [FILE]...
+<h2 id="nproc">nproc</h2>
+<p>print the number of processing units avaiable.</p>
+<h2 id="od-xxd-hexdump">od / xxd / hexdump</h2>
+<p>read the binary file.</p>
+<p>Notes: byte order</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">echo</span> -n <span class="string">&quot;ABCD&quot;</span> | xxd</span><br><span class="line">00000000: 4142 4344                                ABCD</span><br><span class="line">$ <span class="built_in">echo</span> -n <span class="string">&quot;ABCD&quot;</span> | hexdump</span><br><span class="line">0000000 4241 4443                              </span><br><span class="line">0000004</span><br></pre></td></tr></table></figure>
+<p><a target="_blank" rel="noopener" href="https://unix.stackexchange.com/questions/282215/how-to-view-a-binary-file">Reference</a></p>
+<h2 id="comm-diff-tkdiff-cmp">comm / diff / tkdiff / cmp</h2>
+<p>Can be used to compare binary or non-binary files.</p>
+<h3 id="comm">comm</h3>
+<p>compare two sorted files line by line.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cat</span> file1.txt </span><br><span class="line">apple</span><br><span class="line">banana</span><br><span class="line">cherry</span><br><span class="line"></span><br><span class="line">$ <span class="built_in">cat</span> file2.txt </span><br><span class="line">banana</span><br><span class="line">cherry</span><br><span class="line"><span class="built_in">date</span></span><br><span class="line">erase</span><br><span class="line"></span><br><span class="line">$ <span class="built_in">comm</span> file1.txt file2.txt </span><br><span class="line">apple</span><br><span class="line">                banana</span><br><span class="line">                cherry</span><br><span class="line">        <span class="built_in">date</span></span><br><span class="line">        erase</span><br></pre></td></tr></table></figure>
+<p>The file must be sorted before using the <code>comm</code> command. Otherwise it will complain that:</p>
+<pre><code>comm: file 1 is not in sorted order
+</code></pre>
+<p>and cannot work correctly. For example,</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cat</span> file1.txt </span><br><span class="line">apple</span><br><span class="line">cherry</span><br><span class="line">banana</span><br><span class="line"></span><br><span class="line">$ <span class="built_in">cat</span> file2.txt </span><br><span class="line">banana</span><br><span class="line">cherry</span><br><span class="line"><span class="built_in">date</span></span><br><span class="line">erase</span><br><span class="line"></span><br><span class="line">$ <span class="built_in">comm</span> file1.txt file2.txt </span><br><span class="line">apple</span><br><span class="line">        banana</span><br><span class="line">                cherry</span><br><span class="line"><span class="built_in">comm</span>: file 1 is not <span class="keyword">in</span> sorted order</span><br><span class="line">banana</span><br><span class="line">        <span class="built_in">date</span></span><br><span class="line">        erase</span><br><span class="line"><span class="built_in">comm</span>: input is not <span class="keyword">in</span> sorted order</span><br></pre></td></tr></table></figure>
+<h3 id="diff">diff</h3>
+<p>Syntax:</p>
+<pre><code>diff -u file1 file2
+</code></pre>
+<p>Options:</p>
+<pre><code>-e, --ed
+    output an ed script
 
-estimate file space usage.
+-u, -U NUM, --unified[=NUM]
+    output NUM (default 3) lines of unified context
+    (that is, print NUM lines before and after the difference line)
 </code></pre>
-<p>quota</p>
-<pre><code>quota -s -u user...
-
-display users' disk usage and limits.
-quota reports the quotas of all the filesystems listed in /etc/mtab.
-For filesystems that are NFS-mounted a call to the rpc.rquotad on the server machine is performed to get the information.
-
--s, --human-readable
+<h3 id="tkdiff">tkdiff</h3>
+<p>Use a GUI to display the differences.</p>
+<h3 id="cmp">cmp</h3>
+<p>Prints less information comparing to <code>diff</code>.</p>
+<p>Syntax:</p>
+<pre><code>cmp file1 file2
 </code></pre>
-<p>repquota</p>
-<pre><code>prints a summary of disc usage and quotas for the specified file system.
-</code></pre>
-<p>mount</p>
-<p>lsof - list open files</p>
-<pre><code>https://unix.stackexchange.com/questions/11238/how-to-get-over-device-or-resource-busy
-</code></pre>
-<p>findmnt</p>
+<h2 id="ed-vim-sed-awk">ed/vim/sed/awk</h2>
 
       
     </div>
@@ -742,7 +316,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/21/tech/io/rpc/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/26/tech/cpp/basic/cpp-initialization-list/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -756,7 +330,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2024/01/21/tech/io/rpc/" class="post-title-link" itemprop="url">Introducation to RPC</a>
+            <a href="/blog/2024/01/26/tech/cpp/basic/cpp-initialization-list/" class="post-title-link" itemprop="url">C++ 初始化列表</a>
         </h2>
 
         <div class="post-meta">
@@ -766,368 +340,14 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2024-01-21 10:01:18" itemprop="dateCreated datePublished" datetime="2024-01-21T10:01:18+00:00">2024-01-21</time>
+              <time title="Created: 2024-01-26 10:31:32" itemprop="dateCreated datePublished" datetime="2024-01-26T10:31:32+00:00">2024-01-26</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 07:24:28" itemprop="dateModified" datetime="2026-08-11T07:24:28+00:00">2026-08-11</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/io/" itemprop="url" rel="index"><span itemprop="name">io</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Installation">Installation</h2>
-<ul>
-<li><a target="_blank" rel="noopener" href="https://www.ibm.com/docs/ssw_ibm_i_72/rzahp/rzahppdf.pdf">libtirpc(Transport Independent RPC)</a></li>
-<li></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/15/tech/concurrent/deadlock/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/15/tech/concurrent/deadlock/" class="post-title-link" itemprop="url">Dead Lock</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-15 14:11:30" itemprop="dateCreated datePublished" datetime="2024-01-15T14:11:30+00:00">2024-01-15</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 07:24:28" itemprop="dateModified" datetime="2026-08-11T07:24:28+00:00">2026-08-11</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/concurrent/" itemprop="url" rel="index"><span itemprop="name">concurrent</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Reference">Reference</h2>
-<p><a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1161103">关于线程死锁，活锁和饥饿问题</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/14/tech/concurrent/reentrancy/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/14/tech/concurrent/reentrancy/" class="post-title-link" itemprop="url">可重入</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-14 17:44:16" itemprop="dateCreated datePublished" datetime="2024-01-14T17:44:16+00:00">2024-01-14</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 07:24:28" itemprop="dateModified" datetime="2026-08-11T07:24:28+00:00">2026-08-11</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/concurrent/" itemprop="url" rel="index"><span itemprop="name">concurrent</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="概念">概念</h2>
-<p><strong>可重入函数</strong>：如果一个函数在执行过程中被中断服务程序打断，执行中断服务程序之后恢复执行，还能不妨碍之前的执行，就称该函数是<strong>可重入的</strong>。</p>
-<p>可重入函数一般用于<strong>硬件中断处理</strong>或<strong>递归</strong>等应用程序中。</p>
-<p><strong>可重入程序/可重入子例程</strong>：在多个处理器上能被安全地多次并发调用。</p>
-<p><strong>与线程安全的区别</strong>：可重入函数的概念在多任务操作系统出现之前就存在了，所以该概念仅仅针对的是单线程执行过程。<br>
-一个函数可以是线程安全但非可重入的，例如，该函数每次都使用互斥量来包裹。但是，如果该函数用于中断服务程序，那么，它可能在等待第一次执行过程释放互斥量时陷入饥饿。<strong>TODO：陷入饥饿为什么就不是可重入了？</strong></p>
-<p>要实现可重入性，函数通常需要满足以下条件：</p>
-<ul>
-<li>不使用静态或全局变量：这些变量在多次调用之间共享，可能导致数据竞争。</li>
-<li>不依赖于不可重入的函数：例如，标准库中的某些函数可能不是可重入的。</li>
-<li>不使用动态内存分配：动态内存分配可能会导致竞争条件。</li>
-<li>不使用信号处理：信号处理可能会中断函数的执行。</li>
-</ul>
-<p>可重入性在多线程编程和中断处理程序中尤为重要，因为它确保了函数在并发环境下的安全性。</p>
-<h3 id="可重入-VS-线程安全">可重入 VS 线程安全</h3>
-<p>可重入性和线程安全虽然都涉及到并发编程，但它们有不同的侧重点：</p>
-<p>可重入性：</p>
-<p>定义：一个函数可以在被中断后安全地再次调用，而不会影响其执行结果。<br>
-条件：不使用静态或全局变量、不依赖不可重入的函数、不使用动态内存分配、不使用信号处理。<br>
-应用场景：主要用于中断处理程序和嵌入式系统。<br>
-线程安全：</p>
-<p>定义：一个函数或代码块在多线程环境下可以安全地并发执行，而不会导致竞争条件或数据不一致。<br>
-条件：通常需要使用同步机制（如互斥锁、信号量）来保护共享资源。<br>
-应用场景：主要用于多线程编程。<br>
-总结来说，可重入性关注的是函数在被中断后能否安全地再次调用，而线程安全关注的是在多线程环境下能否安全地并发执行。可重入函数不一定是线程安全的，线程安全的函数也不一定是可重入的。</p>
-<ol>
-<li>可重入函数不一定是线程安全的</li>
-</ol>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> counter = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">reentrantFunction</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> localCounter = counter;</span><br><span class="line">    localCounter++;</span><br><span class="line">    counter = localCounter;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">reentrantFunction</span>();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Counter: %d\n&quot;</span>, counter);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>解释：</p>
-<p>reentrantFunction 是可重入的，因为它满足以下条件：</p>
-<p>不使用静态或全局变量：虽然 counter 是一个全局变量，但 reentrantFunction 中的操作都是基于局部变量 localCounter，并且没有依赖于函数外部的状态。<br>
-不依赖不可重入的函数：reentrantFunction 中没有调用任何不可重入的函数。<br>
-不使用动态内存分配：函数中没有使用 malloc 或其他动态内存分配函数。<br>
-不使用信号处理：函数中没有涉及信号处理。<br>
-因此，reentrantFunction 可以在被中断后安全地再次调用，而不会影响其执行结果。</p>
-<p>然而，正因为它使用了全局变量 counter，在多线程环境下可能会导致竞争条件，所以它不是线程安全的。</p>
-<ol start="2">
-<li>线程安全的函数不一定是可重入的</li>
-</ol>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">pthread_mutex_t</span> lock = PTHREAD_MUTEX_INITIALIZER;</span><br><span class="line"><span class="type">int</span> counter = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span>* <span class="title">threadSafeFunction</span><span class="params">(<span class="type">void</span>* arg)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">pthread_mutex_lock</span>(&amp;lock);</span><br><span class="line">    counter++;</span><br><span class="line">    <span class="built_in">pthread_mutex_unlock</span>(&amp;lock);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">pthread_t</span> thread1, thread2;</span><br><span class="line">    <span class="built_in">pthread_create</span>(&amp;thread1, <span class="literal">NULL</span>, threadSafeFunction, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_create</span>(&amp;thread2, <span class="literal">NULL</span>, threadSafeFunction, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_join</span>(thread1, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_join</span>(thread2, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Counter: %d\n&quot;</span>, counter);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>解释：</p>
-<p>这个函数 threadSafeFunction 是线程安全的，因为它使用了互斥锁来保护对 counter 的访问。<br>
-然而，它不是可重入的，因为它使用了互斥锁，互斥锁在中断处理程序中可能会导致死锁：</p>
-<p>互斥锁的使用：互斥锁用于确保线程安全，但它们在中断处理程序中可能会导致死锁。如果一个线程在持有锁时被中断，然后中断处理程序尝试再次调用该函数并试图获取同一个锁，就会发生死锁。</p>
-<p>依赖于锁的状态：函数的执行依赖于锁的状态。如果锁已经被其他线程持有，函数就无法继续执行，必须等待锁释放。这种依赖性使得函数在中断后无法安全地再次调用。</p>
-<p>不可重入的行为：由于锁的存在，函数在中断后重新进入时可能无法正确处理锁的状态，从而导致不可预期的行为。</p>
-<h2 id="Reference">Reference</h2>
-<ul>
-<li><a target="_blank" rel="noopener" href="https://www.geeksforgeeks.org/reentrant-function/">Reentrant Function</a></li>
-<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Reentrancy_(computing)">Reentrancy</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/09/tech/io/network-discovery/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/09/tech/io/network-discovery/" class="post-title-link" itemprop="url">Network discovery</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-09 16:15:17" itemprop="dateCreated datePublished" datetime="2024-01-09T16:15:17+00:00">2024-01-09</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 07:24:28" itemprop="dateModified" datetime="2026-08-11T07:24:28+00:00">2026-08-11</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/io/" itemprop="url" rel="index"><span itemprop="name">io</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Get-IP-from-the-host-name">Get IP from the host name</h2>
-<p>Key function: <code>getaddrinfo</code>.</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> _POSIX_C_SOURCE 200112L</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/socket.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;netdb.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;errno.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;strings.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;arpa/inet.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">addrinfo</span> hints;</span><br><span class="line">    <span class="built_in">bzero</span>(&amp;hints, <span class="keyword">sizeof</span> hints);</span><br><span class="line">    <span class="comment">// hints.ai_family = AF_INET;</span></span><br><span class="line">    hints.ai_socktype = SOCK_STREAM;</span><br><span class="line">    hints.ai_protocol = IPPROTO_TCP;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">addrinfo</span> *res = <span class="number">0</span>;</span><br><span class="line">    <span class="comment">// The following 3 hostnames are legal.</span></span><br><span class="line">    <span class="type">int</span> rc = <span class="built_in">getaddrinfo</span>(<span class="string">&quot;www.baidu.com&quot;</span>, <span class="literal">NULL</span>, &amp;hints, &amp;res);</span><br><span class="line">    <span class="comment">// int rc = getaddrinfo(&quot;localhost&quot;, NULL, &amp;hints, &amp;res);</span></span><br><span class="line">    <span class="comment">// int rc = getaddrinfo(&quot;PC-XXX&quot;, NULL, &amp;hints, &amp;res); // PC-XXX is a hostname</span></span><br><span class="line">    <span class="keyword">if</span> (rc != <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">perror</span>(<span class="string">&quot;getaddrinfo failed&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">struct</span> addrinfo* res_i = res; res_i != <span class="literal">NULL</span>; res_i = res_i-&gt;ai_next) &#123;</span><br><span class="line">        <span class="keyword">if</span> (res_i-&gt;ai_addr) &#123;</span><br><span class="line">            <span class="keyword">if</span> (res_i-&gt;ai_addr-&gt;sa_family == AF_INET) &#123;</span><br><span class="line">                <span class="type">char</span> ip4[INET_ADDRSTRLEN];</span><br><span class="line">                <span class="built_in">inet_ntop</span>(AF_INET, &amp;(((<span class="keyword">struct</span> sockaddr_in*)(res_i-&gt;ai_addr))-&gt;sin_addr), ip4, INET_ADDRSTRLEN);</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">&quot;IP: %s\n&quot;</span>, ip4);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="type">char</span> ip6[INET6_ADDRSTRLEN];</span><br><span class="line">                <span class="built_in">inet_ntop</span>(AF_INET6, &amp;(((<span class="keyword">struct</span> sockaddr_in6*)(res_i-&gt;ai_addr))-&gt;sin6_addr), ip6, INET_ADDRSTRLEN);</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">&quot;IP: %s\n&quot;</span>, ip6);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/07/tech/cpp/basic/cpp-preprocessor/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/07/tech/cpp/basic/cpp-preprocessor/" class="post-title-link" itemprop="url">C++ 预处理</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-07 16:40:10" itemprop="dateCreated datePublished" datetime="2024-01-07T16:40:10+00:00">2024-01-07</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 07:24:28" itemprop="dateModified" datetime="2026-08-11T07:24:28+00:00">2026-08-11</time>
+                <time title="Modified: 2026-08-11 09:41:52" itemprop="dateModified" datetime="2026-08-11T09:41:52+00:00">2026-08-11</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1150,38 +370,125 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="预定义宏">预定义宏</h2>
-<p><code>#if defined(__linux)</code><br>
-<code>#ifdef LINUX2</code></p>
-<h2 id="C标准预定义宏">C标准预定义宏</h2>
-<ul>
-<li><code>__LINE__</code></li>
-<li><code>__func__</code></li>
-<li><code>__FILE__</code></li>
-<li><code>NDEBUG</code>：参考<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2290509/debug-vs-ndebug">_DEBUG和NDEBUG的区别</a>，其中，<code>_DEBUG</code>是Visual Studio定义的，<code>NDEBUG</code>是C/C++标准。</li>
-</ul>
-<h2 id="GNU-C预定义宏">GNU C预定义宏</h2>
-<p><a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html">官方文档</a></p>
-<ul>
+          <h2 id="列表初始化">列表初始化</h2>
+<p>struct/union/array默认支持列表初始化。</p>
+<p><a target="_blank" rel="noopener" href="https://en.cppreference.com/w/c/language/struct_initialization">Struct and union initialization</a><br>
+<a target="_blank" rel="noopener" href="https://en.cppreference.com/w/c/language/array_initialization">Array initialization</a></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bits/stdc++.h&gt;</span></span></span><br><span class="line"><span class="comment">// #include &lt;initializer_list&gt;</span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">A</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="type">int</span> x, y, z; <span class="comment">// 注意：数据成员必须是public的。</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        cout &lt;&lt; x &lt;&lt; <span class="string">&quot; &quot;</span> &lt;&lt; y &lt;&lt; <span class="string">&quot; &quot;</span> &lt;&lt; z &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">B</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    vector&lt;<span class="type">int</span>&gt; vec_;</span><br><span class="line">    <span class="type">int</span> x_;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;vec_=&#123; &quot;</span>;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> x : vec_) &#123;</span><br><span class="line">            cout &lt;&lt; x &lt;&lt; <span class="string">&quot; &quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;&#125;, x_=&quot;</span> &lt;&lt; x_ &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">C</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    vector&lt;<span class="type">int</span>&gt; vec_;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;vec_=&#123; &quot;</span>;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> x : vec_) &#123;</span><br><span class="line">            cout &lt;&lt; x &lt;&lt; <span class="string">&quot; &quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;&#125;&quot;</span> &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// C++会构造一个列表初始化的默认构造函数，</span></span><br><span class="line">    <span class="comment">// 以下(1)和(2)都是调用这个默认构造函数。</span></span><br><span class="line">    A a1&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;; <span class="comment">// (1) 列表初始化</span></span><br><span class="line">    <span class="function">A <span class="title">a2</span><span class="params">(&#123;<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>&#125;)</span></span>; <span class="comment">// (2) 同(1)</span></span><br><span class="line">    a1.<span class="built_in">print</span>();</span><br><span class="line">    a2.<span class="built_in">print</span>();</span><br><span class="line"></span><br><span class="line">    B b1&#123;&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;, <span class="number">4</span>&#125;; <span class="comment">// 内部的&quot;&#123;1,2,3&#125;&quot;用于构造vec_，&quot;4&quot;用于初始化x_</span></span><br><span class="line">    b1.<span class="built_in">print</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// C C1&#123;1,2,3&#125;; // (1) 这里会报错&quot;error: too many initializers for ‘C’&quot;，</span></span><br><span class="line">    <span class="comment">//              //     因为C只有一个数据成员vec_，这里却传入了3个参数</span></span><br><span class="line">    C c2&#123;&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;&#125;; <span class="comment">// (2) 其中，内部的&quot;&#123;1,2,3&#125;&quot;用于构造vec_，外层的&quot;&#123;&#125;&quot;用于对c2本身进行构造</span></span><br><span class="line">    c2.<span class="built_in">print</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="std-initializer-list">std::initializer_list</h2>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bits/stdc++.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;initializer_list&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">A</span> &#123;</span><br><span class="line">    <span class="type">int</span> x, y, z;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">A</span>(initializer_list&lt;<span class="type">int</span>&gt; il) &#123;</span><br><span class="line">        initializer_list&lt;<span class="type">int</span>&gt;::iterator it = il.<span class="built_in">begin</span>();</span><br><span class="line">        x = *it++;</span><br><span class="line">        y = *it++;</span><br><span class="line">        z = *it++;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        cout &lt;&lt; x &lt;&lt; <span class="string">&quot; &quot;</span> &lt;&lt; y &lt;&lt; <span class="string">&quot; &quot;</span> &lt;&lt; z &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">B</span> &#123;</span><br><span class="line">    vector&lt;<span class="type">int</span>&gt; vec;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">B</span>(initializer_list&lt;<span class="type">int</span>&gt; il) &#123;</span><br><span class="line">        vec = il; <span class="comment">// 用initializer_list初始化vector</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;&#123; &quot;</span>;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> x : vec) &#123;</span><br><span class="line">            cout &lt;&lt; x &lt;&lt; <span class="string">&quot; &quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;&#125;&quot;</span> &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    A a&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br><span class="line">    a.<span class="built_in">print</span>();</span><br><span class="line"></span><br><span class="line">    B b&#123;<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>&#125;;</span><br><span class="line">    b.<span class="built_in">print</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/25/tech/linux/brackets-in-bash/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/25/tech/linux/brackets-in-bash/" class="post-title-link" itemprop="url">Brackets in Bash</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-25 13:22:53" itemprop="dateCreated datePublished" datetime="2024-01-25T13:22:53+00:00">2024-01-25</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-11 09:41:52" itemprop="dateModified" datetime="2026-08-11T09:41:52+00:00">2026-08-11</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="中括号">中括号</h2>
+<ol>
 <li>
-<p><code>__COUNTER__</code>: 扩展为从<code>0</code>开始的连续整数值，每次在源码中出现，则加<code>1</code>。不同源文件的<code>__COUNTER__</code>互不影响。</p>
-<p>可以用来生成唯一的命名。<br>
-参考<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/652815/has-anyone-ever-had-a-use-for-the-counter-pre-processor-macro">链接</a>。</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> CONCAT_IMPL(x,y) x##y</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CONCAT(x,y) CONCAT_IMPL(x,y)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> VAR(name) CONCAT(name,__COUNTER__)</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">VAR</span><span class="params">(myvar)</span></span>; <span class="comment">// 展开为 int myvar0;</span></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">VAR</span><span class="params">(myvar)</span></span>; <span class="comment">// 展开为 int myvar1;</span></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">VAR</span><span class="params">(myvar)</span></span>; <span class="comment">// 展开为 int myvar2;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>[ ]</code>和<code>test</code>是bash的内部命令，<code>[[ ]]</code>是shell的条件判断关键字。</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">type</span> [</span><br><span class="line">[ is a shell <span class="built_in">builtin</span></span><br><span class="line">$ <span class="built_in">type</span> <span class="built_in">test</span></span><br><span class="line"><span class="built_in">test</span> is a shell <span class="built_in">builtin</span></span><br><span class="line">$ <span class="built_in">type</span> [[</span><br><span class="line">[[ is a shell keyword</span><br></pre></td></tr></table></figure>
 </li>
 <li>
-<p><code>program_invocation_name</code>：参考<a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man3/program_invocation_name.3.html">man page</a></p>
+<p><code>[ ]</code>和<code>test</code>是等价的，用于评估条件表达式。可以使用<code>man [</code>或<code>help [</code>查阅帮助文档。</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">help</span> [</span><br><span class="line">[: [ arg... ]</span><br><span class="line">    Evaluate conditional expression.</span><br><span class="line">    </span><br><span class="line">    This is a synonym <span class="keyword">for</span> the <span class="string">&quot;test&quot;</span> <span class="built_in">builtin</span>, but the last argument must</span><br><span class="line">    be a literal `]<span class="string">&#x27;, to match the opening `[&#x27;</span>.</span><br></pre></td></tr></table></figure>
 </li>
-<li></li>
+<li>
+<p><code>[[ ]]</code>关键字可以屏蔽shell特殊符号，比如<code>&amp;&amp;</code>、<code>||</code>、<code>&gt;</code>和<code>&lt;</code>可以被认为是条件判断符而不是重定向符。</p>
+</li>
+<li>
+<p><code>[ ]</code>中使用<code>-a</code>和<code>-o</code>表示逻辑与和逻辑或，<code>[[ ]]</code>中则使用<code>&amp;&amp;</code>和<code>||</code>。</p>
+</li>
+</ol>
+<h2 id="小括号">小括号</h2>
+<ol>
+<li><code>$()</code>用于命令替换。</li>
+<li>双小括号<code>(( ))</code>：在比较过程中使用高级数学表达式。</li>
+</ol>
+<h2 id="大括号">大括号</h2>
+<p>请阅读：<a target="_blank" rel="noopener" href="https://www.linux.com/topic/desktop/all-about-curly-braces-bash/">All about {Curly Braces} in Bash</a></p>
+<ol>
+<li>
+<p><code>$&#123;&#125;</code>用于引用变量。</p>
+<p>与<code>$var</code>相比，<code>$&#123;var&#125;</code>是一种消除歧义的措施，比如：</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$ var=abc</span><br><span class="line">$ vartest=ABC</span><br><span class="line"><span class="comment"># $var引用变量&#x27;var&#x27;</span></span><br><span class="line">$ <span class="built_in">echo</span> <span class="variable">$var</span></span><br><span class="line">abc</span><br><span class="line"><span class="comment"># 引用变量&#x27;vartest&#x27;</span></span><br><span class="line">$ <span class="built_in">echo</span> <span class="variable">$vartest</span></span><br><span class="line">ABC</span><br><span class="line"><span class="comment"># 引用变量&#x27;var&#x27;并在其后加上&#x27;test&#x27;字符</span></span><br><span class="line">$ <span class="built_in">echo</span> <span class="variable">$&#123;var&#125;</span><span class="built_in">test</span></span><br><span class="line">abctest</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><code>&#123;&#125;</code>表示分组。</p>
+</li>
+</ol>
+<h2 id="Reference">Reference</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/zeweiwu/p/5485711.html">Shell中test、单中括号、双中括号的区别</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.baeldung.com/linux/bash-single-vs-double-brackets">Differences Between Single and Double Brackets in Bash</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/3e1eaaa3fee8">Shell中的括号、双括号、方括号和双方括号</a></li>
 </ul>
-<h2 id="pragma">#pragma</h2>
-<h3 id="pragma-weak">#pragma weak</h3>
-<h4 id="Synopsis">Synopsis</h4>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">pragma</span> weak function-name1 [= function-name2]</span></span><br></pre></td></tr></table></figure>
-<p><code>#pragma weak</code> means that even if the definition of the symbol is not found, no error will be reported.</p>
-<h4 id="Example">Example</h4>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// It is not an error for symbol to never be defined at all.</span></span><br><span class="line"><span class="comment">// Without this line, the address of &quot;foo&quot; will always evaluate to &quot;true&quot;,</span></span><br><span class="line"><span class="comment">// so the linker will report an &quot;undefined reference to &#x27;foo&#x27;&quot; error.</span></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> weak foo</span></span><br><span class="line"><span class="comment">// The declaration is needed.</span></span><br><span class="line"><span class="comment">/* extern */</span> <span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (foo)</span><br><span class="line">        <span class="built_in">foo</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>Reference: <a target="_blank" rel="noopener" href="https://alberand.com/weak-directive.html">1</a>、<a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/gcc-4.5.4/gcc/Weak-Pragmas.html">2</a>、<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E19059-01/wrkshp50/805-4955/auto6/index.html">3</a></p>
 
       
     </div>
@@ -1201,7 +508,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/03/site/build-personal-website/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/25/tech/linux/regular-expression/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -1215,7 +522,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2024/01/03/site/build-personal-website/" class="post-title-link" itemprop="url">搭建个人网站</a>
+            <a href="/blog/2024/01/25/tech/linux/regular-expression/" class="post-title-link" itemprop="url">Regular Expression</a>
         </h2>
 
         <div class="post-meta">
@@ -1225,14 +532,666 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2024-01-03 16:41:38" itemprop="dateCreated datePublished" datetime="2024-01-03T16:41:38+00:00">2024-01-03</time>
+              <time title="Created: 2024-01-25 13:13:41" itemprop="dateCreated datePublished" datetime="2024-01-25T13:13:41+00:00">2024-01-25</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 07:24:28" itemprop="dateModified" datetime="2026-08-11T07:24:28+00:00">2026-08-11</time>
+                <time title="Modified: 2026-08-11 09:41:52" itemprop="dateModified" datetime="2026-08-11T09:41:52+00:00">2026-08-11</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="regexp">regexp</h2>
+<h2 id="ERegExp">ERegExp</h2>
+<h2 id="Wildcard-Glob">Wildcard/Glob</h2>
+<p><code>man 7 glob</code></p>
+<blockquote>
+<p>glob - globbing pathnames. glob is a shell built-in.</p>
+<p>主要用于匹配带有通配符的文件路径。其匹配字符串的能力比正则表达式弱。</p>
+<p>它最初是贝尔实验室 Unix 系统上的一个名叫 glob 的命令（glob 是 global 的缩写），用于展开命令行中的通配符。后来系统提供了该功能的 C 语言库函数glob()，知名的 shell 解释器就使用了该接口，shell 脚本和命令行中使用的 glob 模式匹配功能便源自于此。——见<a target="_blank" rel="noopener" href="https://juejin.cn/post/6844904077801816077">博客</a>。</p>
+</blockquote>
+<p><a target="_blank" rel="noopener" href="https://tldp.org/LDP/GNU-Linux-Tools-Summary/html/x11655.htm">Wildcards</a></p>
+<p><code>&#123;&#125;</code>严格来讲不属于glob的范畴，其在shell表示一个分组，见：<a target="_blank" rel="noopener" href="https://www.linux.com/topic/desktop/all-about-curly-braces-bash/">All about {Curly Braces} in Bash</a>。</p>
+<h2 id="sed">sed</h2>
+<h2 id="awk">awk</h2>
+<p><a target="_blank" rel="noopener" href="https://www.ibm.com/docs/nl/aix/7.2?topic=awk-command">awk Command</a></p>
+<h3 id="格式">格式</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">awk -F<span class="string">&#x27; *|:&#x27;</span> <span class="string">&#x27;/LISTEN/&#123;print $2&#125;&#x27;</span></span><br></pre></td></tr></table></figure>
+<p>其中，<code>-F</code>表示分隔符；<br>
+<code> *|:</code>是一个正则表达式，表示以&quot;一个或多个空格&quot;或&quot;:&quot;作为分隔符；<br>
+再其后的<code>//</code>中是另一个正则表达式，用于匹配文本；<br>
+<code>&#123;&#125;</code>中是action。</p>
+<h3 id="条件判断">条件判断</h3>
+<p><a target="_blank" rel="noopener" href="https://tecadmin.net/awk-conditional-statements/">if-else in awk</a><br>
+<a target="_blank" rel="noopener" href="https://unix.stackexchange.com/questions/660178/how-to-use-and-and-or-together-in-an-awk-program">use AND and OR in an awk program</a></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">awk <span class="string">&#x27;&#123;if ($1 &gt; 49151 &amp;&amp; $1 &lt; 65536) &#123;print $1&#125; &#125;&#x27;</span></span><br></pre></td></tr></table></figure>
+<p>等价于</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">awk <span class="string">&#x27;$1 &gt; 49151 &amp;&amp; $1 &lt; 65536&#x27;</span></span><br></pre></td></tr></table></figure>
+<h3 id="BEGIN-END">BEGIN/END</h3>
+<p>In AWK, <code>BEGIN</code> and <code>END</code> are special patterns that allow you to execute code before processing the input (<code>BEGIN</code>) or after processing all the input (<code>END</code>).</p>
+<ul>
+<li>The <code>BEGIN</code> block is executed once at the beginning of the AWK program and it is typically used for initializing variables or performing setup tasks.</li>
+<li>The <code>END</code> block is executed once after processing all input, and it is commonly used for final caclucations, summaries, or printing results.</li>
+</ul>
+<h3 id="Special-symbols">Special symbols</h3>
+<ul>
+<li><code>$</code> 用于引用field，例如<code>$1</code>代表第一个field（典型来说是第一列）。</li>
+<li><code>NF</code> 表示number of filed，假设一共有7列，那么<code>$NF</code>与<code>$7</code>等价。</li>
+</ul>
+<h2 id="grep">grep</h2>
+<h2 id="Example">Example</h2>
+<ol>
+<li>找出一个未使用的port</li>
+</ol>
+
+{% tabs Code %}
+
+<!-- tab Makefile -->
+
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># &quot;$$&quot;是为了转义&quot;$&quot;</span></span><br><span class="line">max_port=<span class="variable">$(<span class="built_in">shell</span> netstat -antulpen 2&gt; /dev/null \</span></span><br><span class="line"><span class="variable">    | awk -F&#x27; *&#x27; &#x27;/^(tcp|udp)</span>/&#123;print $$4&#125;&#x27; | cut -d: -f 2 \</span><br><span class="line">    | egrep <span class="string">&quot;\w&quot;</span> | sort | tail -1)</span><br><span class="line"><span class="comment">#$(warning $&#123;max_port&#125;)</span></span><br><span class="line">port=<span class="variable">$(<span class="built_in">shell</span> expr <span class="variable">$(max_port)</span> + 1)</span></span><br><span class="line"><span class="comment">#$(warning $&#123;port&#125;)</span></span><br></pre></td></tr></table></figure>
+
+<!-- endtab -->
+
+<!-- tab Bash -->
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 从1025开始找出已经存在的端口，如果相邻端口的gap大于1，则返回“当前端口号+1”</span></span><br><span class="line">netstat -ant | awk <span class="string">&#x27;&#123;print $4&#125;&#x27;</span> \</span><br><span class="line">    | awk -F: <span class="string">&#x27;&#123;if ($NF ~ /^[0-9]+$/ &amp;&amp; $NF &gt; 1024) &#123;print $NF&#125;&#125;&#x27;</span> \</span><br><span class="line">    | awk <span class="string">&#x27;BEGIN &#123;prev = 1024&#125; </span></span><br><span class="line"><span class="string">        &#123;if ($1 - prev &gt; 1) &#123; port = prev + 1; exit&#125; else &#123; prev = $1&#125;&#125; </span></span><br><span class="line"><span class="string">        END &#123; if (port==&quot;&quot;) &#123;print prev + 1&#125; else &#123;print port&#125;&#125;&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<!-- endtab -->
+
+<!-- tab Python-->
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#这不是正则表达式</span></span><br><span class="line"><span class="comment">#以0端口为参数创建一个socket，则系统会自动选择一个未使用的端口号</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#one-line mode:</span></span><br><span class="line"><span class="comment">#python -c &#x27;import socket; s=socket.socket(); s.bind((&quot;&quot;, 0)); print(s.getsockname()[1]); s.close()&#x27;</span></span><br><span class="line"><span class="keyword">import</span> socket</span><br><span class="line"></span><br><span class="line">s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)</span><br><span class="line">s.bind((<span class="string">&#x27;&#x27;</span>, <span class="number">0</span>))</span><br><span class="line">addr = s.getsockname()</span><br><span class="line"><span class="built_in">print</span>(addr[<span class="number">1</span>])</span><br><span class="line">s.close()</span><br></pre></td></tr></table></figure>
+
+<!-- endtab -->
+
+{% endtabs %}
+
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/24/study/movie/the-killings-at-badgers-drift/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/24/study/movie/the-killings-at-badgers-drift/" class="post-title-link" itemprop="url">The Killings at Badger's Drift</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-24 17:39:03" itemprop="dateCreated datePublished" datetime="2024-01-24T17:39:03+00:00">2024-01-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-11 09:41:52" itemprop="dateModified" datetime="2026-08-11T09:41:52+00:00">2026-08-11</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/study/" itemprop="url" rel="index"><span itemprop="name">study</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Video">Video</h2>
+<p>视频：<a target="_blank" rel="noopener" href="https://tubitv.com/tv-shows/521987/s01-e01-the-killings-at-badgers-drift">链接</a>。</p>
+<p>影片名：Midsomer Murders, S01:E01, <a target="_blank" rel="noopener" href="https://www.google.com/search?q=+Badger%27s+Drift+&amp;rlz=1C1GCEJ_enUS1023US1023&amp;ei=fnuzZJivL96x0PEP4MunkAc&amp;ved=0ahUKEwiY5oz5upKAAxXeGDQIHeDlCXIQ4dUDCBA&amp;uact=5&amp;oq=+Badger%27s+Drift+&amp;gs_lp=Egxnd3Mtd2l6LXNlcnAiECBCYWRnZXIncyBEcmlmdCAyBxAuGBMYgAQyDRAuGBMYgAQYxwEYrwEyBxAAGBMYgAQyBxAAGBMYgAQyCRAAGBMYgAQYCjIHEAAYExiABDIHEAAYExiABDIHEAAYExiABDIHEAAYExiABDIHEAAYExiABDIWEC4YExiABBiXBRjcBBjeBBjgBNgBAUj3MFCYDViYDXAFeAGQAQCYAb0CoAG9AqoBAzMtMbgBA8gBAPgBAvgBAcICChAAGEcY1gQYsAPiAwQYACBBiAYBkAYKugYGCAEQARgU&amp;sclient=gws-wiz-serp">The Killings at Badger’s Drift</a></p>
+<p>S01:E01 - Season 01 : Episode 01，第1季第1集。episode，插曲（某事件；某事发生的短暂时间）；剧集（<a target="_blank" rel="noopener" href="https://www.ldoceonline.com/dictionary/episode">一般一周更新放映一次</a>）。</p>
+<p>midsomer - <a target="_blank" rel="noopener" href="https://www.wordnik.com/words/midsomer">midsummer的过时写法</a>。本片中是<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Midsomer_Murders">一个虚构的英格兰县</a>，影片开头有一个路牌，写着：“Badger’s Drift, Midsomer’s best kept village”，意思大概是，Badger’s Drift是Midsomer保存最好的村庄。</p>
+<h2 id="开幕介绍">开幕介绍</h2>
+<p>Screenplay by Anthony Horowitz - Screenplay 剧本。</p>
+<p>From the novel by Caroline Graham</p>
+<p>Starring - 主演</p>
+<p>Directed by - 导演是</p>
+<p>caption - 字幕。</p>
+<p>subtitle - 字幕。</p>
+<h2 id="第一幕-Emily之死">第一幕 Emily之死</h2>
+<h3 id="村落小路上">村落小路上</h3>
+<p>-[Doctor] Hello, Missis Simpson. Have a very good afternoon.</p>
+<p>bright playful music - 明快俏皮的音乐。</p>
+<p>Daily Mirror, forward with the people. 这是一块招牌上的字样。《每日镜报》的口号是“与人民同行”，The Sun’s slogan was ‘Forward with the People’, which had been adopted by the Mirror in 1945 and only recently dropped. - 参见谷歌快照《<a target="_blank" rel="noopener" href="https://webcache.googleusercontent.com/search?q=cache:32HydJ4eVUYJ:https://www.gale.com/intl/essays/adrian-bingham-introduction-daily-mirror&amp;cd=9&amp;hl=zh-CN&amp;ct=clnk&amp;gl=us">An Introduction to the Daily Mirror</a>》。hayday好天气，全盛时期。hay干草。</p>
+<p>-[Lucy] Ah, sneaking off, aren’t you, Emily? 偷偷溜走，不是吗？</p>
+<p>-[Emily] I wouldn’t call it sneaking, Lucy. Anyway, who’s talking? You’ve been out all day! 我不会称它为溜。不管怎样，是谁在说话？你自己已经出去一整天了！</p>
+<p>-I’m not gonna tell you where. 我不会告诉你我去了哪里。</p>
+<p>-You didn’t find it? 你没有找到？</p>
+<p>-No. 没有。</p>
+<p>-You’ll be buying me tea this year, my dear. You wait and see! 今年你会给我买茶，你等着看！</p>
+<p>-Chance would be a fine thing! 有机会（让我给你买茶）就好了！</p>
+<p>pros and cons - <a target="_blank" rel="noopener" href="https://www.merriam-webster.com/dictionary/pros%20and%20cons">优点和缺点</a>。</p>
+<h3 id="树林">树林</h3>
+<p>birds chirp - 鸟儿叽叽喳喳。</p>
+<p>Spurred coral root - 刺珊瑚根。spur马刺。“It’s an orchid（兰花）, not a flower.”</p>
+<p>padlock clicks - 挂锁咔咔声。</p>
+<p>camera clicks - 相机咔咔声。</p>
+<p>man moans - 男人呻吟。</p>
+<p>man pants - 男人喘息。pant喘气。</p>
+<p>bird flaps - 鸟儿拍飞。</p>
+<p>Emily shrieks - Emily尖叫。</p>
+<h3 id="Emily回家路上">Emily回家路上</h3>
+<p>brakes screech - 刹车声。brake刹车，screech发出尖叫、噪声。</p>
+<h3 id="Emily家">Emily家</h3>
+<p>slow sinister music - sinister险恶的。</p>
+<p>bees buzz - 蜜蜂嗡嗡。</p>
+<p>beehive cottage - 蜂巢小屋。beehive /ˈbiː.haɪv/ 蜂窝；cottage /ˈkɑː.t̬ɪdʒ/ /ˈkɒt.ɪdʒ/小屋。</p>
+<p>cat meows - meow /ˌmiˈaʊ/ 喵</p>
+<p>Come on, out you go - 来，你出去。</p>
+<p>door thuds - 门砰的一声。thud /θʌd/ 撞击声，砰。</p>
+<p>dial up phone rattles - 拨号嘎嘎声。rattle 拨浪鼓；嘎嘎声。</p>
+<p>door rattles.</p>
+<p>bangs. - to (cause something to) make a sudden very loud noise or noises.</p>
+<p>birds squawk - 鸟叫（不好的声音）。squawk - (of a bird) to make an unpleasantly loud, sharp noise.</p>
+<p>door knocks - 敲门声。</p>
+<p>door knob screeches - 门把手尖叫（声）。</p>
+<p>intense sinister music - 激烈险恶的音乐。</p>
+<p>dark dreamy music - 黑暗梦幻的音乐。</p>
+<h2 id="第二幕-初步调查">第二幕 初步调查</h2>
+<p>-This is it, here, Sir.</p>
+<p>-Really, Troy? I’d never have guessed.</p>
+<p>crowd chatters - 人群闲聊。</p>
+<p>We only ever meet when there’s a corpse. - 我们只有在有尸体的时候会见面。corpose - 尸体。ever - at any time: Nothing ever happened in this evening. Have you ever gone to London?</p>
+<p>broken neck - 脖子断了。</p>
+<p>scuff marks on the carpet - 地毯上有磨损痕迹。scuff vt. 磨损，擦伤。</p>
+<p>a blow to the back of the neck and then dragged over here - 颈后遭到一击，然后被拖到这里。</p>
+<p>spinster - 老处女。</p>
+<p>The old girl who lives opposite - 住在对面的老姑娘。</p>
+<p>She slammed the door for a start - 她猛地关上门。slam 猛撞。</p>
+<p>She didn’t padlock her tricycle - 她没有锁上三轮车。padlock 挂锁。tricycle 三轮车。</p>
+<p>There’s no reflection on you, Chief Inspector, but to leave her tricycle like that, she must have been very upset. 总督察，对你来说没有什么反应（没有什么好奇怪的），但是就这样把她的三轮车丢下，她一定很沮丧。</p>
+<p>-I’ll have to go over tomorrow. I still haven’t told the bees. - go over: to make one’s way 开辟新的路。 i.g. go over to store for supplies. 去商店购买日用品。</p>
+<p>-I’m sorry?</p>
+<p>-Well you have to tell the bees when someone dies. Otherwise they just clear off. - <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Telling_the_bees">Telling the bees</a> 养蜂人有一个传统，会将重大事件（生老病死婚姻等）告诉蜜蜂，否则上天会使养蜂家庭受到惩罚（比如本片中Miss Bellringer 说蜜蜂会全部走开）。</p>
+<p>clock bell chimes - 钟声响起。chime /tʃaɪm/ 1.（钟）响起（尤其是告诉你到几点了）；2. 与某某相同或具有相同的效果：e.g. Her views on life didn’t chime with mine. 她的人生观和我不太一致。</p>
+<p>tower bell rings.</p>
+<p>-Clear off her rocker, if you ask me. - rock: 岩石；前后摇晃，rock music摇滚乐。rocker，摇椅，（摇椅等下面的）两条弯木（用来摇晃）之一；off one’s rocker: 处于极度混乱或精神不健全的状态。in a state marked by extreme confusion or mental unsoundness: … he felt dizzy, slightly off his rocker at this extraordinary assailment of his senses.</p>
+<p>-You didn’t believed her?</p>
+<p>-Well, what she got to go on? A slammed door and a trike that wasn’t padlocked. It’s a waste of time.</p>
+<p>undertaker - 殡仪员。</p>
+<p>-I based in Causton but <strong>it happens</strong> I live here in Badger’s Drift and I thought I ought to <strong>pop by</strong>. Miss Simpson was a client. 我在Causton上班，但是碰巧我住这里。pop by: 顺便过来一下；pop, (spoken) to go somewhere for a short time.</p>
+<p>-I’m sorry?</p>
+<p>-She’d pre-paid. Our <strong>Satin</strong> Service. It’s one of our complete funeral packages. Very <strong>up-market</strong>, although between you and me. I let her have it at a discount (sniffs). She taught my mom, you know. - Satin，缎面，绸缎，这里应该指服务的等级，类似金卡会员、银卡会员。</p>
+<p>-What can I do for you, Mister Rainbird?</p>
+<p>-I was wondering if I could take her, <strong>the deceased</strong>. - decease=death. the deceased去世的人。</p>
+<p>-Oh, I’m afraid that won’t be possible for a little while.</p>
+<p>-Oh! You do suspect some naughtiness. It was her neck, I undertand. 你确实怀疑有一些捣蛋鬼。致命伤在颈部，我知道的。- naughty 顽皮的；naughtiness 名词，顽皮。</p>
+<p>-[Troy] Who told you that?</p>
+<p>-Come on, everybody knows that by now. It’s that sort of village.</p>
+<p>-[Troy] Well, you can’t have the body yet. All right? Sir?</p>
+<p>-[to Barnaby] Oh, I see you’ve got a right constable there. You let me know when you’re ready for me.</p>
+<p>-[Troy] See the car?</p>
+<p>-Yes.</p>
+<p>-You wouldn’t have thought they were so well paid, would you, undertakers? 你应该没有想到殡仪员会获得如此高的报酬，不是吗？</p>
+<p>-Check the camera, and the telephones. Find out what calls did Miss Simpson made after six o’clock.</p>
+<p>-So you’re taking it seriously then, sir?</p>
+<p>-No, Troy, I’m just filling in time until tea.</p>
+<p>-Right! Oh, camera and telephone, right. What about you?</p>
+<p>-I must find a doctor.</p>
+<p>-Something wrong, sir?</p>
+<p>-Emily Simpson’s doctor, Troy. Maybe she did suffer from dizzy spells. Maybe she did just fail. Either way, I want to know. - spell 拼写；咒语。</p>
+<h3 id="医生的家里">医生的家里</h3>
+<p>医生的招牌：</p>
+<pre><code>DR. TREVOR LESSITER
+M.B B.S M.R.C.G.P
+
+PHSICIAN &amp; SURGEON
+</code></pre>
+<p>DR. - Doctor。Trevor Lessiter是医生的名字。</p>
+<p>M.B B.S - Bachelor of Medicine, Bachelor of Surgery 内外全科医学士</p>
+<p>M.R.C.G.P - Membership of the Royal College of General Practitioners 英国皇家全科医生学院会员资格。pratitioner 从业者。general pratitioner 全科医生。</p>
+<p>She is remarkably fit for her age. - 在她这个年龄，她显得非常健康。fit 健康的。</p>
+<p>I liked to drop in at the end of my rounds. You know, glass of sherry and all that. - go round to sb’s house 拜访某人。 drop in - 顺便过来。</p>
+<p>cricket 板球。</p>
+<p>But she never <a target="_blank" rel="noopener" href="https://www.collinsdictionary.com/zh/dictionary/english/get-around-to">got round to</a> saying what it was. - 她没能说出来是什么事。get round to 做成了一件你因其他事情被耽搁了事。</p>
+<p>I’ve got to talk to someone. - 我得这个人说说话。have (got) to 不得不。</p>
+<p>-Did she say what it was?</p>
+<p>-No.</p>
+<p>-Didn’t you press her?</p>
+<p>-We’re not meant to. - 我们不是故意的。</p>
+<p>-And there was nothing more?</p>
+<p>-I’m sorry, Inspector. I know there was something else but I can’t think. 我知道还有些事情，但是我想不起来。</p>
+<p>-Well, if it does come to you, can you give us ring? 当你想起来，能不能给我们一个电话。</p>
+<p>-Yes, of course.</p>
+<p>ring off - 挂断电话。</p>
+<p>Inspector - 督察。</p>
+<p>scrambled eggs - 炒鸡蛋。scramble 争夺。</p>
+<p>Stuck with a heavy object as yet unidentified at the base of the neck. 脖子根部被一个尚未辨认的重物卡住。</p>
+<p>sombre music - 阴沉的音乐。</p>
+<p>The grass flattened, brambles broken. 草被压扁了，荆棘断了。</p>
+<p>What, you think someone’s been having it away? 你认为有人把它们拿走了？</p>
+<p>Two people bonking? 两个人搏斗/性交？</p>
+<p>tweezers - 镊子。</p>
+<p>-A piece of black fibre. 一片黑色纤维。</p>
+<p>-Off their clothes. 从他们的衣服上掉下来的？</p>
+<p>-No, I don’t think so. I’d say a blanket or rug, something like that. 我认为是毯子或地毯。</p>
+<p>I want the whole place gone over. - <a target="_blank" rel="noopener" href="https://www.collinsdictionary.com/zh/dictionary/english/go-over">go over</a> 仔细检查。</p>
+<p>Do you really think that’s what it came down to, sir? 你真的认为这就是问题所在吗？</p>
+<p>Unless it was adultery. 除非是通奸。</p>
+<p>I suppose they could have been arse-bandits. - 我猜想可能他们是屁股小偷（同性恋）。arse（粗鲁的词）屁股。bandit 有武器的小偷。</p>
+<p>You mean “homesexuals”, Troy?  Troy，你是说同性恋？</p>
+<p>You are as politically correct as <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Nuremberg_rallies">Nuremberg rally</a>. 你和纽伦堡集会（德国纳粹一年一度的党代会）一样政治正确。</p>
+<h3 id="Rainbird家">Rainbird家</h3>
+<p>eerie music - 怪异的音乐。</p>
+<p>pot to kettle. 把锅里（的水）倒到壶里，应该是上茶的意思。（影片中，茶水是装在瓷壶里）</p>
+<p>eyrie - 是 aerie 的另一种写法，鹰巢。an elevated often secluded dwelling, structure, or position 较高且通常僻静的住宅、结构或位置。<a target="_blank" rel="noopener" href="https://www.collinsdictionary.com/zh/dictionary/e%3Cb%3Englis%3C/b%3Eh/eyrie">If you refer to a place such as a house or a castle as an eyrie, you mean it is built high up and is difficult to reach.</a></p>
+<p>My hide. Yes, I’m a keen observer of wild life, birds. 我的隐藏爱好，我喜欢观察野生动物——鸟。</p>
+<p>I thought I saw a pair of binoculars. 我想我看见了一副望远镜。</p>
+<p>trolley 手推车。</p>
+<p>Do help yourself. 请自便。</p>
+<p>widower - 鳏夫。widow 寡妇。</p>
+<p>The clubs are anchovy. Salmon spread in the hearts. Marmite spades and potted meat diamonds.</p>
+<p>梅花状的anchovy。Salmon spread是心形的。黑桃状的Marmite。方块状的potted meat. - potted: preserved in a pot, jar, or can: potted meat.</p>
+<p>Not that you’ll find her there. 并不是说你会在那里找到她。</p>
+<p>Done very nicely for herself. 为自己做得很好。</p>
+<p>-Iced sombrero, constable. - Iced sombrero冰阔边帽（应该是这种形状的食物），constable 警员。constabulary 警察局。</p>
+<p>-No, thank you. And I’m a sergeant.</p>
+<p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Police_ranks_of_the_United_Kingdom">大不列颠警察等级（由高到低）</a>：</p>
+<p>Chief constable, Deputy chief constable, Assistant chief constable, Chief superintendent总警司, Superintendent警司, Chief inspector总督察, Inspector督察, Sergeant警长, Constable警员. - 参考<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/zh-hans/%E5%80%AB%E6%95%A6%E8%AD%A6%E5%AF%9F%E5%BB%B3">维基百科</a>。</p>
+<p>Detective是警察的前缀之一，比如Detective Chief Inspector。这种警察一般穿便衣，职位和职级和制服警察一样。</p>
+<p>-I mean what are you likely to see flying at that time? 我的意思你那个时候想要看什么飞禽？</p>
+<p>-Owls. 猫头鹰。</p>
+<p>These two give me the creeps. 这两个人让我毛骨悚然。<a target="_blank" rel="noopener" href="https://dictionary.cambridge.org/us/dictionary/english/creep">give someone the creeps</a> - to cause someone to have uncomfortable feelings of nervousness or fear:</p>
+<p>-You don’t suppose it was him in the woods, do you? 你该不会认为是他在树林里吧？</p>
+<p>-I somehow doubt it, Troy. 我有点怀疑。</p>
+<p>They certainly had it in for her. 他们当然是为了她。</p>
+<h3 id="Barnaby家">Barnaby家</h3>
+<p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/%27Tis_Pity_She%27s_a_Whore">'Tis Pity She’s a Whore</a>. 可惜她是一个妓女，John Ford 导演的音乐剧。'Tis 是 it is 的缩写。</p>
+<p>Would you go through my lines with me? 你可以帮我一起练习一下台词吗？</p>
+<p>I doubt he’ll have time. 我怀疑他是否有时间。</p>
+<p>quail - 鹌鹑。</p>
+<p>(Telephone rings) I’ll get it. 我去接电话。</p>
+<p>In the pond behind the quarry. 在采石场后面的池塘里。</p>
+<p>-Think what the police would make of it if their forensic people got hold of it. 想想警察会怎么想，如果他们的法医人员拿到了它。<a target="_blank" rel="noopener" href="https://dictionary.cambridge.org/us/dictionary/english/make-of">make of</a> - to have an impression or understanding about something. 对某事有印象或有了解。</p>
+<p>-They’d have a field day. 他们会度过愉快的一天。<a target="_blank" rel="noopener" href="https://dictionary.cambridge.org/us/dictionary/english/field-day">field day</a> 特殊的一天。</p>
+<p>-This is the big one, Denny. This is going to make us very, very rich. 这是最重要的，这会让我变得非常富有。</p>
+<p>Two colomns in the local rag and a coroner’s re-port. - coroner 验尸官。</p>
+<h3 id="Tye-House">Tye House</h3>
+<p>tyres screech - 轮胎尖叫声。</p>
+<p>bright upbeat music - 明亮欢快的音乐。upbeat 乐观的。</p>
+<p>-How the other half live?</p>
+<p>-Rather less then half I’d say. 我说目前还不是（富豪的）另一半。</p>
+<p>estate manager - 物业经理。</p>
+<p>-I don’t suppose you were in the village at any time at between six and eight on Wednesday? 我想你周三六点到八点之间的任何时间都不会在村子里？</p>
+<p>-No. Don’t remember where I was. Out in the fields. 不在。不太记得我去了哪里。我出去到田野里去了。</p>
+<p>drawing room - 客厅。</p>
+<p>late wife - 已故的妻子。</p>
+<p>as a matter of fact - 事实上。</p>
+<p>-If it’s not too painful, sir, I’d be interested to know how your wife died. 如果不是太痛苦的话，先生，我很想知道你妻子是怎么死的。</p>
+<p>-It is painful. And I don’t see how it’s relevant. 很痛苦。并且我没有看到（这两件事的）相关性。</p>
+<p>-Miss Simpson could have known your wife as Annabella. As a nick name, pet name or something like that. If there is a connection - - Simpson女士可能知道你的妻子是Annabella，一个昵称、爱称或其他啥的。</p>
+<p>-There is no connection.</p>
+<p>-We need to be sure.</p>
+<p>-(sighs) If you insist. It was two years ago… 如果你坚持的话。</p>
+<p>And Bella’s sister had come along. Phyllis, Phyllis Cadell. She didn’t shoot that ofen and I always wondered why she closed that day of all days. - Bella的姐妹Phyllis Cadell也来了，她不经常射击，我常常想知道，为什么那天她整天关门（可能是有个私人商店）。</p>
+<p>He’d come as a beater, to scare the birds. 他来的任务敲击吓唬鸟。</p>
+<p>I suppose it’s always easy to talk about these thing with hindsight but I’m often felt think we were ill-fated that day. 我想事后谈论这些事情总是很容易的，但我常常觉得我们那天运气不好。</p>
+<p>Bella tripped on a root and twisted her ankle rather badly. - Bella被树根绊倒并且脚踝被扭伤得非常严重。</p>
+<p>But by the time ambullance arrived it was all over. 但当救护车到达时，一切都结束了。</p>
+<p>dog whines - 狗呜呜声。</p>
+<p>generator - 发电机。</p>
+<p>marquee - 帐篷。</p>
+<p>You finished it, I take it? （警官）你的问讯结束了吧？我可以做其他的事情吧？</p>
+<p>He was a sort of guardian. 他是某种守护者。</p>
+<p>We won’t take up any more or your time. 我们不再占用您的时间了。</p>
+<p>exhale - 呼气。</p>
+<p>But I do what I can even I’m quite worn out. - 我尽我所能帮忙，即使我累坏了。wear 磨损。</p>
+<p>mistress - 女主人，具有权威或控制地位的女人；情妇。</p>
+<p>Henry has a cottage on the estate and I’m being pensioned off there. I’m quite looking forward to it.</p>
+<p>Pathetic. - 可怜的。</p>
+<p>She was scared shitless. - 她被吓得屁滚尿流。</p>
+<p>You do have a way with words, don’t you?</p>
+<p>What are we investigating, sir? Emily Simpson or Belly Trace?</p>
+<p>There’s no point asking me about it. 没有必要问我这个问题。</p>
+<p>I don’t have anything to do with the village. And the village doesn’t have much to do with me.我和那村子没有任何关系。那村子和我也没有太大关系。</p>
+<p>-Could you tell me where you were on last Wednesday?</p>
+<p>-No. I don’t know. Maybe I’m here, I’m most days.</p>
+<p>-Not much of life. 没什么生活。</p>
+<p>-My work is my life. You wouldn’t understand that. 我的工作就是我的生活。你不会理解这一点。I might have gone for a walk or something, I don’t remember.</p>
+<p>Missis - Miss, Misses 小姐。</p>
+<p>I ran hell for leather back to Tye House. - hell表示程度，加强语气。</p>
+<p>I’ll say one thing for Katherine. She certainly doesn’t come cheap. 我要为Katherine说一件事，她的价格当然不便宜。</p>
+<h3 id="Barnaby家-2">Barnaby家</h3>
+<p>intense uneasy music - 强烈不安的音乐。</p>
+<p>-This noble creature was in every part. So angel-like, so glorious, that a woman, who was not human, as was I – 这个高贵的生物无处不在。</p>
+<p>-Had not been but human. 只不过是人类。</p>
+<p>-Who had not been but human, as was I. Would have kneeled to him and begged for love. 谁不是人类，就像我一样。会向他下跪并乞爱。You, why you are not worthy once to name. His name without true worship, or indeed. Unless you kneeled, to have another name him. 你，为何连一次的名字都不配。 他的名字没有真正的崇拜，或者说确实如此。 除非你跪下来给他起另一个名字</p>
+<p>-What was he called?</p>
+<p>-We not come to that. 我们并没有谈到这个。Let it suffice that you shall have the glory. 只要你拥有荣耀就足够了。To father what so brave a father got. 对于父亲来说，一个父亲有多么勇敢。</p>
+<p>That sounded good. It’s coming along.</p>
+<p>She’s wonderful. We’re gonna have to go up and see it.</p>
+<p>-If I ever manage to learn it all. 如果我能学会这一切就好了。manage to do 设法做，（尽管有困难）成功做。</p>
+<p>I’ve got a nice Pot-au-feu in the deep freeze. 我有一份美味的冷冻炖锅。<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Pot-au-feu">Pot-au-feu</a> (/ˌpɒtoʊˈfɜːr/; French: [pɔt‿o fø] ( listen); “pot on the fire”) is a French dish of slowly boiled meat and vegetables, usually served as two courses: first the broth (bouillon) and then the meat (bouilli) and vegetables.</p>
+<p>horse nickers - nicker: 1, (of a horse) give a soft, low, breathy whinny. 2, a nickering sound.</p>
+<p>white lilies - 白百合。</p>
+<p>This is the Satin Service.</p>
+<p>Whimsical sombre music - 异想天开的忧郁音乐。</p>
+<p>You’ve withdrawn 500 pounds from our joint reserve account. 您已经从我们的联合储蓄账户中提取了500英镑。</p>
+<p>overdraw - 透支。</p>
+<p>I thought I’d leave you two to bicker in private. 我想我应该让你俩私下斗嘴。</p>
+<p>I know that my redeemer liveth, and that he shall stand upon the last on the earth. Whom I shall see for myself, and mine eyes shall behold, and not another.（祷告）我知道我的救世主还活着。- mine 用在元音之前，相当于my.</p>
+<p>Missis Rainbird no more a bird-wather than I am. - Rainbird女士和我一样都不是鸟类观察者。</p>
+<p>personalised Porsche. 个性化的保时捷。</p>
+<p>Rain stopped play. 雨停止了比赛。</p>
+<p>His wife’s just as bad. 他的妻子同样糟糕。</p>
+<p>It’s early closing. 关门还早呀。</p>
+<p>There’s something wrong and something that doesn’t add up. 有些地方出了问题，有些地方不合逻辑。</p>
+<p>Maybe he was. Maybe he simply mistaken in his account. But he wasn’t telling us the truth. 他可能是（在撒谎），也可能只是记错了。但是他没有告诉我们事实。</p>
+<p>Why did he run all the way back to Tye House to call the ambullance when the accident happened on the other side of the village? 事故发生在村子的另一边，为什么他还要千里迢迢跑回The House叫救护车呢？</p>
+<p>-It seems they’re all bloody liars. 看起来他们都是该死的撒谎者。bloody - used to express anger or to emphasize what you are saying in a slightly rude way.</p>
+<p>-One of them is something more. 其中一个有更多东西。</p>
+<p>Forasmuch as it hath pleased Almighty God of his great mercy to take unto himself, the soul of our dear sister here departed, we therefore commit her body to the ground; earth to earth, ashes to ashes, dust to dust; Amen.</p>
+<p>It’s early days yet. 现在还早呢。</p>
+<p>Not for poor Emily.</p>
+<p>Come and have sherry. 来喝杯雪莉酒吧！I feel the need of a drink. I’m afraid funerals do that for me. 我觉得需要喝一杯，恐怕葬礼对我来说就是这样。</p>
+<p>polio - 脊髓灰质炎。</p>
+<p>pensive music - pensive沉思的。</p>
+<p>She adored him. Still does for all I know. - 她崇拜/喜欢他，据我所知（for all I know）仍然如此。</p>
+<p>She was Herry’s ward. 她是Herry的被监护人。</p>
+<p>Herry sort of adopted them. - Herry有点收养了他们。</p>
+<p>set them up in a gamekeeper’s cottage on the estate. - 把他们放在庄园的猎场看守人的小屋里。</p>
+<p>They are very young then, barely in their teens. - 他们那时候还很小，才十几岁。</p>
+<p>nanny - 保姆。</p>
+<p>There was a nanny, Mary Sharpe, Nanny Sharpe, which was meant to look after them. - 有一个保姆，叫Sharpe，是为了照顾他们。</p>
+<p>-But she had a terrible time. 但是她度过了一段糟糕的时光。</p>
+<p>-In what way? 以什么样的方式？</p>
+<p>-The children were always fighting. Endless rows. - 孩子们总是打架，无休止地争吵。row 可数名词，争吵：<a target="_blank" rel="noopener" href="https://www.collinsdictionary.com/zh/dictionary/english/row">A row is a serious disagreement between people or organizations</a>.</p>
+<p>In the end, Mary upped and left. - 最后，Mary起身离开了。up 动词，增加；突然离开：<a target="_blank" rel="noopener" href="https://www.collinsdictionary.com/zh/dictionary/english/up">If you up and leave a place, you go away from it, often suddenly or unexpectedly</a>.</p>
+<p>Now she’s retired down on the coast. 现在她在海边退休了。</p>
+<p>-If you ask me, Katherine is the one to look out for. 如果你问我，凯瑟琳是值得留意的人。</p>
+<p>-Meaning? 意思是？</p>
+<p>-That girl is far too beautiful for other people’s good. 那个女孩太漂亮了，不利于别人。That girl is far too beautiful for other people’s good. If she was found bonking in the wood, she has the most to lose. 如果她被发现在树林里打滚（性交），她的损失将是最大的。</p>
+<p>She’s got a point. 她说得有道理。</p>
+<p>it barks its head off. 它拼命狂叫。its head在这里表示强烈程度。You’d have heard it a mile away! 你一英里外都能听见它。</p>
+<p>Damn! Do you know, for a minute I thought I had the whole thing solved. 该死！你知道吗，有一瞬间我以为我已经解决了整个问题。</p>
+<p>I think I deserve another Marron Lyonnaise. - 我认为我值得再来一份我值得再来一份马龙·里昂酱。</p>
+<p>I want their clothes bagged and down forensics. - 我想把他们的衣服打包并取证。forensics法医。</p>
+<p>What a mess. - 真是一团糟。</p>
+<p>She’s being treated for shock outside, no surprise. - 她休克了，正在外面接受治疗，这并不奇怪。shock休克。</p>
+<p>Don’t expect to get much sense. - 不要指望得到太多意义。</p>
+<p>You’d better come up and take a look at this. 你最好过来看看这个。</p>
+<p>-You’re not going to believe it. 你不会相信的。</p>
+<p>-On the contrary, Troy, I rather think I will. 恰恰相反，我觉得我会相信的。</p>
+<p>What was it she said, sir? 先生，她说了什么？</p>
+<p>Listen to this: At 10:30 a.m. Mister and Missis W crossed over by post box to avoid Miss G. 10点30分，W先生和W小姐穿过邮政信箱以避免G小姐。</p>
+<p>11:00 a.m. A called on Miss S., stayed 15 minutes. 上午11:00，A拜访了S小姐，停留了15分钟。</p>
+<p>There must be a couple of hundred entries in this file alone. 仅这个文件中就得有上百个条目。May thousands of them over the years. 可能有这几年的上千条记录。</p>
+<p>I want them all taken down. 我希望他们都被记录下来了。<a target="_blank" rel="noopener" href="https://www.collinsdictionary.com/zh/dictionary/english-chinese/take-down">take down</a> 1, 记录write down; 2, 拆除dismantle: wall, fence etc.</p>
+<p>We’re gonna have to go through the whole lot of them. 我们不得不要把它们全部浏览一遍。</p>
+<p>blackmail - n. &amp; vt. 勒索。</p>
+<p>She wasn’t a bad old stick. 她不是一个很坏的人。</p>
+<p>She is a bit perculiar, her and her son. Him being au undertaker and all. - 她和她的儿子有点奇怪。他是殡仪馆的承办人等等。perculiar - 奇特的。</p>
+<p>But she was very good for me, in her own way, very good to me.</p>
+<p>One is getting wed. 将要结婚的那个。</p>
+<p>-That’s a bend just ahead. 前面就是一个转弯。</p>
+<p>-Now, I’ve seen it, sir. 我看到了。</p>
+<p>And do me a favor, Troy, when we get there, if we get there, park at the bottom of the lane. 帮我一个忙，特洛伊，当我们到达那里时，如果我们到达那里，请将车停在车道的底部。</p>
+<p>yells - 呼喊。</p>
+<p>Sometimes you really make me sick. 有时你真的让我感到恶心。</p>
+<p>I don’t care if you marry him for money, but why can’t you come clean and admit it? 我不在乎你嫁给他是不是为了钱，但你不坦白承认。come clean 坦白说出来。admit 承认。</p>
+<p>It’s not like that. 不是那样的。</p>
+<p>So what is it like? Tying yourself to a bloody cripple at your age. 在你这个年纪，把自己绑在一个该死的瘸子身上。tying - tie的现在分词。</p>
+<p>That bloody cripple looked after us. If it hadn’t been for him, we wouldn’t have had a home. We wouldn’t have had anything.</p>
+<p>Yes, he’s getting his pound of flesh, isn’t he? - 是的，他正在得到一磅肉（意思是买到回报）。</p>
+<p>He’s not buying me, Michael.</p>
+<p>So what is he doing then? Renting you by the hour? 那他现在是做什么？按小时租赁你吗？</p>
+<p>slaps - 拍击。</p>
+<p>Alright, then. Don’t come to our wedding. Henry and I are better off without you. 那好吧。不要来参加我们的婚礼。没有你，亨利和我会过得更好。be better off - If you say that someone would be better off doing something, you are advising them to do it or expressing the opinion that it would benefit them to do it: If you’ve got bags you’re better off taking a taxi.</p>
+<p>I won’t bother buying a present, then!</p>
+<p>-Do you want to go follow her, sir?</p>
+<p>-No, Troy, I’d like to take a closer look in here.</p>
+<p>-What? Go in without a warrant? Isn’t that a bit? - 什么？没有搜查令就进去？warrant - 保证；值得，有必要；搜查令；做某事的依据。</p>
+<p>-You have a problem, Troy?</p>
+<p>-No, no. Just glad I didn’t suggest it. 只是庆幸我没如此建议。</p>
+<p>-If anybody finds us, you did.</p>
+<p>-Pity. 真遗憾。</p>
+<p>-Locked? 锁上了？</p>
+<p>-Yep.</p>
+<p>-I can force it. 我可以强行弄开它。</p>
+<p>Thank you all the same.</p>
+<p>-Mom gone to bed? 妈妈已经睡了吗？</p>
+<p>-Hours ago. 几小时前（就睡了）。What’s all this? 这到底是什么？</p>
+<p>-Notebooks. Iris Rainbrid took a Neighbourhood Watch to unheard of extremes. - Iris Rainbrid将邻里守望者组织带到了前所未闻的极端。extreme - 极端。</p>
+<p>You wouldn’t think that one small village could have so much trouble bubbling under the surface.</p>
+<p>-Was it very horrid? The bodies.</p>
+<p>-I’ve seen worse.</p>
+<p>I’m one more step further down the road. - 我在路上又向前迈进了一步。</p>
+<p>-I haven’t read lines with you. How’s it going?</p>
+<p>-Oh well, four acts down, one to go. - 四幕已结束，还剩一幕。</p>
+<p>-Yes, I suppost it’s the last act that really matters. 是的，我认为真正重要的是最后一幕。</p>
+<p>car rumbles - 车隆隆地。</p>
+<p>peacock hoots - 孔雀叫。</p>
+<p>It’s out of the question. - 这是不可能的。</p>
+<p>Voice of sanity. 理智的声音。</p>
+<p>Parish Council - 教区议会。</p>
+<p>It was only later I realised. 后来我才意识到。</p>
+<p>Everything’s over, it’s all slipping away. 一切都结束了，一切都过去了。</p>
+<p>-I don’t suppose you saw anyone in the woods? 我想你在树林里没有看到任何人吧？</p>
+<p>-No. 没有看到。</p>
+<p>Phillips Codell, I’m here arresting you on suspicion of the murder of Bella Trace on 26th of June 1995.</p>
+<p>You don’t have to say anything, but it may harm your defence if you do not mention when questioned something that you reply on in court. Anything you do say may be given in evidence.</p>
+<p>He was in that wheelchair and she just couldn’t cope.</p>
+<p>It’s something one does in the country. 这是国内每个人都会做的事情。</p>
+<p>I took a hip flask, filled with vodka and I kept on drinking. It was the only that I could get the courge.</p>
+<p>All the dead birds. The noise, the blood that made me feel sick and dizzy. 到处都是死鸟。噪音、血液让我感到恶心和头晕。</p>
+<p>I didn’t think I was gonna be able to do it.</p>
+<p>I doubled back behind the trees and managed to hide. - 我折回树后并设法躲了起来。double back, to turn and go back in the direction you have come from.</p>
+<p>Then I waited until I had a clear shot. And then. I shot her. 然后我就等到了清晰的视角。然后，我就开枪打了她。第一个shot是“镜头”的意思，第二个shot，是shoot的过去式及过去分词。</p>
+<p>It was terrible. I saw her pitch forward and fall to the ground. - 太可怕了。我看到她向前倾倒，倒在了地上。pitch, to move or be moved suddenly, especially by throwing or being thrown.</p>
+<p>And then, I just panicked. 然后，我就惊慌失措了。panickis a common misspelling of panic.</p>
+<p>I got up and I ran and I ran.</p>
+<p>I thought then that I’d done it, that I got away with it. 那时我想我已经做到了，我逃脱了惩罚。</p>
+<p>How could I have known that I’d been seen? 我想知道，我是怎么被看见的？</p>
+<p>She put it all in those notebooks, didn’t she? I had to go to that revolting house.</p>
+<p>I expect you’ll be needed more than ever at Tye House now. 我预计Tye House现在比以往任何时候都更需要你。Quite the chatelaine you’ll be, won’t you? Now, what will you have?</p>
+<p>dramatic siniter music - 戏剧性的险恶音乐</p>
+<p>The diamonds are marmite, the spades are jam, the hearts are tuna and the clubs are sandwich spread. 方块是马麦酱，黑桃是果酱，红心是金枪鱼，梅花是三明治。</p>
+<p>spread - 放在面包或饼干上的软质食物（酱）。a soft food for putting on bread and crackers:</p>
+<p>cheese/chocolate/fish spread</p>
+<p>There’s bread and various spreads for tea.</p>
+<p>voiceover - 画外音。</p>
+<p>How much did they take? 他们拿了多少钱？</p>
+<p>They’d even stopped asking me. They knew I was cleaned out. 他们甚至不再找我要了。他们知道我被掏空了。</p>
+<p>Sir, there’s someone here for you in reception. 先生，有人在接待处等候您。</p>
+<p>There’s something about that story, the shooting party, that still not right.</p>
+<p>You know you featured in here? 你知道你自己被包括在这个笔记本中了吗？</p>
+<p>He was wearing his denims and that cap he wears. 那个人穿着他的牛子裤和帽子。</p>
+<p>brutal - 野蛮的。</p>
+<p>-You again. You don’t give up, do you?</p>
+<p>-Mister Lacey, we’re here in connection with the death of Iris Rainbird.</p>
+<p>-In connection with. You policemen have a wonderful way of expressing yourselves.</p>
+<p>-As you may know, Mister Lacey, she was murdered in a particularly brutal fashion. 你可能知道，莱西先生，她是被以一种特别残酷的方式谋杀的。</p>
+<p>-I hope you’re not looking for insincere expressions of regret on my part, Chief Inspector. 我希望你不是在寻找我不真诚的遗憾表示，总督察。She was a very nasty woman. 她是个令人讨厌的女人。</p>
+<p>-Did you ever go to her house?</p>
+<p>-No.</p>
+<p>-So what would you say if I told you that somebody had been you entering her front door shortly after four o’clock yesterday afternoon?</p>
+<p>-I would say they needed their eyes testing.</p>
+<p>-(Troy) Mister Lacey, we have a warrant here to search these premises. - premises, 某人（一般是公司或组织）拥有的土地和建筑the land and buildings owned by someone, especially by a company or organization. premise, 前提。</p>
+<p>-So how do you explain this, Sir?</p>
+<p>-I can’t! Of course I can’t!</p>
+<p>-Where have you put the clothes?</p>
+<p>-What clothes?</p>
+<p>-The dungarees, the cap and the golves. 工作服、帽子和手套。</p>
+<p>-What?</p>
+<p>-The clothes you wore to kill Iris Rainbird.</p>
+<p>-You’re raving mad! 你疯了吧！rave, to speak in an uncontrolled way, usually because you are upset or angry, or because you are sick.</p>
+<p>I’ve been framed. 我被陷害了。</p>
+<p>a custody death.</p>
+<p>-Maybe we should have put her on suicide watch, sir?</p>
+<p>-Is that a reprimant, Troy? 'Cause you’re right. This is my fault.</p>
+<p>-Maybe she’s better off this way. All things considered.</p>
+<p>-That is not the point.</p>
+<p>Lacey has been shouting  his mouth off, sir. 莱西一直在大喊大叫。</p>
+<p>door clanks. 门叮当响。</p>
+<p>How nice of you to look in, Chief Inspector.</p>
+<p>-You say what you’ve got to say and get on with it. 你说出你必须说的话，然后继续说下去。</p>
+<p>-I want to go home.</p>
+<p>-Aren’t you, Mister Comedy? You want the truth, Mister Lacey. I’ve had you up to here. 我几乎都查出你的罪了。</p>
+<p>You were in such a hurry to drag me off yesterday. 你昨天那么急着把我拖走。</p>
+<p>mid-morning - 上午中旬。</p>
+<p>Caped Crusader - 斗篷十字军</p>
+<p>He only did the first sketches but they took all day. 他只画了草图，但是这些草图花了一天的时间。</p>
+<p>He said I had a wonderful complicated face.</p>
+<p>He’s a surrealist, is he? 他是超现实主义者，是吗？</p>
+<p>-And since everyone’s always picking on him, you might as well know he was there the night Emily Simpson died too. 既然每个人都在找他的茬，你不妨知道艾米丽·辛普森去世的那天晚上他也在他的工作室里。</p>
+<p>-You’ve seen quite a bit of him, is there something that I ought to know? 你已经和他见过不少次面了，有没有什么事是我该知道的？（你有没有和他发生过什么？）</p>
+<p>-What? Something like you and your Missis Whiplash? Or Barbara and all her boyfriends? No, dad, there’s nothing you need to know at all. 什么事？就像你和Whiplash太太那样吗？或者Barbara和她的那些男朋友一样？没有，爸爸，没有什么事是你应该知道的（我和他没有发生那样的事）。</p>
+<p>In fact I think she may have told us more than she meant to. 事实上我认为她告诉了我们比她本意更多的事情。</p>
+<p>-It’s very good.</p>
+<p>-It’s only Marks and Sparks, I’m afraid. You should have told me you were coming.</p>
+<p>-Marks and Sparks is fine.</p>
+<p>The Lessiter girl backed up his alibi. 莱斯特女孩支持了他的不在场证据。</p>
+<p>It had to be a trick. 这一定是一个诡计。</p>
+<p>car honks. 汽车鸣笛。</p>
+<p>I have to be off. 我要走了。</p>
+<p>Burnham Crescent - Burnham发音为[BUR] + [NUHM]。crescent雕刻成的类似新月的形状。</p>
+<p>Up ahead this road on the left. 往这条路前面的左边走。</p>
+<p>They were not easy children but of course under the circumstances, one had to make allowances. 他们不是好孩子，但当然在这种情况下，人们必须体谅他们。</p>
+<p>Every day it was a slanging match. 每天都是一场谩骂比赛。She’d scream at him and he’d fling himself out of the house.</p>
+<p>cup shatters. 杯子粉碎。</p>
+<p>How could I’ve betrayed them? 我怎么可能背叛他们？</p>
+<p>All she had to do was to hand the dog over to her brother. 她所要做的就是把狗交给她哥哥。</p>
+<p>Why wouldn’t he open the door. Because then she’d have seen the dog and that would have spoiled the whole set-up. 那会破坏整个设计。</p>
+<p>If it hadn’t been for an observant neighbour and an unlocked tricycle, we’d have never been any the wiser. 如果没有细心的邻居和一辆没上锁的三轮车，我们永远不会变得更聪明。</p>
+<p>Yes, they’re clever, weren’t they? Always working off one another.</p>
+<p>Whoever went to the house was wearing overalls and a cap and they probably made sure they were seen at least from behind. - overalls工作服。</p>
+<p>Katherine stabbed them and then she put the knife and the blood-soaked overalls into the basket.</p>
+<p>Bella Trace was just a freak change, wrong place, wrong time.</p>
+<p>makesman - 制造者。</p>
+<p>bludgeon, poison, stab</p>
+<p>sheep bleat - 羊咩咩叫。</p>
+<p>“I’ve been framed.” And he made this sign. It was a coded message. He was warning her to remove the picture. - 我把画装在框里了。frame, 把画装框，When a picture or photograph is framed, it is put in a frame.</p>
+<p>It’d have given the game away, wouldn’t it? 这幅画泄露了这个游戏，不是吗？give away泄露，If you give away information that should be kept secret, you reveal it to other people.</p>
+<p>-It’s powerful. It’s brilliant even in its own way.</p>
+<p>-He had talent.</p>
+<p>-But so twisted.</p>
+<p>-I almost guessed it when we came here. The three bedrooms and only one bed slept in. They pulled the wool right over my eyes.</p>
+<p>-(Troy) When?</p>
+<p>-That time we came here and they were arguing. They really did seem to hate each other, didn’t they? And they couldn’t have staged it for our benefit. Because they didn’t know we were here. Except they did. They saw us in the mirror. And they did put on a show.</p>
+<p>-Poor Emily.</p>
+<p>-(Troy) And poor Annabella. Who was she?</p>
+<p>-I don’t suppose we’ll ever know.</p>
+<p>I hope you’re not gonna fall asleep in this.</p>
+<p>I wouldn’t dream of it.</p>
+<p>Anyway, after what you’ve just been through, a start of incest should be right up your street.</p>
+<p>Come this in sadness from you.</p>
+<p>Let some mystery befall me soon if I dissemble all.</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/24/site/vscode-usage/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/24/site/vscode-usage/" class="post-title-link" itemprop="url">vscode 使用</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-24 17:26:44" itemprop="dateCreated datePublished" datetime="2024-01-24T17:26:44+00:00">2024-01-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-11 09:41:52" itemprop="dateModified" datetime="2026-08-11T09:41:52+00:00">2026-08-11</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1255,261 +1214,738 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="Host-site">Host site</h2>
-<p>有两个托管个人站点的网站：<code>Github pages</code>和<code>reathedocs</code>.</p>
-<h3 id="Github-Pages">Github Pages</h3>
-<p>使用<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages">github pages</a>可以搭建个人主页。</p>
-<p>github pages简介：<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages">官方链接</a>。</p>
-<p>github pages使用了<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/CNAME_record">CNAME record</a>技术，参考：<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/39301250">链接1</a>、<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/26609475">链接2</a>、<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/about-custom-domains-and-github-pages#using-a-subdomain-for-your-github-pages-site">Custom domains in Github Pages</a>。</p>
-<p>注：<a target="_blank" rel="noopener" href="https://readthedocs.org/">Read the Docs</a>也是一个很好的搭建个人主页的网站。</p>
-<h4 id="Github-Pages-站点类型">Github Pages 站点类型</h4>
-<p>有3种类型的 Github Pages 站点（sites）：project, user 和 organization 。</p>
-<p>Project sites 连接到 github 上特定 project ，比如 Javascript library 或 recipe collection。user 或 organization sites 连接到 <a target="_blank" rel="noopener" href="http://github.com">github.com</a> 的特定账户。</p>
-<p>发布 user site ，你必须创建一个你的个人账户下的一个名为 <code>&lt;username&gt;.github.io</code> 的 repository 。发布 organization site ，你必须创建一个组织所有的名为 <code>&lt;organization&gt;.github.io</code> 的 repository 。除非你使用 custom domain ，否则 user 和 organization sites 将位于 <code>http(s)://&lt;username&gt;.github.io</code> 或 <code>http(s)://&lt;organization&gt;.github.io</code> 。</p>
-<p>project site 的源文件存储在作为 project 的相同的 repository 中。除非使用 custom domain ， 否则 project sites 将位于 <code>http(s)://&lt;username&gt;.github.io/&lt;repository&gt;</code> 或 <code>http(s)://&lt;organization&gt;.github.io/&lt;repository&gt;</code> 。</p>
-<p>有关如何自定义影响您网站的域名的更多信息，参见&quot;<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/about-custom-domains-and-github-pages">About custom domains and GitHub Pages</a>&quot;。</p>
-<p>每个 github 账户允许创建 1 个 user 或 organization 站点。无论是被组织还是个人所有，project 站点的个数不限制。</p>
-<h4 id="GitHub-Pages-访问方法">GitHub Pages 访问方法</h4>
-<p>参考<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site#next-steps">官方文档</a>。</p>
-<p>例如，你的project站点配置的发布源是<code>gh-pages</code>分支，然后在<code>gh-pages</code>分支上创建了一个<code>about/contact-us.md</code>文件，你将可以在<code>https://&lt;user&gt;.github.io/&lt;repository&gt;/about/contact-us.html</code>访问它。</p>
-<p>你也可以使用<code>Jekyll</code>等静态站点生成器来给你的github page配置一个主题。</p>
-<h4 id="站点发布常见问题的解决方法">站点发布常见问题的解决方法</h4>
+          <h2 id="Reduce-the-disk-usage-of-VSCode">Reduce the disk usage of VSCode</h2>
+<p>以下文件可以删除：</p>
 <ul>
-<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/72851548/permission-denied-to-github-actionsbot">Permission denied to github-actions[bot]</a></li>
+<li>
+<p>.vscode-server/data/User/workspaceStorage/*：几十 GB.</p>
+</li>
+<li>
+<p>.vscode-server：<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/58453967/vscode-remote-ssh-vscode-server-taking-up-a-lot-of-space">参考</a></p>
+</li>
+<li>
+<p>.config: 可以针对每个目录找到相应的程序，比如 Chrome，然后有针对性地删除一些文件。参考<br>
+<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/58453967/vscode-remote-ssh-vscode-server-taking-up-a-lot-of-space">这里</a>。</p>
+</li>
+<li>
+<p>.cache: 和 .config 类似处理，参考<br>
+<a target="_blank" rel="noopener" href="https://superuser.com/questions/366771/what-does-cache-do-it-consumes-a-huge-disk-space">这里</a>。</p>
+<p>.cache/vscode-cpptools: This cache folder stores cached precompiled headers or “ipch” files that<br>
+the IntelliSense engine uses to improve performance. You can limit the size of the cache by<br>
+changing the setting value of C_Cpp.intelliSenseCacheSize. 参考<br>
+<a target="_blank" rel="noopener" href="https://github.com/microsoft/vscode-cpptools/issues/6594">这里</a>：<br>
+<img src="/blog/assets/images/site/vscode-usage-01.png" alt="C_Cpp.intelliSenseCacheSize"></p>
+</li>
 </ul>
-<h4 id="Github-workflows">Github workflows</h4>
-<p>参考<a target="_blank" rel="noopener" href="https://docs.github.com/zh/actions/using-workflows/workflow-syntax-for-github-actions">官方文档</a>。</p>
-<h4 id="Github个人访问令牌">Github个人访问令牌</h4>
-<p><a target="_blank" rel="noopener" href="https://docs.github.com/zh/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens">Github个人访问令牌</a></p>
-<h3 id="readthedocs">readthedocs</h3>
-<p>Similar to the github pages.</p>
-<p><a target="_blank" rel="noopener" href="https://docs.readthedocs.io/en/stable/tutorial/">Tutorial</a></p>
-<h2 id="配置前准备">配置前准备</h2>
-<h3 id="Markdown编辑器">Markdown编辑器</h3>
-<p>推荐的<a target="_blank" rel="noopener" href="https://www.zhihu.com/tardis/zm/art/103348449?source_id=1003">markdown编辑器</a>：</p>
+<h2 id="Hot-keys">Hot keys</h2>
+<ol>
+<li>跳转到对应大括号：<code>Ctrl Shift \</code></li>
+</ol>
+<h2 id="Debug-code-in-VSCode">Debug code in VSCode</h2>
 <ul>
-<li>VSCode：免费。VSCode原生支持Markdown，安装一些插件可以帮助更快地编写markdown文件。</li>
-<li>Typora：现在已经开始收费。</li>
+<li><a target="_blank" rel="noopener" href="https://code.visualstudio.com/Docs/editor/debugging#_multitarget-debugging">Debug multiple processes in VSCode</a></li>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/60515935/visual-studio-code-does-not-attach-debugger-to-multi-processes-in-python-using-p">Debug Python Subprocess</a></li>
 </ul>
-<p>VSCode markdown插件：</p>
+<h2 id="Useful-plugins">Useful plugins</h2>
 <ul>
-<li>Mardown All in One: 提供快捷键，帮助更快的编写markdown文件。</li>
-<li>Markdown+Math：提供数学公式支持。</li>
-<li>Markdown Preview Enhanced: 将原生markdown预览的黑色背景改成白色。</li>
-<li>Markdown Preview Github Styling：提供Github风格的预览。</li>
+<li><code>Remote - SSH</code>: Windows 连接 Linux。前置条件：Windows 本身需要安装 ssh 命令行工具。</li>
+<li><code>Perforce for VS Code</code>: perforce 工具。</li>
+<li><code>intent-rainbow</code>: 用彩色显示缩进。</li>
+<li><code>C/C++</code></li>
+<li><code>Makefile Tools</code></li>
+<li><code>Verilog Format</code></li>
+<li><code>All in one</code></li>
+<li><code>c/c++ definition generator</code></li>
+<li><code>KoroFileHeader</code>: 参考 <a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/610490070">这里</a>。</li>
 </ul>
-<p><a target="_blank" rel="noopener" href="https://www.tablesgenerator.com/markdown_tables">在线表格生成器</a>：可以生成Markdown、Text、HTML、LaTex、MediaWiki格式的表格。</p>
-<h3 id="轻量级虚拟机WSL">轻量级虚拟机WSL</h3>
-<p>WSL，<a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/wsl/install">Windows Subsystem for Linux</a>，是Windows提供的轻量级Linux虚拟机。</p>
-<p>安装教程：见<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/170210673">链接</a>。</p>
-<h4 id="WSL默认没有启用systemctl：">WSL默认没有启用systemctl：</h4>
-<p>启用systemctl的方法：<a target="_blank" rel="noopener" href="https://askubuntu.com/questions/1379425/system-has-not-been-booted-with-systemd-as-init-system-pid-1-cant-operate">链接</a>。</p>
-<p>替代方法：不需要启动systemctl，因为会比较占用资源，启动也会变慢。可以使用service命令替代。</p>
-<h4 id="WSL默认没有安装openssl-server：">WSL默认没有安装openssl-server：</h4>
-<p>使用ssh连接到服务器时，需要服务器运行着sshd程序，否则连接不上，会出现&quot;<a target="_blank" rel="noopener" href="https://www.makeuseof.com/fix-ssh-connection-refused-error-linux/">Connection refused</a>&quot;错误。</p>
-<p>参考<a target="_blank" rel="noopener" href="https://askubuntu.com/questions/1339980/enable-ssh-in-wsl-system">链接</a>。</p>
-<p>查看openssh-server有没有安装：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dpkg --list | grep ssh</span><br></pre></td></tr></table></figure>
-<p>注：如果安装了openssh-server，执行which sshd可以看到路径。</p>
-<p>WSL默认没有安装openssh-server，安装方法：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install openssh-server</span><br></pre></td></tr></table></figure>
-<p>启动ssh：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo service ssh start</span><br></pre></td></tr></table></figure>
-<h4 id="ssh-keygen">ssh-keygen</h4>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 删除错误的 know_hosts 项</span></span><br><span class="line">ssh-keygen -f <span class="string">&quot;/home/&lt;user&gt;/.ssh/known_hosts&quot;</span> -R <span class="string">&quot;ubuntu&quot;</span></span><br></pre></td></tr></table></figure>
-<h4 id="通过https登录到github">通过https登录到github</h4>
-<p><code>git push</code>不再支持输入用户名和密码，当提示输入密码时，需要输入personal access token.</p>
-<p>步骤1：在github上<a target="_blank" rel="noopener" href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic">创建personal access token</a>；</p>
-<p>步骤2：<a target="_blank" rel="noopener" href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#using-a-personal-access-token-on-the-command-line">在命令行上使用personal access token</a>；</p>
-<p>步骤3：为了避免每次都需要输入personal access token，可以将其<a target="_blank" rel="noopener" href="https://docs.github.com/en/get-started/getting-started-with-git/caching-your-github-credentials-in-git">缓存在git client上</a>：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gh auth login</span><br></pre></td></tr></table></figure>
-<p>注：使用<code>gh</code>命令需要先安装GitHub CLI：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install gh</span><br></pre></td></tr></table></figure>
-<h3 id="WSL常见问题">WSL常见问题</h3>
+<h2 id="Useful-configurations">Useful configurations</h2>
+<p><a target="_blank" rel="noopener" href="https://www.cxyzjd.com/article/weixin_45461426/105936955">自动填充头文件，比如 ifndef 宏</a></p>
+<p>配置文件：</p>
 <ul>
-<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/73673804/npm-show-npm-elf-not-found-error-in-wsl">npm show “NPM ELF : not found error” in WSL</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.reddit.com/r/bashonubuntuonwindows/comments/8teo9i/is_there_a_way_to_open_a_file_in_a_browser_from/">WSL打开html的方法</a></li>
+<li>launch.json</li>
+<li>tasks.json:<br>
+<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/48273346/vscode-command-for-user-input-in-debug-launch-config">ref</a>,<br>
+<a target="_blank" rel="noopener" href="https://code.visualstudio.com/updates/v1_30#_improved-user-input-variables-for-task-and-debug-configurations">ref</a></li>
 </ul>
-<p>在WSL的Linux下，在.bashrc中加入：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="function"><span class="title">browser</span></span>() &#123;</span><br><span class="line">    explorer.exe $(wslpath -w $(<span class="built_in">realpath</span> <span class="variable">$1</span>))</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">export</span> -f browser</span><br></pre></td></tr></table></figure>
-<p>打开html：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">browser index.html</span><br></pre></td></tr></table></figure>
+<h2 id="使用-VSCode-合并-Perforce-代码">使用 VSCode 合并 Perforce 代码</h2>
+<p>在 <code>~.cshrc</code> 脚本中添加：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">## Use VSCode to diff/merge the Perforce code</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Refer to:</span></span><br><span class="line"><span class="comment">#  https://github.com/mjcrouch/vscode-perforce/issues/259</span></span><br><span class="line"><span class="comment">#  https://www.perforce.com/manuals/cmdref/Content/CmdRef/p4_resolve.html</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Map p4 resolve arguments to vscode&#x27;s merge editor arguments</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># &#x27;code&#x27; takes: &lt;path1&gt; &lt;path2&gt; &lt;base&gt; &lt;result&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># perforce gives:</span></span><br><span class="line"><span class="comment">#   1 the base file</span></span><br><span class="line"><span class="comment">#   2 the source file (also known as &quot;theirs&quot;)</span></span><br><span class="line"><span class="comment">#   3 the target file (also known as &quot;yours&quot;)</span></span><br><span class="line"><span class="comment">#   4 the merge file.</span></span><br><span class="line">setenv P4MERGE <span class="string">&#x27;code --wait --merge $2 $3 $1 $4&#x27;</span></span><br><span class="line">setenv P4DIFF <span class="string">&#x27;code --wait --diff&#x27;</span></span><br><span class="line">setenv P4EDITOR <span class="string">&#x27;code --wait&#x27;</span></span><br></pre></td></tr></table></figure>
+<h2 id="跳转到定义如何加速">跳转到定义如何加速</h2>
+<p>🚀 解决方案一：切换 IntelliSense 引擎 VSCode 默认使用的是 “Default” 引擎，它功能强但对大型项目解析慢<br>
+。你可以改成更轻量的 Tag Parser：</p>
+<p>操作步骤：打开 VSCode 设置（Ctrl + ,）</p>
+<p>搜索 C_Cpp.intelliSenseEngine</p>
+<p>将值从 “Default” 改为 “Tag Parser”</p>
+<p>这样跳转速度会明显提升，尤其在大型项目中。</p>
+<p>⚙️ 解决方案二：优化智能提示延迟在设置中调整提示延迟也能改善体验：</p>
+<p>搜索 Editor: Quick Suggestions Delay，设为 10ms 以下</p>
+<p>搜索 Snippets Prevent Quick Suggestions，设为 false</p>
+<p>这些设置可以让提示和跳转更流畅。</p>
+<p>🧠 额外建议关闭未使用的扩展：某些扩展会拖慢性能</p>
+<p>使用 compile_commands.json：如果你用 CMake，可以生成这个文件，让 VSCode 更准确地解析项目结构</p>
+<p>避免打开整个大型项目目录：只打开你正在编辑的子目录，有助于减少分析负担</p>
+<h3 id="compile-commands-json">compile_commands.json</h3>
+<p>🔧 Clang 生态工具（最主要用户）</p>
+<p>这些工具依赖 compile_commands.json 来正确解析代码：</p>
 <ul>
-<li>在 Windows 浏览器打开 ssh 连接的 Linux 的文件：</li>
-</ul>
-<p>使用内置的 Python 轻量级服务器（最快、最推荐）</p>
-<p>在 Linux 终端中切换到文件所在的目录：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /path/to/your/folder</span><br></pre></td></tr></table></figure>
-<p>启动 Python 自带的 HTTP 服务：</p>
-<p>Python 3.x（推荐）：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python3 -m http.server 8000</span><br></pre></td></tr></table></figure>
-<p>在 Windows 浏览器中访问：</p>
-<p>打开浏览器，在地址栏输入：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://&lt;Linux服务器的IP地址&gt;:8000</span><br></pre></td></tr></table></figure>
-<h2 id="静态站点生成器">静态站点生成器</h2>
-<p>以下几种<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages">静态站点生成器</a>都可以用来搭建个人主页。如果使用除JekyII外的工具，则需要配置<a target="_blank" rel="noopener" href="https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions">Github Actions</a>以构建和发布你的站点。</p>
-<h3 id="mkdocs">mkdocs</h3>
-<p><a target="_blank" rel="noopener" href="https://www.mkdocs.org/">mkdocs</a>是一个快速的静态网页生成器。</p>
-<p><code>mkdocs.yml</code> 文件是 MkDocs 文档生成器的配置文件，其格式说明参见<a href="mkdocs.yml.md">这里</a>。</p>
-<h3 id="JekyII">JekyII</h3>
-<p>Jekyll 是一个静态站点生成器，内置对 GitHub Pages 的支持和简化的构建进程。</p>
-<p>参见 <a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll/about-github-pages-and-jekyll">About GitHub Pages and Jekyll</a> 。</p>
-<h3 id="Hexo">Hexo</h3>
+<li>Clangd：语言服务器，提供 VSCode、Vim、Emacs 等编辑器的智能补全、跳转、诊断等功能。
 <ul>
-<li><a target="_blank" rel="noopener" href="https://hexo.io/docs/">Hexo博客框架</a></li>
-<li><a target="_blank" rel="noopener" href="https://hexo.io/zh-cn/docs/">Hexo中文文档</a></li>
-<li><a target="_blank" rel="noopener" href="https://malekbenz.com/blog/2016/09/10/Create-Host-Blog-for-free-with-Hexo-Github">Create and host your blog for free with hexo &amp; Github</a></li>
+<li>clangd 比 Microsoft 的 C/C++ 插件跳转更快，它可以手动安装到系统，也可以直接用 VSCode 的<br>
+Extensions 市场安装（Remote SSH 也支持）。</li>
+<li>compile_commands.json 是 clangd 的眼睛，把这个文件放在项目根目录或在 clangd 中手动配置其路径，可<br>
+以显著提高跳转速度。</li>
+<li>clangd 补充配置：
+<ul>
+<li>在项目根目录创建 <code>.clangd</code> 文件；</li>
+<li>创建 <code>~/.config/clangd/config.yaml</code> 。</li>
 </ul>
-<h3 id="Sphinx">Sphinx</h3>
-<p><a target="_blank" rel="noopener" href="https://www.sphinx-doc.org/en/master/usage/installation.html">Install Sphinx</a><br>
-<a target="_blank" rel="noopener" href="https://sphinx-intro-tutorial.readthedocs.io/en/latest/docs_hosting.html">Hosting the documentation</a></p>
-<h3 id="python">python</h3>
-<p>python建立个人站点</p>
-<pre><code>python -m http.server
+</li>
+<li><a target="_blank" rel="noopener" href="https://clangd.llvm.org/installation.html">clangd 安装方式</a>
+<ul>
+<li>如果系统没有 clangd server，vscode-server 在安装 clangd 插件的时候也会提示安装；如果点击安装，<br>
+则会安装在 vscode-server 默认文件夹。</li>
+<li>如果 VSCode 没有提示安装 clangd ，那么
+<ul>
+<li>打开命令面板（Cmd+Shift+P 或 Ctrl+Shift+P）</li>
+<li>输入并执行：Restart Language Server</li>
+<li>此时，左下角会提示 “clangd server 未安装，是否安装”</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Clang-Tidy：静态分析工具，用于检查代码质量、风格、潜在错误</li>
+<li>Include-What-You-Use (IWYU)：分析并清理多余的 #include 指令</li>
+<li>Clang-Format：在复杂项目中更好地格式化代码</li>
+</ul>
+<p>🖥️ 智能 IDE 和编辑器 VSCode：</p>
+<p>通过 C/C++ 插件读取 compile_commands.json 来加速跳转和补全</p>
+<ul>
+<li>CLion、QtCreator：这些 IDE 会自动识别并使用该文件来构建项目模型</li>
+</ul>
+<p>🛠️ 构建工具和生成方式 CMake：</p>
+<p>最常见的生成方式，只需添加参数：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..</span><br></pre></td></tr></table></figure>
+<p>就会在构建目录中生成该文件</p>
+<p>Bear 工具：适用于非 CMake 项目（如 Makefile），通过拦截编译命令生成该文件</p>
+<h2 id="标签页高亮">标签页高亮</h2>
+<p>Setting -&gt; 搜索 “workbench.colorCustomizations” --&gt; “Edit in setting.json”</p>
+<p>写入以下内容：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">&quot;workbench.colorCustomizations&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;tab.activeBorderTop&quot;</span><span class="punctuation">:</span> <span class="string">&quot;#6a6ce4&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;tab.activeBackground&quot;</span><span class="punctuation">:</span> <span class="string">&quot;#200b6c&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;tab.activeBorder&quot;</span><span class="punctuation">:</span> <span class="string">&quot;#6a6ce4&quot;</span><span class="punctuation">,</span></span><br><span class="line"><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/tech/cpp/debug/print-process-stack/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/tech/cpp/debug/print-process-stack/" class="post-title-link" itemprop="url">打印进程堆栈</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 22:33:09" itemprop="dateCreated datePublished" datetime="2024-01-23T22:33:09+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-11 09:41:52" itemprop="dateModified" datetime="2026-08-11T09:41:52+00:00">2026-08-11</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="函数">函数</h2>
+<p><a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Backtraces.html">glic Functions</a></p>
+<pre><code>backtrace
+backtrace_symbols
+backtrace_symbols_fd
 </code></pre>
-<h2 id="Syntax">Syntax</h2>
-<h3 id="Markdown">Markdown</h3>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;execinfo.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print_trace</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">static</span> <span class="type">const</span> <span class="type">int</span> SIZE = <span class="number">10</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">void</span>* buffer[SIZE];</span><br><span class="line">    <span class="type">char</span>** strings;</span><br><span class="line">    <span class="type">int</span> size, i;</span><br><span class="line"></span><br><span class="line">    size = <span class="built_in">backtrace</span>(buffer, SIZE);</span><br><span class="line">    strings = <span class="built_in">backtrace_symbols</span>(buffer, size);</span><br><span class="line">    <span class="keyword">if</span> (strings != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Obtained %d stack frames.\n&quot;</span>, size);</span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; size; ++i)</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>, strings[i]);</span><br><span class="line">        <span class="built_in">free</span>(strings);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="第三方库">第三方库</h2>
+<p>breakpad: <a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_45609638/article/details/125090204">https://blog.csdn.net/weixin_45609638/article/details/125090204</a></p>
+<p><a target="_blank" rel="noopener" href="https://juejin.cn/post/6899070041074073614">https://juejin.cn/post/6899070041074073614</a></p>
+<p><a target="_blank" rel="noopener" href="https://juejin.cn/post/7130820896213712927">https://juejin.cn/post/7130820896213712927</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/tech/linux/build-linux-kernel-module/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/tech/linux/build-linux-kernel-module/" class="post-title-link" itemprop="url">Build Linux Kernel Module</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 22:24:57" itemprop="dateCreated datePublished" datetime="2024-01-23T22:24:57+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-11 09:41:52" itemprop="dateModified" datetime="2026-08-11T09:41:52+00:00">2026-08-11</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="内核编译">内核编译</h2>
+<p>obj-m: <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/57839941/what-is-the-meaning-of-obj-m-in-linux-device-driver-makefile">链接</a></p>
+<p>make modules: <a target="_blank" rel="noopener" href="https://askubuntu.com/questions/1363530/what-does-make-and-make-modules-do-when-compiling-building-the-kernel">链接</a></p>
+<h2 id="编译内核模块">编译内核模块</h2>
+<p><a target="_blank" rel="noopener" href="https://tldp.org/LDP/lkmpg/2.6/html/x181.html">文档</a></p>
+<p>Makefile:</p>
+<pre><code>obj-m += hello-1.o
+
+all:
+	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+
+clean:
+	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+</code></pre>
+<p><code>make -C</code> changes to a new directory where the new makefiles will be run.</p>
+<p><code>M=$(PWD)</code> defines a variable <code>M</code> which the child makefiles can use.</p>
+<h2 id="命令">命令</h2>
 <ul>
-<li><a target="_blank" rel="noopener" href="https://daringfireball.net/projects/markdown">Markdown Documentation</a></li>
-<li><a target="_blank" rel="noopener" href="https://squidfunk.github.io/mkdocs-material/reference/diagrams/">Diagrams Reference</a></li>
+<li><code>insmod</code>: 插入一个模块（.ko）到kernel中。</li>
+<li><code>rmmod</code>: 从内核中删除一个模块。</li>
+<li><code>modprobe</code>: 从内核中增删模块。<code>modprobe</code>从<code>/lib/modules/`uname -r`</code>中搜索所有的模块和其他文件，除了<code>/etc/modprobe.d</code>目录中的可选配置文件（参见<code>modprobe.d(5)</code>）。</li>
+<li><code>lsmod</code>: 显示当前加载的内核模块的状态（即对<code>/proc/modules</code>内容的格式化）。</li>
+<li><code>modinfo</code>: 从命令行指定的内核模块中提取信息，如果没有给出模块名称，那么会搜索<code>/lib/modules/version</code>目录，就像<code>modprobe</code>加载模块时一样。</li>
+<li><code>depmod</code>: 生成<code>modules.dep</code>和映射文件。</li>
+<li><code>dmesg</code>: 打印或控制内核ring buffer（存储kernel message）。</li>
 </ul>
-<h3 id="reStructuredText">reStructuredText</h3>
-<p><code>.rst</code></p>
-<h2 id="Markdown-文档写作助手">Markdown 文档写作助手</h2>
-<p>VS Code + Markdown 插件：</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/tech/linux/pcie/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/tech/linux/pcie/" class="post-title-link" itemprop="url">Introducation to PCIE</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 22:04:18" itemprop="dateCreated datePublished" datetime="2024-01-23T22:04:18+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-11 09:41:52" itemprop="dateModified" datetime="2026-08-11T09:41:52+00:00">2026-08-11</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1>词汇表（Glossary）</h1>
 <ul>
-<li>Markdown All in One：快捷键、自动列表、格式化支持。</li>
-<li>markdownlint：格式规范检查，可配合 .markdownlint.json 使用。</li>
-<li>Markdown Preview Enhanced：支持公式、流程图、导出 PDF。</li>
+<li>BAR: base address register.</li>
+<li>PCI configuration space.</li>
+<li>sba: system bus address.</li>
 </ul>
-<p>图床工具：</p>
-<p>iPic（macOS）或 PicGo（全平台）：自动上传图片并生成 Markdown 链接。</p>
-<p>国内外常用免费图床推荐</p>
-<table>
+<p><a target="_blank" rel="noopener" href="https://wiki.osdev.org/PCI">PCI</a></p>
+<p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/PCI_configuration_space">PCI configurtation space</a></p>
+<pre><code>PCI设备有一组被称为configuratin space的寄存器，并且PCI Express引入了Extended configuration space。configuration space寄存器被映射到memory locations。
+驱动设备和诊断软件必须要有权限访问configuration space，操作系统通常使用APIs来授权访问设备configuration space。
+</code></pre>
+<p>PCI configuration space有两种类型的Header（64 bytes）：</p>
+<h2 id="Header-Type-0x0">Header Type 0x0</h2>
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-rcf9{background-color:#F9F9F9;text-align:left;vertical-align:middle}
+.tg .tg-tbl0{background-color:#F9F9F9;font-weight:bold;text-align:center;vertical-align:middle}
+</style>
+<table class="tg">
 <thead>
-<tr>
-<th style="text-align:center">图床名称</th>
-<th style="text-align:center">特点与限制</th>
-<th style="text-align:center">适合场景</th>
-</tr>
+  <tr>
+    <th class="tg-tbl0">Register</th>
+    <th class="tg-tbl0">Offset</th>
+    <th class="tg-tbl0">Bits 31-24</th>
+    <th class="tg-tbl0">Bits 23-16</th>
+    <th class="tg-tbl0">Bits 15-8</th>
+    <th class="tg-tbl0">Bits 7-0</th>
+  </tr>
 </thead>
 <tbody>
-<tr>
-<td style="text-align:center"><a target="_blank" rel="noopener" href="http://SM.MS">SM.MS</a></td>
-<td style="text-align:center">免费、支持 API、最大上传 5MB，全球 CDN 加速2</td>
-<td style="text-align:center">技术博客、Markdown</td>
-</tr>
-<tr>
-<td style="text-align:center">Imgur</td>
-<td style="text-align:center">老牌国外图床，支持匿名上传、API，国内访问速度较慢2</td>
-<td style="text-align:center">海外博客、论坛</td>
-</tr>
-<tr>
-<td style="text-align:center">路过图床</td>
-<td style="text-align:center">支持 HTTPS、免注册、永久存储，最大上传 10MB</td>
-<td style="text-align:center">Markdown、公众号</td>
-</tr>
-<tr>
-<td style="text-align:center">聚合图床</td>
-<td style="text-align:center">上传后自动分发至多个图床，支持多种格式</td>
-<td style="text-align:center">多平台分发</td>
-</tr>
-<tr>
-<td style="text-align:center">PostImage</td>
-<td style="text-align:center">国外图床，最大上传 24MB，支持 BBCode/HTML/Markdown 链接</td>
-<td style="text-align:center">技术论坛、社交媒体</td>
-</tr>
-<tr>
-<td style="text-align:center"><a target="_blank" rel="noopener" href="http://UPLOAD.CC">UPLOAD.CC</a></td>
-<td style="text-align:center">香港图床，支持 Chrome 插件、最大上传 10MB</td>
-<td style="text-align:center">博客写作</td>
-</tr>
-<tr>
-<td style="text-align:center"><a target="_blank" rel="noopener" href="http://ImageHub.cc">ImageHub.cc</a></td>
-<td style="text-align:center">全球 CDN 加速，最大上传 10MB，支持多地备份</td>
-<td style="text-align:center">稳定性要求高的场景</td>
-</tr>
+  <tr>
+    <td class="tg-rcf9">0x0</td>
+    <td class="tg-rcf9">0x0</td>
+    <td class="tg-rcf9" colspan="2">Device ID</td>
+    <td class="tg-rcf9" colspan="2">Vendor ID</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x1</td>
+    <td class="tg-rcf9">0x4</td>
+    <td class="tg-rcf9" colspan="2">Status</td>
+    <td class="tg-rcf9" colspan="2">Command</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x2</td>
+    <td class="tg-rcf9">0x8</td>
+    <td class="tg-rcf9">Class code</td>
+    <td class="tg-rcf9">Subclass</td>
+    <td class="tg-rcf9">Prog IF</td>
+    <td class="tg-rcf9">Revision ID</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x3</td>
+    <td class="tg-rcf9">0xC</td>
+    <td class="tg-rcf9">BIST</td>
+    <td class="tg-rcf9">Header type</td>
+    <td class="tg-rcf9">Latency Timer</td>
+    <td class="tg-rcf9">Cache Line Size</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x4</td>
+    <td class="tg-rcf9">0x10</td>
+    <td class="tg-rcf9" colspan="4">Base address #0 (BAR0)</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x5</td>
+    <td class="tg-rcf9">0x14</td>
+    <td class="tg-rcf9" colspan="4">Base address #1 (BAR1)</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x6</td>
+    <td class="tg-rcf9">0x18</td>
+    <td class="tg-rcf9">Secondary Latency Timer</td>
+    <td class="tg-rcf9">Subordinate Bus Number</td>
+    <td class="tg-rcf9">Secondary Bus Number</td>
+    <td class="tg-rcf9">Primary Bus Number</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x7</td>
+    <td class="tg-rcf9">0x1C</td>
+    <td class="tg-rcf9" colspan="2">Secondary Status</td>
+    <td class="tg-rcf9">I/O Limit</td>
+    <td class="tg-rcf9">I/O Base</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x8</td>
+    <td class="tg-rcf9">0x20</td>
+    <td class="tg-rcf9" colspan="2">Memory Limit</td>
+    <td class="tg-rcf9" colspan="2">Memory Base</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x9</td>
+    <td class="tg-rcf9">0x24</td>
+    <td class="tg-rcf9" colspan="2">Prefetchable Memory Limit</td>
+    <td class="tg-rcf9" colspan="2">Prefetchable Memory Base</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xA</td>
+    <td class="tg-rcf9">0x28</td>
+    <td class="tg-rcf9" colspan="4">Prefetchable Base Upper 32 Bits</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xB</td>
+    <td class="tg-rcf9">0x2C</td>
+    <td class="tg-rcf9" colspan="4">Prefetchable Limit Upper 32 Bits</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xC</td>
+    <td class="tg-rcf9">0x30</td>
+    <td class="tg-rcf9" colspan="2">I/O Limit Upper 16 Bits</td>
+    <td class="tg-rcf9" colspan="2">I/O Base Upper 16 Bits</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xD</td>
+    <td class="tg-rcf9">0x34</td>
+    <td class="tg-rcf9" colspan="3">Reserved</td>
+    <td class="tg-rcf9">Capability Pointer</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xE</td>
+    <td class="tg-rcf9">0x38</td>
+    <td class="tg-rcf9" colspan="4">Expansion ROM base address</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xF</td>
+    <td class="tg-rcf9">0x3C</td>
+    <td class="tg-rcf9" colspan="2">Bridge Control</td>
+    <td class="tg-rcf9">Interrupt PIN</td>
+    <td class="tg-rcf9">Interrupt Line</td>
+  </tr>
 </tbody>
 </table>
+<h2 id="Header-Type-0x1">Header Type 0x1</h2>
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-rcf9{background-color:#F9F9F9;text-align:left;vertical-align:middle}
+.tg .tg-tbl0{background-color:#F9F9F9;font-weight:bold;text-align:center;vertical-align:middle}
+</style>
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-tbl0">Register</th>
+    <th class="tg-tbl0">Offset</th>
+    <th class="tg-tbl0">Bits 31-24</th>
+    <th class="tg-tbl0">Bits 23-16</th>
+    <th class="tg-tbl0">Bits 15-8</th>
+    <th class="tg-tbl0">Bits 7-0</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-rcf9">0x0</td>
+    <td class="tg-rcf9">0x0</td>
+    <td class="tg-rcf9" colspan="2">Device ID</td>
+    <td class="tg-rcf9" colspan="2">Vendor ID</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x1</td>
+    <td class="tg-rcf9">0x4</td>
+    <td class="tg-rcf9" colspan="2">Status</td>
+    <td class="tg-rcf9" colspan="2">Command</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x2</td>
+    <td class="tg-rcf9">0x8</td>
+    <td class="tg-rcf9">Class code</td>
+    <td class="tg-rcf9">Subclass</td>
+    <td class="tg-rcf9">Prog IF</td>
+    <td class="tg-rcf9">Revision ID</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x3</td>
+    <td class="tg-rcf9">0xC</td>
+    <td class="tg-rcf9">BIST</td>
+    <td class="tg-rcf9">Header type</td>
+    <td class="tg-rcf9">Latency Timer</td>
+    <td class="tg-rcf9">Cache Line Size</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x4</td>
+    <td class="tg-rcf9">0x10</td>
+    <td class="tg-rcf9" colspan="4">Base address #0 (BAR0)</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x5</td>
+    <td class="tg-rcf9">0x14</td>
+    <td class="tg-rcf9" colspan="4">Base address #1 (BAR1)</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x6</td>
+    <td class="tg-rcf9">0x18</td>
+    <td class="tg-rcf9">Secondary Latency Timer</td>
+    <td class="tg-rcf9">Subordinate Bus Number</td>
+    <td class="tg-rcf9">Secondary Bus Number</td>
+    <td class="tg-rcf9">Primary Bus Number</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x7</td>
+    <td class="tg-rcf9">0x1C</td>
+    <td class="tg-rcf9" colspan="2">Secondary Status</td>
+    <td class="tg-rcf9">I/O Limit</td>
+    <td class="tg-rcf9">I/O Base</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x8</td>
+    <td class="tg-rcf9">0x20</td>
+    <td class="tg-rcf9" colspan="2">Memory Limit</td>
+    <td class="tg-rcf9" colspan="2">Memory Base</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0x9</td>
+    <td class="tg-rcf9">0x24</td>
+    <td class="tg-rcf9" colspan="2">Prefetchable Memory Limit</td>
+    <td class="tg-rcf9" colspan="2">Prefetchable Memory Base</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xA</td>
+    <td class="tg-rcf9">0x28</td>
+    <td class="tg-rcf9" colspan="4">Prefetchable Base Upper 32 Bits</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xB</td>
+    <td class="tg-rcf9">0x2C</td>
+    <td class="tg-rcf9" colspan="4">Prefetchable Limit Upper 32 Bits</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xC</td>
+    <td class="tg-rcf9">0x30</td>
+    <td class="tg-rcf9" colspan="2">I/O Limit Upper 16 Bits</td>
+    <td class="tg-rcf9" colspan="2">I/O Base Upper 16 Bits</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xD</td>
+    <td class="tg-rcf9">0x34</td>
+    <td class="tg-rcf9" colspan="3">Reserved</td>
+    <td class="tg-rcf9">Capability Pointer</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xE</td>
+    <td class="tg-rcf9">0x38</td>
+    <td class="tg-rcf9" colspan="4">Expansion ROM base address</td>
+  </tr>
+  <tr>
+    <td class="tg-rcf9">0xF</td>
+    <td class="tg-rcf9">0x3C</td>
+    <td class="tg-rcf9" colspan="2">Bridge Control</td>
+    <td class="tg-rcf9">Interrupt PIN</td>
+    <td class="tg-rcf9">Interrupt Line</td>
+  </tr>
+</tbody>
+</table>
+<pre><code>BAR0
+Memory-mapped I/O (MMIO) registers
+BAR1
+Device memory windows.
+BAR2/3
+Complementary space of BAR1.
+BAR5
+I/O port.
+BAR6
+PCI ROM.
+</code></pre>
+<h1>Commands</h1>
+<p>lspci</p>
+<p><a target="_blank" rel="noopener" href="https://diego.assencio.com/?index=649b7a71b35fc7ad41e03b6d0e825f07">Interpreting the output of lspci</a></p>
+<h1>参考</h1>
 <ul>
-<li>Markdown 插图：推荐 <a target="_blank" rel="noopener" href="http://SM.MS">SM.MS</a>、路过图床，支持直接生成 <img src="/blog/" alt=""> 格式链接。</li>
-<li>国内访问速度：微博图床仍是最快之一，但需借助工具（如 iPic）上传。</li>
-<li>稳定性优先：Imgur 和 PostImage 在国外非常稳定，适合长期托管。</li>
-<li>自动化上传：PicGo + <a target="_blank" rel="noopener" href="http://SM.MS">SM.MS</a> 是最常见的组合，支持 VS Code 插件集成。</li>
+<li><a target="_blank" rel="noopener" href="https://insujang.github.io/2017-04-03/pci-express-i/o-system/">PCI Express I/O System</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.pcmag.com/encyclopedia/term/pci-express">PCI Express</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.trentonsystems.com/blog/what-is-pcie">What is PCIe</a></li>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/30190050/what-is-the-base-address-register-bar-in-pcie">What is the Base Address Register (BAR) in PCIe?</a></li>
+<li><a target="_blank" rel="noopener" href="https://utcc.utoronto.ca/~cks/space/blog/linux/PCIeLspciBusAddresses">PCIe bus addresses, lspci, and working out your PCIe bus topology</a></li>
 </ul>
-<p>表格生成器：</p>
-<ul>
-<li>TableConvert：将 Excel/CSV 转换为 Markdown 表格。</li>
-<li><a target="_blank" rel="noopener" href="https://www.tablesgenerator.com/markdown_tables">Tables Generator</a></li>
-</ul>
-<p>美化内容：图文辅助</p>
-<ul>
-<li>Carbon / Polacode：生成美观的代码截图。</li>
-<li><a target="_blank" rel="noopener" href="http://draw.io">draw.io</a> / ProcessOn：绘制流程图、架构图、UML 图。</li>
-<li>Canva / Figma：制作封面图、插图、社交媒体配图。</li>
-</ul>
-<p>写作后：发布与分发</p>
-<p>自建站：WordPress、Hexo、Hugo（推荐 GitHub Pages 托管）</p>
-<p>排版工具：</p>
-<ul>
-<li>mdnice：自动美化 Markdown，适配知乎/公众号。</li>
-<li>Aclickall：一键生成公众号排版样式。</li>
-</ul>
-<p>多平台分发工具：</p>
-<p>BlogHelper：支持一键发布到多个平台。</p>
-<h2 id="大型文件存储">大型文件存储</h2>
-<h3 id="图片">图片</h3>
-<p>Postimages</p>
-<ul>
-<li>网站: <a target="_blank" rel="noopener" href="https://postimages.org/">https://postimages.org/</a></li>
-<li>特点:</li>
-<li>适合快速上传和生成图片链接。</li>
-<li>不需要注册，可以直接上传图片并获得链接。</li>
-<li>提供图片缩略图和直接链接。</li>
-<li>上传后图片会长期存储，适用于网站和博客图片托管。</li>
-</ul>
-<h3 id="视频">视频</h3>
-<p>TinyPic (由 Photobucket 提供)</p>
-<ul>
-<li>网站: <a target="_blank" rel="noopener" href="https://tinypic.com/">https://tinypic.com/</a></li>
-<li>特点:</li>
-<li>支持上传并生成快速共享链接。</li>
-<li>上传后，链接可以嵌入到社交媒体、论坛、博客中。</li>
-<li>图片和视频都支持托管，但TinyPic已关闭，现由Photobucket服务接管。</li>
-</ul>
-<h3 id="Git-LFS">Git LFS</h3>
-<p>GitHub 提供的用于存储大型文件的服务叫 Git LFS（Git Large File Storage）。</p>
-<h4 id="什么是-Git-LFS？">什么是 Git LFS？</h4>
-<p>Git LFS 是一个 Git 扩展，用于处理 Git 仓库中的大型文件（如图片、视频、音频等），它通过将大型文件存储在 GitHub 的独立存储区来解决 Git 的性能瓶颈。</p>
-<h4 id="Git-LFS-的免费额度：">Git LFS 的免费额度：</h4>
-<p>GitHub 为免费账户提供一定的 LFS 存储和带宽额度：</p>
-<p>免费存储：每个 GitHub 账户提供 1GB 的 LFS 存储。</p>
-<p>免费带宽：每个月 1GB 的下载带宽。</p>
-<p>如果超出免费额度，你可以选择购买更多的存储和带宽。</p>
-<h4 id="Git-LFS-的工作原理：">Git LFS 的工作原理：</h4>
-<p>文件替代：Git LFS 用一个指向大文件的指针来替代文件内容，将文件本身存储在 GitHub 提供的 LFS 存储空间中。</p>
-<p>文件存储：实际的文件内容存储在 GitHub 的 LFS 存储中，Git 只会管理这些文件的指针。</p>
-<p>下载/上传：当你从仓库克隆或拉取代码时，Git LFS 会自动下载大文件，反之，当你提交大文件时，Git LFS 会将其上传到 GitHub。</p>
-<h4 id="如何使用-Git-LFS？">如何使用 Git LFS？</h4>
-<ol>
-<li>安装 Git LFS：<br>
-首先需要安装 Git LFS，可以通过 Git LFS 官方网站 下载和安装。</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git lfs install</span><br></pre></td></tr></table></figure>
-<ol start="2">
-<li>初始化 Git LFS：<br>
-在你的 Git 仓库中初始化 Git LFS。</li>
-</ol>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git lfs track <span class="string">&quot;*.jpg&quot;</span>   <span class="comment"># 例如跟踪所有 jpg 格式的图片</span></span><br><span class="line">git add .gitattributes   <span class="comment"># 添加 .gitattributes 文件</span></span><br><span class="line">git add &lt;large-file&gt;     <span class="comment"># 添加大型文件</span></span><br><span class="line">git commit -m <span class="string">&quot;Add large file&quot;</span></span><br><span class="line">git push origin main     <span class="comment"># 推送到 GitHub</span></span><br></pre></td></tr></table></figure>
-<ol start="3">
-<li>使用 Git LFS 进行提交：<br>
-每次提交时，Git LFS 会自动处理大文件，并将它们上传到 GitHub LFS 存储区。</li>
-</ol>
-<h5 id="优势：">优势：</h5>
-<p>减少仓库体积：通过将大文件存储在 Git LFS 中，可以避免将大文件直接存储在 Git 仓库中，从而提高 Git 的性能。</p>
-<p>适用于大文件：适合管理图像、视频、二进制文件等大型文件，避免 Git 克隆和拉取过程变得过于缓慢。</p>
-<h4 id="总结：">总结：</h4>
-<p>Git LFS 是 GitHub 提供的用于管理和存储大型文件的扩展服务，适合存储需要频繁更改或管理的大文件（如图片、音频、视频等）。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/tech/linux/ldap/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/23/tech/linux/ldap/" class="post-title-link" itemprop="url">LDAP</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-23 21:57:59" itemprop="dateCreated datePublished" datetime="2024-01-23T21:57:59+00:00">2024-01-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-11 09:41:52" itemprop="dateModified" datetime="2026-08-11T09:41:52+00:00">2026-08-11</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="简介">简介</h2>
+<p>LDAP, Lightweight Directory Access Protocol.</p>
+<h2 id="参考">参考</h2>
+<p><a target="_blank" rel="noopener" href="https://support.bull.com/documentation/byproduct/infra/sw-extremcomp/sw-extremcomp-com/g">Bull Support</a></p>
 
       
     </div>
@@ -1528,7 +1964,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/blog/page/10/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/10/">10</a><span class="page-number current">11</span><a class="page-number" href="/blog/page/12/">12</a><a class="page-number" href="/blog/page/13/">13</a><a class="extend next" rel="next" href="/blog/page/12/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+    <a class="extend prev" rel="prev" href="/blog/page/10/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/10/">10</a><span class="page-number current">11</span><a class="page-number" href="/blog/page/12/">12</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/15/">15</a><a class="extend next" rel="next" href="/blog/page/12/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -1596,7 +2032,7 @@ For filesystems that are NFS-mounted a call to the rpc.rquotad on the server mac
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">129</span>
+          <span class="site-state-item-count">148</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

@@ -188,7 +188,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/11/27/tech/cpp/basic/printf-formatting/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/tech/cpp/debug/cpp-debugging-tools/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -202,7 +202,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2023/11/27/tech/cpp/basic/printf-formatting/" class="post-title-link" itemprop="url">printf</a>
+            <a href="/blog/2024/01/23/tech/cpp/debug/cpp-debugging-tools/" class="post-title-link" itemprop="url">C++ 调试工具</a>
         </h2>
 
         <div class="post-meta">
@@ -212,14 +212,14 @@
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2023-11-27 14:45:21" itemprop="dateCreated datePublished" datetime="2023-11-27T14:45:21+00:00">2023-11-27</time>
+              <time title="Created: 2024-01-23 21:27:05" itemprop="dateCreated datePublished" datetime="2024-01-23T21:27:05+00:00">2024-01-23</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 07:24:28" itemprop="dateModified" datetime="2026-08-11T07:24:28+00:00">2026-08-11</time>
+                <time title="Modified: 2026-08-11 09:41:52" itemprop="dateModified" datetime="2026-08-11T09:41:52+00:00">2026-08-11</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -242,21 +242,39 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="Functions">Functions</h2>
-<p><a target="_blank" rel="noopener" href="https://cpp.hotexamples.com/zh/examples/-/-/lprintf/cpp-lprintf-function-examples.html">https://cpp.hotexamples.com/zh/examples/-/-/lprintf/cpp-lprintf-function-examples.html</a></p>
+          <h2 id="单元测试框架">单元测试框架</h2>
+<p><a target="_blank" rel="noopener" href="https://cpptest.sourceforge.io/tutorial.html">CppTest</a></p>
+<h2 id="gdb">gdb</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(gdb) breakpoint exit</span><br><span class="line">(gdb) breakpoint _exit</span><br><span class="line">(gdb) breakpoint atexit</span><br><span class="line">(gdb) breakpoint abort</span><br></pre></td></tr></table></figure>
+<p>Enable coredump:<br>
+<a target="_blank" rel="noopener" href="https://medium.com/@sourabhedake/core-dumps-how-to-enable-them-73856a437711">how to do</a></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ulimit</span> -c unlimited</span><br></pre></td></tr></table></figure>
+<p>Where is the core dumped file:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">grep <span class="string">&#x27;kernel.core_pattern&#x27;</span> /etc/sysctl.conf</span><br></pre></td></tr></table></figure>
+<h2 id="strace">strace</h2>
+<p>Example:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">strace -f -o strace.log -tt -y -yy -e trace=desc,process,network</span><br></pre></td></tr></table></figure>
+<p>Refer to <a target="_blank" rel="noopener" href="https://gist.github.com/graste/929bb122c353bdd90c20">here</a></p>
+<blockquote>
+<p>-e trace=ipc – communication between processes (IPC) -e trace=memory – memory syscalls -e<br>
+trace=network – network syscalls -e trace=process – process calls (like fork, exec) -e<br>
+trace=signal – process signal handling (like HUP, exit) -e trace=file – file related syscalls -e<br>
+trace=desc – all file descriptor related system calls</p>
+</blockquote>
+<h2 id="DDT-Distributed-Debugging-Tool-Arm-Forge">DDT (Distributed Debugging Tool, Arm Forge)</h2>
 <ul>
-<li>printf</li>
-<li>lprintf</li>
-<li>fprintf</li>
-<li>sprintf</li>
-<li>vsprintf</li>
+<li>来源：最初由 Allinea 开发，后来并入 Arm Forge 工具链。</li>
+<li>用途：面向 大规模并行和分布式应用的调试器，广泛用于 HPC (高性能计算)。</li>
+<li>工作方式：
+<ul>
+<li>能 attach 到数千个 MPI 进程或 OpenMP 线程，统一调试。</li>
+<li>支持断点、变量检查、内存错误检测。</li>
+<li>与性能分析工具（如 Arm MAP）结合使用，可以同时做调试和性能分析。</li>
 </ul>
-<p>字符串处理函数<br>
-bcopy</p>
-<h2 id="非打印字符">非打印字符</h2>
-<p>参见 <a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/escape">Escape sequeneces</a>.</p>
-<pre><code><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">char</span> str[] = <span class="string">&quot;\x1E&quot;</span>; <span class="comment">// &quot;0x1E&quot; 是一个非打印字符</span></span><br></pre></td></tr></table></figure>
-</code></pre>
+</li>
+<li>适用场景：超级计算机上的 MPI/OpenMP 程序，科研和工程计算。</li>
+<li>特点：偏向 调试和并行正确性，而不是单纯性能采样。</li>
+</ul>
 
       
     </div>
@@ -276,7 +294,7 @@ bcopy</p>
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/11/17/tech/cpp/build-tool/makefile-introduction/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/site/mkdocs-configuration/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -290,7 +308,7 @@ bcopy</p>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2023/11/17/tech/cpp/build-tool/makefile-introduction/" class="post-title-link" itemprop="url">Makefile入门</a>
+            <a href="/blog/2024/01/23/site/mkdocs-configuration/" class="post-title-link" itemprop="url">Mkdocs Configuration</a>
         </h2>
 
         <div class="post-meta">
@@ -300,14 +318,14 @@ bcopy</p>
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2023-11-17 14:19:35" itemprop="dateCreated datePublished" datetime="2023-11-17T14:19:35+00:00">2023-11-17</time>
+              <time title="Created: 2024-01-23 21:13:02" itemprop="dateCreated datePublished" datetime="2024-01-23T21:13:02+00:00">2024-01-23</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 07:24:28" itemprop="dateModified" datetime="2026-08-11T07:24:28+00:00">2026-08-11</time>
+                <time title="Modified: 2026-08-11 09:41:52" itemprop="dateModified" datetime="2026-08-11T09:41:52+00:00">2026-08-11</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -315,7 +333,7 @@ bcopy</p>
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
+                  <a href="/blog/categories/site/" itemprop="url" rel="index"><span itemprop="name">site</span></a>
                 </span>
             </span>
 
@@ -330,124 +348,67 @@ bcopy</p>
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="Makefile默认shell">Makefile默认shell</h2>
-<p>Makefile 默认的 shell 是 /bin/sh:<br>
-查看 Makefile 默认的 shell:<br>
-$(warning ${SHELL}) # 查看默认 shell</p>
-<p>如果在 Makefile 开头加上以下语句，可以指定 shell:<br>
-SHELL := /bin/bash</p>
-<p>Makefile 的 shell 命令似乎每一条都会新开辟一个 shell 环境来执行，因为每条 shell 命令似乎都执行了一次 .cshrc 脚本。<br>
-要想在同一个 shell 环境中执行所有命令，则需要使用分号分割并转义换行符。</p>
-<h2 id="Makefile环境变量">Makefile环境变量</h2>
-<p>你可以通过设置环境变量 MAKEFLAGS 来让所有的子shell都将 make 认作 make -n：<br>
-export MAKEFLAGS=“-n”<br>
-注：-n, --dry-run 表示只打印将要执行的命令，但是不真正执行它们。</p>
-<p>Makefile 设置 PATH 环境变量：<br>
-PATH := mypath:$(PATH)<br>
-必须使用 “:=” ，因为 “:=” 是简单赋值，但是 “=” 会递归展开，会导致报错 “Recursive variable `PATH’ references itself (eventually)”。</p>
-<p>Makefile 定义多行变量：使用 define 语句。<br>
-Makefile 接收命令行参数</p>
-<p>非常奇特的现象：<br>
-$ make clean<br>
-cat <a target="_blank" rel="noopener" href="http://clean.sh">clean.sh</a> &gt;clean<br>
-chmod a+x clean<br>
-因为 Makefile 文件中没有 clean 的 recipe，但是当前目录下有个 <a target="_blank" rel="noopener" href="http://clean.sh">clean.sh</a> 文件。<br>
-但是，当再次执行 make clean，clean 脚本还是不会被执行：<br>
-$ make clean<br>
-make: `clean’ is up to date.</p>
-<h2 id="特殊符号">特殊符号</h2>
-<h3 id="空格">空格</h3>
-<p>Makefile对空格的处理，似乎是：从第一个非空格开始，到明确的截止符（换行、逗号、括号、注释标记’#'等）为止。<br>
-a =   b   #注意末尾有3个空格<br>
-<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><mi>w</mi><mi>a</mi><mi>r</mi><mi>n</mi><mi>i</mi><mi>n</mi><mi>g</mi><mi>a</mi><mo>=</mo></mrow><annotation encoding="application/x-tex">(warning a=</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.0269em;">w</span><span class="mord mathnormal">a</span><span class="mord mathnormal" style="margin-right:0.0278em;">r</span><span class="mord mathnormal">nin</span><span class="mord mathnormal" style="margin-right:0.0359em;">g</span><span class="mord mathnormal">a</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span></span></span></span>(a)c)</p>
-<p>结果：<br>
-a=    b   c</p>
-<p>Makefile转义符：<br>
-字符	转义方法<br>
-$	$$</p>
-<h1>#</h1>
-<p>\	\</p>
-<p>注意：这里说的是Makefile中的转义符，不是bash中的转义符。</p>
-<h3 id="括号">括号</h3>
-<p>引用变量时，Shell使用大括号，Makefile则大括号和小括号都行。但是在命令中使用Shell变量就需要使用大括号。</p>
-<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/bigmarco/article/details/6687337">参考</a></p>
-<h2 id="Makefile调试方法">Makefile调试方法</h2>
-<p>要调试 Makefile 并查看其执行过程，可以使用以下几种方法：<br>
-1. 使用 make 的 -n 或 --dry-run 选项：这将显示 Makefile 中的所有命令，而不会真正执行它们。<br>
-make -n<br>
-1. 使用 make 的 -d 或 --debug 选项：这将显示详细的调试信息，包括变量的展开和规则的匹配过程。<br>
-make -d<br>
-1. 使用 make 的 -p 或 --print-data-base 选项：这将打印所有的变量、规则和隐含规则。<br>
-make -p<br>
-1. 在 Makefile 中添加调试信息：你可以在 Makefile 中添加一些调试信息，例如使用 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><mi>i</mi><mi>n</mi><mi>f</mi><mi>o</mi><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mo stretchy="false">)</mo><mtext>来打印变量的值。</mtext><mi>p</mi><mi>r</mi><mi>i</mi><mi>n</mi><mi>t</mi><mo>:</mo><mi mathvariant="normal">@</mi></mrow><annotation encoding="application/x-tex">(info ...) 来打印变量的值。
-print:
-    @</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal">in</span><span class="mord mathnormal" style="margin-right:0.1076em;">f</span><span class="mord mathnormal">o</span><span class="mord">...</span><span class="mclose">)</span><span class="mord cjk_fallback">来打印变量的值。</span><span class="mord mathnormal">p</span><span class="mord mathnormal" style="margin-right:0.0278em;">r</span><span class="mord mathnormal">in</span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">:</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6944em;"></span><span class="mord">@</span></span></span></span>(foreach V, $(.VARIABLES), $(info $(V) = <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo></mrow><annotation encoding="application/x-tex">(</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span></span></span></span>(V))))<br>
-1. 使用 make 的 -j 选项：如果你使用并行执行，可以使用 -j 选项来限制并行任务的数量，并更容易地跟踪输出。<br>
-make -j1</p>
-<p>makefile打印所有变量的值：<br>
-debug:<br>
-@$(foreach V, $(.VARIABLES), $(info $(V) = <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo></mrow><annotation encoding="application/x-tex">(</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span></span></span></span>(V))))<br>
-然后在命令行中运行：<br>
-make debug<br>
-这将打印所有变量及其值。</p>
-<p>print-%:<br>
-@echo $* = <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo></mrow><annotation encoding="application/x-tex">(</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span></span></span></span>*)</p>
-<p>print-% 是一个 Makefile 目标，用于打印变量的值。具体步骤如下：<br>
-1. 定义一个目标 print-%，其中 % 是一个通配符，表示任意变量名。<br>
-2. 使用 @echo $* = <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo></mrow><annotation encoding="application/x-tex">(</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span></span></span></span>*) 打印变量名和变量值。</p>
-<p>示例代码：<br>
-print-%:<br>
-@echo $* = <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo></mrow><annotation encoding="application/x-tex">(</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span></span></span></span>*)<br>
-使用方法：<br>
-在命令行中运行：<br>
-make print-VARIABLE_NAME<br>
-例如：<br>
-make print-XTENSA_SW_RELEASE<br>
-这将打印 XTENSA_SW_RELEASE 变量的值。</p>
-<h2 id="命令行参数">命令行参数</h2>
-<p>See <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2214575/passing-arguments-to-make-run">here</a>.</p>
-<p><code>@:</code> See <a target="_blank" rel="noopener" href="https://unix.stackexchange.com/questions/92978/what-does-this-2-mean-in-shell-scripting">here</a>.</p>
-<p>This works fine for me:</p>
-<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># If the first argument is &quot;run&quot;...</span></span><br><span class="line"><span class="keyword">ifeq</span> (run,<span class="variable">$(<span class="built_in">firstword</span> <span class="variable">$(MAKECMDGOALS)</span>)</span>)</span><br><span class="line">  <span class="comment"># use the rest as arguments for &quot;run&quot;</span></span><br><span class="line">  RUN_ARGS := <span class="variable">$(<span class="built_in">wordlist</span> 2,$(words <span class="variable">$(MAKECMDGOALS)</span>)</span>,<span class="variable">$(MAKECMDGOALS)</span>)</span><br><span class="line">  <span class="comment"># ...and turn them into do-nothing targets</span></span><br><span class="line">  <span class="comment"># <span class="doctag">TODO:</span> What does the following line mean?</span></span><br><span class="line">  <span class="comment"># $(eval $(RUN_ARGS):;@:)</span></span><br><span class="line"><span class="keyword">endif</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># &quot;cmd&quot; refers to any command</span></span><br><span class="line"><span class="section">run:</span></span><br><span class="line">	cmd <span class="variable">$(RUN_ARGS)</span></span><br></pre></td></tr></table></figure>
-<h2 id="makefile同名目标处理方式">makefile同名目标处理方式</h2>
-<p>参考：</p>
+          <h2 id="Configuration">Configuration</h2>
+<p><code>mkdocs.yml</code> 文件是 MkDocs 文档生成器的配置文件。</p>
+<p>示例：<a target="_blank" rel="noopener" href="https://github.com/squidfunk/mkdocs-material/blob/master/mkdocs.yml"><code>mkdocs.yml</code></a></p>
+<h3 id="theme">theme</h3>
+<p>该文件中的 <code>theme</code> 部分用于指定用于生成文档的主题。</p>
+<p>在这种情况下，使用的主题是 Material。 <code>name</code> 字段指定主题的名称，而 <code>custom_dir</code> 字段指定包含主题自定义内容的目录。 <code>features</code> 字段指定可以为主题启用的可选功能列表。</p>
+<p>以下是在此配置文件中列出的可选功能：</p>
 <ul>
-<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/lixiangminghate/article/details/50448664">链接</a></li>
-<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/43718595/two-targets-with-the-same-name-in-a-makefile">链接</a></li>
+<li><code>announce.dismiss</code>: 启用可关闭的公告横幅，显示在文档的每个页面顶部。</li>
+<li><code>content.action.edit</code>: 在每个页面上启用“编辑”按钮，以便用户可以轻松编辑页面内容。</li>
+<li><code>content.action.view</code>: 在每个页面上启用“查看源代码”按钮，以便用户可以查看页面的源代码。</li>
+<li><code>content.code.annotate</code>: 启用代码注释功能，使用户可以添加注释以解释代码。</li>
+<li><code>content.code.copy</code>: 启用代码复制功能，使用户可以轻松复制代码。</li>
+<li><code>content.tooltips</code>: 启用工具提示功能，使用户可以在鼠标悬停时查看有关页面元素的信息。</li>
+<li><code>navigation.footer</code>: 在每个页面上启用页脚导航栏。</li>
+<li><code>navigation.indexes</code>: 启用索引导航栏，使用户可以轻松浏览文档中的索引。</li>
+<li><code>navigation.sections</code>: 启用部分导航栏，使用户可以轻松浏览文档中的各个部分。</li>
+<li><code>navigation.tabs</code>: 启用选项卡导航栏，使用户可以轻松浏览文档中的各个选项卡。</li>
+<li><code>navigation.top</code>: 在每个页面上启用顶部导航栏。</li>
+<li><code>navigation.tracking</code>: 启用导航跟踪功能，使用户可以跟踪他们在文档中的位置。</li>
+<li><code>search.highlight</code>: 启用搜索结果高亮显示功能。</li>
+<li><code>search.share</code>: 启用共享搜索结果功能，使用户可以轻松共享搜索结果。</li>
+<li><code>search.suggest</code>: 启用搜索建议功能，使用户可以在输入搜索查询时获得建议。</li>
+<li><code>toc.follow</code>: 启用目录跟随功能，使目录始终保持可见。</li>
 </ul>
-<p><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2019989/how-to-assign-the-output-of-a-command-to-a-makefile-variable">makefile将命令结果赋值给变量</a></p>
-<h2 id="Makefile中短划线">Makefile中短划线</h2>
-<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">all:</span></span><br><span class="line">	-/bin/rm -rf *.log</span><br></pre></td></tr></table></figure>
-<p>其中，“<code>-/bin/rm</code>&quot;的短划线”<code>-</code>&quot;是一个特殊前缀，表示忽略命令执行过程的错误。</p>
-<h2 id="为每个源文件生成一个可执行程序">为每个源文件生成一个可执行程序</h2>
-<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">SRCS = <span class="variable">$(<span class="built_in">wildcard</span> *.c)</span></span><br><span class="line"></span><br><span class="line"><span class="section">all: $(SRCS:.c=)</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Unnecessary, as the default rules are adequate.</span></span><br><span class="line"><span class="section">.c:</span></span><br><span class="line">	gcc <span class="variable">$(CPFLAGS)</span> <span class="variable">$&lt;</span> -o <span class="variable">$@</span></span><br></pre></td></tr></table></figure>
-<p>最后两行其实不需要，默认规则已经足够了。</p>
-<p>其中，<code>$(SRCS:.c=.o)</code>表示将变量<code>SRCS</code>中的每个单词（以空格分割）中的<code>.c</code>替换为<code>.o</code>。以上代码则是将所有<code>.c</code>都去掉。</p>
-<h2 id="Makefile保留中间文件">Makefile保留中间文件</h2>
-<p>🛡️ 方法一：使用 .PRECIOUS 保留中间文件<br>
-这是最直接的方式，告诉 make 不要删除某些目标，即使构建失败：</p>
-<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">.PRECIOUS: %.o %.d</span></span><br></pre></td></tr></table></figure>
-<p>你可以指定具体的文件名或模式（如 %.o 表示所有 .o 文件）。</p>
-<p>🛡️ 方法二：使用 .SECONDARY 保留中间文件但不强制重建<br>
-如果你希望保留中间文件，但又不希望它们被视为最终目标，可以用：</p>
-<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">.SECONDARY: intermediate.o</span></span><br></pre></td></tr></table></figure>
-<p>或者：</p>
-<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">.SECONDARY:</span></span><br></pre></td></tr></table></figure>
-<p>这会保留所有中间文件。</p>
-<p>🧠 方法三：避免使用“中间目标”语法<br>
-如果你写了类似：</p>
-<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">intermediate: ;</span></span><br></pre></td></tr></table></figure>
-<p>这种空规则会让 make 把 intermediate 视为中间目标，构建失败时自动删除。避免这种写法，或者配合 .PRECIOUS 使用。</p>
-<p>🛠️ 方法四：将中间文件输出到特定目录<br>
-你可以将中间文件集中到一个目录中，便于管理和保留：</p>
-<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">OBJ_DIR := build/obj</span><br><span class="line"><span class="variable">$(OBJ_DIR)</span>/%.o: %.cpp</span><br><span class="line">    <span class="variable">$(CXX)</span> -c <span class="variable">$&lt;</span> -o <span class="variable">$@</span></span><br><span class="line">然后用 .PRECIOUS: <span class="variable">$(OBJ_DIR)</span>/%.o 保留它们。</span><br></pre></td></tr></table></figure>
-<p>📌 示例：保留 .o 和 .d 文件</p>
-<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">.PRECIOUS: %.o %.d</span></span><br><span class="line"></span><br><span class="line"><span class="section">main: main.o</span></span><br><span class="line">    <span class="variable">$(CC)</span> <span class="variable">$^</span> -o <span class="variable">$@</span></span><br><span class="line"></span><br><span class="line"><span class="section">main.o: main.c</span></span><br><span class="line">    <span class="variable">$(CC)</span> -c <span class="variable">$&lt;</span> -o <span class="variable">$@</span></span><br></pre></td></tr></table></figure>
-<p>gcc可以使用 <code>-save-temps</code> 选项保留中间文件：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -save-temps -c main.c</span><br></pre></td></tr></table></figure>
-<p>🧠 补充：<code>-save-temps=obj</code></p>
-<p>如果你只想把中间文件保存在目标文件所在目录，而不是当前目录，可以使用：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -save-temps=obj main.c -o main</span><br></pre></td></tr></table></figure>
+<p><code>palette</code> 字段指定了一个颜色方案，该方案包含以下内容：</p>
+<ul>
+<li><code>scheme</code>: 指定颜色方案的名称。</li>
+<li><code>primary</code>: 指定主要颜色。</li>
+<li><code>accent</code>: 指定强调颜色。</li>
+<li><code>toggle</code>: 指定切换到暗模式时使用的图标和名称。</li>
+</ul>
+<p>第一个方案名为 default，其中主要颜色和强调颜色均为 indigo。切换到暗模式时，使用的图标为 material/brightness-7，名称为“切换到暗模式”。</p>
+<p>第二个方案名为 slate，其中主要颜色和强调颜色均为 indigo。切换到亮模式时，使用的图标为 material/brightness-4，名称为“切换到亮模式”。</p>
+<p>font 字段指定了用于文本和代码的字体。在此配置文件中，文本字体为 Roboto，代码字体为 Roboto Mono。 favicon 字段指定了网站图标的路径。 icon 字段指定了网站标志的路径。</p>
+<p>favicon 和 icon 是网站的两个不同元素。</p>
+<p>favicon 是网站的图标，通常显示在浏览器标签页上。它可以是一个小的图像文件，通常是 .ico 格式。在 mkdocs.yml 文件中，可以使用 favicon 字段来指定网站图标的路径。</p>
+<p>icon 是网站的标志，通常显示在网站的标题栏或页眉中。它可以是一个图像文件，例如 .png 或 .jpg 文件。在 mkdocs.yml 文件中，可以使用 icon 字段来指定网站标志的路径。</p>
+<h3 id="plugin">plugin</h3>
+<p>这里列出了三个插件：blog、search和minify。其中，blog插件用于支持博客功能，search插件用于支持搜索功能，而minify插件用于压缩HTML文件。在search插件中，separator参数指定了搜索时的分隔符，这里的分隔符包括空格、连字符、逗号、冒号、等号、感叹号、方括号、括号、引号、反引号和斜杠等。</p>
+<h3 id="extra">extra</h3>
+<h4 id="analytics">analytics</h4>
+<p>analytics参数用于指定网站分析服务提供商和属性ID，例如衡量网站流量。</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://squidfunk.github.io/mkdocs-material/setup/setting-up-site-analytics/">Setting up site analytics</a></li>
+<li><a target="_blank" rel="noopener" href="https://analytics.google.com/analytics/academy/course/6">google免费课程</a></li>
+</ul>
+<h2 id="常见问题">常见问题</h2>
+<p>See <a target="_blank" rel="noopener" href="https://mkdocs.readthedocs.io/en/0.10/user-guide/configuration/">the doc</a>.</p>
+<ol>
+<li>Keep underscore in file name</li>
+</ol>
+<p>refer to:</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://pypi.org/project/mkdocs-gen-nav-plugin/">https://pypi.org/project/mkdocs-gen-nav-plugin/</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/mkdocs/mkdocs/issues/2017">https://github.com/mkdocs/mkdocs/issues/2017</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/squidfunk/mkdocs-material/discussions/5977">https://github.com/squidfunk/mkdocs-material/discussions/5977</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.mkdocs.org/user-guide/writing-your-docs/#meta-data">https://www.mkdocs.org/user-guide/writing-your-docs/#meta-data</a></li>
+<li>No help: <a target="_blank" rel="noopener" href="https://www.mkdocs.org/user-guide/custom-themes/#pagetitle">https://www.mkdocs.org/user-guide/custom-themes/#pagetitle</a></li>
+</ul>
+
       
     </div>
 
@@ -466,7 +427,7 @@ make print-XTENSA_SW_RELEASE<br>
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/11/13/tech/linux/shell-configuration/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/23/tech/linux/file-system/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -480,7 +441,7 @@ make print-XTENSA_SW_RELEASE<br>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2023/11/13/tech/linux/shell-configuration/" class="post-title-link" itemprop="url">Shell Configuration</a>
+            <a href="/blog/2024/01/23/tech/linux/file-system/" class="post-title-link" itemprop="url">文件系统</a>
         </h2>
 
         <div class="post-meta">
@@ -490,14 +451,14 @@ make print-XTENSA_SW_RELEASE<br>
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2023-11-13 14:27:59" itemprop="dateCreated datePublished" datetime="2023-11-13T14:27:59+00:00">2023-11-13</time>
+              <time title="Created: 2024-01-23 20:01:02" itemprop="dateCreated datePublished" datetime="2024-01-23T20:01:02+00:00">2024-01-23</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 07:24:28" itemprop="dateModified" datetime="2026-08-11T07:24:28+00:00">2026-08-11</time>
+                <time title="Modified: 2026-08-11 09:41:52" itemprop="dateModified" datetime="2026-08-11T09:41:52+00:00">2026-08-11</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -520,150 +481,169 @@ make print-XTENSA_SW_RELEASE<br>
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="Color-Scheme">Color Scheme</h2>
-<p>Refer to <a target="_blank" rel="noopener" href="https://askubuntu.com/questions/466198/how-do-i-change-the-color-for-directories-with-ls-in-the-console">the link</a>.</p>
-<p>Add these three lines to ~/.bashrc</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ vi ~/.bashrc</span><br><span class="line"><span class="built_in">export</span> LS_OPTIONS=<span class="string">&#x27;--color=auto&#x27;</span></span><br><span class="line"><span class="comment"># dircolors - color set for ls</span></span><br><span class="line"><span class="built_in">eval</span> <span class="string">&quot;<span class="subst">$(dircolors -b)</span>&quot;</span></span><br><span class="line"><span class="built_in">alias</span> <span class="built_in">ls</span>=<span class="string">&#x27;ls $LS_OPTIONS&#x27;</span></span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/11/07/tech/memory/virtual-memory/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2023/11/07/tech/memory/virtual-memory/" class="post-title-link" itemprop="url">虚拟内存</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2023-11-07 15:36:21" itemprop="dateCreated datePublished" datetime="2023-11-07T15:36:21+00:00">2023-11-07</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 07:24:28" itemprop="dateModified" datetime="2026-08-11T07:24:28+00:00">2026-08-11</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/memory/" itemprop="url" rel="index"><span itemprop="name">memory</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="1-术语">1. 术语</h2>
-<p>resident set size (RSS)</p>
-<h2 id="2-文件系统">2. 文件系统</h2>
-<p>/proc/self/statm</p>
-<h2 id="3-相关命令">3. 相关命令</h2>
-<h3 id="3-1-top">3.1. top</h3>
-<h4 id="3-1-1-Fields">3.1.1. Fields</h4>
+          <h2 id="文件示例">文件示例</h2>
+<ul>
+<li>
+<p><code>/proc</code>: 查看手册 <code>man proc</code>。</p>
+</li>
+<li>
+<p><code>/proc/self/exe</code>: 是指向当前进程的程序文件的软链接。</p>
+</li>
+<li>
+<p><code>/proc/&lt;pid&gt;/exe</code>: 是指向进程<code>&lt;pid&gt;</code>的程序文件的软链接。</p>
+<p><a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E19455-01/805-7228/bkuptasks2-78540/index.html">How to Find File System Names</a></p>
+</li>
+<li>
+<p><code>/proc/[pid]/status</code>：可查看进程的内存使用峰值等信息，关键字为&quot;VmHWM&quot;、“VmPeak”、“VmRSS”。</p>
+</li>
+<li>
+<p><code>/proc/[pid]/stat</code>：get current memory</p>
+</li>
+<li>
+<p><code>/dev/shm</code>:</p>
+<p><a target="_blank" rel="noopener" href="https://www.cyberciti.biz/tips/what-is-devshm-and-its-practical-usage.html">What Is /dev/shm And Its Practical Usage</a></p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">df</span> -h</span><br></pre></td></tr></table></figure>
+<p>Sample outputs:</p>
+  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Filesystem            Size  Used Avail Use% Mounted on</span><br><span class="line">/dev/mapper/wks01-root</span><br><span class="line">                    444G   70G  351G  17% /</span><br><span class="line">tmpfs                 3.9G     0  3.9G   0% /lib/init/rw</span><br><span class="line">udev                  3.9G  332K  3.9G   1% /dev</span><br><span class="line">tmpfs                 3.9G  168K  3.9G   1% /dev/shm</span><br><span class="line">/dev/sda1             228M   32M  184M  15% /boot</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><code>/proc/[pid]/maps</code></p>
+</li>
+</ul>
+<p>可以看到映射的so.</p>
+<h2 id="分区-Partition-和文件系统-Filesystem">分区(Partition)和文件系统(Filesystem)</h2>
+<p>本小节内容来自 <a target="_blank" rel="noopener" href="https://www.linuxfordevices.com/tutorials/linux/partitions-and-filesystems">参考链接</a> 。</p>
+<h3 id="分区：">分区：</h3>
+<p>Linux上的分区指：存储设备中划分出来的一个片段，该片段与其他片段逻辑上分离，好比一个个独立的房间。</p>
+<h3 id="分区表-partition-table-：">分区表(partition table)：</h3>
+<p>分区表存储各个分区的元数据，比如起始位置、终止位置、大小等。<br>
+有两种主要的分区表类型，MBR(older)和GPT(newer)：</p>
 <table>
 <thead>
 <tr>
-<th>TIME+<sup><a href="%5Bwhat-does-time-cpu-time-hundredth-in-top-mean%5D(https://superuser.com/questions/1148884/what-does-time-cpu-time-hundredth-in-top-mean/)">1</a></sup></th>
-<th>TIME</th>
+<th>Partition tables</th>
+<th>Maximum primary partitions</th>
+<th>Maximum size for each partition</th>
+<th>Security</th>
+<th>Operating system Support</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>5432:01</code> means “5432 minutes and 1 second”</td>
-<td><code>90,32</code> means “90 hours and 32 minutes”</td>
+<td>Master Boot Record (MBR)</td>
+<td>4</td>
+<td>2TB</td>
+<td>No such security features</td>
+<td>Supports most modern OS</td>
 </tr>
 <tr>
-<td><code>25:15.20</code> means “25 minutes, 15 seconds and 20% of 1 second”</td>
-<td><code>25:15</code> means “25 minutes and 15 seconds”</td>
+<td>Guid Partition Table (GPT)</td>
+<td>No such limit</td>
+<td>18 Exabytes</td>
+<td>CRC32 checksum mechanism to verify the integrity of files</td>
+<td>Supports most modern OS</td>
 </tr>
 </tbody>
 </table>
-<h3 id="3-2-ps">3.2. ps</h3>
-<h4 id="3-2-1-输出说明">3.2.1. 输出说明</h4>
-<p><code>TIME</code>: the cumulated CPU time in [DD-]hh:mm:ss format (time=TIME)</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>value &amp; means</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>TIME</code></td>
-<td><code>1-18:09:38</code> means “1 day, 18 hours, 9 minutes and 38 seconds”</td>
-</tr>
-</tbody>
-</table>
-<h2 id="4-相关系统调用">4. 相关系统调用</h2>
-<h3 id="4-1-fork">4.1. fork</h3>
-<p>子进程是父进程的副本，获取了父进程的数据空间、堆和栈的副本，但是他们共享正文段。</p>
-<p>写时复制（Copy-On-Write，COW）：不复制父进程的完全副本，只有在父或子进程尝试修改这些区域时，则为修改区域的那块内存制作一个副本，通常是虚拟内存的一页。</p>
-<p><strong>博主注：</strong> 如果父进程尝试修改共享的内存页，内核会为父进程同样制作副本，而把原本的内存页留给子进程使用，这会导致即使在父进程中，原本的内存页的物理地址也会发生改变，从而使得 RDMA 等机制发生错误（要求物理地址保持不变），所以此时需要使用 <code>madise</code> 设置 <code>MADV_DONTFORK</code> 标志。</p>
-<p>在 Linux 中，写时复制（Copy-On-Write, COW）机制主要通过页表和内存管理单元（MMU）来实现。以下是 COW 在 Linux 中的具体实现步骤：</p>
-<p>页表标记：当进程调用 fork() 创建子进程时，父进程和子进程的页表会标记共享的内存页为只读。这意味着这些页在初始状态下是共享的，且无法被写入。</p>
-<p>页错误处理：如果父进程或子进程尝试写入这些只读页，会触发页错误（page fault）。操作系统内核会捕获这个页错误，并执行 COW 机制。</p>
-<p>内存页复制：在页错误发生时，操作系统会分配一个新的物理内存页，并将原始页的内容复制到这个新页中。然后，页表会更新，以指向新的可写内存页。</p>
-<p>页表更新：操作系统更新进程的页表，使得写入操作可以在新的内存页上进行，而不会影响其他进程共享的原始页。</p>
-<p>引用计数：操作系统维护每个内存页的引用计数，以跟踪有多少进程共享该页。当引用计数减少到零时，内存页可以被释放。</p>
-<h3 id="4-2-mmap">4.2. mmap</h3>
-<p>TODO</p>
-<h3 id="4-3-madvise">4.3. madvise</h3>
-<p><code>madvise</code> 是一个系统调用，用于向内核提供关于内存使用的建议。</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">madvise</span><span class="params">(<span class="type">void</span> *addr, <span class="type">size_t</span> length, <span class="type">int</span> advice)</span>;</span><br></pre></td></tr></table></figure>
-<h4 id="4-3-1-选项-advice：">4.3.1. 选项 advice：</h4>
-<h5 id="4-3-1-1-MADV-DONTFORK">4.3.1.1. <code>MADV_DONTFORK</code></h5>
-<p><code>MADV_DONTFORK</code> 阻止 <code>fork()</code> 后的子进程看见这些范围的内存页。</p>
-<p>这意味该内存不会被复制，即在 <code>fork()</code> 调用时，指定的内存区域不会被子进程继承，避免写时复制导致的页物理地址发生变化。在 fork() 之后，如果父进程对共享内存页进行写操作，写时复制（COW）机制会将这些页复制到新的物理位置。这会导致 RDMA 操作使用的内存地址不一致，从而引发数据错误。</p>
-<p><strong>拓展：</strong> RDMA 中，<code>ibv_fork_init</code> 和 <code>RDMAV_HUGEPAGES_SAFE</code> 会调用 <code>madvise()</code> 来为 IB 卡的 DMA 内存页设置 <code>MADV_DONTFORK</code> ，以避免数据损坏。</p>
-<h2 id="5-参考">5. 参考</h2>
-<p><a target="_blank" rel="noopener" href="https://serverfault.com/questions/138427/what-does-virtual-memory-size-in-top-mean">what-does-virtual-memory-size-in-top-mean</a><br>
-[2]: <a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_42319496/article/details/125940896">https://blog.csdn.net/weixin_42319496/article/details/125940896</a><br>
-[3]: <a target="_blank" rel="noopener" href="https://docs.nvidia.com/networking/display/rdmaawareprogrammingv17/ibv_fork_init">https://docs.nvidia.com/networking/display/rdmaawareprogrammingv17/ibv_fork_init</a></p>
+<p>从上表可以很明显地看出，为什么GPT更推荐。</p>
+<h2 id="文件系统">文件系统</h2>
+<p>文件系统是我们在每个分区中管理数据的方式。它负责索引、存储、检索、命名文件和维护文件的元数据（文件所有者、大小、权限等）。存储在分区中。</p>
+<p>一个文件保存在多个连续的 <strong>扇区（sector）</strong> 中，现代每个扇区大约为4096字节。<br>
+文件系统负责组织哪些扇区准备好使用了、一个文件必须存储在哪个扇区、哪个扇区存储了什么文件。<br>
+如果没有这种组织，就无法无法检索任何文件，因为系统无法得知文件的位置（block，块）。</p>
+<p>主要的文件系统分类：</p>
+<ul>
+<li>FAT</li>
+</ul>
+<p>文件分配表（FAT，File Allocation Table）是Microsoft开发的第一个文件系统。<br>
+从1997发布之后，有多个版本，称为FAT12、FAT16、FAT32，连续地增加了最大支持文件大小（file size）和驱动器大小（drive size）。</p>
+<p>FAT32允许的最大文件大小为4Gb。直至WindowsXP，FAT32是默认的文件系统，之后被NTFS取代。<br>
+虽然FAT非常基础，但是它支持几乎所有的设备和操作系统。</p>
+<p><strong>注：</strong> 驱动器（<a target="_blank" rel="noopener" href="https://www.computerhope.com/jargon/d/drive.htm">drive</a>），是一个能存储和读取非易失信息的位置，比如磁盘（disk）或光盘（disc）。</p>
+<p>如下图，驱动器A:是一个软盘（<a target="_blank" rel="noopener" href="https://www.computerhope.com/jargon/f/fdd.htm">floppy drive</a>），<br>
+驱动器C:是主硬盘（primary hard drivce），<br>
+驱动器D:和E:是分区，F:是<a target="_blank" rel="noopener" href="https://www.computerhope.com/jargon/c/cdrom.htm">CD-ROM</a>。<br>
+CD-ROM常常是最后一个盘符（drive letter）。<br>
+在多数情况下，硬盘是C:驱动器，CD-ROM或其他光盘是D:驱动器。</p>
+<p><img src="/blog/assets/images/tech/linux/file-system-01.webp" alt="驱动器示例" title="驱动器示例图"></p>
+<ul>
+<li>NTFS</li>
+</ul>
+<p>新技术文件系统（New Technology File System，NTFS）是FAT的现代替代者。<br>
+除了支持高达16EB（大于170亿GB）的驱动器大小和256TB的单文件大小外，还支持日志系统（<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Journaling_file_system">journaling system</a>）。</p>
+<ul>
+<li>ext/ext2/ext3/ext4</li>
+</ul>
+<p>Linux的扩展文件系统（extended file system）或ext于1992年发布。之后有了3次更新：</p>
+<p>ext2引入了文件属性（文件权限），ext3引入了日志功能（<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Journaling_file_system">journaling</a>）。</p>
+<p>ext4对ext2和ext3向后兼容，增加了存储限制和一些性能调整。<br>
+可以支持高达1EB的卷（volumn），单个文件可以达16TB。</p>
+<p>ext4也引入了延迟内存分配的概念，即在文件被强制刷新到存储设备时才为其分配扇区。<br>
+这提高了CPU的性能并减少了坏的扇区。<br>
+今天几乎所有的现代Linux发行版都使用ext4作为默认的文件系统。</p>
+<ul>
+<li>
+<p>ZFS</p>
+</li>
+<li>
+<p>Btrfs</p>
+</li>
+</ul>
+<h3 id="总结">总结</h3>
+<p>下图是一个分区和文件系统的层次结构示例：</p>
+<p><img src="/blog/assets/images/tech/linux/file-system-02.webp" alt="分区和文件系统的层次结构示例图" title="分区和文件系统的层次结构示例图"></p>
+<p>我有一个500GB的SSD，分成3个分区（boot、home、root），使用GPT作为分区表。</p>
+<p>我没有分出swap分区。所有的分区都跑在ext4文件系统上。</p>
+<p>在一个双启动（dual-booted）存储设备（Windows和Linux）上，还有几个适用于Windwows的NTFS分区。</p>
+<p>你可以使用以下命令在任意存储设备上查看分区：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lsblk</span><br></pre></td></tr></table></figure>
+<p>更多资源请访问：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.linuxfordevices.com/tutorials/ubuntu/install-zfs-on-ubuntu">How to install ZFS on Ubuntu – A Setup and Usage Guide</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.linuxfordevices.com/tutorials/linux/ext4-vs-btrfs-filesystem">Ext4 vs Btrfs Filesystems – Which one should you choose?</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.linuxfordevices.com/tutorials/linux/btrfs-on-ubuntu">How to install and format a partition with the Btrfs on Ubuntu?</a></li>
+<li><a target="_blank" rel="noopener" href="https://ext4.wiki.kernel.org/index.php/Frequently_Asked_Questions">Frequently Asked Questions regarding ext4</a></li>
+</ul>
+<h2 id="挂载">挂载</h2>
+<p>挂载：使设备上的文件和目录可以通过文件系统访问的一个过程。见<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/zh-cn/%E6%8C%82%E8%BD%BD">维基百科</a>。</p>
+<p>挂载点：A mount point is a location in the partition used as a root filesystem.</p>
+<h2 id="驱动">驱动</h2>
+<h2 id="相关命令一览表">相关命令一览表</h2>
+<p>lsblk</p>
+<pre><code>lsblk [options] [device...]
+
+list all avaivable or specified block devices.
+Reads the sysfs filesystem to gather information.
+</code></pre>
+<p>df</p>
+<pre><code>df [OPTION]... [FILE]...
+
+report file system disk space usage on which each FILE resides.
+
+df -T 打印文件系统的类型。
+</code></pre>
+<p>du</p>
+<pre><code>du [OPTION]... [FILE]...
+
+estimate file space usage.
+</code></pre>
+<p>quota</p>
+<pre><code>quota -s -u user...
+
+display users' disk usage and limits.
+quota reports the quotas of all the filesystems listed in /etc/mtab.
+For filesystems that are NFS-mounted a call to the rpc.rquotad on the server machine is performed to get the information.
+
+-s, --human-readable
+</code></pre>
+<p>repquota</p>
+<pre><code>prints a summary of disc usage and quotas for the specified file system.
+</code></pre>
+<p>mount</p>
+<p>lsof - list open files</p>
+<pre><code>https://unix.stackexchange.com/questions/11238/how-to-get-over-device-or-resource-busy
+</code></pre>
+<p>findmnt</p>
 
       
     </div>
@@ -683,7 +663,7 @@ make print-XTENSA_SW_RELEASE<br>
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/11/07/tech/cpp/basic/binary-prefix-kib-kb/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/21/tech/io/rpc/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -697,7 +677,7 @@ make print-XTENSA_SW_RELEASE<br>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2023/11/07/tech/cpp/basic/binary-prefix-kib-kb/" class="post-title-link" itemprop="url">KiB vs KB vs kB</a>
+            <a href="/blog/2024/01/21/tech/io/rpc/" class="post-title-link" itemprop="url">Introducation to RPC</a>
         </h2>
 
         <div class="post-meta">
@@ -707,14 +687,14 @@ make print-XTENSA_SW_RELEASE<br>
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2023-11-07 15:26:48" itemprop="dateCreated datePublished" datetime="2023-11-07T15:26:48+00:00">2023-11-07</time>
+              <time title="Created: 2024-01-21 10:01:18" itemprop="dateCreated datePublished" datetime="2024-01-21T10:01:18+00:00">2024-01-21</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 07:24:28" itemprop="dateModified" datetime="2026-08-11T07:24:28+00:00">2026-08-11</time>
+                <time title="Modified: 2026-08-11 09:41:52" itemprop="dateModified" datetime="2026-08-11T09:41:52+00:00">2026-08-11</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -722,7 +702,7 @@ make print-XTENSA_SW_RELEASE<br>
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
+                  <a href="/blog/categories/io/" itemprop="url" rel="index"><span itemprop="name">io</span></a>
                 </span>
             </span>
 
@@ -737,115 +717,12 @@ make print-XTENSA_SW_RELEASE<br>
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>See the article: <a target="_blank" rel="noopener" href="https://physics.nist.gov/cuu/Units/binary.html">Prefixes for binary multiples</a></p>
-<p>Table:</p>
-<table border="0" cellspacing="0" cellpadding="3">
-<tbody><tr>
-<td colspan="5">
-<center>
-<hr noshade="" size="2"><b><font face="Myriad Roman,Syntax,Arial,Helvetica"><font color="#006633"><font size="+1">Prefixes
-for binary multiples</font></font></font></b>
-<hr></center>
-</td>
-</tr>
-<tr>
-<td colspan="5">
-<table border="0" cellspacing="0" cellpadding="3">
-<tbody><tr>
-<td><b>&nbsp;Factor&nbsp;</b></td>
-<td><b>Name&nbsp;</b></td>
-<td><b>Symbol&nbsp;</b></td>
-<td><b>Origin</b></td>
-<td><b>Derivation&nbsp;</b></td>
-</tr>
-<tr bgcolor="#D0F0C8">
-<td>&nbsp;2<sup>10</sup></td>
-<td>kibi</td>
-<td>Ki</td>
-<td>kilobinary: (2<sup>10</sup>)<sup>1</sup></td>
-<td>kilo: (10<sup>3</sup>)<sup>1</sup></td>
-</tr>
-<tr>
-<td>&nbsp;2<sup>20</sup></td>
-<td>mebi</td>
-<td>Mi</td>
-<td>megabinary: (2<sup>10</sup>)<sup>2&nbsp;</sup></td>
-<td>mega: (10<sup>3</sup>)<sup>2</sup></td>
-</tr>
-<tr bgcolor="#D0F0C8">
-<td>&nbsp;2<sup>30</sup></td>
-<td>gibi</td>
-<td>Gi</td>
-<td>gigabinary: (2<sup>10</sup>)<sup>3</sup></td>
-<td>giga: (10<sup>3</sup>)<sup>3</sup></td>
-</tr>
-<tr>
-<td>&nbsp;2<sup>40</sup></td>
-<td>tebi</td>
-<td>Ti</td>
-<td>terabinary: (2<sup>10</sup>)<sup>4</sup></td>
-<td>tera: (10<sup>3</sup>)<sup>4</sup></td>
-</tr>
-<tr bgcolor="#D0F0C8">
-<td>&nbsp;2<sup>50</sup></td>
-<td>pebi</td>
-<td>Pi</td>
-<td>petabinary: (2<sup>10</sup>)<sup>5</sup></td>
-<td>peta: (10<sup>3</sup>)<sup>5</sup></td>
-</tr>
-<tr>
-<td>&nbsp;2<sup>60</sup></td>
-<td>exbi</td>
-<td>Ei</td>
-<td>exabinary: (2<sup>10</sup>)<sup>6</sup></td>
-<td>exa: (10<sup>3</sup>)<sup>6</sup></td>
-</tr>
-</tbody></table>
-</td>
-</tr>
-<tr>
-<td colspan="5">
-<hr noshade="" size="1"></td>
-</tr>
-<tr>
-<td align="CENTER" colspan="5">
-<table border="0" cellspacing="0" cellpadding="3" width="100%">
-<tbody><tr>
-<td align="CENTER" colspan="2"><b>Examples and comparisons with SI prefixes</b></td>
-</tr>
-<tr>
-<td align="RIGHT" bgcolor="#D0F0C8">one <b>kibibit</b></td>
-<td bgcolor="#D0F0C8">&nbsp;1 Kibit = 2<sup>10</sup> bit = <b>1024 bit</b></td>
-</tr>
-<tr>
-<td align="RIGHT">one <b>kilobit</b></td>
-<td>&nbsp;1 kbit = 10<sup>3</sup> bit = <b>1000 bit</b></td>
-</tr>
-<tr>
-  <td align="RIGHT" bgcolor="#D0F0C8">one <strong>byte</strong></td>
-	<td bgcolor="#D0F0C8">&nbsp;1 B = 2<sup>3</sup> bit = <strong>8 bit</strong></td>
-</tr>
-<tr>
-<td align="RIGHT">one <b>mebibyte</b></td>
-<td>&nbsp;1 MiB = 2<sup>20</sup> B = <b>1 048 576 B</b></td>
-</tr>
-<tr>
-<td align="RIGHT" bgcolor="#D0F0C8">one <b>megabyte</b></td>
-<td bgcolor="#D0F0C8">&nbsp;1 MB = 10<sup>6</sup> B = <b>1 000 000 B</b></td>
-</tr>
-<tr>
-<td align="RIGHT">one <b>gibibyte</b></td>
-<td>&nbsp;1 GiB = 2<sup>30</sup> B = <b>1 073 741 824
-B</b></td>
-</tr>
-<tr>
-<td align="RIGHT" bgcolor="#D0F0C8">one <b>gigabyte</b></td>
-<td bgcolor="#D0F0C8">&nbsp;1 GB = 10<sup>9</sup> B = <b>1 000 000 000 B</b></td>
-</tr>
-</tbody></table>
-<hr noshade="" size="1"></td>
-</tr>
-</tbody></table>
+          <h2 id="Installation">Installation</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.ibm.com/docs/ssw_ibm_i_72/rzahp/rzahppdf.pdf">libtirpc(Transport Independent RPC)</a></li>
+<li></li>
+</ul>
+
       
     </div>
 
@@ -864,7 +741,7 @@ B</b></td>
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/11/03/tech/cpp/basic/variadic-functions/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/15/tech/concurrent/deadlock/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -878,7 +755,7 @@ B</b></td>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2023/11/03/tech/cpp/basic/variadic-functions/" class="post-title-link" itemprop="url">C 变长参数函数（va_*）</a>
+            <a href="/blog/2024/01/15/tech/concurrent/deadlock/" class="post-title-link" itemprop="url">Dead Lock</a>
         </h2>
 
         <div class="post-meta">
@@ -888,14 +765,14 @@ B</b></td>
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2023-11-03 18:52:32" itemprop="dateCreated datePublished" datetime="2023-11-03T18:52:32+00:00">2023-11-03</time>
+              <time title="Created: 2024-01-15 14:11:30" itemprop="dateCreated datePublished" datetime="2024-01-15T14:11:30+00:00">2024-01-15</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 07:24:28" itemprop="dateModified" datetime="2026-08-11T07:24:28+00:00">2026-08-11</time>
+                <time title="Modified: 2026-08-11 09:41:52" itemprop="dateModified" datetime="2026-08-11T09:41:52+00:00">2026-08-11</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -903,7 +780,7 @@ B</b></td>
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
+                  <a href="/blog/categories/concurrent/" itemprop="url" rel="index"><span itemprop="name">concurrent</span></a>
                 </span>
             </span>
 
@@ -918,145 +795,133 @@ B</b></td>
     <div class="post-body" itemprop="articleBody">
 
       
-          <p><code>printf</code>、<code>scanf</code> 这类函数参数个数不固定，靠的是变参函数：形参列表里用 <code>...</code> 表示后面还可以跟任意个实参。要在自己的函数里读这些参数，靠的是 <code>&lt;stdarg.h&gt;</code>（C++ 里是 <code>&lt;cstdarg&gt;</code>）提供的一整套 <code>va_*</code> 接口：<code>va_list</code>、<code>va_start</code>、<code>va_arg</code>、<code>va_end</code>，以及需要复制状态时用的 <code>va_copy</code>。</p>
-<p>本文以 <strong><code>va_*</code> 的原理</strong>为主线：它们如何协同工作、背后依赖什么假设，再落到用法、完整示例，以及几个容易卡住的理解点。</p>
-<h2 id="va-在解决什么问题？"><code>va_*</code> 在解决什么问题？</h2>
-<p>对普通函数，形参个数、类型在声明里写死，编译器按调用约定为每个参数安排寄存器或栈槽。变参函数多了 <code>...</code>：调用方可多传任意个实参，但<strong>被调函数一侧没有名字、没有类型信息</strong>。</p>
-<p><code>va_*</code> 就是为此准备的一套「运行时游标」：</p>
+          <h2 id="Reference">Reference</h2>
+<p><a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1161103">关于线程死锁，活锁和饥饿问题</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/14/tech/concurrent/reentrancy/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/14/tech/concurrent/reentrancy/" class="post-title-link" itemprop="url">可重入</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-14 17:44:16" itemprop="dateCreated datePublished" datetime="2024-01-14T17:44:16+00:00">2024-01-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-11 09:41:52" itemprop="dateModified" datetime="2026-08-11T09:41:52+00:00">2026-08-11</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/concurrent/" itemprop="url" rel="index"><span itemprop="name">concurrent</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="概念">概念</h2>
+<p><strong>可重入函数</strong>：如果一个函数在执行过程中被中断服务程序打断，执行中断服务程序之后恢复执行，还能不妨碍之前的执行，就称该函数是<strong>可重入的</strong>。</p>
+<p>可重入函数一般用于<strong>硬件中断处理</strong>或<strong>递归</strong>等应用程序中。</p>
+<p><strong>可重入程序/可重入子例程</strong>：在多个处理器上能被安全地多次并发调用。</p>
+<p><strong>与线程安全的区别</strong>：可重入函数的概念在多任务操作系统出现之前就存在了，所以该概念仅仅针对的是单线程执行过程。<br>
+一个函数可以是线程安全但非可重入的，例如，该函数每次都使用互斥量来包裹。但是，如果该函数用于中断服务程序，那么，它可能在等待第一次执行过程释放互斥量时陷入饥饿。<strong>TODO：陷入饥饿为什么就不是可重入了？</strong></p>
+<p>要实现可重入性，函数通常需要满足以下条件：</p>
+<ul>
+<li>不使用静态或全局变量：这些变量在多次调用之间共享，可能导致数据竞争。</li>
+<li>不依赖于不可重入的函数：例如，标准库中的某些函数可能不是可重入的。</li>
+<li>不使用动态内存分配：动态内存分配可能会导致竞争条件。</li>
+<li>不使用信号处理：信号处理可能会中断函数的执行。</li>
+</ul>
+<p>可重入性在多线程编程和中断处理程序中尤为重要，因为它确保了函数在并发环境下的安全性。</p>
+<h3 id="可重入-VS-线程安全">可重入 VS 线程安全</h3>
+<p>可重入性和线程安全虽然都涉及到并发编程，但它们有不同的侧重点：</p>
+<p>可重入性：</p>
+<p>定义：一个函数可以在被中断后安全地再次调用，而不会影响其执行结果。<br>
+条件：不使用静态或全局变量、不依赖不可重入的函数、不使用动态内存分配、不使用信号处理。<br>
+应用场景：主要用于中断处理程序和嵌入式系统。<br>
+线程安全：</p>
+<p>定义：一个函数或代码块在多线程环境下可以安全地并发执行，而不会导致竞争条件或数据不一致。<br>
+条件：通常需要使用同步机制（如互斥锁、信号量）来保护共享资源。<br>
+应用场景：主要用于多线程编程。<br>
+总结来说，可重入性关注的是函数在被中断后能否安全地再次调用，而线程安全关注的是在多线程环境下能否安全地并发执行。可重入函数不一定是线程安全的，线程安全的函数也不一定是可重入的。</p>
 <ol>
-<li>用 <code>va_list</code> 保存「当前读到哪」的状态</li>
-<li>用 <code>va_start</code> 把状态对准第一个可变参数</li>
-<li>用 <code>va_arg</code> 按你给出的类型取出一个参数，并前进状态</li>
-<li>用 <code>va_end</code> 结束这次遍历、做清理</li>
-<li>需要同一份参数再扫一遍或交给别人时，用 <code>va_copy</code> 复制状态</li>
+<li>可重入函数不一定是线程安全的</li>
 </ol>
-<p>它们大多是<strong>宏</strong>（现代编译器上常落到 <code>__builtin_va_*</code>），不是普通库函数。整套接口要一起看：缺了初始化，后面无法读；读完不清理，在部分 ABI 上是未定义行为。</p>
-<p>还有一点贯穿始终：编译器<strong>不知道</strong> <code>...</code> 里有几个参数、各是什么类型。因此业务代码必须另有约定——固定参数里带个数、格式串（如 <code>&quot;%d%s&quot;</code>）、或哨兵值（如 <code>-1</code> / <code>NULL</code>）。<code>va_*</code> 只负责「按你的指示往前读」，不负责猜协议。</p>
-<h2 id="原理：游标如何跟着参数走">原理：游标如何跟着参数走</h2>
-<h3 id="经典栈模型">经典栈模型</h3>
-<p>传统 cdecl 一类约定里，参数从右往左压栈，固定参数与可变参数在栈上往往连成一片。此时可以把 <code>va_*</code> 想成在这块连续内存上移动指针。</p>
-<p>先说清「最后一个固定参数」指什么。变参函数里，写在 <code>...</code> <strong>前面</strong>、带名字的形参叫固定参数；<code>...</code> 代表的那些没有名字的实参叫可变参数。固定参数里<strong>紧挨着 <code>...</code>、排在最末尾的那一个</strong>，就叫最后一个固定参数。例如：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">printf</span><span class="params">(<span class="type">const</span> <span class="type">char</span> *format, ...)</span>;</span><br><span class="line"><span class="comment">/*          ↑ format 是唯一的固定参数，也是「最后一个固定参数」 */</span></span><br><span class="line"></span><br><span class="line"><span class="type">double</span> <span class="title function_">calculate_average</span><span class="params">(<span class="type">int</span> count, ...)</span>;</span><br><span class="line"><span class="comment">/*                       ↑ count 是最后一个（也是唯一的）固定参数 */</span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">log_message</span><span class="params">(<span class="type">const</span> <span class="type">char</span> *level, <span class="type">const</span> <span class="type">char</span> *format, ...)</span>;</span><br><span class="line"><span class="comment">/*                                  ↑ format 才是最后一个固定参数；</span></span><br><span class="line"><span class="comment">                                     level 也是固定参数，但不是「最后」那个 */</span></span><br></pre></td></tr></table></figure>
-<p><code>va_start</code> 的第二个参数必须写这个名字（如 <code>format</code> / <code>count</code>），用来标定可变参数从哪开始。</p>
-<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">地址由低到高 ---&gt;</span><br><span class="line"></span><br><span class="line">[ 最后一个固定参数 ] [ 可变参数1 ] [ 可变参数2 ] ...</span><br><span class="line">         ▲                    ▲</span><br><span class="line">         │                    └── va_start 之后游标对准这里</span><br><span class="line">         └── 定位基准（va_start 的第二个参数）</span><br></pre></td></tr></table></figure>
-<p>各接口在这个模型里的分工：</p>
-<table>
-<thead>
-<tr>
-<th>接口</th>
-<th>原理上在做什么</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>va_list</code></td>
-<td>游标本身：保存当前读位置（教学实现里常是 <code>char*</code>）</td>
-</tr>
-<tr>
-<td><code>va_start(ap, last)</code></td>
-<td>以 <code>last</code>（最后一个固定形参）为基准，算出第一个可变参数的地址，写入 <code>ap</code></td>
-</tr>
-<tr>
-<td><code>va_arg(ap, type)</code></td>
-<td>按 <code>type</code> 从当前位置读值，再把游标前进 <code>sizeof(type)</code>（含对齐）</td>
-</tr>
-<tr>
-<td><code>va_end(ap)</code></td>
-<td>重置/清空游标，结束本次使用</td>
-</tr>
-<tr>
-<td><code>va_copy(dst, src)</code></td>
-<td>复制一份游标状态，便于再次遍历或交给别的函数</td>
-</tr>
-</tbody>
-</table>
-<p>概念上的朴素实现（仅用于理解，勿当可移植代码）：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="type">char</span> *va_list;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> va_start(ap, last) \</span></span><br><span class="line"><span class="meta">    (ap = (va_list)&amp;(last) + sizeof(last))</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> va_arg(ap, type) \</span></span><br><span class="line"><span class="meta">    (*(type *)((ap += sizeof(type)) - sizeof(type)))</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> va_end(ap) (ap = (va_list)0)</span></span><br></pre></td></tr></table></figure>
-<p>读一遍就能看清协作关系：<code>va_start</code> 赋初值，<code>va_arg</code> 读并前进，<code>va_end</code> 收尾。真正实现里对齐、提升类型等细节更复杂，但骨架如此。</p>
-<h3 id="现代-ABI：寄存器-结构体游标">现代 ABI：寄存器 + 结构体游标</h3>
-<p>x86-64、ARM64 上，不少参数先放进寄存器，装不下的再进栈。此时：</p>
-<ul>
-<li><code>va_list</code> 往往是带多个字段的结构（或其一元素数组），而不只是 <code>char*</code></li>
-<li>常见字段类似 <code>gp_offset</code>、<code>fp_offset</code>、<code>reg_save_area</code>、<code>overflow_arg_area</code>，分别跟踪通用/浮点寄存器保存区与栈上溢出区</li>
-<li><code>va_start</code> / <code>va_arg</code> / <code>va_end</code> 常落到编译器内建，按 ABI 填表、取数、清理</li>
-</ul>
-<p><strong>原理没有变</strong>：仍然是一套状态机，记录「下一个参数从哪取」；变的是状态里记的是简单地址，还是寄存器偏移加栈指针。可移植代码应把 <code>va_list</code> 当不透明类型，只用 <code>va_*</code> 操作。</p>
-<h2 id="用法与完整示例">用法与完整示例</h2>
-<p>标准用法（自己解析每一个参数时）：</p>
-<ol>
-<li>声明 <code>va_list ap</code></li>
-<li><code>va_start(ap, last_named_param)</code></li>
-<li>循环或按协议调用 <code>va_arg(ap, type)</code></li>
-<li><code>va_end(ap)</code></li>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> counter = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">reentrantFunction</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> localCounter = counter;</span><br><span class="line">    localCounter++;</span><br><span class="line">    counter = localCounter;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">reentrantFunction</span>();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Counter: %d\n&quot;</span>, counter);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>解释：</p>
+<p>reentrantFunction 是可重入的，因为它满足以下条件：</p>
+<p>不使用静态或全局变量：虽然 counter 是一个全局变量，但 reentrantFunction 中的操作都是基于局部变量 localCounter，并且没有依赖于函数外部的状态。<br>
+不依赖不可重入的函数：reentrantFunction 中没有调用任何不可重入的函数。<br>
+不使用动态内存分配：函数中没有使用 malloc 或其他动态内存分配函数。<br>
+不使用信号处理：函数中没有涉及信号处理。<br>
+因此，reentrantFunction 可以在被中断后安全地再次调用，而不会影响其执行结果。</p>
+<p>然而，正因为它使用了全局变量 counter，在多线程环境下可能会导致竞争条件，所以它不是线程安全的。</p>
+<ol start="2">
+<li>线程安全的函数不一定是可重入的</li>
 </ol>
-<h3 id="示例一：固定参数给出个数">示例一：固定参数给出个数</h3>
-<figure class="highlight c"><figcaption><span> title:按 count 求平均</span><a href="/blog/downloads/code/tech/cpp/basic/variadic-functions-01.c">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdarg.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* count 为固定参数，表示后面跟随的可变参数个数 */</span></span><br><span class="line"><span class="type">double</span> <span class="title function_">calculate_average</span><span class="params">(<span class="type">int</span> count, ...)</span> {</span><br><span class="line">    <span class="keyword">if</span> (count &lt;= <span class="number">0</span>) {</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0.0</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    va_list args;</span><br><span class="line">    <span class="type">double</span> sum = <span class="number">0.0</span>;</span><br><span class="line"></span><br><span class="line">    va_start(args, count);</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; count; i++) {</span><br><span class="line">        <span class="type">int</span> value = va_arg(args, <span class="type">int</span>);</span><br><span class="line">        sum += value;</span><br><span class="line">    }</span><br><span class="line">    va_end(args);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> sum / count;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span> {</span><br><span class="line">    <span class="type">double</span> avg1 = calculate_average(<span class="number">4</span>, <span class="number">10</span>, <span class="number">20</span>, <span class="number">30</span>, <span class="number">40</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Average 1: %.2f\n&quot;</span>, avg1); <span class="comment">/* 25.00 */</span></span><br><span class="line"></span><br><span class="line">    <span class="type">double</span> avg2 = calculate_average(<span class="number">3</span>, <span class="number">5</span>, <span class="number">15</span>, <span class="number">25</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Average 2: %.2f\n&quot;</span>, avg2); <span class="comment">/* 15.00 */</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-<h3 id="示例二：哨兵标记结尾">示例二：哨兵标记结尾</h3>
-<figure class="highlight c"><figcaption><span> title:以 -1 为结束哨兵</span><a href="/blog/downloads/code/tech/cpp/basic/variadic-functions-02.c">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdarg.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* 打印非负整数序列，约定以 -1 作为结束哨兵 */</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">print_numbers</span><span class="params">(<span class="type">int</span> first, ...)</span> {</span><br><span class="line">    va_list args;</span><br><span class="line">    va_start(args, first);</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> current = first;</span><br><span class="line">    <span class="keyword">while</span> (current != <span class="number">-1</span>) {</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%d &quot;</span>, current);</span><br><span class="line">        current = va_arg(args, <span class="type">int</span>);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    va_end(args);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;\n&quot;</span>);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span> {</span><br><span class="line">    print_numbers(<span class="number">10</span>, <span class="number">20</span>, <span class="number">30</span>, <span class="number">40</span>, <span class="number">-1</span>); <span class="comment">/* 10 20 30 40 */</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-<h3 id="示例三：不自己解析，整份转交">示例三：不自己解析，整份转交</h3>
-<p>若本函数只是包装器，可以把已初始化的 <code>va_list</code> 交给 <code>vprintf</code>、<code>vsnprintf</code> 等 <code>v*</code> 接口——它们内部会走自己的 <code>va_arg</code>。这时你仍需要 <code>va_start</code> / <code>va_end</code>，但不必手写 <code>va_arg</code>：</p>
-<figure class="highlight c"><figcaption><span> title:转交 vprintf</span><a href="/blog/downloads/code/tech/cpp/basic/variadic-functions-03.c">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdarg.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* 包装器：只做 va_start / va_end，参数解析交给 vprintf */</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">log_message</span><span class="params">(<span class="type">const</span> <span class="type">char</span> *level, <span class="type">const</span> <span class="type">char</span> *format, ...)</span> {</span><br><span class="line">    va_list args;</span><br><span class="line">    va_start(args, format);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;[%s]: &quot;</span>, level);</span><br><span class="line">    <span class="built_in">vprintf</span>(format, args);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">    va_end(args);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span> {</span><br><span class="line">    log_message(<span class="string">&quot;INFO&quot;</span>, <span class="string">&quot;User %s logged in from %s&quot;</span>, <span class="string">&quot;Alice&quot;</span>, <span class="string">&quot;192.168.1.1&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">}</span><br></pre></td></tr></table></figure>
-<p>需要把同一份参数交给多个函数、或扫完再扫一遍时，用 <code>va_copy</code> 复制状态，并分别 <code>va_end</code>。一份 <code>va_list</code> 被消费后，一般不能假定还能原样再扫。</p>
-<h2 id="理解点一：va-list（ap）到底是什么类型？">理解点一：<code>va_list</code>（<code>ap</code>）到底是什么类型？</h2>
-<p><code>ap</code> 的类型就是 <code>va_list</code>。标准只说它是实现定义类型，用来保存遍历所需信息。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">pthread_mutex_t</span> lock = PTHREAD_MUTEX_INITIALIZER;</span><br><span class="line"><span class="type">int</span> counter = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span>* <span class="title">threadSafeFunction</span><span class="params">(<span class="type">void</span>* arg)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">pthread_mutex_lock</span>(&amp;lock);</span><br><span class="line">    counter++;</span><br><span class="line">    <span class="built_in">pthread_mutex_unlock</span>(&amp;lock);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">pthread_t</span> thread1, thread2;</span><br><span class="line">    <span class="built_in">pthread_create</span>(&amp;thread1, <span class="literal">NULL</span>, threadSafeFunction, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_create</span>(&amp;thread2, <span class="literal">NULL</span>, threadSafeFunction, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_join</span>(thread1, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">pthread_join</span>(thread2, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Counter: %d\n&quot;</span>, counter);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>解释：</p>
+<p>这个函数 threadSafeFunction 是线程安全的，因为它使用了互斥锁来保护对 counter 的访问。<br>
+然而，它不是可重入的，因为它使用了互斥锁，互斥锁在中断处理程序中可能会导致死锁：</p>
+<p>互斥锁的使用：互斥锁用于确保线程安全，但它们在中断处理程序中可能会导致死锁。如果一个线程在持有锁时被中断，然后中断处理程序尝试再次调用该函数并试图获取同一个锁，就会发生死锁。</p>
+<p>依赖于锁的状态：函数的执行依赖于锁的状态。如果锁已经被其他线程持有，函数就无法继续执行，必须等待锁释放。这种依赖性使得函数在中断后无法安全地再次调用。</p>
+<p>不可重入的行为：由于锁的存在，函数在中断后重新进入时可能无法正确处理锁的状态，从而导致不可预期的行为。</p>
+<h2 id="Reference">Reference</h2>
 <ul>
-<li><strong>简化 / 老平台</strong>：常是 <code>typedef char *va_list</code>，<code>ap</code> 就是指向参数内存的字节指针；<code>va_start</code> 展开后类似 <code>ap = (va_list)&amp;count + sizeof(count)</code>。</li>
-<li><strong>现代 x86-64 等</strong>：常是结构体（有的再 typedef 成一元素数组，便于按「数组退化为指针」传递，避免整份状态被错误拷贝）。<code>va_start</code> 由内建填好各字段。</li>
+<li><a target="_blank" rel="noopener" href="https://www.geeksforgeeks.org/reentrant-function/">Reentrant Function</a></li>
+<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Reentrancy_(computing)">Reentrancy</a></li>
 </ul>
-<p>两种形态都服务于同一原理：<strong><code>va_list</code> 是游标状态，不是业务数据本身</strong>。想看本机定义，打开系统 <code>stdarg.h</code> 或对源文件预处理后搜 <code>va_list</code> 即可。</p>
-<h2 id="理解点二：va-start-为何传「名字」而不是指针？">理解点二：<code>va_start</code> 为何传「名字」而不是指针？</h2>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">va_start(ap, last_fix_param);</span><br></pre></td></tr></table></figure>
-<p>第二个参数必须是形参列表里 <strong><code>...</code> 前面最后一个固定参数的标识符</strong>（例如 <code>format</code>），用来标定可变参数从哪开始。</p>
-<p>因为 <code>va_start</code> 是宏：内部需要对这个名字做定位（朴素实现里是 <code>&amp;(last)</code> 再加 <code>sizeof</code>；现代实现里是 <code>__builtin_va_start</code> 按 ABI 分析该标识符）。若你传入 <code>&amp;count</code>，展开后会对指针再取地址，位置全错。</p>
-<p>同理，第一个参数写 <code>ap</code> 而不是 <code>&amp;ap</code>：宏展开后直接对当前作用域的 <code>ap</code> 赋值，不必像函数出参那样传指针。</p>
-<h2 id="理解点三：什么时候可以不写-va-arg？">理解点三：什么时候可以不写 <code>va_arg</code>？</h2>
-<p><code>va_arg</code> 只是「亲手取下一个参数」这一环。若你不亲手解析，就可以不写它，但通常仍要理解整套 <code>va_*</code>：</p>
-<table>
-<thead>
-<tr>
-<th>场景</th>
-<th>仍用哪些</th>
-<th>可否省 <code>va_arg</code></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>自己逐个解析</td>
-<td><code>va_list</code> + <code>start</code> + <code>arg</code> + <code>end</code></td>
-<td>否</td>
-</tr>
-<tr>
-<td>转发给 <code>vprintf</code> 等</td>
-<td><code>start</code> + <code>end</code>（中间把 <code>ap</code> 交出）</td>
-<td>是</td>
-</tr>
-<tr>
-<td><code>va_copy</code> 后整体交给别人</td>
-<td><code>start</code> / <code>copy</code> / <code>end</code></td>
-<td>当前函数可以不写</td>
-</tr>
-<tr>
-<td>协议表明没有额外参数</td>
-<td>视实现：有时仍 <code>start</code>/<code>end</code>，逻辑上跳过提取</td>
-<td>可跳过调用</td>
-</tr>
-<tr>
-<td>改用 C++ 变参模板</td>
-<td>不用 <code>&lt;cstdarg&gt;</code></td>
-<td>整套都不需要</td>
-</tr>
-</tbody>
-</table>
-<p>C++11 起的变参模板（以及 C++17 折叠表达式）是另一条类型安全的路线，与 <code>va_*</code> 运行时游标不是同一套机制。</p>
-<h2 id="常见坑点">常见坑点</h2>
-<ul>
-<li><strong>类型提升</strong>：经 <code>...</code> 传入时，<code>char</code> / <code>short</code> 升为 <code>int</code>，<code>float</code> 升为 <code>double</code>。<code>va_arg(ap, float)</code> 错误，应 <code>va_arg(ap, double)</code>。</li>
-<li><strong>成对使用</strong>：<code>va_start</code>（或 <code>va_copy</code>）之后必须 <code>va_end</code>；在部分 ABI 上 <code>va_end</code> 会做真实清理，省略是未定义行为。</li>
-<li><strong>类型和个数要自己保证正确</strong>：<code>va_arg</code> 写的类型必须和调用方实际传入的一致（并考虑上面的类型提升）；循环取参的次数也不能超过真实传入的个数。这些编译器都检查不了，写错了运行时才会表现为读到莫名其妙的值，甚至越界崩溃。</li>
-</ul>
-<h2 id="小结">小结</h2>
-<p><code>va_*</code> 是一套围绕「可变参数游标」的协作接口：<code>va_list</code> 存状态，<code>va_start</code> 定位起点，<code>va_arg</code> 按类型读取并前进，<code>va_end</code> 收尾，<code>va_copy</code> 复制状态。原理上，它们把调用约定里排布好的可变实参，变成函数体内可逐步消费的序列；栈模型用指针加减理解，现代 ABI 用结构体记寄存器与栈位置，骨架相同。</p>
-<p>业务侧仍要自己约定个数与类型；需要转发时，把整份 <code>va_list</code> 交给 <code>v*</code> 即可，不必在每个包装函数里重复 <code>va_arg</code>。</p>
 
       
     </div>
@@ -1076,7 +941,7 @@ B</b></td>
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/11/02/tech/cpp/basic/cpp-namespace/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/09/tech/io/network-discovery/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -1090,7 +955,7 @@ B</b></td>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2023/11/02/tech/cpp/basic/cpp-namespace/" class="post-title-link" itemprop="url">C++ 命名空间</a>
+            <a href="/blog/2024/01/09/tech/io/network-discovery/" class="post-title-link" itemprop="url">Network discovery</a>
         </h2>
 
         <div class="post-meta">
@@ -1100,14 +965,90 @@ B</b></td>
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2023-11-02 09:53:52" itemprop="dateCreated datePublished" datetime="2023-11-02T09:53:52+00:00">2023-11-02</time>
+              <time title="Created: 2024-01-09 16:15:17" itemprop="dateCreated datePublished" datetime="2024-01-09T16:15:17+00:00">2024-01-09</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 07:24:28" itemprop="dateModified" datetime="2026-08-11T07:24:28+00:00">2026-08-11</time>
+                <time title="Modified: 2026-08-11 09:41:52" itemprop="dateModified" datetime="2026-08-11T09:41:52+00:00">2026-08-11</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/io/" itemprop="url" rel="index"><span itemprop="name">io</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Get-IP-from-the-host-name">Get IP from the host name</h2>
+<p>Key function: <code>getaddrinfo</code>.</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> _POSIX_C_SOURCE 200112L</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/socket.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;netdb.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;errno.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;strings.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;arpa/inet.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">addrinfo</span> hints;</span><br><span class="line">    <span class="built_in">bzero</span>(&amp;hints, <span class="keyword">sizeof</span> hints);</span><br><span class="line">    <span class="comment">// hints.ai_family = AF_INET;</span></span><br><span class="line">    hints.ai_socktype = SOCK_STREAM;</span><br><span class="line">    hints.ai_protocol = IPPROTO_TCP;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">addrinfo</span> *res = <span class="number">0</span>;</span><br><span class="line">    <span class="comment">// The following 3 hostnames are legal.</span></span><br><span class="line">    <span class="type">int</span> rc = <span class="built_in">getaddrinfo</span>(<span class="string">&quot;www.baidu.com&quot;</span>, <span class="literal">NULL</span>, &amp;hints, &amp;res);</span><br><span class="line">    <span class="comment">// int rc = getaddrinfo(&quot;localhost&quot;, NULL, &amp;hints, &amp;res);</span></span><br><span class="line">    <span class="comment">// int rc = getaddrinfo(&quot;PC-XXX&quot;, NULL, &amp;hints, &amp;res); // PC-XXX is a hostname</span></span><br><span class="line">    <span class="keyword">if</span> (rc != <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">perror</span>(<span class="string">&quot;getaddrinfo failed&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">struct</span> addrinfo* res_i = res; res_i != <span class="literal">NULL</span>; res_i = res_i-&gt;ai_next) &#123;</span><br><span class="line">        <span class="keyword">if</span> (res_i-&gt;ai_addr) &#123;</span><br><span class="line">            <span class="keyword">if</span> (res_i-&gt;ai_addr-&gt;sa_family == AF_INET) &#123;</span><br><span class="line">                <span class="type">char</span> ip4[INET_ADDRSTRLEN];</span><br><span class="line">                <span class="built_in">inet_ntop</span>(AF_INET, &amp;(((<span class="keyword">struct</span> sockaddr_in*)(res_i-&gt;ai_addr))-&gt;sin_addr), ip4, INET_ADDRSTRLEN);</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">&quot;IP: %s\n&quot;</span>, ip4);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="type">char</span> ip6[INET6_ADDRSTRLEN];</span><br><span class="line">                <span class="built_in">inet_ntop</span>(AF_INET6, &amp;(((<span class="keyword">struct</span> sockaddr_in6*)(res_i-&gt;ai_addr))-&gt;sin6_addr), ip6, INET_ADDRSTRLEN);</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">&quot;IP: %s\n&quot;</span>, ip6);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/07/tech/cpp/basic/cpp-preprocessor/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/01/07/tech/cpp/basic/cpp-preprocessor/" class="post-title-link" itemprop="url">C++ 预处理</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-01-07 16:40:10" itemprop="dateCreated datePublished" datetime="2024-01-07T16:40:10+00:00">2024-01-07</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-11 09:41:52" itemprop="dateModified" datetime="2026-08-11T09:41:52+00:00">2026-08-11</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1130,14 +1071,38 @@ B</b></td>
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="inline-namespace">inline namespace</h2>
-<p>You can define and specialize members of an <code>inline namespace</code> as if they were also members of the enclosing namespace.<br>
-<code>inline namespace</code> 表示该命名空间也是上级命名空间的成员。<br>
-参考: <a target="_blank" rel="noopener" href="https://www.ibm.com/docs/en/zos/2.2.0?topic=only-inline-namespace-definitions-c11">Inline namespace definitions (C++11)</a></p>
-<p>例如：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> A &#123;</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> USE_INLINE_B</span></span><br><span class="line">   <span class="keyword">inline</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">   <span class="keyword">namespace</span> B &#123;</span><br><span class="line">      <span class="function"><span class="type">int</span> <span class="title">foo</span><span class="params">(<span class="type">bool</span>)</span> </span>&#123; <span class="keyword">return</span> <span class="number">1</span>; &#125;</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="function"><span class="type">int</span> <span class="title">foo</span><span class="params">(<span class="type">int</span>)</span> </span>&#123; <span class="keyword">return</span> <span class="number">2</span>; &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">void</span>)</span> </span>&#123;</span><br><span class="line">   <span class="keyword">return</span> A::<span class="built_in">foo</span>(<span class="literal">true</span>); <span class="comment">// 如果USE_INLINE_B为0，则该句出错：找不到定义。</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="Unnamed-anonymous-namespaces-vs-static-in-namespace">Unnamed / anonymous namespaces vs static in namespace</h2>
-<p>Refer to: <a target="_blank" rel="noopener" href="https://medium.com/pranayaggarwal25/unnamed-namespaces-static-f1498741c527">Unnamed / anonymous namespaces vs static in namespace</a></p>
+          <h2 id="预定义宏">预定义宏</h2>
+<p><code>#if defined(__linux)</code><br>
+<code>#ifdef LINUX2</code></p>
+<h2 id="C标准预定义宏">C标准预定义宏</h2>
+<ul>
+<li><code>__LINE__</code></li>
+<li><code>__func__</code></li>
+<li><code>__FILE__</code></li>
+<li><code>NDEBUG</code>：参考<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2290509/debug-vs-ndebug">_DEBUG和NDEBUG的区别</a>，其中，<code>_DEBUG</code>是Visual Studio定义的，<code>NDEBUG</code>是C/C++标准。</li>
+</ul>
+<h2 id="GNU-C预定义宏">GNU C预定义宏</h2>
+<p><a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html">官方文档</a></p>
+<ul>
+<li>
+<p><code>__COUNTER__</code>: 扩展为从<code>0</code>开始的连续整数值，每次在源码中出现，则加<code>1</code>。不同源文件的<code>__COUNTER__</code>互不影响。</p>
+<p>可以用来生成唯一的命名。<br>
+参考<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/652815/has-anyone-ever-had-a-use-for-the-counter-pre-processor-macro">链接</a>。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> CONCAT_IMPL(x,y) x##y</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CONCAT(x,y) CONCAT_IMPL(x,y)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> VAR(name) CONCAT(name,__COUNTER__)</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">VAR</span><span class="params">(myvar)</span></span>; <span class="comment">// 展开为 int myvar0;</span></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">VAR</span><span class="params">(myvar)</span></span>; <span class="comment">// 展开为 int myvar1;</span></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">VAR</span><span class="params">(myvar)</span></span>; <span class="comment">// 展开为 int myvar2;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><code>program_invocation_name</code>：参考<a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man3/program_invocation_name.3.html">man page</a></p>
+</li>
+<li></li>
+</ul>
+<h2 id="pragma">#pragma</h2>
+<h3 id="pragma-weak">#pragma weak</h3>
+<h4 id="Synopsis">Synopsis</h4>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">pragma</span> weak function-name1 [= function-name2]</span></span><br></pre></td></tr></table></figure>
+<p><code>#pragma weak</code> means that even if the definition of the symbol is not found, no error will be reported.</p>
+<h4 id="Example">Example</h4>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// It is not an error for symbol to never be defined at all.</span></span><br><span class="line"><span class="comment">// Without this line, the address of &quot;foo&quot; will always evaluate to &quot;true&quot;,</span></span><br><span class="line"><span class="comment">// so the linker will report an &quot;undefined reference to &#x27;foo&#x27;&quot; error.</span></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> weak foo</span></span><br><span class="line"><span class="comment">// The declaration is needed.</span></span><br><span class="line"><span class="comment">/* extern */</span> <span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (foo)</span><br><span class="line">        <span class="built_in">foo</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Reference: <a target="_blank" rel="noopener" href="https://alberand.com/weak-directive.html">1</a>、<a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/gcc-4.5.4/gcc/Weak-Pragmas.html">2</a>、<a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E19059-01/wrkshp50/805-4955/auto6/index.html">3</a></p>
 
       
     </div>
@@ -1157,7 +1122,7 @@ B</b></td>
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/11/02/study/idiom/daily-idiom/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/03/site/build-personal-website/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -1171,7 +1136,7 @@ B</b></td>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2023/11/02/study/idiom/daily-idiom/" class="post-title-link" itemprop="url">English idiom</a>
+            <a href="/blog/2024/01/03/site/build-personal-website/" class="post-title-link" itemprop="url">搭建个人网站</a>
         </h2>
 
         <div class="post-meta">
@@ -1181,14 +1146,14 @@ B</b></td>
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2023-11-02 09:30:29" itemprop="dateCreated datePublished" datetime="2023-11-02T09:30:29+00:00">2023-11-02</time>
+              <time title="Created: 2024-01-03 16:41:38" itemprop="dateCreated datePublished" datetime="2024-01-03T16:41:38+00:00">2024-01-03</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 07:24:28" itemprop="dateModified" datetime="2026-08-11T07:24:28+00:00">2026-08-11</time>
+                <time title="Modified: 2026-08-11 09:41:52" itemprop="dateModified" datetime="2026-08-11T09:41:52+00:00">2026-08-11</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1196,7 +1161,7 @@ B</b></td>
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/study/" itemprop="url" rel="index"><span itemprop="name">study</span></a>
+                  <a href="/blog/categories/site/" itemprop="url" rel="index"><span itemprop="name">site</span></a>
                 </span>
             </span>
 
@@ -1211,30 +1176,261 @@ B</b></td>
     <div class="post-body" itemprop="articleBody">
 
       
-          <ol>
-<li>at a drop of a hat: 毫不犹豫。见<a href="(https://dictionary.cambridge.org/us/dictionary/english/at-the-drop-of-a-hat)">Cambridge dict</a>.</li>
-<li>beyond your ken: 超过你的认知范畴<br>
-ken: the range of perception, understanding or knowledge. 参考<a target="_blank" rel="noopener" href="https://www.merriam-webster.com/dictionary/ken">词典</a>。</li>
+          <h2 id="Host-site">Host site</h2>
+<p>有两个托管个人站点的网站：<code>Github pages</code>和<code>reathedocs</code>.</p>
+<h3 id="Github-Pages">Github Pages</h3>
+<p>使用<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages">github pages</a>可以搭建个人主页。</p>
+<p>github pages简介：<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages">官方链接</a>。</p>
+<p>github pages使用了<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/CNAME_record">CNAME record</a>技术，参考：<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/39301250">链接1</a>、<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/26609475">链接2</a>、<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/about-custom-domains-and-github-pages#using-a-subdomain-for-your-github-pages-site">Custom domains in Github Pages</a>。</p>
+<p>注：<a target="_blank" rel="noopener" href="https://readthedocs.org/">Read the Docs</a>也是一个很好的搭建个人主页的网站。</p>
+<h4 id="Github-Pages-站点类型">Github Pages 站点类型</h4>
+<p>有3种类型的 Github Pages 站点（sites）：project, user 和 organization 。</p>
+<p>Project sites 连接到 github 上特定 project ，比如 Javascript library 或 recipe collection。user 或 organization sites 连接到 <a target="_blank" rel="noopener" href="http://github.com">github.com</a> 的特定账户。</p>
+<p>发布 user site ，你必须创建一个你的个人账户下的一个名为 <code>&lt;username&gt;.github.io</code> 的 repository 。发布 organization site ，你必须创建一个组织所有的名为 <code>&lt;organization&gt;.github.io</code> 的 repository 。除非你使用 custom domain ，否则 user 和 organization sites 将位于 <code>http(s)://&lt;username&gt;.github.io</code> 或 <code>http(s)://&lt;organization&gt;.github.io</code> 。</p>
+<p>project site 的源文件存储在作为 project 的相同的 repository 中。除非使用 custom domain ， 否则 project sites 将位于 <code>http(s)://&lt;username&gt;.github.io/&lt;repository&gt;</code> 或 <code>http(s)://&lt;organization&gt;.github.io/&lt;repository&gt;</code> 。</p>
+<p>有关如何自定义影响您网站的域名的更多信息，参见&quot;<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/about-custom-domains-and-github-pages">About custom domains and GitHub Pages</a>&quot;。</p>
+<p>每个 github 账户允许创建 1 个 user 或 organization 站点。无论是被组织还是个人所有，project 站点的个数不限制。</p>
+<h4 id="GitHub-Pages-访问方法">GitHub Pages 访问方法</h4>
+<p>参考<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site#next-steps">官方文档</a>。</p>
+<p>例如，你的project站点配置的发布源是<code>gh-pages</code>分支，然后在<code>gh-pages</code>分支上创建了一个<code>about/contact-us.md</code>文件，你将可以在<code>https://&lt;user&gt;.github.io/&lt;repository&gt;/about/contact-us.html</code>访问它。</p>
+<p>你也可以使用<code>Jekyll</code>等静态站点生成器来给你的github page配置一个主题。</p>
+<h4 id="站点发布常见问题的解决方法">站点发布常见问题的解决方法</h4>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/72851548/permission-denied-to-github-actionsbot">Permission denied to github-actions[bot]</a></li>
+</ul>
+<h4 id="Github-workflows">Github workflows</h4>
+<p>参考<a target="_blank" rel="noopener" href="https://docs.github.com/zh/actions/using-workflows/workflow-syntax-for-github-actions">官方文档</a>。</p>
+<h4 id="Github个人访问令牌">Github个人访问令牌</h4>
+<p><a target="_blank" rel="noopener" href="https://docs.github.com/zh/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens">Github个人访问令牌</a></p>
+<h3 id="readthedocs">readthedocs</h3>
+<p>Similar to the github pages.</p>
+<p><a target="_blank" rel="noopener" href="https://docs.readthedocs.io/en/stable/tutorial/">Tutorial</a></p>
+<h2 id="配置前准备">配置前准备</h2>
+<h3 id="Markdown编辑器">Markdown编辑器</h3>
+<p>推荐的<a target="_blank" rel="noopener" href="https://www.zhihu.com/tardis/zm/art/103348449?source_id=1003">markdown编辑器</a>：</p>
+<ul>
+<li>VSCode：免费。VSCode原生支持Markdown，安装一些插件可以帮助更快地编写markdown文件。</li>
+<li>Typora：现在已经开始收费。</li>
+</ul>
+<p>VSCode markdown插件：</p>
+<ul>
+<li>Mardown All in One: 提供快捷键，帮助更快的编写markdown文件。</li>
+<li>Markdown+Math：提供数学公式支持。</li>
+<li>Markdown Preview Enhanced: 将原生markdown预览的黑色背景改成白色。</li>
+<li>Markdown Preview Github Styling：提供Github风格的预览。</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://www.tablesgenerator.com/markdown_tables">在线表格生成器</a>：可以生成Markdown、Text、HTML、LaTex、MediaWiki格式的表格。</p>
+<h3 id="轻量级虚拟机WSL">轻量级虚拟机WSL</h3>
+<p>WSL，<a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/wsl/install">Windows Subsystem for Linux</a>，是Windows提供的轻量级Linux虚拟机。</p>
+<p>安装教程：见<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/170210673">链接</a>。</p>
+<h4 id="WSL默认没有启用systemctl：">WSL默认没有启用systemctl：</h4>
+<p>启用systemctl的方法：<a target="_blank" rel="noopener" href="https://askubuntu.com/questions/1379425/system-has-not-been-booted-with-systemd-as-init-system-pid-1-cant-operate">链接</a>。</p>
+<p>替代方法：不需要启动systemctl，因为会比较占用资源，启动也会变慢。可以使用service命令替代。</p>
+<h4 id="WSL默认没有安装openssl-server：">WSL默认没有安装openssl-server：</h4>
+<p>使用ssh连接到服务器时，需要服务器运行着sshd程序，否则连接不上，会出现&quot;<a target="_blank" rel="noopener" href="https://www.makeuseof.com/fix-ssh-connection-refused-error-linux/">Connection refused</a>&quot;错误。</p>
+<p>参考<a target="_blank" rel="noopener" href="https://askubuntu.com/questions/1339980/enable-ssh-in-wsl-system">链接</a>。</p>
+<p>查看openssh-server有没有安装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dpkg --list | grep ssh</span><br></pre></td></tr></table></figure>
+<p>注：如果安装了openssh-server，执行which sshd可以看到路径。</p>
+<p>WSL默认没有安装openssh-server，安装方法：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install openssh-server</span><br></pre></td></tr></table></figure>
+<p>启动ssh：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo service ssh start</span><br></pre></td></tr></table></figure>
+<h4 id="ssh-keygen">ssh-keygen</h4>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 删除错误的 know_hosts 项</span></span><br><span class="line">ssh-keygen -f <span class="string">&quot;/home/&lt;user&gt;/.ssh/known_hosts&quot;</span> -R <span class="string">&quot;ubuntu&quot;</span></span><br></pre></td></tr></table></figure>
+<h4 id="通过https登录到github">通过https登录到github</h4>
+<p><code>git push</code>不再支持输入用户名和密码，当提示输入密码时，需要输入personal access token.</p>
+<p>步骤1：在github上<a target="_blank" rel="noopener" href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic">创建personal access token</a>；</p>
+<p>步骤2：<a target="_blank" rel="noopener" href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#using-a-personal-access-token-on-the-command-line">在命令行上使用personal access token</a>；</p>
+<p>步骤3：为了避免每次都需要输入personal access token，可以将其<a target="_blank" rel="noopener" href="https://docs.github.com/en/get-started/getting-started-with-git/caching-your-github-credentials-in-git">缓存在git client上</a>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gh auth login</span><br></pre></td></tr></table></figure>
+<p>注：使用<code>gh</code>命令需要先安装GitHub CLI：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install gh</span><br></pre></td></tr></table></figure>
+<h3 id="WSL常见问题">WSL常见问题</h3>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/73673804/npm-show-npm-elf-not-found-error-in-wsl">npm show “NPM ELF : not found error” in WSL</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.reddit.com/r/bashonubuntuonwindows/comments/8teo9i/is_there_a_way_to_open_a_file_in_a_browser_from/">WSL打开html的方法</a></li>
+</ul>
+<p>在WSL的Linux下，在.bashrc中加入：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="function"><span class="title">browser</span></span>() &#123;</span><br><span class="line">    explorer.exe $(wslpath -w $(<span class="built_in">realpath</span> <span class="variable">$1</span>))</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">export</span> -f browser</span><br></pre></td></tr></table></figure>
+<p>打开html：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">browser index.html</span><br></pre></td></tr></table></figure>
+<ul>
+<li>在 Windows 浏览器打开 ssh 连接的 Linux 的文件：</li>
+</ul>
+<p>使用内置的 Python 轻量级服务器（最快、最推荐）</p>
+<p>在 Linux 终端中切换到文件所在的目录：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /path/to/your/folder</span><br></pre></td></tr></table></figure>
+<p>启动 Python 自带的 HTTP 服务：</p>
+<p>Python 3.x（推荐）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python3 -m http.server 8000</span><br></pre></td></tr></table></figure>
+<p>在 Windows 浏览器中访问：</p>
+<p>打开浏览器，在地址栏输入：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://&lt;Linux服务器的IP地址&gt;:8000</span><br></pre></td></tr></table></figure>
+<h2 id="静态站点生成器">静态站点生成器</h2>
+<p>以下几种<a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages">静态站点生成器</a>都可以用来搭建个人主页。如果使用除JekyII外的工具，则需要配置<a target="_blank" rel="noopener" href="https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions">Github Actions</a>以构建和发布你的站点。</p>
+<h3 id="mkdocs">mkdocs</h3>
+<p><a target="_blank" rel="noopener" href="https://www.mkdocs.org/">mkdocs</a>是一个快速的静态网页生成器。</p>
+<p><code>mkdocs.yml</code> 文件是 MkDocs 文档生成器的配置文件，其格式说明参见<a href="mkdocs.yml.md">这里</a>。</p>
+<h3 id="JekyII">JekyII</h3>
+<p>Jekyll 是一个静态站点生成器，内置对 GitHub Pages 的支持和简化的构建进程。</p>
+<p>参见 <a target="_blank" rel="noopener" href="https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll/about-github-pages-and-jekyll">About GitHub Pages and Jekyll</a> 。</p>
+<h3 id="Hexo">Hexo</h3>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://hexo.io/docs/">Hexo博客框架</a></li>
+<li><a target="_blank" rel="noopener" href="https://hexo.io/zh-cn/docs/">Hexo中文文档</a></li>
+<li><a target="_blank" rel="noopener" href="https://malekbenz.com/blog/2016/09/10/Create-Host-Blog-for-free-with-Hexo-Github">Create and host your blog for free with hexo &amp; Github</a></li>
+</ul>
+<h3 id="Sphinx">Sphinx</h3>
+<p><a target="_blank" rel="noopener" href="https://www.sphinx-doc.org/en/master/usage/installation.html">Install Sphinx</a><br>
+<a target="_blank" rel="noopener" href="https://sphinx-intro-tutorial.readthedocs.io/en/latest/docs_hosting.html">Hosting the documentation</a></p>
+<h3 id="python">python</h3>
+<p>python建立个人站点</p>
+<pre><code>python -m http.server
+</code></pre>
+<h2 id="Syntax">Syntax</h2>
+<h3 id="Markdown">Markdown</h3>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://daringfireball.net/projects/markdown">Markdown Documentation</a></li>
+<li><a target="_blank" rel="noopener" href="https://squidfunk.github.io/mkdocs-material/reference/diagrams/">Diagrams Reference</a></li>
+</ul>
+<h3 id="reStructuredText">reStructuredText</h3>
+<p><code>.rst</code></p>
+<h2 id="Markdown-文档写作助手">Markdown 文档写作助手</h2>
+<p>VS Code + Markdown 插件：</p>
+<ul>
+<li>Markdown All in One：快捷键、自动列表、格式化支持。</li>
+<li>markdownlint：格式规范检查，可配合 .markdownlint.json 使用。</li>
+<li>Markdown Preview Enhanced：支持公式、流程图、导出 PDF。</li>
+</ul>
+<p>图床工具：</p>
+<p>iPic（macOS）或 PicGo（全平台）：自动上传图片并生成 Markdown 链接。</p>
+<p>国内外常用免费图床推荐</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">图床名称</th>
+<th style="text-align:center">特点与限制</th>
+<th style="text-align:center">适合场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><a target="_blank" rel="noopener" href="http://SM.MS">SM.MS</a></td>
+<td style="text-align:center">免费、支持 API、最大上传 5MB，全球 CDN 加速2</td>
+<td style="text-align:center">技术博客、Markdown</td>
+</tr>
+<tr>
+<td style="text-align:center">Imgur</td>
+<td style="text-align:center">老牌国外图床，支持匿名上传、API，国内访问速度较慢2</td>
+<td style="text-align:center">海外博客、论坛</td>
+</tr>
+<tr>
+<td style="text-align:center">路过图床</td>
+<td style="text-align:center">支持 HTTPS、免注册、永久存储，最大上传 10MB</td>
+<td style="text-align:center">Markdown、公众号</td>
+</tr>
+<tr>
+<td style="text-align:center">聚合图床</td>
+<td style="text-align:center">上传后自动分发至多个图床，支持多种格式</td>
+<td style="text-align:center">多平台分发</td>
+</tr>
+<tr>
+<td style="text-align:center">PostImage</td>
+<td style="text-align:center">国外图床，最大上传 24MB，支持 BBCode/HTML/Markdown 链接</td>
+<td style="text-align:center">技术论坛、社交媒体</td>
+</tr>
+<tr>
+<td style="text-align:center"><a target="_blank" rel="noopener" href="http://UPLOAD.CC">UPLOAD.CC</a></td>
+<td style="text-align:center">香港图床，支持 Chrome 插件、最大上传 10MB</td>
+<td style="text-align:center">博客写作</td>
+</tr>
+<tr>
+<td style="text-align:center"><a target="_blank" rel="noopener" href="http://ImageHub.cc">ImageHub.cc</a></td>
+<td style="text-align:center">全球 CDN 加速，最大上传 10MB，支持多地备份</td>
+<td style="text-align:center">稳定性要求高的场景</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Markdown 插图：推荐 <a target="_blank" rel="noopener" href="http://SM.MS">SM.MS</a>、路过图床，支持直接生成 <img src="/blog/" alt=""> 格式链接。</li>
+<li>国内访问速度：微博图床仍是最快之一，但需借助工具（如 iPic）上传。</li>
+<li>稳定性优先：Imgur 和 PostImage 在国外非常稳定，适合长期托管。</li>
+<li>自动化上传：PicGo + <a target="_blank" rel="noopener" href="http://SM.MS">SM.MS</a> 是最常见的组合，支持 VS Code 插件集成。</li>
+</ul>
+<p>表格生成器：</p>
+<ul>
+<li>TableConvert：将 Excel/CSV 转换为 Markdown 表格。</li>
+<li><a target="_blank" rel="noopener" href="https://www.tablesgenerator.com/markdown_tables">Tables Generator</a></li>
+</ul>
+<p>美化内容：图文辅助</p>
+<ul>
+<li>Carbon / Polacode：生成美观的代码截图。</li>
+<li><a target="_blank" rel="noopener" href="http://draw.io">draw.io</a> / ProcessOn：绘制流程图、架构图、UML 图。</li>
+<li>Canva / Figma：制作封面图、插图、社交媒体配图。</li>
+</ul>
+<p>写作后：发布与分发</p>
+<p>自建站：WordPress、Hexo、Hugo（推荐 GitHub Pages 托管）</p>
+<p>排版工具：</p>
+<ul>
+<li>mdnice：自动美化 Markdown，适配知乎/公众号。</li>
+<li>Aclickall：一键生成公众号排版样式。</li>
+</ul>
+<p>多平台分发工具：</p>
+<p>BlogHelper：支持一键发布到多个平台。</p>
+<h2 id="大型文件存储">大型文件存储</h2>
+<h3 id="图片">图片</h3>
+<p>Postimages</p>
+<ul>
+<li>网站: <a target="_blank" rel="noopener" href="https://postimages.org/">https://postimages.org/</a></li>
+<li>特点:</li>
+<li>适合快速上传和生成图片链接。</li>
+<li>不需要注册，可以直接上传图片并获得链接。</li>
+<li>提供图片缩略图和直接链接。</li>
+<li>上传后图片会长期存储，适用于网站和博客图片托管。</li>
+</ul>
+<h3 id="视频">视频</h3>
+<p>TinyPic (由 Photobucket 提供)</p>
+<ul>
+<li>网站: <a target="_blank" rel="noopener" href="https://tinypic.com/">https://tinypic.com/</a></li>
+<li>特点:</li>
+<li>支持上传并生成快速共享链接。</li>
+<li>上传后，链接可以嵌入到社交媒体、论坛、博客中。</li>
+<li>图片和视频都支持托管，但TinyPic已关闭，现由Photobucket服务接管。</li>
+</ul>
+<h3 id="Git-LFS">Git LFS</h3>
+<p>GitHub 提供的用于存储大型文件的服务叫 Git LFS（Git Large File Storage）。</p>
+<h4 id="什么是-Git-LFS？">什么是 Git LFS？</h4>
+<p>Git LFS 是一个 Git 扩展，用于处理 Git 仓库中的大型文件（如图片、视频、音频等），它通过将大型文件存储在 GitHub 的独立存储区来解决 Git 的性能瓶颈。</p>
+<h4 id="Git-LFS-的免费额度：">Git LFS 的免费额度：</h4>
+<p>GitHub 为免费账户提供一定的 LFS 存储和带宽额度：</p>
+<p>免费存储：每个 GitHub 账户提供 1GB 的 LFS 存储。</p>
+<p>免费带宽：每个月 1GB 的下载带宽。</p>
+<p>如果超出免费额度，你可以选择购买更多的存储和带宽。</p>
+<h4 id="Git-LFS-的工作原理：">Git LFS 的工作原理：</h4>
+<p>文件替代：Git LFS 用一个指向大文件的指针来替代文件内容，将文件本身存储在 GitHub 提供的 LFS 存储空间中。</p>
+<p>文件存储：实际的文件内容存储在 GitHub 的 LFS 存储中，Git 只会管理这些文件的指针。</p>
+<p>下载/上传：当你从仓库克隆或拉取代码时，Git LFS 会自动下载大文件，反之，当你提交大文件时，Git LFS 会将其上传到 GitHub。</p>
+<h4 id="如何使用-Git-LFS？">如何使用 Git LFS？</h4>
+<ol>
+<li>安装 Git LFS：<br>
+首先需要安装 Git LFS，可以通过 Git LFS 官方网站 下载和安装。</li>
 </ol>
-<blockquote>
-<p>Sheldon: Woman, you’re playing with forces beyond your ken.<br>
-Penny: Yeah, your ken can kiss my Barbie.</p>
-</blockquote>
-<p>Penny想要气气Sheldon，她故意把ken曲解成玩偶，说：你的ken可以和我芭比娃娃谈恋爱。<br>
-出处: <a target="_blank" rel="noopener" href="https://forum.wordreference.com/threads/your-ken-can-kiss-my-barbie.3999874/">word reference</a>。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git lfs install</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>初始化 Git LFS：<br>
+在你的 Git 仓库中初始化 Git LFS。</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git lfs track <span class="string">&quot;*.jpg&quot;</span>   <span class="comment"># 例如跟踪所有 jpg 格式的图片</span></span><br><span class="line">git add .gitattributes   <span class="comment"># 添加 .gitattributes 文件</span></span><br><span class="line">git add &lt;large-file&gt;     <span class="comment"># 添加大型文件</span></span><br><span class="line">git commit -m <span class="string">&quot;Add large file&quot;</span></span><br><span class="line">git push origin main     <span class="comment"># 推送到 GitHub</span></span><br></pre></td></tr></table></figure>
 <ol start="3">
-<li>a rule of thumb: 经验法则。见<a target="_blank" rel="noopener" href="https://www.collinsdictionary.com/zh/dictionary/english/a-rule-of-thumb">柯林斯词典</a>。</li>
-<li>vice versa: 反之亦然。近义词：conversely.</li>
-<li>on (a) par with: 相当，对等，可媲美。See more: <a target="_blank" rel="noopener" href="https://www.merriam-webster.com/dictionary/on%20%28a%29%20par%20with">on (a) par with</a></li>
-<li>IMHO: In my humble opinion 恕我直言。humble 谦逊的。</li>
-<li>AFAIK: As far as I know 据我所知。</li>
-<li>miss the forest for the trees. / not see the forest for the trees. 只见树木、不见森林。参见<a target="_blank" rel="noopener" href="https://dictionary.cambridge.org/us/dictionary/english/not-see-the-forest-for-the-trees">剑桥词典</a>：to be unable to get a general understanding of a situation because you are too worried about the details 因太注重细节而无法从整体角度看待问题。</li>
-<li>irrespective of 不论</li>
-<li>sell sb out. 出卖某人。</li>
-<li>mood swings. 情绪波动。 swing v. 摇摆；swings n. 秋千。</li>
-<li>buy that… 相信…… e.g. I didn’t think the doctor was gonna buy that…</li>
-<li>Roger that. / Copy that. <a target="_blank" rel="noopener" href="https://medium.com/@methark/copy-that-or-roger-that-whats-the-difference-63ad1367ff22">参考</a></li>
+<li>使用 Git LFS 进行提交：<br>
+每次提交时，Git LFS 会自动处理大文件，并将它们上传到 GitHub LFS 存储区。</li>
 </ol>
+<h5 id="优势：">优势：</h5>
+<p>减少仓库体积：通过将大文件存储在 Git LFS 中，可以避免将大文件直接存储在 Git 仓库中，从而提高 Git 的性能。</p>
+<p>适用于大文件：适合管理图像、视频、二进制文件等大型文件，避免 Git 克隆和拉取过程变得过于缓慢。</p>
+<h4 id="总结：">总结：</h4>
+<p>Git LFS 是 GitHub 提供的用于管理和存储大型文件的扩展服务，适合存储需要频繁更改或管理的大文件（如图片、音频、视频等）。</p>
 
       
     </div>
@@ -1254,7 +1450,7 @@ Penny: Yeah, your ken can kiss my Barbie.</p>
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2023/10/28/study/movie/murder-on-the-orient-express/">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/03/site/markdown-syntax/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/blog/images/avatar.gif">
@@ -1268,7 +1464,7 @@ Penny: Yeah, your ken can kiss my Barbie.</p>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/blog/2023/10/28/study/movie/murder-on-the-orient-express/" class="post-title-link" itemprop="url">Muder on The Orient Express</a>
+            <a href="/blog/2024/01/03/site/markdown-syntax/" class="post-title-link" itemprop="url">Markdown Syntax</a>
         </h2>
 
         <div class="post-meta">
@@ -1278,14 +1474,14 @@ Penny: Yeah, your ken can kiss my Barbie.</p>
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2023-10-28 19:00:54" itemprop="dateCreated datePublished" datetime="2023-10-28T19:00:54+00:00">2023-10-28</time>
+              <time title="Created: 2024-01-03 16:40:05" itemprop="dateCreated datePublished" datetime="2024-01-03T16:40:05+00:00">2024-01-03</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 07:24:28" itemprop="dateModified" datetime="2026-08-11T07:24:28+00:00">2026-08-11</time>
+                <time title="Modified: 2026-08-11 09:41:52" itemprop="dateModified" datetime="2026-08-11T09:41:52+00:00">2026-08-11</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1293,7 +1489,7 @@ Penny: Yeah, your ken can kiss my Barbie.</p>
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/study/" itemprop="url" rel="index"><span itemprop="name">study</span></a>
+                  <a href="/blog/categories/site/" itemprop="url" rel="index"><span itemprop="name">site</span></a>
                 </span>
             </span>
 
@@ -1308,66 +1504,32 @@ Penny: Yeah, your ken can kiss my Barbie.</p>
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="人物">人物</h2>
-<p>Daisy Armstrong<br>
-Miss Mary Debenham<br>
-Colonel Arbuthnott<br>
-Hercule Poirot<br>
-Lieutenant Dubosc</p>
-<h2 id="台词">台词</h2>
-<p>1930<br>
-The Armstrong Home, Long Island, N.Y.</p>
-<p>Armstrong Baby Kidnapped.<br>
-Crushed toys, crushed hopes.</p>
-<p>Baby taken in dead of night.<br>
-Armstrong Household Turmoil.<br>
-Baby Daisy Taken from Armstrong Home.<br>
-Staff Wakened But Hopeless.</p>
-<p>DAISY ARMSTRONG - Child of Colonel and Mrs. Hamish Armstrong was dramatically kidnapped last night while her parents were being driven to the airport by their chauffeur.</p>
-<p>The discover of the missing child was made by the chauffeur on returning from the airport where he found the family nurse bound and gagged in the room next to Baby Daisy’s bedroom.</p>
-<p>The police were informed immediately and investigations began at once. They described kidnapping as one of the most vicious crimous that can be commited.</p>
-<p>Daisy found slain.</p>
-<p>5 years later<br>
-The Asian side of Istanbul.</p>
-<p>Miss Mary Debenham</p>
-<p>Salacak</p>
-<p>Welcome aboard.</p>
-<p>Bosporus Ferry will shortly depart from Istanbul Sirkeci Station, connecting with the Orient Express.</p>
-<p>Here’s your ticket, Monsieur Poirot. I’m afraid you’ve still got another hour.</p>
-<p>Well, then, please do not wait.</p>
-<p>Not wait? After all you’ve done for us, Monsieur Poriot? My general’s orders were to ensure your safe departure. He also wished me to thank you again for saving the honor of the British garrison in Jordan. The brigadier’s confession was opportune. I say, how did you do it? Was it the old thumbscrew, you know, the rack?</p>
-<p>Chop-chop</p>
-<p>I hope we did the right thing booking you into a hotel on the European side rather than the Asia side.<br>
-我希望我们给你预订的是欧洲酒店而不是亚洲酒店是正确的。</p>
-<p>I have no prejudice with either continent.</p>
-<p>The crossing should be pleasant. The Borporus is always calm.<br>
-穿行应该会很愉快。博斯普鲁斯海峡总是很平静。</p>
-<p>You have crossed by the ferry?<br>
-你乘渡船穿渡过？</p>
-<h2 id="词汇">词汇</h2>
-<p>Daisy: 雏菊；人名（黛西）。<br>
-kidnapped: 绑架<br>
-crushed: 破灭的，压碎的<br>
-dead of night: 深夜时分，the quietest, darkest part of the night.<br>
-household: 家庭；户；家；家族；家人<br>
-turmoil: n. 动荡；动乱<br>
-staff: 工作人员。<br>
-wakened: waken v. 醒来。wakened 是waken的过去式和过去分词。<br>
-chauffeur: 美/ʃoʊˈfɝː/ 英/ˈʃəʊ.fər/ 司机。<br>
-bound: 这里是bind的过去式和过去分词，绑定、捆绑。<br>
-gag: n./v. 堵嘴；插科打诨。<br>
-vicious: 恶毒的。<br>
-slay: To kill in a violent way. 残忍杀害。<br>
-Istanbul: 伊斯坦布尔，为土耳其首都直至1923年。<br>
-Salacak: garrison: A group of soliders living in or defending a town or building, or the building that the soliders live in. 守军；守备营地。<br>
-Jordan: 约旦（西亚国家）。<br>
-brigadier: 英/ˌbrɪɡəˈdɪə®/ 美/ˌbrɪɡəˈdɪr/ 准将。<br>
-confession: n. 坦白；忏悔；认罪。<br>
-opportune: 英/ˈɒpətjuːn/ 美/ˌɑːpərˈtuːn/ 适当的；及时的。<br>
-thumbscrew: 螺丝；拧紧 。<br>
-rack: chop-chop: chop v./n. 砍；向下猛击。chop-chop 赶快，快点。<br>
-Bosporus Strait: 博斯普鲁斯海峡，又称伊斯坦布尔海峡，介于欧洲与亚洲之间的海峡。它长约30公里，最宽处宽约3,700米，最窄处宽约700米。北连黑海，南通马尔马拉海（土耳其内海），土耳其第一大城伊斯坦堡即隔着博斯普鲁斯海峡与小亚细亚半岛相望，是黑海沿岸国家出海第一关口，也是连接黑海以及地中海的唯一航道。因此，俄罗斯的黑海舰队必须通过博斯普鲁斯海峡才能前往地中海。<br>
-ferry: n./v. 渡船；摆渡</p>
+          <h2 id="Mermaid">Mermaid</h2>
+<p><a target="_blank" rel="noopener" href="https://mermaid.js.org/syntax/flowchart.html">Flowchart</a></p>
+<h2 id="Tips">Tips</h2>
+<h3 id="转义反引号">转义反引号</h3>
+<p>参考<a target="_blank" rel="noopener" href="https://www.growingwiththeweb.com/2015/06/escaping-backtick-in-markdown.html">链接</a>。</p>
+<ol>
+<li>在code block之外，使用&quot;&quot;转义即可：</li>
+</ol>
+<pre>\`</pre>
+<ol start="2">
+<li>用将反引号放入双反引号中，即</li>
+</ol>
+<pre>`` ` ``</pre>
+<ol start="3">
+<li>在代码块开始前缩进4个空格，即</li>
+</ol>
+<pre>    `</pre>
+<ol start="4">
+<li>使用fenced代码块：</li>
+</ol>
+<pre>```<br>`<br>```</pre>
+<h2 id="References">References</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.jetbrains.com/help/hub/markdown-syntax.html">JetBrains: Markdown Syntax</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.markdownguide.org/extended-syntax/">Markdown Guide: Extended Syntax</a></li>
+</ul>
 
       
     </div>
@@ -1386,7 +1548,7 @@ ferry: n./v. 渡船；摆渡</p>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/blog/page/12/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/12/">12</a><span class="page-number current">13</span>
+    <a class="extend prev" rel="prev" href="/blog/page/12/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/12/">12</a><span class="page-number current">13</span><a class="page-number" href="/blog/page/14/">14</a><a class="page-number" href="/blog/page/15/">15</a><a class="extend next" rel="next" href="/blog/page/14/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -1454,7 +1616,7 @@ ferry: n./v. 渡船；摆渡</p>
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">129</span>
+          <span class="site-state-item-count">148</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

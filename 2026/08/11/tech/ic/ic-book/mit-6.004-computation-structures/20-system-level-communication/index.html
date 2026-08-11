@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="整理自 MIT OCW 6.004 Computation Structures（Spring 2017）L20 注解幻灯片。 源网页：20.1 Annotated Slides | System-level Communication 讲师：Chris Terman。图片直接引用 OCW 原站链接。  L20：系统级通信（System-level Communication） 本讲从“接口比实">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MIT 6.004：L20 系统级通信">
+<meta property="og:url" content="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/20-system-level-communication/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="整理自 MIT OCW 6.004 Computation Structures（Spring 2017）L20 注解幻灯片。 源网页：20.1 Annotated Slides | System-level Communication 讲师：Chris Terman。图片直接引用 OCW 原站链接。  L20：系统级通信（System-level Communication） 本讲从“接口比实">
+<meta property="og:locale">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/45e577ee34a0057221f26fd2927a1b0c_Slide02.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f4550335571e98dc1b6c05495017e9e0_Slide03.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/73bceda39323f678815af8ad225d3655_Slide04.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e486b6055e1054fd63f632b56d1bbfbc_Slide05.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ae1a13d3a3a915246744e406718b9346_Slide06.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5d9b7f957c5df0b7996cd71b1453c903_Slide07.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8f328b683a0f6538ea7a4d4f7188d776_Slide08.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f91fd6bf986fb060d2a17fd387c14f31_Slide09.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3b5d7d1509610565c9da79485c47311b_Slide10.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/547404e26fe0a3f8c0a45210f6b73048_Slide11.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/cd84c313e3e6481efb00c866f5061eb2_Slide12.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/485c413a18de64d9b511a168f74f5008_Slide13.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/30dd6dee964db2fc6a3ff3fe61c70d3f_Slide14.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/aae7afc6203cf297aa4711386ff93fd4_Slide15.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/fa2493bc98a3f94ccd5bf2c4a85356c4_Slide16.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/db70c975f5486a29c04f761fcad5089a_Slide17.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/30c09568fb25eed78047bf8e4799fd03_Slide18.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4af1b80e2a5679eb8fd71a7d3a59c9c2_Slide19.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/054e50bf15e14e06a02ffcd0b08f6a72_Slide20.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/abf1f2bce6f5671439c836a6509b8d19_Slide21.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7cc9ecd1103469f2cf4a1f71e8f1c553_Slide22.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/259c477b7c50dddd21cbfcfbc2b79b50_Slide23.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/03892845f4ee4af09a7019f31d899a56_Slide24.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/00c2729745ea1783c3b84e55f56e8663_Slide25.png">
+<meta property="article:published_time" content="2026-08-11T17:43:00.000Z">
+<meta property="article:modified_time" content="2026-08-11T09:41:52.785Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="ic">
+<meta property="article:tag" content="semiconductor">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/45e577ee34a0057221f26fd2927a1b0c_Slide02.png">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/20-system-level-communication/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>MIT 6.004：L20 系统级通信 | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/20-system-level-communication/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MIT 6.004：L20 系统级通信
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2026-08-11 17:43:00 / Modified: 09:41:52" itemprop="dateCreated datePublished" datetime="2026-08-11T17:43:00+00:00">2026-08-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/ic/" itemprop="url" rel="index"><span itemprop="name">ic</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>整理自 MIT OCW <strong>6.004 Computation Structures</strong>（Spring 2017）L20 注解幻灯片。</p>
+<p>源网页：<a target="_blank" rel="noopener" href="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/pages/c20/c20s1/">20.1 Annotated Slides | System-level Communication</a></p>
+<p>讲师：Chris Terman。图片直接引用 OCW 原站链接。</p>
+</blockquote>
+<h1>L20：系统级通信（System-level Communication）</h1>
+<p>本讲从“接口比实现更长久”出发，回顾背板 <strong>bus</strong> 的电气与时序困境（传输线、反射、clock skew），总结网络经验：<strong>单驱动、点对点、差分、时钟恢复（8b/10b）</strong>；再看 PCIe/QPI 等串行链路，并以渐近复杂度比较 ring / mesh / hypercube 等拓扑。</p>
+<h2 id="1-计算机系统中的技术（Computer-System-Technologies）">1. 计算机系统中的技术（Computer System Technologies）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/45e577ee34a0057221f26fd2927a1b0c_Slide02.png" alt="Computer System Technologies" width="80%"/>
+<p>系统拼合多种技术；各部件有功能与接口规格。设计者按规格集成，不必深究内部实现。技术换代（更小更快更省电）时，<strong>接口不变即可几乎无痛替换</strong>——架构中真正长久的是接口。</p>
+<h2 id="2-接口天长地久（Interfaces-Last-Forever）">2. 接口天长地久（Interfaces Last Forever）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f4550335571e98dc1b6c05495017e9e0_Slide03.png" alt="Interfaces Last Forever" width="80%"/>
+<p>长寿接口靠有用抽象：可靠字节流网络、窗口图形、日志文件系统等，屏蔽包/错误恢复/存储阵列细节。晶体管翻倍、网络 1→10 GHz、内存×4 时，不能每次从零重写。</p>
+<p>反例：</p>
+<ul>
+<li><strong>Endianness</strong>：IBM big-endian vs Intel little-endian——本地方便，联网传数值却终身麻烦（“一时方便，终身后悔”）</li>
+<li>早期 IBM PC 扩展总线直接暴露当时 x86 引脚与协议——与特定 CPU 绑定，后续升级痛苦</li>
+</ul>
+<h2 id="3-系统接口与模块化（System-Interfaces-Modularity）">3. 系统接口与模块化（System Interfaces &amp; Modularity）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/73bceda39323f678815af8ad225d3655_Slide04.png" alt="System Interfaces and Modularity" width="80%"/>
+<p>演进：机柜间 ad-hoc 线缆 → 背板插板模块化（厂商互不兼容）→ 标准化背板促进竞争 → 性能再涨，背板带宽不够 → 又回到专用通道林立。工程现实最终推向 <strong>通用单向点对点</strong> 通道；异步点对点大体取代早期同步多信号总线。系统级通信多为线传，速率从 kHz 到 GHz 带来新电气问题。</p>
+<h2 id="4-总线、互连，然后呢？（Buses-Interconnect-So…-）">4. 总线、互连，然后呢？（Buses, Interconnect, So…?）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e486b6055e1054fd63f632b56d1bbfbc_Slide05.png" alt="Buses Interconnect" width="80%"/>
+<p>电路理论里导线是<strong>等势节点</strong>：电压处处相同、变化瞬时传到各端，距离被抽象掉。当电压变化速率相对电磁波渡越时间不再“慢”时，该模型失效。Heaviside 的电报方程早已说明信号沿导线有限速传播——高速下导线是 <strong>transmission line</strong>，长度与传播必须计入。</p>
+<h2 id="5-真实导线的电气模型（Electrical-Model-for-Real-Wires）">5. 真实导线的电气模型（Electrical Model for Real Wires）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ae1a13d3a3a915246744e406718b9346_Slide06.png" alt="Electrical Model for Real Wires" width="80%"/>
+<p>无穷小段模型参数：<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>R</mi></mrow><annotation encoding="application/x-tex">R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0077em;">R</span></span></span></span>（电阻）、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi></mrow><annotation encoding="application/x-tex">L</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal">L</span></span></span></span>（自感）、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi></mrow><annotation encoding="application/x-tex">C</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0715em;">C</span></span></span></span>（对参考的电容）、<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>G</mi></mrow><annotation encoding="application/x-tex">G</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal">G</span></span></span></span>（绝缘泄漏）。高速、芯片/板级距离下近似<strong>无损</strong>传输线，特征阻抗 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>Z</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">Z_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0715em;">Z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0715em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，波速 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>∼</mo><mn>1</mn><mi mathvariant="normal">/</mi><msqrt><mrow><mi>L</mi><mi>C</mi></mrow></msqrt></mrow><annotation encoding="application/x-tex">\sim 1/\sqrt{LC}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.3669em;"></span><span class="mrel">∼</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1.1767em;vertical-align:-0.25em;"></span><span class="mord">1/</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.9267em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord mathnormal">L</span><span class="mord mathnormal" style="margin-right:0.0715em;">C</span></span></span><span style="top:-2.8867em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1133em;"><span></span></span></span></span></span></span></span></span>。PCB 约 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>Z</mi><mn>0</mn></msub><mo>∼</mo><mn>50</mn><mtext> </mtext><mi mathvariant="normal">Ω</mi></mrow><annotation encoding="application/x-tex">Z_0\sim 50\,\Omega</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0715em;">Z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0715em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∼</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord">50</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">Ω</span></span></span></span>，传播约 18 cm/ns。</p>
+<p>电压阶跃沿导线传播；末端若不吸收能量会<strong>反射回波</strong>。需用匹配 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>Z</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">Z_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0715em;">Z</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0715em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 的电阻端接；双向传播则两端都要端接。</p>
+<h2 id="6-现实后果（Real-world-Consequences）">6. 现实后果（Real-world Consequences）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5d9b7f957c5df0b7996cd71b1453c903_Slide07.png" alt="Real-world Consequences" width="80%"/>
+<p>残留能量会污染后续传输。通用药方是<strong>给更多时间稳定</strong>——高性能系统不可接受，故须减小储能效应：端接不准→反射；阻抗不连续→处处小回波；容性负载限制翻转速率→runt pulse；LC <strong>ringing</strong> 需等阻尼到合法电平。精心设计布线与驱动可把性能损失压到最低。</p>
+<h2 id="7-空间与时间约束（Space-Time-Constraints）">7. 空间与时间约束（Space &amp; Time Constraints）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8f328b683a0f6538ea7a4d4f7188d776_Slide08.png" alt="Space and Time Constraints" width="80%"/>
+<p>信息沿时间保持 → <strong>storage</strong>；送到另一部件 → <strong>communication</strong>。通信耗时，时序预算必须计入：传播速度上限、部件间距、翻转过快引发的效应。时序模型要显式包含 <strong>wire delay</strong>。</p>
+<h2 id="8-门、线与延迟（Gates-Wires-Delays）">8. 门、线与延迟（Gates, Wires, &amp; Delays）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f91fd6bf986fb060d2a17fd387c14f31_Slide09.png" alt="Gates Wires and Delays" width="80%"/>
+<p>早期模型给门固定 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">P</mi><mi mathvariant="normal">D</mi></mrow></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{PD}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">PD</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>；实际输出延迟<strong>依赖负载</strong>。Jade 会按负载算有效传播延迟。减负载或加 <strong>buffer</strong> 驱动重载可加速。优化时常追踪重载慢线。以下转向系统级互连设计。</p>
+<h2 id="9-接口标准：背板总线（Interface-Standard-Backplane-Bus）">9. 接口标准：背板总线（Interface Standard: Backplane Bus）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3b5d7d1509610565c9da79485c47311b_Slide10.png" alt="Backplane Bus" width="80%"/>
+<p>可扩展性经典做法：主板插槽连接附加卡。信号含电源、时钟，以及：</p>
+<ul>
+<li><strong>地址线</strong>：选端点（内存、控制寄存器等）</li>
+<li><strong>数据线</strong>：传数据（早期常多比特并行）</li>
+<li><strong>控制线</strong>：事务起止与应答</li>
+</ul>
+<p>多槽可并联同一组线，靠地址区分目标。合称 <strong>system bus</strong>——按既定协议传数据的一组线。</p>
+<h2 id="10-并行总线事务（A-Parallel-Bus-Transaction）">10. 并行总线事务（A Parallel Bus Transaction）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/547404e26fe0a3f8c0a45210f6b73048_Slide11.png" alt="A Parallel Bus Transaction" width="80%"/>
+<p>CLK 的 assertion 边沿放信号、sample 边沿采样；周期须够传播并稳定。发起者 <strong>bus master</strong>“拥有”总线（可转移所有权）；指明操作、地址、写数据。<strong>Slave</strong> 在 sample 边沿认地址后执行，完成时用控制线应答，可读回数据。无响应时总线逻辑可超时报错。事务率不太高（如 &lt;50 MHz）时此架构很实用。</p>
+<h2 id="11-总线线即传输线（Bus-Lines-as-Transmission-Lines）">11. 总线线即传输线（Bus Lines as Transmission Lines）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/cd84c313e3e6481efb00c866f5061eb2_Slide12.png" alt="Bus Lines as Transmission Lines" width="80%"/>
+<p>提速后问题放大：周期太短，主设备驱动→长总线传播→各接收端建立时间不够；<strong>clock skew</strong> 导致一卡新周期开驱动、另一卡仍在驱动 → 冲突噪声；连接器阻抗不连续产生多路小反射——像在大峡谷里喊话，回声淹没内容。总线最终留给低速，高速另寻他法。</p>
+<h2 id="12-与此同时，箱外……（Meanwhile-Outside-the-Box…）">12. 与此同时，箱外……（Meanwhile, Outside the Box…）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/485c413a18de64d9b511a168f74f5008_Slide13.png" alt="Meanwhile Outside the Box" width="80%"/>
+<p>网络连接米级距离：比特组成带目的地址与校验的 <strong>packet</strong>，可请求重传。协议栈分层：物理层收发包并检错；网络层寻址路由；传输层提供可靠字节流与 <strong>flow control</strong>。关键思想：在 “best effort” 包网上堆可靠通道——上层可恢复下层错误，比每层 100% 可靠更便宜稳健。</p>
+<h2 id="13-经验：单驱动、点对点（Lessons-learned-Single-driver-point-to-point）">13. 经验：单驱动、点对点（Lessons learned: Single driver; point-to-point）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/30dd6dee964db2fc6a3ff3fe61c70d3f_Slide14.png" alt="Single driver point-to-point" width="80%"/>
+<p>共享线上多驱动/多接收电气问题多；减速能缓解但高性能不许。网络经验：<strong>point-to-point</strong>（单驱动↔单接收）最快最干净。<strong>差分信号</strong>测两线电压差，共模噪声抵消——几乎所有高速链路都用。</p>
+<h2 id="14-经验：时钟恢复（Lessons-learned-Clock-recovery）">14. 经验：时钟恢复（Lessons learned: Clock recovery）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/aae7afc6203cf297aa4711386ff93fd4_Slide15.png" alt="Clock recovery" width="80%"/>
+<p>不必另送时钟：接收端用跳变推断部分边沿，再以标称周期 + <strong>PLL</strong> 生成本地时钟。包前加 <strong>training sequence</strong>；特殊分隔序列标数据起点。为保足够跳变，常用 <strong>8b/10b</strong>（8 消息比特→10 传输比特，保证至多每 6 bit 时间有跳变）。真正只需一路比特流即可同时恢复时钟与数据。</p>
+<h2 id="15-串行点对点通信（Serial-Point-to-point-Communications）">15. 串行点对点通信（Serial, Point-to-point Communications）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/fa2493bc98a3f94ccd5bf2c4a85356c4_Slide16.png" alt="Serial Point-to-point" width="80%"/>
+<p>局域网从共享介质变为点对点（如 BaseT 收发各一对差分线），经交换机/路由器多跳转发。系统内互连同理：点对点 + 交换路由。各链路独立，多链路可并行提供大带宽；交换机少量缓冲处理短暂争用。</p>
+<h2 id="16-改进总线（Improving-on-the-Bus）">16. 改进总线（Improving on the Bus）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/db70c975f5486a29c04f761fcad5089a_Slide17.png" alt="Improving on the Bus" width="80%"/>
+<p>串行点对点取代并行总线：无共享、无 clock skew、电气环境可控 → GHz 级。要更高吞吐可<strong>多 lane 并行</strong>，用逻辑重组分包。扩展卡仍插主板，但接到的是点对点链路而非并行总线。</p>
+<h2 id="17-当今计算机中的通信（Communications-in-Today’s-Computers）">17. 当今计算机中的通信（Communications in Today’s Computers）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/30c09568fb25eed78047bf8e4799fd03_Slide18.png" alt="Communications in Today Computers" width="80%"/>
+<p>例：Intel Core i7 系——CPU 直连内存求带宽；其余经 <strong>QPI</strong>（每向 20 路差分，可达每向每秒 64 亿次 20-bit 传输）。USB、PCIe、网口、SATA、音频等亦为串行链路。有了足够强的通用互连，何必堆一堆专用通道——有如魔戒“一戒御众”。</p>
+<h2 id="18-串行链路例：PCI-Express（Example-serial-link-PCI-Express-PCIe-）">18. 串行链路例：PCI Express（Example serial link: PCI Express (PCIe)）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4af1b80e2a5679eb8fd71a7d3a59c9c2_Slide19.png" alt="PCI Express" width="80%"/>
+<p>PCIe Gen2 单 <strong>lane</strong>：5 Gb/s，LVDS，约 100 Ω 特征阻抗。物理层：训练序列 + 起止定界 + 载荷；链路层用序号与 CRC 检丢包并重传、做流控；事务层重组多 lane、按头识别接收方。8 lane 可达约 4 GB/s，够显卡等高性能外设。主板通信已从并行总线转向少量串行点对点——更快、更可靠、更省电、更紧凑。</p>
+<h2 id="19-通信拓扑（Communication-Topologies）">19. 通信拓扑（Communication Topologies）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/054e50bf15e14e06a02ffcd0b08f6a72_Slide20.png" alt="Communication Topologies" width="80%"/>
+<p>连接 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 个需互发消息的部件（如多核）。约定：每点对点链路代价 1、传一跳时间 1、链路可并行。渐近看吞吐、最坏延迟、硬件代价。</p>
+<ul>
+<li><strong>总线</strong>：吞吐 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">O</span><span class="mopen">(</span><span class="mord">1</span><span class="mclose">)</span></span></span></span>，延迟 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">O</span><span class="mopen">(</span><span class="mord">1</span><span class="mclose">)</span></span></span></span>，代价 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">O</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span></li>
+<li><strong>Ring</strong>：吞吐/代价 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">O</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span>，最坏延迟 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">O</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span>——适合流水线或延迟不敏感场景</li>
+</ul>
+<h2 id="20-二次代价拓扑（Quadratic-cost-Topologies）">20. 二次代价拓扑（Quadratic-cost Topologies）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/abf1f2bce6f5671439c836a6509b8d19_Slide21.png" alt="Quadratic-cost Topologies" width="80%"/>
+<ul>
+<li><strong>完全图</strong>：链路 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><msup><mi>N</mi><mn>2</mn></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(N^2)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">O</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.109em;">N</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> → 吞吐与代价 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><msup><mi>N</mi><mn>2</mn></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(N^2)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">O</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.109em;">N</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span>，延迟 1</li>
+<li><strong>Crossbar</strong>：每时隙每行/列一条消息，吞吐 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">O</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span>、延迟 1，开关数 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>N</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">N^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.109em;">N</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span> → 代价仍 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><msup><mi>N</mi><mn>2</mn></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(N^2)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">O</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.109em;">N</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></li>
+</ul>
+<h2 id="21-网格拓扑（Mesh-Topologies）">21. 网格拓扑（Mesh Topologies）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7cc9ecd1103469f2cf4a1f71e8f1c553_Slide22.png" alt="Mesh Topologies" width="80%"/>
+<p>2D/3D mesh：每节点连固定邻居 → 链路数 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>∝</mo><mi>N</mi></mrow><annotation encoding="application/x-tex">\propto N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mrel">∝</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span>，吞吐与代价 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">O</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span>。最坏延迟：2D 为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><msqrt><mi>n</mi></msqrt><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(\sqrt{n})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1.0503em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">O</span><span class="mopen">(</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8003em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord mathnormal">n</span></span></span><span style="top:-2.7603em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2397em;"><span></span></span></span></span></span><span class="mclose">)</span></span></span></span>，3D 为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mroot><mi>n</mi><mn>3</mn></mroot><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(\sqrt[3]{n})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1.0503em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">O</span><span class="mopen">(</span><span class="mord sqrt"><span class="katex-root"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6586em;"><span style="top:-2.8363em;"><span class="pstrut" style="height:2.5em;"></span><span class="katex-sizing reset-size6 size1 mtight"><span class="mord mtight"><span class="mord mtight">3</span></span></span></span></span></span></span></span><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8003em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord mathnormal">n</span></span></span><span style="top:-2.7603em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2397em;"><span></span></span></span></span></span><span class="mclose">)</span></span></span></span>。布局规整、每节点硬件常量、延迟适中 → 实验多核常用 2D 四邻接 mesh。</p>
+<h2 id="22-对数延迟网络（Logarithmic-latency-Networks）">22. 对数延迟网络（Logarithmic-latency Networks）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/259c477b7c50dddd21cbfcfbc2b79b50_Slide23.png" alt="Logarithmic-latency Networks" width="80%"/>
+<p><strong>Hypercube</strong>、<strong>tree</strong> 提供对数级延迟。CM-1 Connection Machine 用超立方连接多达 65536 个简单处理器（各连 16 邻）；后期改树，且靠近根的链路容量更大。</p>
+<h2 id="23-通信技术：延迟（Communication-Technologies-Latency）">23. 通信技术：延迟（Communication Technologies: Latency）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/03892845f4ee4af09a7019f31d899a56_Slide24.png" alt="Communication Technologies Latency" width="80%"/>
+<p>三维世界中部件最坏距离下界 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mroot><mi>N</mi><mn>3</mn></mroot><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(\sqrt[3]{N})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1.1767em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">O</span><span class="mopen">(</span><span class="mord sqrt"><span class="katex-root"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8102em;"><span style="top:-2.988em;"><span class="pstrut" style="height:2.5em;"></span><span class="katex-sizing reset-size6 size1 mtight"><span class="mord mtight"><span class="mord mtight">3</span></span></span></span></span></span></span></span><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.9267em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span><span style="top:-2.8867em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1133em;"><span></span></span></span></span></span><span class="mclose">)</span></span></span></span>，平面布局 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><msqrt><mi>N</mi></msqrt><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(\sqrt{N})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1.1767em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">O</span><span class="mopen">(</span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.9267em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span><span style="top:-2.8867em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.08em" viewBox="0 0 400000 1080" preserveAspectRatio="xMinYMin slice"><path d="M95,702
+c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14
+c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54
+c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10
+s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429
+c69,-144,104.5,-217.7,106.5,-221
+l0 -0
+c5.3,-9.3,12,-14,20,-14
+H400000v40H845.2724
+s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
+c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
+M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1133em;"><span></span></span></span></span></span><span class="mclose">)</span></span></span></span>——延迟应反映物理距离。总线/crossbar 上 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 个连接的容性负载也抬高下界。<strong>Mesh</strong> 随 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 增长不必强行加长线，对连接上千处理器的高容量片上网络很有吸引力。</p>
+<h2 id="24-通信的未来（Communications-Futures）">24. 通信的未来（Communications Futures）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/00c2729745ea1783c3b84e55f56e8663_Slide25.png" alt="Communications Futures" width="80%"/>
+<p>总结：点对点已成系统级主流；超高带宽内存通道仍用多信号并行但工程极谨慎。无线连接移动设备，并研究自动发现附近外设。多核将有数十到数百核，片上网络拓扑（高带宽 + 低延迟）仍是活跃研究——未来十年对片上网络工程师很有戏。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/ic/" rel="tag"># ic</a>
+              <a href="/blog/tags/semiconductor/" rel="tag"># semiconductor</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/19-concurrency-and-synchronization/" rel="prev" title="MIT 6.004：L19 并发与同步">
+      <i class="fa fa-chevron-left"></i> MIT 6.004：L19 并发与同步
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/21-parallel-processing/" rel="next" title="MIT 6.004：L21 并行处理">
+      MIT 6.004：L21 并行处理 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-text">L20：系统级通信（System-level Communication）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84%E6%8A%80%E6%9C%AF%EF%BC%88Computer-System-Technologies%EF%BC%89"><span class="nav-text">1. 计算机系统中的技术（Computer System Technologies）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E6%8E%A5%E5%8F%A3%E5%A4%A9%E9%95%BF%E5%9C%B0%E4%B9%85%EF%BC%88Interfaces-Last-Forever%EF%BC%89"><span class="nav-text">2. 接口天长地久（Interfaces Last Forever）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E7%B3%BB%E7%BB%9F%E6%8E%A5%E5%8F%A3%E4%B8%8E%E6%A8%A1%E5%9D%97%E5%8C%96%EF%BC%88System-Interfaces-Modularity%EF%BC%89"><span class="nav-text">3. 系统接口与模块化（System Interfaces &amp; Modularity）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E6%80%BB%E7%BA%BF%E3%80%81%E4%BA%92%E8%BF%9E%EF%BC%8C%E7%84%B6%E5%90%8E%E5%91%A2%EF%BC%9F%EF%BC%88Buses-Interconnect-So%E2%80%A6-%EF%BC%89"><span class="nav-text">4. 总线、互连，然后呢？（Buses, Interconnect, So…?）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-%E7%9C%9F%E5%AE%9E%E5%AF%BC%E7%BA%BF%E7%9A%84%E7%94%B5%E6%B0%94%E6%A8%A1%E5%9E%8B%EF%BC%88Electrical-Model-for-Real-Wires%EF%BC%89"><span class="nav-text">5. 真实导线的电气模型（Electrical Model for Real Wires）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-%E7%8E%B0%E5%AE%9E%E5%90%8E%E6%9E%9C%EF%BC%88Real-world-Consequences%EF%BC%89"><span class="nav-text">6. 现实后果（Real-world Consequences）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-%E7%A9%BA%E9%97%B4%E4%B8%8E%E6%97%B6%E9%97%B4%E7%BA%A6%E6%9D%9F%EF%BC%88Space-Time-Constraints%EF%BC%89"><span class="nav-text">7. 空间与时间约束（Space &amp; Time Constraints）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#8-%E9%97%A8%E3%80%81%E7%BA%BF%E4%B8%8E%E5%BB%B6%E8%BF%9F%EF%BC%88Gates-Wires-Delays%EF%BC%89"><span class="nav-text">8. 门、线与延迟（Gates, Wires, &amp; Delays）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#9-%E6%8E%A5%E5%8F%A3%E6%A0%87%E5%87%86%EF%BC%9A%E8%83%8C%E6%9D%BF%E6%80%BB%E7%BA%BF%EF%BC%88Interface-Standard-Backplane-Bus%EF%BC%89"><span class="nav-text">9. 接口标准：背板总线（Interface Standard: Backplane Bus）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#10-%E5%B9%B6%E8%A1%8C%E6%80%BB%E7%BA%BF%E4%BA%8B%E5%8A%A1%EF%BC%88A-Parallel-Bus-Transaction%EF%BC%89"><span class="nav-text">10. 并行总线事务（A Parallel Bus Transaction）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#11-%E6%80%BB%E7%BA%BF%E7%BA%BF%E5%8D%B3%E4%BC%A0%E8%BE%93%E7%BA%BF%EF%BC%88Bus-Lines-as-Transmission-Lines%EF%BC%89"><span class="nav-text">11. 总线线即传输线（Bus Lines as Transmission Lines）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#12-%E4%B8%8E%E6%AD%A4%E5%90%8C%E6%97%B6%EF%BC%8C%E7%AE%B1%E5%A4%96%E2%80%A6%E2%80%A6%EF%BC%88Meanwhile-Outside-the-Box%E2%80%A6%EF%BC%89"><span class="nav-text">12. 与此同时，箱外……（Meanwhile, Outside the Box…）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#13-%E7%BB%8F%E9%AA%8C%EF%BC%9A%E5%8D%95%E9%A9%B1%E5%8A%A8%E3%80%81%E7%82%B9%E5%AF%B9%E7%82%B9%EF%BC%88Lessons-learned-Single-driver-point-to-point%EF%BC%89"><span class="nav-text">13. 经验：单驱动、点对点（Lessons learned: Single driver; point-to-point）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#14-%E7%BB%8F%E9%AA%8C%EF%BC%9A%E6%97%B6%E9%92%9F%E6%81%A2%E5%A4%8D%EF%BC%88Lessons-learned-Clock-recovery%EF%BC%89"><span class="nav-text">14. 经验：时钟恢复（Lessons learned: Clock recovery）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#15-%E4%B8%B2%E8%A1%8C%E7%82%B9%E5%AF%B9%E7%82%B9%E9%80%9A%E4%BF%A1%EF%BC%88Serial-Point-to-point-Communications%EF%BC%89"><span class="nav-text">15. 串行点对点通信（Serial, Point-to-point Communications）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#16-%E6%94%B9%E8%BF%9B%E6%80%BB%E7%BA%BF%EF%BC%88Improving-on-the-Bus%EF%BC%89"><span class="nav-text">16. 改进总线（Improving on the Bus）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#17-%E5%BD%93%E4%BB%8A%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%B8%AD%E7%9A%84%E9%80%9A%E4%BF%A1%EF%BC%88Communications-in-Today%E2%80%99s-Computers%EF%BC%89"><span class="nav-text">17. 当今计算机中的通信（Communications in Today’s Computers）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#18-%E4%B8%B2%E8%A1%8C%E9%93%BE%E8%B7%AF%E4%BE%8B%EF%BC%9APCI-Express%EF%BC%88Example-serial-link-PCI-Express-PCIe-%EF%BC%89"><span class="nav-text">18. 串行链路例：PCI Express（Example serial link: PCI Express (PCIe)）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#19-%E9%80%9A%E4%BF%A1%E6%8B%93%E6%89%91%EF%BC%88Communication-Topologies%EF%BC%89"><span class="nav-text">19. 通信拓扑（Communication Topologies）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#20-%E4%BA%8C%E6%AC%A1%E4%BB%A3%E4%BB%B7%E6%8B%93%E6%89%91%EF%BC%88Quadratic-cost-Topologies%EF%BC%89"><span class="nav-text">20. 二次代价拓扑（Quadratic-cost Topologies）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#21-%E7%BD%91%E6%A0%BC%E6%8B%93%E6%89%91%EF%BC%88Mesh-Topologies%EF%BC%89"><span class="nav-text">21. 网格拓扑（Mesh Topologies）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#22-%E5%AF%B9%E6%95%B0%E5%BB%B6%E8%BF%9F%E7%BD%91%E7%BB%9C%EF%BC%88Logarithmic-latency-Networks%EF%BC%89"><span class="nav-text">22. 对数延迟网络（Logarithmic-latency Networks）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#23-%E9%80%9A%E4%BF%A1%E6%8A%80%E6%9C%AF%EF%BC%9A%E5%BB%B6%E8%BF%9F%EF%BC%88Communication-Technologies-Latency%EF%BC%89"><span class="nav-text">23. 通信技术：延迟（Communication Technologies: Latency）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#24-%E9%80%9A%E4%BF%A1%E7%9A%84%E6%9C%AA%E6%9D%A5%EF%BC%88Communications-Futures%EF%BC%89"><span class="nav-text">24. 通信的未来（Communications Futures）</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">148</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">44</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://cuda-doc.readthedocs.io/" title="https:&#x2F;&#x2F;cuda-doc.readthedocs.io" rel="noopener" target="_blank">CUDA中文手册</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://infiniband-doc.readthedocs.io/" title="https:&#x2F;&#x2F;infiniband-doc.readthedocs.io&#x2F;" rel="noopener" target="_blank">InfiniBand中文手册</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+      
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.css">
+
+
+  
+
+</body>
+</html>

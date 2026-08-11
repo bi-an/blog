@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="整理自 MIT OCW 6.004 Computation Structures（Spring 2017）L11 注解幻灯片。 源网页：11.1 Annotated Slides | Compilers 讲师：Chris Terman。图片直接引用 OCW 原站链接。  L11：编译器（Compilers） 本讲从高级语言出发，对比解释（interpretation）与编译（compilatio">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MIT 6.004：L11 编译器">
+<meta property="og:url" content="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/11-compilers/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="整理自 MIT OCW 6.004 Computation Structures（Spring 2017）L11 注解幻灯片。 源网页：11.1 Annotated Slides | Compilers 讲师：Chris Terman。图片直接引用 OCW 原站链接。  L11：编译器（Compilers） 本讲从高级语言出发，对比解释（interpretation）与编译（compilatio">
+<meta property="og:locale">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/34f32b11c581ff12667156e220c1d1ec_Slide02.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/738299146f0f4ed47c7bcfff7b478be4_Slide03.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/48f454c0102fb9926d436a2eff7218e9_Slide04.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/29a385517f7edf981057120150adb734_Slide05.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/233447eb861533c3c448eb9ef9d4b661_Slide06.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/825798a692e25db597d14e2da4a6398c_Slide07.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ebbf386f679fd739c66c430c39218887_Slide08.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/db87d6c47aeb9561ee46c34daad70753_Slide09.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/fc46224972d36e38f05d11df9762adec_Slide10.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9caa57defd4fffd7bed534f088dd1f91_Slide11.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ba763f151457b1ac2dc01f44414ca27e_Slide12.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d944798591b63162596bfdf8cb6d681b_Slide13.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/45bfd0bcd813e7cbbe9323f931d7f1c0_Slide14.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a941a67234d1f22d3fa42c7c702efb69_Slide15.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e0df7a87249a55fe123034ed552b2041_Slide16.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9b4c4190a20ac6643dfa4bc5f291932b_Slide17.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2aea3cfc8fef0a08bbb45daad2105917_Slide18.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/64a9cb31fc7ff29454ea494731283989_Slide19.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/09e316d5be168697e77c1b9932ba9b88_Slide20.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5283f7ef2c81e6613a47b1287b97112b_Slide21.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e2851f4acb66e276dd58f805c78547ff_Slide22.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9745dcee00abd38fedf6bdbf64c28ad6_Slide23.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c07ac52814a15709afe1089f313e91a4_Slide24.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d5bb16690b95c1a92d8126b1593dc24a_Slide25.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/aa454c55254f5781d15cc3a3d3ec2894_Slide26.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1fb9ffb6c636f88ddc811b97c8d91b45_Slide27.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c57a3560c024f3d97fc001d3247a0e63_Slide28.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/70fbef84308277a4b8a8a22f4dac1221_Slide29.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/028d57410f7f34e71ef7d055a5c962bb_Slide30.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/557a429644ca286f12a8661b4a1f9026_Slide31.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5667f4503d1c5154b88e7ba16ecd7e52_Slide32.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1ab32272df7cf36304a2526469a78a24_Slide33.png">
+<meta property="article:published_time" content="2026-08-11T17:34:00.000Z">
+<meta property="article:modified_time" content="2026-08-11T09:41:52.784Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="ic">
+<meta property="article:tag" content="semiconductor">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/34f32b11c581ff12667156e220c1d1ec_Slide02.png">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/11-compilers/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>MIT 6.004：L11 编译器 | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/11-compilers/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MIT 6.004：L11 编译器
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2026-08-11 17:34:00 / Modified: 09:41:52" itemprop="dateCreated datePublished" datetime="2026-08-11T17:34:00+00:00">2026-08-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/ic/" itemprop="url" rel="index"><span itemprop="name">ic</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>整理自 MIT OCW <strong>6.004 Computation Structures</strong>（Spring 2017）L11 注解幻灯片。</p>
+<p>源网页：<a target="_blank" rel="noopener" href="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/pages/c11/c11s1/">11.1 Annotated Slides | Compilers</a></p>
+<p>讲师：Chris Terman。图片直接引用 OCW 原站链接。</p>
+</blockquote>
+<h1>L11：编译器（Compilers）</h1>
+<p>本讲从高级语言出发，对比<strong>解释</strong>（interpretation）与<strong>编译</strong>（compilation），再用递归下降模板把 C 表达式/语句翻译成 Beta 汇编；随后拆解现代编译器前端（词法/语法/语义）、中间表示（IR / CFG）与多遍优化，最后做代码生成。</p>
+<h2 id="1-编程语言（Programming-Languages）">1. 编程语言（Programming Languages）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/34f32b11c581ff12667156e220c1d1ec_Slide02.png" alt="Programming Languages" width="80%"/>
+<p>已学 Beta ISA：对寄存器中的 32 位数据做 datapath 操作，并访存、改 PC；指令由 opcode / 源 / 目的等字段组成 32 位字。汇编一句对应一条指令，程序员自己管寄存器与主存，并把数组访问等拆成 Beta 操作序列。</p>
+<p>高级语言用变量与数据结构抽象存储与搬移；用表达式与赋值 <code>=</code> 等紧凑描述本需大量汇编的计算。本讲核心：如何把高级语言程序翻译成可在 Beta 上运行的代码。</p>
+<h2 id="2-高级语言（High-Level-Languages）">2. 高级语言（High-Level Languages）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/738299146f0f4ed47c7bcfff7b478be4_Slide03.png" alt="High-Level Languages" width="80%"/>
+<p>以欧几里得求 GCD 的 C 代码为例；课程用 C 的简单子集作示例语言。C 由 Dennis Ritchie 在 AT&amp;T Bell Labs 为 Unix 而开发；此后语言不断加入 OOP、新数据结构与控制结构。</p>
+<p>用高级语言可不提寄存器、具体指令等 ISA 细节 → 写得更快、更易读、更易维护；类型检查可拦下把字符串赋给数值变量等错误；动态分配等可自动化。因抽象掉具体 ISA，同一源码可移植到不同机器。代价取决于执行策略：<strong>解释</strong>还是<strong>编译</strong>。</p>
+<h2 id="3-解释（Interpretation）">3. 解释（Interpretation）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/48f454c0102fb9926d436a2eff7218e9_Slide04.png" alt="Interpretation" width="80%"/>
+<p>在真实机器 M1 上跑<strong>解释器</strong>，模拟易编程的抽象机 M2：每条 M2 操作由一段 M1 指令序列实现。解释器 + M1 ≡ M2 的一种实现。</p>
+<p>常见多层解释：笔记本 x86 跑 Python 解释器 → 加载 SciPy → 一条 SciPy 命令展开为大量 Python 语句 → 每条 Python 再变成数百条 x86。适合一次性计算或探索算法；不必手写全部机器指令。</p>
+<h2 id="4-编译（Compilation）">4. 编译（Compilation）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/29a385517f7edf981057120150adb734_Slide05.png" alt="Compilation" width="80%"/>
+<p>对需反复执行、愿付前期成本的任务用编译：把高级程序 P2 <strong>逐语句翻译</strong>成 M1 上的等价程序 P1（并不在翻译时“跑”P2）。做翻译的程序叫<strong>编译器</strong>（compiler）。</p>
+<p>编译一次得 P1，之后直接跑 P1，避免运行时解析源码与多层解释开销。换不同编译器可把同一 P2 落到 M2、M3… 而不改写源码。解释与编译都能改源码、抽象真实机器，且在现代系统中并存。</p>
+<h2 id="5-解释-vs-编译（Interpretation-vs-Compilation）">5. 解释 vs. 编译（Interpretation vs. Compilation）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/233447eb861533c3c448eb9ef9d4b661_Slide06.png" alt="Interpretation vs Compilation" width="80%"/>
+<p>对语句 <code>x+2</code>：解释器处理时立刻取 <code>x</code> 并加 2；编译器则生成 <code>LD</code>/<code>ADD</code> 等指令，留待以后执行。循环中解释器会反复处理同一语句；编译器只生成指令一次。</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>解释</th>
+<th>编译</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>开销时机</td>
+<td>执行中反复处理源码</td>
+<td>一次性编译，执行更快</td>
+</tr>
+<tr>
+<td>类型/操作决策</td>
+<td>运行时，更灵活</td>
+<td>编译期，换速度</td>
+</tr>
+<tr>
+<td>开发循环</td>
+<td>改完即可跑</td>
+<td>compile–run–debug 可能更慢</td>
+</tr>
+</tbody>
+</table>
+<p>一般编译代码快得多；解释器可按 <code>x</code> 的实际类型改变行为。</p>
+<h2 id="6-编译器（Compilers）">6. 编译器（Compilers）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/825798a692e25db597d14e2da4a6398c_Slide07.png" alt="Compilers" width="80%"/>
+<p>编译器：把高级语言程序翻译成功能等价的机器指令序列（汇编）。先检查良构性：语句是否合法、有无 nonsensical 运算（字符串+整数）、未初始化就用等；并警告浮点转整型可能溢出等。</p>
+<p>通过检查后生成高效指令，常重排计算使序列更短更快。现代优化编译器耐心探索替代方案，往往难被手写汇编全面超越。本节先看简单编译策略，再看现代编译器结构。</p>
+<h2 id="7-简单编译策略（A-Simple-Compilation-Strategy）">7. 简单编译策略（A Simple Compilation Strategy）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ebbf386f679fd739c66c430c39218887_Slide08.png" alt="A Simple Compilation Strategy" width="80%"/>
+<p>两主例程：<code>compile_statement</code> 与 <code>compile_expr</code>。源程序是语句序列，反复调前者。关注四类语句：无条件（求一次表达式）、复合（顺序执行子语句）、条件（<code>if</code>：测表达式真则执行 then）、以及迭代（后文 WHILE）。</p>
+<p><code>compile_expr</code>：生成求值表达式并把结果放在某寄存器的代码。表达式含常量、标量/数组变量、赋值、一元/二元运算、过程调用等。复杂算术可拆成一元/二元序列。过程调用留待下讲；其余表达式与语句可直接模板化。</p>
+<h2 id="8-compile-expr-expr-→-Rx">8. compile_expr(expr) → Rx</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/db87d6c47aeb9561ee46c34daad70753_Slide09.png" alt="compile_expr expr to Rx" width="80%"/>
+<ul>
+<li><strong>小常量</strong>（<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mn>32768</mn><mo>∼</mo><mo>+</mo><mn>32767</mn></mrow><annotation encoding="application/x-tex">-32768\sim +32767</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">−</span><span class="mord">32768</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∼</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">+</span><span class="mord">32767</span></span></span></span>）：<code>CMOVE</code> 符号扩展进寄存器；过大则存主存再 <code>LD</code>。</li>
+<li><strong>变量</strong>：与大常量类似，<code>LD</code> 对应地址。</li>
+<li><strong>数组访问</strong>：元素连续存放；先 <code>compile_expr</code> 得下标于 Rx，再乘元素字节数 <code>bsize</code>（如 <code>int</code> 为 4）得字节偏移，<code>LD</code> 基址+偏移取元素。</li>
+<li><strong>赋值</strong>：<code>compile_expr</code> 得右值，再 <code>ST</code> 到左值变量。</li>
+<li><strong>算术</strong>：分别编译操作数到寄存器，再生成对应 ALU 指令。</li>
+</ul>
+<h2 id="9-编译表达式（Compiling-Expressions）">9. 编译表达式（Compiling Expressions）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/fc46224972d36e38f05d11df9762adec_Slide10.png" alt="Compiling Expressions" width="80%"/>
+<p>例：含减、乘、加的赋值。按赋值模板递归编译 RHS；遇乘则再编译左操作数（减）……直至叶节点（变量/常量）生成 <code>LD</code>/<code>CMOVE</code>，再沿表达式树上返回生成 <code>SUB</code>/<code>MUL</code>/<code>ADD</code> 等。</p>
+<p>此即<strong>递归下降</strong>（recursive descent）：每层表达式更简单，直到叶。相邻指令还可做<strong>窥孔优化</strong>（peephole）：如 <code>CMOVE</code> 后跟算术常可合并为带常量操作数的单条指令。</p>
+<h2 id="10-compile-statement">10. compile_statement</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9caa57defd4fffd7bed534f088dd1f91_Slide11.png" alt="compile_statement" width="80%"/>
+<ul>
+<li><strong>无条件语句</strong>：多为赋值或过程调用 → 交给 <code>compile_expr</code>。</li>
+<li><strong>复合语句</strong>：对每个子语句递归 <code>compile_statement</code>；生成代码首尾相接，顺序执行。</li>
+</ul>
+<h2 id="11-compile-statement：条件（Conditional）">11. compile_statement：条件（Conditional）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ba763f151457b1ac2dc01f44414ca27e_Slide12.png" alt="compile_statement Conditional" width="80%"/>
+<p>最简 <code>if</code>：编译 test；若寄存器为 FALSE，分支跳过 THEN 子句代码。完整 <code>if–else</code> 用分支与标签保证：真走 then，假走 else，最后汇合。</p>
+<p>编译本质：套用许多小模板，逐步把代码生成拆成更小任务，并用分支把碎片粘成正确控制流。</p>
+<h2 id="12-compile-statement：迭代（Iteration）">12. compile_statement：迭代（Iteration）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d944798591b63162596bfdf8cb6d681b_Slide13.png" alt="compile_statement Iteration" width="80%"/>
+<p><code>while</code> 模板类似 <code>if</code>，末尾再分支回测表达式，直到为假。可重组使每轮只需一条 <code>BT</code>（原模板每轮 <code>BF</code>+<code>BR</code>），循环内小优化可累积为大收益。</p>
+<p><code>for</code> 可改写成带更新的 <code>while</code>，再套上述模板。</p>
+<h2 id="13-综合：阶乘（Putting-It-All-Together-Factorial）">13. 综合：阶乘（Putting It All Together: Factorial）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/45bfd0bcd813e7cbbe9323f931d7f1c0_Slide14.png" alt="Putting It All Together Factorial" width="80%"/>
+<p>把模板套到迭代版阶乘：生成代码可与前述模板一一对应。非最优，但递归下降已够用。</p>
+<h2 id="14-优化：值留在寄存器（Optimization-keep-values-in-regs）">14. 优化：值留在寄存器（Optimization: keep values in regs）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a941a67234d1f22d3fa42c7c702efb69_Slide15.png" alt="Optimization keep values in regs" width="80%"/>
+<p>让变量住在专用寄存器而非主存，可少掉大量 <code>LD</code>/<code>ST</code>。例：循环内指令从 10 条减到 4。优化编译器擅长找此类机会。下文改谈更一般的现代编译器流程。</p>
+<h2 id="15-现代编译器解剖（Anatomy-of-a-Modern-Compiler）">15. 现代编译器解剖（Anatomy of a Modern Compiler）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e0df7a87249a55fe123034ed552b2041_Slide16.png" alt="Anatomy of a Modern Compiler" width="80%"/>
+<ul>
+<li><strong>前端 / 分析</strong>：检查语法与语义（类型等），把源程序变成机器无关的<strong>中间表示</strong>（IR）。多语言前端可共享同一 IR。</li>
+<li><strong>后端 / 综合</strong>：先对 IR 做优化（如把与循环下标无关的运算提出循环），再为目标 ISA 生成指令，并做 ISA 相关窥孔优化（如 Beta 上 <code>CMOVE</code>+算术合并）。</li>
+</ul>
+<h2 id="16-前端：词法分析（Frontend-Stages-Lexical-Analysis）">16. 前端：词法分析（Frontend Stages: Lexical Analysis）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9b4c4190a20ac6643dfa4bc5f291932b_Slide17.png" alt="Frontend Stages Lexical Analysis" width="80%"/>
+<p>扫描源文本 → <strong>token</strong> 序列；空格/制表/换行仅作分隔，扫描后去掉。token 带文件名、行号、列号以便报错。非法 token（如 C 中 <code>3x</code>）在此阶段报错。</p>
+<h2 id="17-前端：语法分析（Frontend-Stages-Syntactic-Analysis）">17. 前端：语法分析（Frontend Stages: Syntactic Analysis）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2aea3cfc8fef0a08bbb45daad2105917_Slide18.png" alt="Frontend Stages Syntactic Analysis" width="80%"/>
+<p><strong>解析</strong>（parsing）把 token 建成<strong>语法树</strong>（syntax tree）：操作数挂到一元/二元结点，语句各部件标好角色。树结点标签与前述代码模板对应；深度优先遍历即可按标签选模板——但先还要做语义分析与变换。</p>
+<h2 id="18-前端：语义分析（Frontend-Stages-Semantic-Analysis）">18. 前端：语义分析（Frontend Stages: Semantic Analysis）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/64a9cb31fc7ff29454ea494731283989_Slide19.png" alt="Frontend Stages Semantic Analysis" width="80%"/>
+<p>在语法树上检查语义：如 <code>x = &quot;bananas&quot;</code> 语法合法（左变量、右表达式），但若 <code>x</code> 声明为 <code>int</code>、右为 string，则类型不兼容。查符号表比对类型。完成后：语法树表示语法正确且语义有效的、语言无关的操作序列。</p>
+<h2 id="19-中间表示-IR（Intermediate-Representation）">19. 中间表示 IR（Intermediate Representation）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/09e316d5be168697e77c1b9932ba9b88_Slide20.png" alt="Intermediate Representation IR" width="80%"/>
+<p>语法树是常用 IR：独立于源语言与目标 ISA；保留运算顺序与分组信息；允许多前端共用一后端。后端可再分：机无关 IR 优化 → 代码生成到目标 ISA。</p>
+<h2 id="20-常用-IR：控制流图（Common-IR-Control-Flow-Graph）">20. 常用 IR：控制流图（Common IR: Control Flow Graph）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5283f7ef2c81e6613a47b1287b97112b_Slide21.png" alt="Common IR Control Flow Graph" width="80%"/>
+<p>把语法树重组为<strong>控制流图</strong>（CFG）：结点为<strong>基本块</strong>（basic block）——以分支结束的赋值/表达式序列；一旦进入块，块内其余操作会连着执行。边表示跳转到哪一块。基本块边界清晰，便于寄存器暂存变量等优化。</p>
+<h2 id="21-GCD-的控制流图（Control-Flow-Graph-for-GCD）">21. GCD 的控制流图（Control Flow Graph for GCD）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e2851f4acb66e276dd58f805c78547ff_Slide22.png" alt="Control Flow Graph for GCD" width="80%"/>
+<p>条件分支块有标 <code>T</code>/<code>F</code> 的两条出边；无条件则单出边。若某块仅一个前驱，可继承前驱关于寄存器中已有 <code>x</code>、<code>y</code> 等知识；多前驱时只能用<strong>所有</strong>前驱共有的知识。CFG 很像高级 FSM 的状态转移图。</p>
+<h2 id="22-IR-优化（IR-Optimization）">22. IR 优化（IR Optimization）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9745dcee00abd38fedf6bdbf64c28ad6_Slide23.png" alt="IR Optimization" width="80%"/>
+<p>对 CFG 多遍简单优化，反复直到无进展；简单变换可叠加出复杂效果。例：</p>
+<ul>
+<li><strong>死代码消除</strong>（dead code elimination）：删从未用的赋值、不可达块</li>
+<li><strong>常量传播</strong>（constant propagation）：已知常量的变量用常量替换引用</li>
+<li><strong>常量折叠</strong>（constant folding）：编译期求常量表达式</li>
+</ul>
+<h2 id="23-IR-优化示例-I（Example-IR-Optimizations-I）">23. IR 优化示例 I（Example IR Optimizations I）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c07ac52814a15709afe1089f313e91a4_Slide24.png" alt="Example IR Optimizations I" width="80%"/>
+<p>略造作的源程序及其 CFG：复杂表达式拆成简单二元运算，中间结果用临时名如 <code>_t1</code>。</p>
+<h2 id="24-IR-优化示例-II（Example-IR-Optimizations-II）">24. IR 优化示例 II（Example IR Optimizations II）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d5bb16690b95c1a92d8126b1593dc24a_Slide25.png" alt="Example IR Optimizations II" width="80%"/>
+<p>死代码消除去掉第一块中对 <code>Z</code> 的赋值（后续再赋且中间未用）；发现 <code>X=3</code> 且不再赋值 → 传播常量 3；再常量折叠。</p>
+<h2 id="25-IR-优化示例-II（续）（Example-IR-Optimizations-II-continued）">25. IR 优化示例 II（续）（Example IR Optimizations II continued）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/aa454c55254f5781d15cc3a3d3ec2894_Slide26.png" alt="Example IR Optimizations II continued" width="80%"/>
+<p>更新后的 CFG 再一轮：死代码 → 常量传播 → 常量折叠。</p>
+<h2 id="26-IR-优化示例-III（Example-IR-Optimizations-III）">26. IR 优化示例 III（Example IR Optimizations III）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1fb9ffb6c636f88ddc811b97c8d91b45_Slide27.png" alt="Example IR Optimizations III" width="80%"/>
+<p>两轮后赋值大减。第三轮：死代码；并可判定条件分支结果 → 删空块或不可达块。</p>
+<h2 id="27-IR-优化示例-IV（Example-IR-Optimizations-IV）">27. IR 优化示例 IV（Example IR Optimizations IV）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c57a3560c024f3d97fc001d3247a0e63_Slide28.png" alt="Example IR Optimizations IV" width="80%"/>
+<p>IR 明显变小。继续常量传播、折叠、死代码消除。</p>
+<h2 id="28-IR-优化示例-IV（续）（Example-IR-Optimizations-IV-continued）">28. IR 优化示例 IV（续）（Example IR Optimizations IV continued）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/70fbef84308277a4b8a8a22f4dac1221_Slide29.png" alt="Example IR Optimizations IV continued" width="80%"/>
+<p>直到无更多优化。简单变换反复应用，得到算同一最终 <code>Z</code> 的更小程序。还可加：公共子表达式消除、循环无关代码外提、短循环展开等。</p>
+<h2 id="29-代码生成（Code-Generation）">29. 代码生成（Code Generation）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/028d57410f7f34e71ef7d055a5c962bb_Slide30.png" alt="Code Generation" width="80%"/>
+<ol>
+<li>为变量分配专用寄存器；不够则部分进内存，必要时 <code>LD</code>/<code>ST</code></li>
+<li>用模板把赋值/运算译成指令</li>
+<li>按块发射，加标签与分支</li>
+<li>重排基本块以尽量消除无条件跳转</li>
+<li>目标相关窥孔优化</li>
+</ol>
+<h2 id="30-综合-I（Putting-It-All-Together-I）">30. 综合 I（Putting It All Together I）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/557a429644ca286f12a8661b4a1f9026_Slide31.png" alt="Putting It All Together I" width="80%"/>
+<p>GCD 的原 CFG 与略优化 CFG：主要是常量传播/折叠。顶块关于变量的知识不能简单传到多前驱的 <code>if</code> 块。</p>
+<h2 id="31-综合-II（Putting-It-All-Together-II）">31. 综合 II（Putting It All Together II）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5667f4503d1c5154b88e7ba16ecd7e52_Slide32.png" alt="Putting It All Together II" width="80%"/>
+<p>为 <code>x</code>、<code>y</code> 专配寄存器；按块生成；重排消除无条件分支。结果已接近人手难再明显改进的质量。</p>
+<h2 id="32-小结（Summary）">32. 小结（Summary）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1ab32272df7cf36304a2526469a78a24_Slide33.png" alt="Summary" width="80%"/>
+<p>编译流水线按序把源码变为高质量汇编：词法 → 语法 → 语义 → IR/CFG 优化 → 代码生成。耐心多遍优化常优于手写汇编；程序员专注功能正确性，细节交给编译器。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/ic/" rel="tag"># ic</a>
+              <a href="/blog/tags/semiconductor/" rel="tag"># semiconductor</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/10-assembly-language-models-of-computation/" rel="prev" title="MIT 6.004：L10 汇编语言与计算模型">
+      <i class="fa fa-chevron-left"></i> MIT 6.004：L10 汇编语言与计算模型
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/12-procedures-and-stacks/" rel="next" title="MIT 6.004：L12 过程与栈">
+      MIT 6.004：L12 过程与栈 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-text">L11：编译器（Compilers）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80%EF%BC%88Programming-Languages%EF%BC%89"><span class="nav-text">1. 编程语言（Programming Languages）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E9%AB%98%E7%BA%A7%E8%AF%AD%E8%A8%80%EF%BC%88High-Level-Languages%EF%BC%89"><span class="nav-text">2. 高级语言（High-Level Languages）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E8%A7%A3%E9%87%8A%EF%BC%88Interpretation%EF%BC%89"><span class="nav-text">3. 解释（Interpretation）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E7%BC%96%E8%AF%91%EF%BC%88Compilation%EF%BC%89"><span class="nav-text">4. 编译（Compilation）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-%E8%A7%A3%E9%87%8A-vs-%E7%BC%96%E8%AF%91%EF%BC%88Interpretation-vs-Compilation%EF%BC%89"><span class="nav-text">5. 解释 vs. 编译（Interpretation vs. Compilation）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-%E7%BC%96%E8%AF%91%E5%99%A8%EF%BC%88Compilers%EF%BC%89"><span class="nav-text">6. 编译器（Compilers）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-%E7%AE%80%E5%8D%95%E7%BC%96%E8%AF%91%E7%AD%96%E7%95%A5%EF%BC%88A-Simple-Compilation-Strategy%EF%BC%89"><span class="nav-text">7. 简单编译策略（A Simple Compilation Strategy）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#8-compile-expr-expr-%E2%86%92-Rx"><span class="nav-text">8. compile_expr(expr) → Rx</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#9-%E7%BC%96%E8%AF%91%E8%A1%A8%E8%BE%BE%E5%BC%8F%EF%BC%88Compiling-Expressions%EF%BC%89"><span class="nav-text">9. 编译表达式（Compiling Expressions）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#10-compile-statement"><span class="nav-text">10. compile_statement</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#11-compile-statement%EF%BC%9A%E6%9D%A1%E4%BB%B6%EF%BC%88Conditional%EF%BC%89"><span class="nav-text">11. compile_statement：条件（Conditional）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#12-compile-statement%EF%BC%9A%E8%BF%AD%E4%BB%A3%EF%BC%88Iteration%EF%BC%89"><span class="nav-text">12. compile_statement：迭代（Iteration）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#13-%E7%BB%BC%E5%90%88%EF%BC%9A%E9%98%B6%E4%B9%98%EF%BC%88Putting-It-All-Together-Factorial%EF%BC%89"><span class="nav-text">13. 综合：阶乘（Putting It All Together: Factorial）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#14-%E4%BC%98%E5%8C%96%EF%BC%9A%E5%80%BC%E7%95%99%E5%9C%A8%E5%AF%84%E5%AD%98%E5%99%A8%EF%BC%88Optimization-keep-values-in-regs%EF%BC%89"><span class="nav-text">14. 优化：值留在寄存器（Optimization: keep values in regs）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#15-%E7%8E%B0%E4%BB%A3%E7%BC%96%E8%AF%91%E5%99%A8%E8%A7%A3%E5%89%96%EF%BC%88Anatomy-of-a-Modern-Compiler%EF%BC%89"><span class="nav-text">15. 现代编译器解剖（Anatomy of a Modern Compiler）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#16-%E5%89%8D%E7%AB%AF%EF%BC%9A%E8%AF%8D%E6%B3%95%E5%88%86%E6%9E%90%EF%BC%88Frontend-Stages-Lexical-Analysis%EF%BC%89"><span class="nav-text">16. 前端：词法分析（Frontend Stages: Lexical Analysis）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#17-%E5%89%8D%E7%AB%AF%EF%BC%9A%E8%AF%AD%E6%B3%95%E5%88%86%E6%9E%90%EF%BC%88Frontend-Stages-Syntactic-Analysis%EF%BC%89"><span class="nav-text">17. 前端：语法分析（Frontend Stages: Syntactic Analysis）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#18-%E5%89%8D%E7%AB%AF%EF%BC%9A%E8%AF%AD%E4%B9%89%E5%88%86%E6%9E%90%EF%BC%88Frontend-Stages-Semantic-Analysis%EF%BC%89"><span class="nav-text">18. 前端：语义分析（Frontend Stages: Semantic Analysis）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#19-%E4%B8%AD%E9%97%B4%E8%A1%A8%E7%A4%BA-IR%EF%BC%88Intermediate-Representation%EF%BC%89"><span class="nav-text">19. 中间表示 IR（Intermediate Representation）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#20-%E5%B8%B8%E7%94%A8-IR%EF%BC%9A%E6%8E%A7%E5%88%B6%E6%B5%81%E5%9B%BE%EF%BC%88Common-IR-Control-Flow-Graph%EF%BC%89"><span class="nav-text">20. 常用 IR：控制流图（Common IR: Control Flow Graph）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#21-GCD-%E7%9A%84%E6%8E%A7%E5%88%B6%E6%B5%81%E5%9B%BE%EF%BC%88Control-Flow-Graph-for-GCD%EF%BC%89"><span class="nav-text">21. GCD 的控制流图（Control Flow Graph for GCD）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#22-IR-%E4%BC%98%E5%8C%96%EF%BC%88IR-Optimization%EF%BC%89"><span class="nav-text">22. IR 优化（IR Optimization）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#23-IR-%E4%BC%98%E5%8C%96%E7%A4%BA%E4%BE%8B-I%EF%BC%88Example-IR-Optimizations-I%EF%BC%89"><span class="nav-text">23. IR 优化示例 I（Example IR Optimizations I）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#24-IR-%E4%BC%98%E5%8C%96%E7%A4%BA%E4%BE%8B-II%EF%BC%88Example-IR-Optimizations-II%EF%BC%89"><span class="nav-text">24. IR 优化示例 II（Example IR Optimizations II）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#25-IR-%E4%BC%98%E5%8C%96%E7%A4%BA%E4%BE%8B-II%EF%BC%88%E7%BB%AD%EF%BC%89%EF%BC%88Example-IR-Optimizations-II-continued%EF%BC%89"><span class="nav-text">25. IR 优化示例 II（续）（Example IR Optimizations II continued）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#26-IR-%E4%BC%98%E5%8C%96%E7%A4%BA%E4%BE%8B-III%EF%BC%88Example-IR-Optimizations-III%EF%BC%89"><span class="nav-text">26. IR 优化示例 III（Example IR Optimizations III）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#27-IR-%E4%BC%98%E5%8C%96%E7%A4%BA%E4%BE%8B-IV%EF%BC%88Example-IR-Optimizations-IV%EF%BC%89"><span class="nav-text">27. IR 优化示例 IV（Example IR Optimizations IV）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#28-IR-%E4%BC%98%E5%8C%96%E7%A4%BA%E4%BE%8B-IV%EF%BC%88%E7%BB%AD%EF%BC%89%EF%BC%88Example-IR-Optimizations-IV-continued%EF%BC%89"><span class="nav-text">28. IR 优化示例 IV（续）（Example IR Optimizations IV continued）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#29-%E4%BB%A3%E7%A0%81%E7%94%9F%E6%88%90%EF%BC%88Code-Generation%EF%BC%89"><span class="nav-text">29. 代码生成（Code Generation）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#30-%E7%BB%BC%E5%90%88-I%EF%BC%88Putting-It-All-Together-I%EF%BC%89"><span class="nav-text">30. 综合 I（Putting It All Together I）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#31-%E7%BB%BC%E5%90%88-II%EF%BC%88Putting-It-All-Together-II%EF%BC%89"><span class="nav-text">31. 综合 II（Putting It All Together II）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#32-%E5%B0%8F%E7%BB%93%EF%BC%88Summary%EF%BC%89"><span class="nav-text">32. 小结（Summary）</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">148</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">44</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://cuda-doc.readthedocs.io/" title="https:&#x2F;&#x2F;cuda-doc.readthedocs.io" rel="noopener" target="_blank">CUDA中文手册</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://infiniband-doc.readthedocs.io/" title="https:&#x2F;&#x2F;infiniband-doc.readthedocs.io&#x2F;" rel="noopener" target="_blank">InfiniBand中文手册</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+      
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.css">
+
+
+  
+
+</body>
+</html>

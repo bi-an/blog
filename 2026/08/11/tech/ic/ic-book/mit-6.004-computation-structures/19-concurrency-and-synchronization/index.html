@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="整理自 MIT OCW 6.004 Computation Structures（Spring 2017）L19 注解幻灯片。 源网页：19.1 Annotated Slides | Concurrency and Synchronization 讲师：Chris Terman。图片直接引用 OCW 原站链接。  L19：并发与同步（Concurrency and Synchronization">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MIT 6.004：L19 并发与同步">
+<meta property="og:url" content="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/19-concurrency-and-synchronization/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="整理自 MIT OCW 6.004 Computation Structures（Spring 2017）L19 注解幻灯片。 源网页：19.1 Annotated Slides | Concurrency and Synchronization 讲师：Chris Terman。图片直接引用 OCW 原站链接。  L19：并发与同步（Concurrency and Synchronization">
+<meta property="og:locale">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/eb4084d127d79b1af9f75365ff615bd9_Slide02.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3fcd6b0266322bfe94c8e661a0b720b2_Slide03.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/cbb5722d9bbf949e6dba2a5f1f6afb86_Slide04.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7f17e586f3fa2e9cef5a958bf2c5643e_Slide05.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/782c2bd2fdb2289ea369fc01c2e12a18_Slide06.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c7b1ead2c4b41f946a2fcf649fcb15a8_Slide07.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2e0ee81b0052ac4e534b604dd8862c84_Slide08.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/466700fb4097b8f26bf717610c6d32b1_Slide09.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/69cf34264659c1247eb3a74cea16bdd9_Slide10.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c01bf6d559a14c22b299330837470cab_Slide11.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4d090643f7efaaef7818c2e9b68614e6_Slide12.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c4791bbd00a4b82ba0372f71f16b8827_Slide13.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7ba6611519d0b6eb9579af3331aec584_Slide14.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a9b2e2d16758fa0c0e3fa62a4b217399_Slide15.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/357dd1158430cee1ec864ce10b2ac60a_Slide16.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4e2f8ef94bb743f997dab9e20ccd307e_Slide17.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c173dceca094760016349a4ce797ccda_Slide18.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9059d77ae437a6f04313f507ce660af0_Slide19.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7ed986d4ea119554ac7686769dcb97e6_Slide20.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9664c5191d8248fd1117914449a9219a_Slide21.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b1ec628d898f7ccfb1b7276925dd6f8f_Slide22.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d3261c81a0a0f2696f5691f10d628d5d_Slide23.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5aacddd6c3a3182ff8945ec7b796e6b9_Slide24.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a897d8e1eb4d36deea89b12ad008a9ee_Slide25.png">
+<meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/73a898d12dac31e50cc7be6ed22195ef_Slide26.png">
+<meta property="article:published_time" content="2026-08-11T17:42:00.000Z">
+<meta property="article:modified_time" content="2026-08-11T09:41:52.785Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="ic">
+<meta property="article:tag" content="semiconductor">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/eb4084d127d79b1af9f75365ff615bd9_Slide02.png">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/19-concurrency-and-synchronization/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>MIT 6.004：L19 并发与同步 | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/19-concurrency-and-synchronization/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MIT 6.004：L19 并发与同步
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2026-08-11 17:42:00 / Modified: 09:41:52" itemprop="dateCreated datePublished" datetime="2026-08-11T17:42:00+00:00">2026-08-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/ic/" itemprop="url" rel="index"><span itemprop="name">ic</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>整理自 MIT OCW <strong>6.004 Computation Structures</strong>（Spring 2017）L19 注解幻灯片。</p>
+<p>源网页：<a target="_blank" rel="noopener" href="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/pages/c19/c19s1/">19.1 Annotated Slides | Concurrency and Synchronization</a></p>
+<p>讲师：Chris Terman。图片直接引用 OCW 原站链接。</p>
+</blockquote>
+<h1>L19：并发与同步（Concurrency and Synchronization）</h1>
+<p>本讲以 <strong>producer–consumer</strong> 为线索，引入 precedence constraint、FIFO 缓冲，以及 Dijkstra 的 <strong>semaphore</strong>（WAIT/SIGNAL）；覆盖资源分配、互斥临界区、多生产者/消费者，以及用 SVC 或 <strong>TCLR</strong>（test-and-clear）实现 semaphore；最后讨论 <strong>deadlock</strong>（Dining Philosophers）与全局资源序 / 检测恢复。</p>
+<h2 id="1-进程间通信（Interprocess-Communication）">1. 进程间通信（Interprocess Communication）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/eb4084d127d79b1af9f75365ff615bd9_Slide02.png" alt="Interprocess Communication" width="80%"/>
+<p>应用常拆成多进程：视频压缩可并行处理宏块；游戏分前端 UI 与后端仿真/渲染。进程封装独立状态，需要时再共享信息。</p>
+<p>通信方式：</p>
+<ul>
+<li><strong>共享内存</strong>：同一物理页映射进两进程；配合同步原语（部分 ISA 有专用指令）</li>
+<li><strong>消息传递</strong>：经 OS SVC；开销更大，但编程模型不依赖是否同机</li>
+</ul>
+<p>本讲用经典 <strong>producer–consumer</strong> 作并发同步范例。</p>
+<h2 id="2-同步通信（Synchronous-Communication）">2. 同步通信（Synchronous Communication）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3fcd6b0266322bfe94c8e661a0b720b2_Slide03.png" alt="Synchronous Communication" width="80%"/>
+<p>单进程内程序计数器决定执行顺序。跨进程还需 <strong>precedence constraints</strong>（记号 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>≺</mo></mrow><annotation encoding="application/x-tex">\prec</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mrel">≺</span></span></span></span>）：第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> 次 send 须先于第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> 次 receive；若共享单单元，第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> 次 receive 须先于第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">i+1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7429em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> 次 send（防覆盖）。二者使产消<strong>紧耦合</strong>——消费完才能再生产。下一节用缓冲放松约束。</p>
+<h2 id="3-FIFO-缓冲（FIFO-Buffering）">3. FIFO 缓冲（FIFO Buffering）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/cbb5722d9bbf949e6dba2a5f1f6afb86_Slide04.png" alt="FIFO Buffering" width="80%"/>
+<p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 字符 <strong>FIFO</strong>：空则消费者等，满则生产者等。覆盖约束放宽为：第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> 次 receive <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>≺</mo></mrow><annotation encoding="application/x-tex">\prec</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mrel">≺</span></span></span></span> 第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mo>+</mo><mi>N</mi></mrow><annotation encoding="application/x-tex">i+N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7429em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 次 send——生产者最多超前 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 个。</p>
+<p>实现：长度 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 的环形数组 + 读/写下标（模 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 递增）；另需计数（图中略）。任意交错执行皆可，只要不满写、不空读。</p>
+<h2 id="4-例：有界缓冲问题（Example-Bounded-Buffer-Problem）">4. 例：有界缓冲问题（Example: Bounded Buffer Problem）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7f17e586f3fa2e9cef5a958bf2c5643e_Slide05.png" alt="Bounded Buffer Problem" width="80%"/>
+<p>共享数组与 <code>IN</code>/<code>OUT</code>。<code>SEND</code> 用 <code>IN</code> 写，<code>RCV</code> 用 <code>OUT</code> 读，各自模 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 递增。如图代码<strong>未强制</strong>任何 precedence——可空读、可满写。需要同步抽象。</p>
+<h2 id="5-信号量（Dijkstra）（Semaphores-Dijkstra-）">5. 信号量（Dijkstra）（Semaphores (Dijkstra)）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/782c2bd2fdb2289ea369fc01c2e12a18_Slide06.png" alt="Semaphores" width="80%"/>
+<p>Dijkstra 提出 <strong>semaphore</strong>：共享整数 ≥0；操作：</p>
+<ul>
+<li><strong>WAIT(s)</strong>：等 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>&gt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">s&gt;0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mord mathnormal">s</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span> 再减一返回（实现上可忙等或挂起）</li>
+<li><strong>SIGNAL(s)</strong>：加一；若有等待者，<strong>恰好一个</strong>可继续</li>
+</ul>
+<p>初值 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0715em;">K</span></span></span></span> 保证：第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> 次 SIGNAL <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>≺</mo></mrow><annotation encoding="application/x-tex">\prec</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mrel">≺</span></span></span></span> 第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mo>+</mo><mi>K</mi></mrow><annotation encoding="application/x-tex">i+K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7429em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0715em;">K</span></span></span></span> 次 WAIT 完成。本课不允许负值。文献亦称 P/V（荷兰语“测/增”）。</p>
+<h2 id="6-用信号量表达先后（Semaphores-for-Precedence）">6. 用信号量表达先后（Semaphores for Precedence）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c7b1ead2c4b41f946a2fcf649fcb15a8_Slide07.png" alt="Semaphores for Precedence" width="80%"/>
+<p>配方：semaphore 初值 0；箭头<strong>起点</strong>后放 <code>signal(s)</code>，<strong>终点</strong>前放 <code>wait(s)</code>。例：A2 后 signal、B4 前 wait → 保证 A2 完成才开始 B4。初值 0 强制第一次 signal 先于第一次 wait。</p>
+<h2 id="7-用信号量做资源分配（Semaphores-for-Resource-Allocation）">7. 用信号量做资源分配（Semaphores for Resource Allocation）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2e0ee81b0052ac4e534b604dd8862c84_Slide08.png" alt="Semaphores for Resource Allocation" width="80%"/>
+<p>另一视角：初值 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0715em;">K</span></span></span></span> = 共享资源池大小。SIGNAL 归还/加入资源，WAIT 独占领取；当前值 = 剩余未分配数。WAIT/SIGNAL 可同进程或跨进程。</p>
+<h2 id="8-有界缓冲-信号量（Bounded-Buffer-Problem-with-Semaphores）">8. 有界缓冲 + 信号量（Bounded Buffer Problem with Semaphores）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/466700fb4097b8f26bf717610c6d32b1_Slide09.png" alt="Bounded Buffer with Semaphores" width="80%"/>
+<p><code>CHARS</code> 初值 0：SEND 写入后 <code>signal(CHARS)</code>；RCV 先 <code>wait(CHARS)</code> 再读。保证消费者不空读。但只实现了两条 precedence 中的一条。</p>
+<h2 id="9-流控问题（Flow-Control-Problems）">9. 流控问题（Flow Control Problems）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/69cf34264659c1247eb3a74cea16bdd9_Slide10.png" alt="Flow Control Problems" width="80%"/>
+<p>仅有 <code>CHARS</code> 时，生产者仍可写入超过 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 个 → <strong>buffer overflow</strong>，字符流损坏。还需：第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mo>+</mo><mi>N</mi></mrow><annotation encoding="application/x-tex">i+N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7429em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 次 send 之前必须完成第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> 次 receive。</p>
+<h2 id="10-更多信号量的有界缓冲（Bounded-Buffer-Problem-with-More-Semaphores）">10. 更多信号量的有界缓冲（Bounded Buffer Problem with More Semaphores）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c01bf6d559a14c22b299330837470cab_Slide11.png" alt="Bounded Buffer More Semaphores" width="80%"/>
+<p>加 <code>SPACES</code> 初值 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span>：生产者 <code>wait(SPACES)</code> 再写；消费者读后 <code>signal(SPACES)</code>。对称：生产者消费空位、生产字符；消费者反之。单生产者+单消费者至此正确；多对多另有问题。</p>
+<h2 id="11-同时事务（Simultaneous-Transactions）">11. 同时事务（Simultaneous Transactions）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4d090643f7efaaef7818c2e9b68614e6_Slide12.png" alt="Simultaneous Transactions" width="80%"/>
+<p>两客户同时从同一账户取 $50。若两次 <code>Debit</code> 完整串行执行：余额减 $100，正确。</p>
+<h2 id="12-但若…（But-What-If…）">12. 但若…（But, What If…）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c4791bbd00a4b82ba0372f71f16b8827_Slide13.png" alt="But What If" width="80%"/>
+<p>进程 A 读完余额后被打断，B 完成扣款，A 用过期余额写回 → 只扣了 $50。共享数据上的 LD/修改/ST 构成 <strong>critical section</strong>，需要 <strong>mutual exclusion</strong>：同时只有一个进程在临界区内。Semaphore + 临界区 ≈ <strong>transaction</strong>（期间共享数据不被他进程读写）。</p>
+<h2 id="13-互斥用信号量（Semaphores-for-Mutual-Exclusion）">13. 互斥用信号量（Semaphores for Mutual Exclusion）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7ba6611519d0b6eb9579af3331aec584_Slide14.png" alt="Semaphores for Mutual Exclusion" width="80%"/>
+<p><code>LOCK</code> 初值 1：进临界区前 WAIT（acquire），出后 SIGNAL（release）。锁的<strong>粒度</strong>重要：全行一个锁会串行化无关账户；<strong>每账户一锁</strong>只阻塞真正冲突的事务，吞吐更好。</p>
+<h2 id="14-产消原子性问题（Producer-Consumer-Atomicity-Problems）">14. 产消原子性问题（Producer/Consumer Atomicity Problems）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a9b2e2d16758fa0c0e3fa62a4b217399_Slide15.png" alt="Producer Consumer Atomicity" width="80%"/>
+<p>多生产者同时插入时，对 FIFO/<code>IN</code> 的更新可能交错 → 覆盖或下标错误。插入路径是临界区，须原子执行。</p>
+<h2 id="15-再加信号量的有界缓冲（Bounded-Buffer-Problem-with-Even-More-Semaphores）">15. 再加信号量的有界缓冲（Bounded Buffer Problem with Even More Semaphores）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/357dd1158430cee1ec864ce10b2ac60a_Slide16.png" alt="Bounded Buffer Even More Semaphores" width="80%"/>
+<p>第三 semaphore <code>LOCK</code> 保护 SEND/RCV 中操作缓冲的临界区。同锁可用于多消费者，但生产者用 <code>IN</code>、消费者用 <code>OUT</code>，共用一把锁引入多余先后约束——可拆成两把锁。</p>
+<h2 id="16-信号量的威力（The-Power-of-Semaphores）">16. 信号量的威力（The Power of Semaphores）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4e2f8ef94bb743f997dab9e20ccd307e_Slide17.png" alt="The Power of Semaphores" width="80%"/>
+<p>Semaphore 像瑞士军刀：跨进程 WAIT/SIGNAL 保证时序（空不读、满不写）；同进程内可实现临界区原子性（如 <code>IN</code>/<code>OUT</code> 的读改写不被打断）。</p>
+<h2 id="17-信号量实现（Semaphore-Implementation）">17. 信号量实现（Semaphore Implementation）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c173dceca094760016349a4ce797ccda_Slide18.png" alt="Semaphore Implementation" width="80%"/>
+<p>Semaphore 自身是共享数据，WAIT/SIGNAL 的读改写也是临界区——不能再用 semaphore 实现 semaphore（<strong>bootstrap</strong>）。出路：</p>
+<ol>
+<li>不可中断内核上的 <strong>SVC</strong></li>
+<li>ISA 的 <strong>test-and-set / test-and-clear</strong>，由内存原子读改写支持</li>
+<li>纯软件算法（如 Dekker）仅依赖单次读写原子性</li>
+</ol>
+<p>本讲详述前两种。</p>
+<h2 id="18-作为-SVC-的信号量（Semaphores-as-a-Supervisor-Call）">18. 作为 SVC 的信号量（Semaphores as a Supervisor Call）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9059d77ae437a6f04313f507ce660af0_Slide19.png" alt="Semaphores as SVC" width="80%"/>
+<p>内核态 SVC 不可中断 → handler 天然临界区。WAIT：值非零则减一并返回；为零则安排重试 SVC 并 <code>SLEEP</code>。SIGNAL：加一并 <code>WAKEUP</code> 等该 semaphore 的进程。</p>
+<p>默认实现<strong>无公平性</strong>——调度顺序决定谁先拿到；若要公平，WAIT 可维护等待队列。</p>
+<h2 id="19-硬件支持（Hardware-Support-for-Semaphores）">19. 硬件支持（Hardware Support for Semaphores）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7ed986d4ea119554ac7686769dcb97e6_Slide20.png" alt="Hardware Support for Semaphores" width="80%"/>
+<p><strong>TCLR</strong>（test-and-clear）：一次原子操作读内存当前值并清零。自旋：TCLR 得 0 → 别人持锁，重试；得非 0 → 已获取锁（且已把锁置 0）。临界区结束用 ST 写回非 0 释放。</p>
+<h2 id="20-同步的阴暗面（Synchronization-The-Dark-Side）">20. 同步的阴暗面（Synchronization: The Dark Side）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9664c5191d8248fd1117914449a9219a_Slide21.png" alt="Synchronization Dark Side" width="80%"/>
+<p>转账需拿两账户锁。两人按<strong>相反顺序</strong>各拿到第一把锁后，都等对方释放第二把 → <strong>deadlock（deadly embrace）</strong>。多资源同步需额外纪律。</p>
+<h2 id="21-哲学家就餐（Dining-Philosophers）">21. 哲学家就餐（Dining Philosophers）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b1ec628d898f7ccfb1b7276925dd6f8f_Slide22.png" alt="Dining Philosophers" width="80%"/>
+<p>5 哲学家、5 筷；每人需左右两筷。算法：先左后右，吃完归还。典型的“多资源才可完成”设定。</p>
+<h2 id="22-死锁！（Deadlock-）">22. 死锁！（Deadlock!）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d3261c81a0a0f2696f5691f10d628d5d_Slide23.png" alt="Deadlock" width="80%"/>
+<p>若人人先拿左筷，则无人能拿右筷 → 死锁。四条件：</p>
+<ol>
+<li><strong>Mutual exclusion</strong></li>
+<li><strong>Hold-and-wait</strong></li>
+<li><strong>No preemption</strong></li>
+<li><strong>Circular wait</strong></li>
+</ol>
+<p>对策：<strong>避免</strong>，或<strong>检测 + 恢复</strong>。</p>
+<h2 id="23-一种解法（One-Solution）">23. 一种解法（One Solution）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5aacddd6c3a3182ff8945ec7b796e6b9_Slide24.png" alt="One Solution" width="80%"/>
+<p>给筷子唯一编号，<strong>按全局序</strong>取资源（先低号再高号）。若全部筷子都被拿起，必有人已持有最高号筷，此前也已拿到另一侧低号筷 → 此人可吃并归还，打破 hold-and-wait 环。全系统约定资源全局序并按序获取 → 无环等待死锁。</p>
+<h2 id="24-处理死锁（Dealing-With-Deadlocks）">24. 处理死锁（Dealing With Deadlocks）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a897d8e1eb4d36deea89b12ad008a9ee_Slide25.png" alt="Dealing With Deadlocks" width="80%"/>
+<p>转账：先锁低账号，再锁高账号——双方先争同一把“第一资源”，胜者可安全拿齐其余。无法改应用时：OS 的 WAIT 可检测环等待并终止一进程释放资源；数据库则检测冲突、<strong>abort</strong> 事务并由程序员决定重试，提交前改动只在事务私有副本上，确认后才 <strong>commit</strong>。</p>
+<h2 id="25-小结（Summary）">25. 小结（Summary）</h2>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/73a898d12dac31e50cc7be6ed22195ef_Slide26.png" alt="Summary" width="80%"/>
+<ul>
+<li>多进程组织应用常更自然；用 <strong>semaphore</strong> 保证 precedence 与 <strong>mutual exclusion</strong></li>
+<li>临界区 + 锁实现事务语义</li>
+<li>多锁可能 <strong>deadlock</strong>；全局资源序避免，或检测/重启恢复</li>
+<li>大数据与云上千进程协作时，同步是核心技能</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/ic/" rel="tag"># ic</a>
+              <a href="/blog/tags/semiconductor/" rel="tag"># semiconductor</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/18-devices-and-interrupts/" rel="prev" title="MIT 6.004：L18 设备与中断">
+      <i class="fa fa-chevron-left"></i> MIT 6.004：L18 设备与中断
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/20-system-level-communication/" rel="next" title="MIT 6.004：L20 系统级通信">
+      MIT 6.004：L20 系统级通信 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-text">L19：并发与同步（Concurrency and Synchronization）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E8%BF%9B%E7%A8%8B%E9%97%B4%E9%80%9A%E4%BF%A1%EF%BC%88Interprocess-Communication%EF%BC%89"><span class="nav-text">1. 进程间通信（Interprocess Communication）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E5%90%8C%E6%AD%A5%E9%80%9A%E4%BF%A1%EF%BC%88Synchronous-Communication%EF%BC%89"><span class="nav-text">2. 同步通信（Synchronous Communication）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-FIFO-%E7%BC%93%E5%86%B2%EF%BC%88FIFO-Buffering%EF%BC%89"><span class="nav-text">3. FIFO 缓冲（FIFO Buffering）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E4%BE%8B%EF%BC%9A%E6%9C%89%E7%95%8C%E7%BC%93%E5%86%B2%E9%97%AE%E9%A2%98%EF%BC%88Example-Bounded-Buffer-Problem%EF%BC%89"><span class="nav-text">4. 例：有界缓冲问题（Example: Bounded Buffer Problem）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-%E4%BF%A1%E5%8F%B7%E9%87%8F%EF%BC%88Dijkstra%EF%BC%89%EF%BC%88Semaphores-Dijkstra-%EF%BC%89"><span class="nav-text">5. 信号量（Dijkstra）（Semaphores (Dijkstra)）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-%E7%94%A8%E4%BF%A1%E5%8F%B7%E9%87%8F%E8%A1%A8%E8%BE%BE%E5%85%88%E5%90%8E%EF%BC%88Semaphores-for-Precedence%EF%BC%89"><span class="nav-text">6. 用信号量表达先后（Semaphores for Precedence）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-%E7%94%A8%E4%BF%A1%E5%8F%B7%E9%87%8F%E5%81%9A%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D%EF%BC%88Semaphores-for-Resource-Allocation%EF%BC%89"><span class="nav-text">7. 用信号量做资源分配（Semaphores for Resource Allocation）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#8-%E6%9C%89%E7%95%8C%E7%BC%93%E5%86%B2-%E4%BF%A1%E5%8F%B7%E9%87%8F%EF%BC%88Bounded-Buffer-Problem-with-Semaphores%EF%BC%89"><span class="nav-text">8. 有界缓冲 + 信号量（Bounded Buffer Problem with Semaphores）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#9-%E6%B5%81%E6%8E%A7%E9%97%AE%E9%A2%98%EF%BC%88Flow-Control-Problems%EF%BC%89"><span class="nav-text">9. 流控问题（Flow Control Problems）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#10-%E6%9B%B4%E5%A4%9A%E4%BF%A1%E5%8F%B7%E9%87%8F%E7%9A%84%E6%9C%89%E7%95%8C%E7%BC%93%E5%86%B2%EF%BC%88Bounded-Buffer-Problem-with-More-Semaphores%EF%BC%89"><span class="nav-text">10. 更多信号量的有界缓冲（Bounded Buffer Problem with More Semaphores）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#11-%E5%90%8C%E6%97%B6%E4%BA%8B%E5%8A%A1%EF%BC%88Simultaneous-Transactions%EF%BC%89"><span class="nav-text">11. 同时事务（Simultaneous Transactions）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#12-%E4%BD%86%E8%8B%A5%E2%80%A6%EF%BC%88But-What-If%E2%80%A6%EF%BC%89"><span class="nav-text">12. 但若…（But, What If…）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#13-%E4%BA%92%E6%96%A5%E7%94%A8%E4%BF%A1%E5%8F%B7%E9%87%8F%EF%BC%88Semaphores-for-Mutual-Exclusion%EF%BC%89"><span class="nav-text">13. 互斥用信号量（Semaphores for Mutual Exclusion）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#14-%E4%BA%A7%E6%B6%88%E5%8E%9F%E5%AD%90%E6%80%A7%E9%97%AE%E9%A2%98%EF%BC%88Producer-Consumer-Atomicity-Problems%EF%BC%89"><span class="nav-text">14. 产消原子性问题（Producer&#x2F;Consumer Atomicity Problems）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#15-%E5%86%8D%E5%8A%A0%E4%BF%A1%E5%8F%B7%E9%87%8F%E7%9A%84%E6%9C%89%E7%95%8C%E7%BC%93%E5%86%B2%EF%BC%88Bounded-Buffer-Problem-with-Even-More-Semaphores%EF%BC%89"><span class="nav-text">15. 再加信号量的有界缓冲（Bounded Buffer Problem with Even More Semaphores）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#16-%E4%BF%A1%E5%8F%B7%E9%87%8F%E7%9A%84%E5%A8%81%E5%8A%9B%EF%BC%88The-Power-of-Semaphores%EF%BC%89"><span class="nav-text">16. 信号量的威力（The Power of Semaphores）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#17-%E4%BF%A1%E5%8F%B7%E9%87%8F%E5%AE%9E%E7%8E%B0%EF%BC%88Semaphore-Implementation%EF%BC%89"><span class="nav-text">17. 信号量实现（Semaphore Implementation）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#18-%E4%BD%9C%E4%B8%BA-SVC-%E7%9A%84%E4%BF%A1%E5%8F%B7%E9%87%8F%EF%BC%88Semaphores-as-a-Supervisor-Call%EF%BC%89"><span class="nav-text">18. 作为 SVC 的信号量（Semaphores as a Supervisor Call）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#19-%E7%A1%AC%E4%BB%B6%E6%94%AF%E6%8C%81%EF%BC%88Hardware-Support-for-Semaphores%EF%BC%89"><span class="nav-text">19. 硬件支持（Hardware Support for Semaphores）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#20-%E5%90%8C%E6%AD%A5%E7%9A%84%E9%98%B4%E6%9A%97%E9%9D%A2%EF%BC%88Synchronization-The-Dark-Side%EF%BC%89"><span class="nav-text">20. 同步的阴暗面（Synchronization: The Dark Side）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#21-%E5%93%B2%E5%AD%A6%E5%AE%B6%E5%B0%B1%E9%A4%90%EF%BC%88Dining-Philosophers%EF%BC%89"><span class="nav-text">21. 哲学家就餐（Dining Philosophers）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#22-%E6%AD%BB%E9%94%81%EF%BC%81%EF%BC%88Deadlock-%EF%BC%89"><span class="nav-text">22. 死锁！（Deadlock!）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#23-%E4%B8%80%E7%A7%8D%E8%A7%A3%E6%B3%95%EF%BC%88One-Solution%EF%BC%89"><span class="nav-text">23. 一种解法（One Solution）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#24-%E5%A4%84%E7%90%86%E6%AD%BB%E9%94%81%EF%BC%88Dealing-With-Deadlocks%EF%BC%89"><span class="nav-text">24. 处理死锁（Dealing With Deadlocks）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#25-%E5%B0%8F%E7%BB%93%EF%BC%88Summary%EF%BC%89"><span class="nav-text">25. 小结（Summary）</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">148</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">44</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://cuda-doc.readthedocs.io/" title="https:&#x2F;&#x2F;cuda-doc.readthedocs.io" rel="noopener" target="_blank">CUDA中文手册</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://infiniband-doc.readthedocs.io/" title="https:&#x2F;&#x2F;infiniband-doc.readthedocs.io&#x2F;" rel="noopener" target="_blank">InfiniBand中文手册</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+      
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.css">
+
+
+  
+
+</body>
+</html>
