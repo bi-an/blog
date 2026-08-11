@@ -56,7 +56,20 @@ mathjax: true
 - **写**：把 bit line 驱动到目标电压（数字 0/1），再令 word line 为 HIGH，电容充/放到与 bit line 同压；再令 word line 为 LOW，关断开关，理想情况下电荷可一直留在内部极板。
 - **读**：先把 bit line 充到中间电压，再开 word line，使 bit line 与存储电容**电荷共享**。存 1（较高压）时电荷流向 bit line，电压略升；存 0 则略降。变化通常很小，需**灵敏放大器**（sense amp）检出并还原成合法数字电压。
 
-读写步骤多、模拟电路讲究。优点：存储电容极小，现代 IC 可在廉价 **DRAM**（dynamic random-access memory）上集成数十亿比特，单位比特成本低。缺点：访问慢；要防噪声；NFET 关断仍有泄漏，须约每 10 ms **刷新**（refresh）——读出再写回。能否用反馈持续“刷新”存储信息？
+- **优点**：存储电容极小，现代 IC 可在廉价 **DRAM**（dynamic random-access memory）上集成数十亿比特，单位比特成本低。
+- **缺点**：读写需要复杂的操作，所以访问慢；必须注意在外部电噪声干扰下，小心地保持储能电容器上的电荷；NFET 关断仍有泄漏，当前技术下须约每 10 ms **刷新**（refresh）——读出再写回。所以我们需要搭配精心设计的模拟电子电路（analog electronics） [^along-with-designed-electronics]。
+
+[^along-with-designed-electronics]: 译者注：模拟电子电路（analog electronics）主要指以下几个关键的模拟电路组件和机制：
+
+    - 敏感放大器（Sense Amplifier）：
+      - 在读取电容存储的数据时，电容释放或吸收的电荷极少，只能导致位线（Bit line）产生非常微小的电压变化（远未达到标准数字电路的 0 或 1 电平）。
+      - 需要专门设计的高灵敏度模拟放大器来检测这一微弱的连续电压差，并将其放大还原为标准的数字逻辑电平（逻辑 0 或逻辑 1）。
+
+    - 微小电荷与连续电压的处理（Charge Sharing & Leakage Control）：
+      - 电容上的电荷存储和衰减（泄漏）、位线上的电荷共享（Charge sharing）都是连续变化的模拟物理过程，而非瞬间完成的离散数字状态。
+      - 电路需要精准控制 NFET 晶体管开关的导通电阻、阈值电压以及微小的泄漏电流（Leakage current），这些器件特性的设计和优化都属于模拟电路设计的范畴。
+
+或许我们可以通过设计一种利用“反馈”持续刷新存储信息的电路来克服电容式存储的缺点。
 
 ## 4. 用反馈做存储（Memory: Using Feedback）
 
