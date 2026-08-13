@@ -4,7 +4,7 @@ date: 2026-07-12 19:40:18
 categories: ic
 tags:
   - ic
-  - semiconductor
+  - analog-circuit
 ---
 
 **Sand / 沙子 (SiO₂)**

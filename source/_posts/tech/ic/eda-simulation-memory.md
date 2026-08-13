@@ -3,9 +3,9 @@ title: EDA 仿真之 Memory
 date: 2025-08-20 22:25:49
 categories: ic
 tags:
- - ic
- - eda
- - tcl
+  - ic
+  - eda
+  - digital-circuit
 ---
 
 

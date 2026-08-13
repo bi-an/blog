@@ -3,9 +3,9 @@ title: 第1章 数字IC设计流程
 date: 2025-01-15 16:59:30
 categories: ic-book
 tags:
- - ic
- - eda
- - tcl
+  - ic
+  - digital-circuit
+  - eda
 ---
 
 

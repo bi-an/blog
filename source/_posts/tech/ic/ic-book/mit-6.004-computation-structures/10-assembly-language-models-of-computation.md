@@ -4,7 +4,8 @@ date: 2026-08-11 10:10:00
 categories: ic
 tags:
   - ic
-  - semiconductor
+  - digital-circuit
+  - assembly
 mathjax: true
 ---
 

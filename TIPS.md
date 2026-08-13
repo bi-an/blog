@@ -56,9 +56,10 @@ code_dir: downloads/code
 示例：
 
 ```text
-{% include_code lang:c title:示例 malloc-failure-analysis-01.cpp %}
+{% include_code "cmos-inverter.py" lang:python tech/ic/schemdraw-basics-01.py %}
 ```
 
+`title` 直接写在 `include_code` 后并用双引号括起，不要使用 `title:` 关键字。
 ## 插件
 
 插件通过 npm 管理，可用插件见 [Hexo 插件列表](https://hexo.io/docs/plugins)。首次安装项目依赖见 [`README.md`](README.md)；以下命令针对单个插件的安装与卸载。

@@ -400,7 +400,7 @@ tech/ic/ic-book/
 
 - linux、shell
 
-- ic、eda、tcl
+- ic、eda、tcl、digital-circuit、analog-circuit
 
 - project、practice
 
@@ -431,5 +431,13 @@ tech/ic/ic-book/
 - 英语习语笔记：`tags: [english, idiom]`
 
 - 影视台词笔记：`tags: [english, movie-line]`
+
+- 数字电路笔记：`tags: [ic, digital-circuit]`
+
+- 模拟电路 / 器件物理笔记：`tags: [ic, analog-circuit]`
+
+- EDA 工具与仿真：`tags: [ic, eda]`
+
+- EDA TCL 脚本：`tags: [ic, eda, tcl]`
 
 > （注：文档部分内容可能由 AI 生成）

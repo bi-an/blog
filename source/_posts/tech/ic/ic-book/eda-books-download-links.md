@@ -3,9 +3,8 @@ title: EDA书籍下载链接
 date: 2026-06-14 04:00:10+08:00
 categories: ic-book
 tags:
- - ic
- - eda
- - tcl
+  - ic
+  - eda
 ---
 
 

@@ -4,7 +4,7 @@ date: 2026-07-16 17:53:09
 categories: ic
 tags:
   - ic
-  - semiconductor
+  - analog-circuit
 ---
 
 # P型与N型半导体的形成与导电原理（含PN结延伸）
