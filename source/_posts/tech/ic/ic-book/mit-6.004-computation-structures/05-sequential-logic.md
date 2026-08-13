@@ -101,7 +101,51 @@ mathjax: true
 
 右侧时序图：稳定段为恒定 LOW/HIGH，变化段画成多次跳变。$G$ 为 HIGH 时，$D$ 稳定后至多再经 $t_{\mathrm{PD}}$，$Q$ 到达新稳定值。
 
-理论期望：$G$ 变 LOW 后，$Q$ 保持跳变瞬间 $D$ 上的值。但一般组合器件在输入跳变后，$t_{\mathrm{CD}}$ 到 $t_{\mathrm{PD}}$ 之间输出可任意变化——若 $G$ 的 1→0 使 $Q$ 短暂失效，要记的正是 $Q$ 上的值！因此必须保证 $G$ 的 1→0 **不影响** $Q$。
+理论期望：$G$ 变 LOW 后，$Q$ 保持跳变瞬间 $D$ 上的值。但一般组合器件在输入跳变后，$t_{\mathrm{CD}}$ 到 $t_{\mathrm{PD}}$ 之间输出可任意变化——若 $G$ 的 1→0 使 $Q$ 短暂失效，要记的正是 $Q$ 上的值！因此必须保证 $G$ 的 1→0 **不影响** $Q$。[^dlatch-impl]
+
+[^dlatch-impl]: 译者注：上文门控信号 $G$（即后文的 CLK）在 CMOS 中接到**钟控反相器**或**传输门**的栅极。以下给出两种基本单元与完整 D 锁存器电路，展示 CLK 接到 MOS 管的哪个端点。电路图由 [Schemdraw](https://schemdraw.readthedocs.io/en/stable/index.html) 绘制（也可参考我的另一篇文章「Schemdraw 绘制 IC 原理图」）。
+
+    **钟控反相器（Clocked Inverter）**   标准 CMOS 反相器各串一个时钟管，CLK/CLK̄ 接到时钟管的栅极。CLK=HIGH 时反相器正常工作；CLK=LOW 时输出高阻（floating）。有两种常见串联顺序：
+
+    | ![钟控反相器实现一](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/05-seq-clk-inv-01.svg) | ![钟控反相器实现二](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/05-seq-clk-inv-02.svg) |
+    |:-:|:-:|
+    | 钟控反相器实现一：时钟管在外侧 | 钟控反相器实现二：时钟管在中间 |
+
+    <details>
+    <summary>Schemdraw 绘图代码：钟控反相器实现一</summary>
+
+    {% include_code lang:python tech/ic/05-seq-clk-inv-01.py %}
+
+    </details>
+
+    <details>
+    <summary>Schemdraw 绘图代码：钟控反相器实现二</summary>
+
+    {% include_code lang:python tech/ic/05-seq-clk-inv-02.py %}
+
+    </details>
+
+    **传输门（Transmission Gate）**   NFET（栅 = CLK）与 PFET（栅 = $\overline{\text{CLK}}$）并联。CLK=HIGH 时双向导通（无阈值损失）；CLK=LOW 时断开。
+
+    ![传输门](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/05-seq-tg-01.svg)
+
+    <details>
+    <summary>Schemdraw 绘图代码：传输门</summary>
+
+    {% include_code lang:python tech/ic/05-seq-tg-01.py %}
+
+    </details>
+
+    **D 锁存器**（双钟控反相器）  CI1（CLK=HIGH 导通）将 D 反相至 $\overline{Q}$；CI2（CLK=LOW 导通）将 $\overline{Q}$ 反相反馈回 D 节点，构成保持环。
+
+    ![D 锁存器](/assets/images/tech/ic/ic-book/mit-6.004-computation-structures/05-seq-dlatch-01.svg)
+
+    <details>
+    <summary>Schemdraw 绘图代码：D 锁存器</summary>
+
+    {% include_code lang:python tech/ic/05-seq-dlatch-01.py %}
+
+    </details>
 
 ## 7. 请求宽容（A Plea for Lenience）
 
