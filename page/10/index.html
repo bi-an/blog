@@ -188,6 +188,142 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/06/tech/linux/bash-debugging/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2024/09/06/tech/linux/bash-debugging/" class="post-title-link" itemprop="url">Bash Debugging</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-09-06 18:10:12" itemprop="dateCreated datePublished" datetime="2024-09-06T18:10:12+00:00">2024-09-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="启用调试模式">启用调试模式</h2>
+<ol>
+<li>命令行启用调试：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#使用 -x 和 -v 选项运行 main.sh 脚本。</span></span><br><span class="line">bash -xv main.sh</span><br></pre></td></tr></table></figure>
+<p>注意：调试输出是通过 <code>stderr</code> ，在试图重定向时要注意。</p>
+<ol start="2">
+<li>在脚本中启用调试：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">set</span> -xv</span><br></pre></td></tr></table></figure>
+<table>
+<thead>
+<tr>
+<th>Short notation</th>
+<th>Long notation</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>set -f</td>
+<td>set -o noglob</td>
+<td>Disable file name generation using metacharacters (globbing).</td>
+</tr>
+<tr>
+<td>set -v</td>
+<td>set -o verbose</td>
+<td>Prints shell input lines as they are read.</td>
+</tr>
+<tr>
+<td>set -x</td>
+<td>set -o xtrace</td>
+<td>Print command traces before executing command.</td>
+</tr>
+</tbody>
+</table>
+<p>参考<a target="_blank" rel="noopener" href="https://tldp.org/LDP/Bash-Beginners-Guide/html/sect_02_03.html">链接</a></p>
+<p>其他选项：</p>
+<ul>
+<li><code>set +e</code>：忽略错误继续运行（bash）。</li>
+<li><code>set -e</code>：遇错停止执行（bash）。</li>
+</ul>
+<ol start="3">
+<li>环境变量 <code>PS4</code></li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PS4=<span class="string">&#x27;+ $&#123;LINENO&#125;: &#x27;</span></span><br></pre></td></tr></table></figure>
+<p>可以搭配使用 <code>PS4</code> 环境变量，以在调试输出中打印命令所在的文件行号。</p>
+<p><code>PS4</code> 是一个 Bash 环境变量，用于定义调试模式下的提示符格式。<br>
+当你启用调试模式（通过 <code>set -x</code>）时，Bash 会在每一行执行之前打印调试信息，而 PS4 决定了这些调试信息的格式。<br>
+<code>$LINENO</code>表示打印行号。</p>
+<h2 id="trap-DEBUG"><code>trap DEBUG</code></h2>
+<p>设置DEBUG陷阱，该陷阱在每一条“简单语句”执行完毕之后会被调用一次。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">set</span> -o functrace</span><br><span class="line">track_var=<span class="string">&quot;my_var&quot;</span></span><br><span class="line">old_value=<span class="string">&quot;&quot;</span></span><br><span class="line"><span class="function"><span class="title">check_var_change</span></span>() &#123;</span><br><span class="line">    new_value=<span class="string">&quot;<span class="variable">$&#123;!track_var&#125;</span>&quot;</span></span><br><span class="line">    <span class="keyword">if</span> [[ <span class="string">&quot;<span class="variable">$new_value</span>&quot;</span> != <span class="string">&quot;<span class="variable">$old_value</span>&quot;</span> ]]; <span class="keyword">then</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$track_var</span> changed to \&quot;<span class="variable">$new_value</span>\&quot; at <span class="variable">$BASH_LINENO</span>&quot;</span></span><br><span class="line">        old_value=<span class="string">&quot;<span class="variable">$new_value</span>&quot;</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">trap</span> check_var_change DEBUG</span><br></pre></td></tr></table></figure>
+<p>说明：监控<code>my_var</code>变量的变化，如果变化，则打印新值。</p>
+<p>注意：实际测试中，我们发现<code>trap</code>监控变量变化似乎会延迟，而<code>set -x</code>打印的信息是可靠的。</p>
+<h2 id="特殊变量">特殊变量</h2>
+<p>参考：<a target="_blank" rel="noopener" href="https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html">https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html</a></p>
+<ul>
+<li><code>BASH_LINENO</code>: 这是一个数组变量，‌用于表示当前执行的脚本或函数中每一行的行号。‌它特别适用于调试，‌因为它可以追踪到函数调用栈中每一层的行号。‌通过访问BASH_LINENO数组的不同索引，‌可以获取到不同函数调用层级对应的行号信息‌。</li>
+<li><code>LINENO</code>: 获取当前脚本行号‌，‌而不涉及函数调用栈的追踪‌。</li>
+<li><code>FUNCNAME</code>: 函数名</li>
+<li><code>BASH_SOURCE</code></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/06/tech/linux/file-exists/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -219,7 +355,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 14:44:05" itemprop="dateModified" datetime="2026-08-11T14:44:05+00:00">2026-08-11</time>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -345,7 +481,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 14:44:05" itemprop="dateModified" datetime="2026-08-11T14:44:05+00:00">2026-08-11</time>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -451,7 +587,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 14:44:05" itemprop="dateModified" datetime="2026-08-11T14:44:05+00:00">2026-08-11</time>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -542,7 +678,7 @@ A: when &quot;C_Cpp.intelliSenseEngine&quot; is set to &quot;Tag Parser&quot;, G
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 14:44:05" itemprop="dateModified" datetime="2026-08-11T14:44:05+00:00">2026-08-11</time>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -627,7 +763,7 @@ hair colouring</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 14:44:05" itemprop="dateModified" datetime="2026-08-11T14:44:05+00:00">2026-08-11</time>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -708,7 +844,7 @@ hair colouring</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 14:44:05" itemprop="dateModified" datetime="2026-08-11T14:44:05+00:00">2026-08-11</time>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1242,7 +1378,7 @@ TBB 只处理计算任务</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 14:44:05" itemprop="dateModified" datetime="2026-08-11T14:44:05+00:00">2026-08-11</time>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1443,7 +1579,7 @@ ldd</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 14:44:05" itemprop="dateModified" datetime="2026-08-11T14:44:05+00:00">2026-08-11</time>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1525,7 +1661,7 @@ ldd</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 14:44:05" itemprop="dateModified" datetime="2026-08-11T14:44:05+00:00">2026-08-11</time>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1568,83 +1704,6 @@ ldd</p>
 <li><a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Memory_002dmapped-I_002fO.html">The GNU C Library (glibc) manual: 13.8 Memory-mapped I/O</a></li>
 <li><a target="_blank" rel="noopener" href="https://www.gnu.org/software/libc/manual/html_node/Memory-Protection.html">The GNU C Library (glibc) manual: 3.4 Memory Protection</a></li>
 </ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/01/29/tech/cpp/basic/uml/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/01/29/tech/cpp/basic/uml/" class="post-title-link" itemprop="url">UML</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-01-29 11:10:46" itemprop="dateCreated datePublished" datetime="2024-01-29T11:10:46+00:00">2024-01-29</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-11 14:44:05" itemprop="dateModified" datetime="2026-08-11T14:44:05+00:00">2026-08-11</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Reference">Reference</h2>
-<ol>
-<li><a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1176331">认识UML类关系——依赖、关联、聚合、组合、泛化</a></li>
-</ol>
 
       
     </div>
@@ -1731,7 +1790,7 @@ ldd</p>
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">148</span>
+          <span class="site-state-item-count">149</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1744,7 +1803,7 @@ ldd</p>
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">44</span>
+        <span class="site-state-item-count">46</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

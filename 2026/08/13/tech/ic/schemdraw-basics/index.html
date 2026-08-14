@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="简介 Schemdraw 是一个用 Python 绘制电路原理图的库。使用时逐一添加元件并设置其朝向与标签，库按添加顺序维护画笔位置，自动完成连线衔接，最终导出 SVG 或 PNG。 与 KiCad、Fritzing 等图形化工具不同，Schemdraw 没有交互式编辑器，图形完全由代码生成。这一特点使它天然适合需要版本控制与可复现性的场景——文档、讲义、论文附图等，图形随代码一起纳入版本管理。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Schemdraw 绘制 IC 原理图">
+<meta property="og:url" content="https://bi-an.github.io/blog/2026/08/13/tech/ic/schemdraw-basics/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="简介 Schemdraw 是一个用 Python 绘制电路原理图的库。使用时逐一添加元件并设置其朝向与标签，库按添加顺序维护画笔位置，自动完成连线衔接，最终导出 SVG 或 PNG。 与 KiCad、Fritzing 等图形化工具不同，Schemdraw 没有交互式编辑器，图形完全由代码生成。这一特点使它天然适合需要版本控制与可复现性的场景——文档、讲义、论文附图等，图形随代码一起纳入版本管理。">
+<meta property="og:locale">
+<meta property="og:image" content="https://bi-an.github.io/blog/assets/images/tech/ic/schemdraw-basics-01.svg">
+<meta property="article:published_time" content="2026-08-13T11:37:33.000Z">
+<meta property="article:modified_time" content="2026-08-14T09:20:27.953Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="ic">
+<meta property="article:tag" content="digital-circuit">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://bi-an.github.io/blog/assets/images/tech/ic/schemdraw-basics-01.svg">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2026/08/13/tech/ic/schemdraw-basics/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>Schemdraw 绘制 IC 原理图 | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/08/13/tech/ic/schemdraw-basics/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Schemdraw 绘制 IC 原理图
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2026-08-13 11:37:33" itemprop="dateCreated datePublished" datetime="2026-08-13T11:37:33+00:00">2026-08-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/ic/" itemprop="url" rel="index"><span itemprop="name">ic</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="简介">简介</h2>
+<p><a target="_blank" rel="noopener" href="https://schemdraw.readthedocs.io/">Schemdraw</a> 是一个用 Python 绘制电路原理图的库。使用时逐一添加元件并设置其朝向与标签，库按添加顺序维护画笔位置，自动完成连线衔接，最终导出 SVG 或 PNG。</p>
+<p>与 KiCad、Fritzing 等图形化工具不同，Schemdraw 没有交互式编辑器，图形完全由代码生成。这一特点使它天然适合<strong>需要版本控制与可复现性</strong>的场景——文档、讲义、论文附图等，图形随代码一起纳入版本管理。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install schemdraw</span><br></pre></td></tr></table></figure>
+<p>放置元件前，可先对照官方图示了解各符号的外形与默认朝向：<a target="_blank" rel="noopener" href="https://schemdraw.readthedocs.io/en/stable/elements/electrical.html">Basic Elements（electrical）</a>。</p>
+<h2 id="核心对象：Drawing-与-Element">核心对象：Drawing 与 Element</h2>
+<p>画图时主要打交道的是两个类：</p>
+<table>
+<thead>
+<tr>
+<th>类</th>
+<th>含义</th>
+<th>在程序中的角色</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong><code>schemdraw.Drawing</code></strong></td>
+<td><strong>一张</strong>原理图画布</td>
+<td>容器：持有已添加的元件、全局样式，以及当前画笔位置 <code>here</code></td>
+</tr>
+<tr>
+<td><strong><code>schemdraw.elements.Element</code> 及其子类</strong></td>
+<td>单个电路符号</td>
+<td><code>Resistor</code>、<code>PFet</code>、<code>Line</code>、<code>Ground</code> 等都是 <code>Element</code> 的子类；先构造实例，再交给 <code>Drawing</code> 放置</td>
+</tr>
+</tbody>
+</table>
+<p><code>Drawing</code> 支持上下文管理器（<code>with ... as d</code>）：进入时创建画布，退出时按配置显示或保存。常用写法：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> schemdraw</span><br><span class="line"><span class="keyword">import</span> schemdraw.elements <span class="keyword">as</span> elm</span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> schemdraw.Drawing() <span class="keyword">as</span> d:          <span class="comment"># d 是 Drawing 实例</span></span><br><span class="line">    d.config(fontsize=<span class="number">12</span>, color=<span class="string">&#x27;black&#x27;</span>, bgcolor=<span class="string">&#x27;white&#x27;</span>)</span><br><span class="line">    r = d.add(elm.Resistor().right().label(<span class="string">&#x27;1k&#x27;</span>))   <span class="comment"># 构造 Element，再加入画布</span></span><br><span class="line">    d.add(elm.Capacitor().down().at(r.end).label(<span class="string">&#x27;10uF&#x27;</span>))</span><br><span class="line">    d.save(<span class="string">&#x27;out.svg&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<p>要点：</p>
+<ol>
+<li><strong><code>elm.Resistor()</code> 等</strong>只构造符号对象（可链式设置朝向、标签），<strong>尚未上画布</strong>。</li>
+<li><strong><code>d.add(...)</code></strong> 才真正放置：按入笔（Placement）/ 出笔（Drop）更新 <code>d.here</code>，并返回已放置的元件，便于用 <code>r.end</code>、<code>MP.gate</code> 等锚点继续布线。</li>
+<li>整张图的画笔状态（<code>d.here</code>、全局样式）在 <code>Drawing</code> 上；单个符号的几何与锚点在 <code>Element</code> 上。后续各节（坐标系、朝向、链式接口）均在说明这两者如何配合。</li>
+</ol>
+<h2 id="坐标系与画笔">坐标系与画笔</h2>
+<p><code>Drawing</code> 维护一个全局画笔坐标 <strong><code>d.here</code></strong>。每次 <code>d.add()</code> 放置元件时，有两件独立的事情发生：</p>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>含义</th>
+<th>控制方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Placement（入笔）</strong></td>
+<td>元件以哪个引脚对齐到起始坐标；起始坐标默认为当前 <code>d.here</code></td>
+<td><code>.at(坐标或锚点)</code> 改起始坐标；<code>.anchor(名)</code> 改对齐引脚</td>
+</tr>
+<tr>
+<td><strong>Drop（出笔）</strong></td>
+<td>放置完成后将 <code>d.here</code> 更新为哪个引脚的坐标</td>
+<td><code>.drop(名)</code> 换端子；<code>.hold()</code> 保持 <code>d.here</code> 不变</td>
+</tr>
+</tbody>
+</table>
+<p>顺序串联时只需逐个 <code>d.add</code>：每颗元件的出笔（drop）自动成为下一颗的入笔，<code>d.here</code> 链式推进。跨支路或非串联走线时，用 <code>.at(锚点)</code> 显式指定位置，独立于 <code>d.here</code>。</p>
+<h3 id="Placement（入笔）">Placement（入笔）</h3>
+<ul>
+<li>未指定时，放置点为当前 <code>d.here</code>（上一元件的出笔，或画布初始位置）。</li>
+<li><code>.at(p)</code> 将放置点设为坐标或另一元件的锚点（如 <code>M.drain</code>），相当于跳过默认入笔、改钉别处。</li>
+<li><code>.anchor(name)</code> 指定以该引脚对齐到放置点（即「用哪个端子入笔」）。</li>
+</ul>
+<p>典型默认放置锚点：二端元件为 <code>start</code>；<code>PFet</code> 为 <code>source</code>；<code>NFet</code> 为 <code>drain</code>。</p>
+<h3 id="Drop（出笔）">Drop（出笔）</h3>
+<p>元件加入画布后，<code>d.here</code> 更新为该元件 drop 端子的坐标。</p>
+<p><strong>官方文档一般不标注 “drop”</strong>，仅给出锚点名称。推断规则：</p>
+<ol>
+<li><strong>二端元件</strong>（<code>Element2Term</code>：电阻、电容、二极管、导线等）：默认 drop = <strong><code>end</code></strong>，即沿绘制方向的出口端（<code>.right()</code> 时在右端，<code>.down()</code> 时在下端）——与包围盒的「最右」「最下」无关，取决于绘制方向。</li>
+<li><strong>多端元件</strong>：默认 drop 由库内 <code>elmparams['drop']</code> 决定，需对照锚点或运行时验证。</li>
+</ol>
+<p>常见多端默认（元件默认朝向）：</p>
+<table>
+<thead>
+<tr>
+<th>元件</th>
+<th>默认 drop（出笔端子）</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PFet</code></td>
+<td><code>drain</code></td>
+<td>θ = 0 时位于竖直沟道下端</td>
+</tr>
+<tr>
+<td><code>NFet</code></td>
+<td><code>source</code></td>
+<td>同上，便于自上而下串联</td>
+</tr>
+<tr>
+<td><code>PFet2</code> / <code>NFet2</code></td>
+<td><code>end</code></td>
+<td>二端件风格；<code>.right()</code> 时在右端</td>
+</tr>
+<tr>
+<td><code>BjtNpn</code></td>
+<td><code>collector</code></td>
+<td>非沟道下端</td>
+</tr>
+<tr>
+<td><code>Opamp</code></td>
+<td><code>out</code></td>
+<td>输出端</td>
+</tr>
+<tr>
+<td><code>JFetN</code> / <code>JFetP</code></td>
+<td><code>gate</code></td>
+<td>栅极</td>
+</tr>
+<tr>
+<td><code>Ground</code> / <code>Vdd</code> 等</td>
+<td>连接点</td>
+<td>出笔几乎不动，下一入笔仍在原处</td>
+</tr>
+</tbody>
+</table>
+<p>可覆盖默认行为：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">d.add(elm.PFet().right().reverse().drop(<span class="string">&#x27;gate&#x27;</span>))  <span class="comment"># 出笔改到栅极（下一默认入笔亦在此）</span></span><br><span class="line">d.add(elm.Resistor().right().hold())              <span class="comment"># 不出笔：d.here 保持入笔处</span></span><br></pre></td></tr></table></figure>
+<p>运行时核对：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print</span>(d.here)</span><br><span class="line"><span class="built_in">print</span>(m.source, m.drain, m.gate)</span><br></pre></td></tr></table></figure>
+<h2 id="朝向：旋转与镜像">朝向：旋转与镜像</h2>
+<p>Placement / Drop 回答「从哪入、从哪出」；<strong>朝向</strong>回答「符号在纸面上怎么转」。<code>.right()</code> / <code>.up()</code> / <code>.left()</code> / <code>.down()</code> 设置元件旋转角 θ，参考系为画布 <strong>x 正半轴</strong>（θ = 0°）：</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>θ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.right()</code></td>
+<td>0°</td>
+</tr>
+<tr>
+<td><code>.up()</code></td>
+<td>90°</td>
+</tr>
+<tr>
+<td><code>.left()</code></td>
+<td>180°</td>
+</tr>
+<tr>
+<td><code>.down()</code></td>
+<td>270°</td>
+</tr>
+</tbody>
+</table>
+<p>等价写法：<code>.theta(角度)</code>。</p>
+<p>语义说明：</p>
+<ul>
+<li>二端元件本地几何沿 <strong>+x</strong> 定义，故 <code>.right()</code> 表示主体沿 +x 延伸。</li>
+<li><code>PFet</code> / <code>NFet</code> 在本地坐标中沟道沿 <strong>−y</strong> 方向。θ = 0 意为不旋转，沟道保持竖直，所以对这两种元件 <code>.right()</code> 的<strong>外观是竖直沟道</strong>——「right」只代表旋转角为 0°，并非表示沟道朝右延伸。</li>
+<li><code>.reverse()</code> 为沿元件轴向的镜像（MOS 上常用于切换栅极左右）；<code>.flip()</code> 为另一方向翻转。二者与 θ 旋转相互独立。</li>
+</ul>
+<p>改变 θ 后，drop 仍绑定同一命名端子，其在纸面上的方位会随旋转改变。</p>
+<h2 id="常用-API-接口">常用 API 接口</h2>
+<p>构造 <code>Element</code> 时常用的方法：</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.right()</code> / <code>.left()</code> / <code>.up()</code> / <code>.down()</code> / <code>.theta(θ)</code></td>
+<td>旋转</td>
+</tr>
+<tr>
+<td><code>.at(p)</code></td>
+<td>指定放置点</td>
+</tr>
+<tr>
+<td><code>.anchor(name)</code></td>
+<td>指定对齐引脚</td>
+</tr>
+<tr>
+<td><code>.to(p)</code></td>
+<td>连线终点（如 <code>Line</code>）</td>
+</tr>
+<tr>
+<td><code>.length(n)</code></td>
+<td>长度</td>
+</tr>
+<tr>
+<td><code>.label(...)</code></td>
+<td>标注</td>
+</tr>
+<tr>
+<td><code>.reverse()</code> / <code>.flip()</code></td>
+<td>镜像 / 翻转</td>
+</tr>
+<tr>
+<td><code>.drop(...)</code> / <code>.hold()</code></td>
+<td>覆盖出笔端子 / 冻结 <code>d.here</code>（不出笔）</td>
+</tr>
+</tbody>
+</table>
+<p>非串联连接时，优先用已放置元件的锚点绝对坐标（<code>.at</code> / <code>.to</code>），不必依赖 <code>d.here</code> 顺序。</p>
+<h2 id="示例：CMOS-反相器">示例：CMOS 反相器</h2>
+<p>结构：电源侧 <code>PFet</code> 与地侧 <code>NFet</code> 串联，栅极共接 <code>IN</code>，中间节点引出 <code>OUT</code>。下面脚本把前述对象与规则串起来：<code>Drawing</code> 作画布，<code>PFet</code> / <code>NFet</code> / <code>Line</code> 等为 <code>Element</code>，串联靠入笔 / 出笔衔接，跨支路靠锚点 <code>.at</code> / <code>.to</code>。</p>
+<figure class="highlight python"><figcaption><span>schemdraw-basics-01.py</span><a href="/blog/downloads/code/tech/ic/schemdraw-basics-01.py">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 用 schemdraw 绘制 CMOS 反相器：PFet 上拉 + NFet 下拉，标注 VDD / GND / IN / OUT，并导出 SVG。</span></span><br><span class="line"><span class="keyword">import</span> schemdraw</span><br><span class="line"><span class="keyword">import</span> schemdraw.elements <span class="keyword">as</span> elm</span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> schemdraw.Drawing() <span class="keyword">as</span> d:</span><br><span class="line">    d.config(fontsize=<span class="number">12</span>, color=<span class="string">&#x27;black&#x27;</span>, bgcolor=<span class="string">&#x27;white&#x27;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># PFet: placement at source; θ=0 → vertical channel; reverse → gate on left</span></span><br><span class="line">    MP = d.add(elm.PFet().right().reverse())</span><br><span class="line">    d.add(elm.Line().down().at(MP.drain).length(<span class="number">0.4</span>))</span><br><span class="line">    <span class="comment"># NFet: align drain to current pen for series stack</span></span><br><span class="line">    MN = d.add(elm.NFet().right().reverse().anchor(<span class="string">&#x27;drain&#x27;</span>))</span><br><span class="line"></span><br><span class="line">    d.add(elm.Line().up().at(MP.source).length(<span class="number">0.6</span>))</span><br><span class="line">    d.add(elm.Label().label(<span class="string">&#x27;VDD&#x27;</span>))</span><br><span class="line">    d.add(elm.Ground().at(MN.source))</span><br><span class="line"></span><br><span class="line">    d.add(elm.Line().at(MP.gate).to(MN.gate))</span><br><span class="line">    mid = <span class="number">0.5</span> * (MP.gate + MN.gate)</span><br><span class="line">    d.add(elm.Dot().at(mid))</span><br><span class="line">    d.add(elm.Line().left().at(mid).length(<span class="number">1</span>).label(<span class="string">&#x27;IN&#x27;</span>, loc=<span class="string">&#x27;left&#x27;</span>))</span><br><span class="line"></span><br><span class="line">    d.add(elm.Dot().at(MP.drain))</span><br><span class="line">    d.add(elm.Line().right().at(MP.drain).length(<span class="number">1</span>).label(<span class="string">&#x27;OUT&#x27;</span>, loc=<span class="string">&#x27;end&#x27;</span>))</span><br><span class="line"></span><br><span class="line">    d.save(<span class="string">&#x27;schemdraw-basics-01.svg&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python3 schemdraw-basics-01.py</span><br></pre></td></tr></table></figure>
+<p>生成的 CMOS 反相器原理图如下：</p>
+<p><img src="/blog/assets/images/tech/ic/schemdraw-basics-01.svg" alt="CMOS 反相器原理图"></p>
+<p>与上述概念的对应关系：</p>
+<ol>
+<li><code>elm.PFet().right().reverse()</code>：θ = 0（竖直沟道），<code>.reverse()</code> 将栅极置于左侧；默认自 <code>source</code> 入笔，出笔（drop）至 <code>drain</code>。</li>
+<li><code>elm.NFet(...).anchor('drain')</code>：以 <code>drain</code> 对齐当前笔尖（上一出笔），完成漏极侧串联。</li>
+<li><code>Line().at(MP.gate).to(MN.gate)</code> 与中点引出：基于锚点坐标布线，独立于画笔串联的入/出笔路径。</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/ic/" rel="tag"># ic</a>
+              <a href="/blog/tags/digital-circuit/" rel="tag"># digital-circuit</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/21-parallel-processing/" rel="prev" title="MIT 6.004：L21 并行处理">
+      <i class="fa fa-chevron-left"></i> MIT 6.004：L21 并行处理
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E5%AF%B9%E8%B1%A1%EF%BC%9ADrawing-%E4%B8%8E-Element"><span class="nav-text">核心对象：Drawing 与 Element</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9D%90%E6%A0%87%E7%B3%BB%E4%B8%8E%E7%94%BB%E7%AC%94"><span class="nav-text">坐标系与画笔</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Placement%EF%BC%88%E5%85%A5%E7%AC%94%EF%BC%89"><span class="nav-text">Placement（入笔）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Drop%EF%BC%88%E5%87%BA%E7%AC%94%EF%BC%89"><span class="nav-text">Drop（出笔）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%9D%E5%90%91%EF%BC%9A%E6%97%8B%E8%BD%AC%E4%B8%8E%E9%95%9C%E5%83%8F"><span class="nav-text">朝向：旋转与镜像</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B8%B8%E7%94%A8-API-%E6%8E%A5%E5%8F%A3"><span class="nav-text">常用 API 接口</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9ACMOS-%E5%8F%8D%E7%9B%B8%E5%99%A8"><span class="nav-text">示例：CMOS 反相器</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">149</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://cuda-doc.readthedocs.io/" title="https:&#x2F;&#x2F;cuda-doc.readthedocs.io" rel="noopener" target="_blank">CUDA中文手册</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://infiniband-doc.readthedocs.io/" title="https:&#x2F;&#x2F;infiniband-doc.readthedocs.io&#x2F;" rel="noopener" target="_blank">InfiniBand中文手册</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

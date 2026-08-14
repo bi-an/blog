@@ -188,6 +188,297 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/08/13/tech/ic/schemdraw-basics/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2026/08/13/tech/ic/schemdraw-basics/" class="post-title-link" itemprop="url">Schemdraw 绘制 IC 原理图</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2026-08-13 11:37:33" itemprop="dateCreated datePublished" datetime="2026-08-13T11:37:33+00:00">2026-08-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/ic/" itemprop="url" rel="index"><span itemprop="name">ic</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="简介">简介</h2>
+<p><a target="_blank" rel="noopener" href="https://schemdraw.readthedocs.io/">Schemdraw</a> 是一个用 Python 绘制电路原理图的库。使用时逐一添加元件并设置其朝向与标签，库按添加顺序维护画笔位置，自动完成连线衔接，最终导出 SVG 或 PNG。</p>
+<p>与 KiCad、Fritzing 等图形化工具不同，Schemdraw 没有交互式编辑器，图形完全由代码生成。这一特点使它天然适合<strong>需要版本控制与可复现性</strong>的场景——文档、讲义、论文附图等，图形随代码一起纳入版本管理。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install schemdraw</span><br></pre></td></tr></table></figure>
+<p>放置元件前，可先对照官方图示了解各符号的外形与默认朝向：<a target="_blank" rel="noopener" href="https://schemdraw.readthedocs.io/en/stable/elements/electrical.html">Basic Elements（electrical）</a>。</p>
+<h2 id="核心对象：Drawing-与-Element">核心对象：Drawing 与 Element</h2>
+<p>画图时主要打交道的是两个类：</p>
+<table>
+<thead>
+<tr>
+<th>类</th>
+<th>含义</th>
+<th>在程序中的角色</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong><code>schemdraw.Drawing</code></strong></td>
+<td><strong>一张</strong>原理图画布</td>
+<td>容器：持有已添加的元件、全局样式，以及当前画笔位置 <code>here</code></td>
+</tr>
+<tr>
+<td><strong><code>schemdraw.elements.Element</code> 及其子类</strong></td>
+<td>单个电路符号</td>
+<td><code>Resistor</code>、<code>PFet</code>、<code>Line</code>、<code>Ground</code> 等都是 <code>Element</code> 的子类；先构造实例，再交给 <code>Drawing</code> 放置</td>
+</tr>
+</tbody>
+</table>
+<p><code>Drawing</code> 支持上下文管理器（<code>with ... as d</code>）：进入时创建画布，退出时按配置显示或保存。常用写法：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> schemdraw</span><br><span class="line"><span class="keyword">import</span> schemdraw.elements <span class="keyword">as</span> elm</span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> schemdraw.Drawing() <span class="keyword">as</span> d:          <span class="comment"># d 是 Drawing 实例</span></span><br><span class="line">    d.config(fontsize=<span class="number">12</span>, color=<span class="string">&#x27;black&#x27;</span>, bgcolor=<span class="string">&#x27;white&#x27;</span>)</span><br><span class="line">    r = d.add(elm.Resistor().right().label(<span class="string">&#x27;1k&#x27;</span>))   <span class="comment"># 构造 Element，再加入画布</span></span><br><span class="line">    d.add(elm.Capacitor().down().at(r.end).label(<span class="string">&#x27;10uF&#x27;</span>))</span><br><span class="line">    d.save(<span class="string">&#x27;out.svg&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<p>要点：</p>
+<ol>
+<li><strong><code>elm.Resistor()</code> 等</strong>只构造符号对象（可链式设置朝向、标签），<strong>尚未上画布</strong>。</li>
+<li><strong><code>d.add(...)</code></strong> 才真正放置：按入笔（Placement）/ 出笔（Drop）更新 <code>d.here</code>，并返回已放置的元件，便于用 <code>r.end</code>、<code>MP.gate</code> 等锚点继续布线。</li>
+<li>整张图的画笔状态（<code>d.here</code>、全局样式）在 <code>Drawing</code> 上；单个符号的几何与锚点在 <code>Element</code> 上。后续各节（坐标系、朝向、链式接口）均在说明这两者如何配合。</li>
+</ol>
+<h2 id="坐标系与画笔">坐标系与画笔</h2>
+<p><code>Drawing</code> 维护一个全局画笔坐标 <strong><code>d.here</code></strong>。每次 <code>d.add()</code> 放置元件时，有两件独立的事情发生：</p>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>含义</th>
+<th>控制方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Placement（入笔）</strong></td>
+<td>元件以哪个引脚对齐到起始坐标；起始坐标默认为当前 <code>d.here</code></td>
+<td><code>.at(坐标或锚点)</code> 改起始坐标；<code>.anchor(名)</code> 改对齐引脚</td>
+</tr>
+<tr>
+<td><strong>Drop（出笔）</strong></td>
+<td>放置完成后将 <code>d.here</code> 更新为哪个引脚的坐标</td>
+<td><code>.drop(名)</code> 换端子；<code>.hold()</code> 保持 <code>d.here</code> 不变</td>
+</tr>
+</tbody>
+</table>
+<p>顺序串联时只需逐个 <code>d.add</code>：每颗元件的出笔（drop）自动成为下一颗的入笔，<code>d.here</code> 链式推进。跨支路或非串联走线时，用 <code>.at(锚点)</code> 显式指定位置，独立于 <code>d.here</code>。</p>
+<h3 id="Placement（入笔）">Placement（入笔）</h3>
+<ul>
+<li>未指定时，放置点为当前 <code>d.here</code>（上一元件的出笔，或画布初始位置）。</li>
+<li><code>.at(p)</code> 将放置点设为坐标或另一元件的锚点（如 <code>M.drain</code>），相当于跳过默认入笔、改钉别处。</li>
+<li><code>.anchor(name)</code> 指定以该引脚对齐到放置点（即「用哪个端子入笔」）。</li>
+</ul>
+<p>典型默认放置锚点：二端元件为 <code>start</code>；<code>PFet</code> 为 <code>source</code>；<code>NFet</code> 为 <code>drain</code>。</p>
+<h3 id="Drop（出笔）">Drop（出笔）</h3>
+<p>元件加入画布后，<code>d.here</code> 更新为该元件 drop 端子的坐标。</p>
+<p><strong>官方文档一般不标注 “drop”</strong>，仅给出锚点名称。推断规则：</p>
+<ol>
+<li><strong>二端元件</strong>（<code>Element2Term</code>：电阻、电容、二极管、导线等）：默认 drop = <strong><code>end</code></strong>，即沿绘制方向的出口端（<code>.right()</code> 时在右端，<code>.down()</code> 时在下端）——与包围盒的「最右」「最下」无关，取决于绘制方向。</li>
+<li><strong>多端元件</strong>：默认 drop 由库内 <code>elmparams['drop']</code> 决定，需对照锚点或运行时验证。</li>
+</ol>
+<p>常见多端默认（元件默认朝向）：</p>
+<table>
+<thead>
+<tr>
+<th>元件</th>
+<th>默认 drop（出笔端子）</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PFet</code></td>
+<td><code>drain</code></td>
+<td>θ = 0 时位于竖直沟道下端</td>
+</tr>
+<tr>
+<td><code>NFet</code></td>
+<td><code>source</code></td>
+<td>同上，便于自上而下串联</td>
+</tr>
+<tr>
+<td><code>PFet2</code> / <code>NFet2</code></td>
+<td><code>end</code></td>
+<td>二端件风格；<code>.right()</code> 时在右端</td>
+</tr>
+<tr>
+<td><code>BjtNpn</code></td>
+<td><code>collector</code></td>
+<td>非沟道下端</td>
+</tr>
+<tr>
+<td><code>Opamp</code></td>
+<td><code>out</code></td>
+<td>输出端</td>
+</tr>
+<tr>
+<td><code>JFetN</code> / <code>JFetP</code></td>
+<td><code>gate</code></td>
+<td>栅极</td>
+</tr>
+<tr>
+<td><code>Ground</code> / <code>Vdd</code> 等</td>
+<td>连接点</td>
+<td>出笔几乎不动，下一入笔仍在原处</td>
+</tr>
+</tbody>
+</table>
+<p>可覆盖默认行为：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">d.add(elm.PFet().right().reverse().drop(<span class="string">&#x27;gate&#x27;</span>))  <span class="comment"># 出笔改到栅极（下一默认入笔亦在此）</span></span><br><span class="line">d.add(elm.Resistor().right().hold())              <span class="comment"># 不出笔：d.here 保持入笔处</span></span><br></pre></td></tr></table></figure>
+<p>运行时核对：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print</span>(d.here)</span><br><span class="line"><span class="built_in">print</span>(m.source, m.drain, m.gate)</span><br></pre></td></tr></table></figure>
+<h2 id="朝向：旋转与镜像">朝向：旋转与镜像</h2>
+<p>Placement / Drop 回答「从哪入、从哪出」；<strong>朝向</strong>回答「符号在纸面上怎么转」。<code>.right()</code> / <code>.up()</code> / <code>.left()</code> / <code>.down()</code> 设置元件旋转角 θ，参考系为画布 <strong>x 正半轴</strong>（θ = 0°）：</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>θ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.right()</code></td>
+<td>0°</td>
+</tr>
+<tr>
+<td><code>.up()</code></td>
+<td>90°</td>
+</tr>
+<tr>
+<td><code>.left()</code></td>
+<td>180°</td>
+</tr>
+<tr>
+<td><code>.down()</code></td>
+<td>270°</td>
+</tr>
+</tbody>
+</table>
+<p>等价写法：<code>.theta(角度)</code>。</p>
+<p>语义说明：</p>
+<ul>
+<li>二端元件本地几何沿 <strong>+x</strong> 定义，故 <code>.right()</code> 表示主体沿 +x 延伸。</li>
+<li><code>PFet</code> / <code>NFet</code> 在本地坐标中沟道沿 <strong>−y</strong> 方向。θ = 0 意为不旋转，沟道保持竖直，所以对这两种元件 <code>.right()</code> 的<strong>外观是竖直沟道</strong>——「right」只代表旋转角为 0°，并非表示沟道朝右延伸。</li>
+<li><code>.reverse()</code> 为沿元件轴向的镜像（MOS 上常用于切换栅极左右）；<code>.flip()</code> 为另一方向翻转。二者与 θ 旋转相互独立。</li>
+</ul>
+<p>改变 θ 后，drop 仍绑定同一命名端子，其在纸面上的方位会随旋转改变。</p>
+<h2 id="常用-API-接口">常用 API 接口</h2>
+<p>构造 <code>Element</code> 时常用的方法：</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.right()</code> / <code>.left()</code> / <code>.up()</code> / <code>.down()</code> / <code>.theta(θ)</code></td>
+<td>旋转</td>
+</tr>
+<tr>
+<td><code>.at(p)</code></td>
+<td>指定放置点</td>
+</tr>
+<tr>
+<td><code>.anchor(name)</code></td>
+<td>指定对齐引脚</td>
+</tr>
+<tr>
+<td><code>.to(p)</code></td>
+<td>连线终点（如 <code>Line</code>）</td>
+</tr>
+<tr>
+<td><code>.length(n)</code></td>
+<td>长度</td>
+</tr>
+<tr>
+<td><code>.label(...)</code></td>
+<td>标注</td>
+</tr>
+<tr>
+<td><code>.reverse()</code> / <code>.flip()</code></td>
+<td>镜像 / 翻转</td>
+</tr>
+<tr>
+<td><code>.drop(...)</code> / <code>.hold()</code></td>
+<td>覆盖出笔端子 / 冻结 <code>d.here</code>（不出笔）</td>
+</tr>
+</tbody>
+</table>
+<p>非串联连接时，优先用已放置元件的锚点绝对坐标（<code>.at</code> / <code>.to</code>），不必依赖 <code>d.here</code> 顺序。</p>
+<h2 id="示例：CMOS-反相器">示例：CMOS 反相器</h2>
+<p>结构：电源侧 <code>PFet</code> 与地侧 <code>NFet</code> 串联，栅极共接 <code>IN</code>，中间节点引出 <code>OUT</code>。下面脚本把前述对象与规则串起来：<code>Drawing</code> 作画布，<code>PFet</code> / <code>NFet</code> / <code>Line</code> 等为 <code>Element</code>，串联靠入笔 / 出笔衔接，跨支路靠锚点 <code>.at</code> / <code>.to</code>。</p>
+<figure class="highlight python"><figcaption><span>schemdraw-basics-01.py</span><a href="/blog/downloads/code/tech/ic/schemdraw-basics-01.py">view raw</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 用 schemdraw 绘制 CMOS 反相器：PFet 上拉 + NFet 下拉，标注 VDD / GND / IN / OUT，并导出 SVG。</span></span><br><span class="line"><span class="keyword">import</span> schemdraw</span><br><span class="line"><span class="keyword">import</span> schemdraw.elements <span class="keyword">as</span> elm</span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> schemdraw.Drawing() <span class="keyword">as</span> d:</span><br><span class="line">    d.config(fontsize=<span class="number">12</span>, color=<span class="string">&#x27;black&#x27;</span>, bgcolor=<span class="string">&#x27;white&#x27;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># PFet: placement at source; θ=0 → vertical channel; reverse → gate on left</span></span><br><span class="line">    MP = d.add(elm.PFet().right().reverse())</span><br><span class="line">    d.add(elm.Line().down().at(MP.drain).length(<span class="number">0.4</span>))</span><br><span class="line">    <span class="comment"># NFet: align drain to current pen for series stack</span></span><br><span class="line">    MN = d.add(elm.NFet().right().reverse().anchor(<span class="string">&#x27;drain&#x27;</span>))</span><br><span class="line"></span><br><span class="line">    d.add(elm.Line().up().at(MP.source).length(<span class="number">0.6</span>))</span><br><span class="line">    d.add(elm.Label().label(<span class="string">&#x27;VDD&#x27;</span>))</span><br><span class="line">    d.add(elm.Ground().at(MN.source))</span><br><span class="line"></span><br><span class="line">    d.add(elm.Line().at(MP.gate).to(MN.gate))</span><br><span class="line">    mid = <span class="number">0.5</span> * (MP.gate + MN.gate)</span><br><span class="line">    d.add(elm.Dot().at(mid))</span><br><span class="line">    d.add(elm.Line().left().at(mid).length(<span class="number">1</span>).label(<span class="string">&#x27;IN&#x27;</span>, loc=<span class="string">&#x27;left&#x27;</span>))</span><br><span class="line"></span><br><span class="line">    d.add(elm.Dot().at(MP.drain))</span><br><span class="line">    d.add(elm.Line().right().at(MP.drain).length(<span class="number">1</span>).label(<span class="string">&#x27;OUT&#x27;</span>, loc=<span class="string">&#x27;end&#x27;</span>))</span><br><span class="line"></span><br><span class="line">    d.save(<span class="string">&#x27;schemdraw-basics-01.svg&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python3 schemdraw-basics-01.py</span><br></pre></td></tr></table></figure>
+<p>生成的 CMOS 反相器原理图如下：</p>
+<p><img src="/blog/assets/images/tech/ic/schemdraw-basics-01.svg" alt="CMOS 反相器原理图"></p>
+<p>与上述概念的对应关系：</p>
+<ol>
+<li><code>elm.PFet().right().reverse()</code>：θ = 0（竖直沟道），<code>.reverse()</code> 将栅极置于左侧；默认自 <code>source</code> 入笔，出笔（drop）至 <code>drain</code>。</li>
+<li><code>elm.NFet(...).anchor('drain')</code>：以 <code>drain</code> 对齐当前笔尖（上一出笔），完成漏极侧串联。</li>
+<li><code>Line().at(MP.gate).to(MN.gate)</code> 与中点引出：基于锚点坐标布线，独立于画笔串联的入/出笔路径。</li>
+</ol>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/21-parallel-processing/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -211,10 +502,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2026-08-11 10:21:00 / Modified: 14:44:05" itemprop="dateCreated datePublished" datetime="2026-08-11T10:21:00+00:00">2026-08-11</time>
+              <time title="Created: 2026-08-11 10:21:00" itemprop="dateCreated datePublished" datetime="2026-08-11T10:21:00+00:00">2026-08-11</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -413,10 +710,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2026-08-11 10:20:00 / Modified: 14:44:05" itemprop="dateCreated datePublished" datetime="2026-08-11T10:20:00+00:00">2026-08-11</time>
+              <time title="Created: 2026-08-11 10:20:00" itemprop="dateCreated datePublished" datetime="2026-08-11T10:20:00+00:00">2026-08-11</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -633,10 +936,16 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2026-08-11 10:19:00 / Modified: 14:44:05" itemprop="dateCreated datePublished" datetime="2026-08-11T10:19:00+00:00">2026-08-11</time>
+              <time title="Created: 2026-08-11 10:19:00" itemprop="dateCreated datePublished" datetime="2026-08-11T10:19:00+00:00">2026-08-11</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -813,10 +1122,16 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2026-08-11 10:18:00 / Modified: 14:44:05" itemprop="dateCreated datePublished" datetime="2026-08-11T10:18:00+00:00">2026-08-11</time>
+              <time title="Created: 2026-08-11 10:18:00" itemprop="dateCreated datePublished" datetime="2026-08-11T10:18:00+00:00">2026-08-11</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -1008,10 +1323,16 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2026-08-11 10:17:00 / Modified: 14:44:05" itemprop="dateCreated datePublished" datetime="2026-08-11T10:17:00+00:00">2026-08-11</time>
+              <time title="Created: 2026-08-11 10:17:00" itemprop="dateCreated datePublished" datetime="2026-08-11T10:17:00+00:00">2026-08-11</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -1176,10 +1497,16 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2026-08-11 10:16:00 / Modified: 14:44:05" itemprop="dateCreated datePublished" datetime="2026-08-11T10:16:00+00:00">2026-08-11</time>
+              <time title="Created: 2026-08-11 10:16:00" itemprop="dateCreated datePublished" datetime="2026-08-11T10:16:00+00:00">2026-08-11</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -1372,10 +1699,16 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2026-08-11 10:15:00 / Modified: 14:44:05" itemprop="dateCreated datePublished" datetime="2026-08-11T10:15:00+00:00">2026-08-11</time>
+              <time title="Created: 2026-08-11 10:15:00" itemprop="dateCreated datePublished" datetime="2026-08-11T10:15:00+00:00">2026-08-11</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -1630,10 +1963,16 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2026-08-11 10:14:00 / Modified: 14:44:05" itemprop="dateCreated datePublished" datetime="2026-08-11T10:14:00+00:00">2026-08-11</time>
+              <time title="Created: 2026-08-11 10:14:00" itemprop="dateCreated datePublished" datetime="2026-08-11T10:14:00+00:00">2026-08-11</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -1867,10 +2206,16 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2026-08-11 10:13:00 / Modified: 14:44:05" itemprop="dateCreated datePublished" datetime="2026-08-11T10:13:00+00:00">2026-08-11</time>
+              <time title="Created: 2026-08-11 10:13:00" itemprop="dateCreated datePublished" datetime="2026-08-11T10:13:00+00:00">2026-08-11</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-08-14 09:20:27" itemprop="dateModified" datetime="2026-08-14T09:20:27+00:00">2026-08-14</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -2012,199 +2357,6 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/12-procedures-and-stacks/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2026/08/11/tech/ic/ic-book/mit-6.004-computation-structures/12-procedures-and-stacks/" class="post-title-link" itemprop="url">MIT 6.004：L12 过程与栈</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2026-08-11 10:12:00 / Modified: 14:44:05" itemprop="dateCreated datePublished" datetime="2026-08-11T10:12:00+00:00">2026-08-11</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/ic/" itemprop="url" rel="index"><span itemprop="name">ic</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <blockquote>
-<p>整理自 MIT OCW <strong>6.004 Computation Structures</strong>（Spring 2017）L12 注解幻灯片。</p>
-<p>源网页：<a target="_blank" rel="noopener" href="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/pages/c12/c12s1/">12.1 Annotated Slides | Procedures and Stacks</a></p>
-<p>讲师：Chris Terman。图片直接引用 OCW 原站链接。</p>
-</blockquote>
-<h1>L12：过程与栈（Procedures and Stacks）</h1>
-<p>本讲讲清过程（procedure）抽象为何需要<strong>激活记录</strong>（activation record），以及为何 LIFO <strong>栈</strong>能自然支持嵌套与递归；随后给出 Beta 上的 SP/LP/BP 约定、栈帧布局、callee-saves 契约，并用阶乘与“栈侦探”题目串起整套调用约定。</p>
-<h2 id="1-过程：软件抽象（Procedures-A-Software-Abstraction）">1. 过程：软件抽象（Procedures: A Software Abstraction）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/081188ef0c971ba238cf6ded49cc0a7d_Slide02.png" alt="Procedures A Software Abstraction" width="80%"/>
-<p>过程/子程序：完成特定任务的指令序列，有唯一命名入口。可有形式参数（formal parameters）；调用时实参（arguments）与之对应。过程体可定义仅在执行期间存在的<strong>局部变量</strong>；可返回值，也可只为副作用而执行。</p>
-<p>例：<code>COPRIMES</code> 只需知道 <code>GCD</code> 的入参/返回类型即可调用——实现被封装成黑盒。标准库提供大量预建过程（数学、容器、文件等）。过程抽象是高级语言表达力的核心。</p>
-<h2 id="2-实现过程（Implementing-Procedures）">2. 实现过程（Implementing Procedures）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6a84e14f318c22650c320f431c84f184_Slide03.png" alt="Implementing Procedures" width="80%"/>
-<p>两种思路：</p>
-<ol>
-<li><strong>内联</strong>（inline）：用过程体副本替换调用，实参代入形参（类似宏）。短过程有时值得；长过程多次调用会膨胀代码。递归在编译期无法终止展开 → 内联失败。</li>
-<li><strong>链接</strong>（link）：过程代码只保留一份；调用方求实参、存约定位置，<code>BR</code> 到入口并保存<strong>返回地址</strong>（return address）；过程算完把结果放约定位置，再 <code>JMP</code> 回返回地址。</li>
-</ol>
-<h2 id="3-过程调用约定（Procedure-Calling-Convention）">3. 过程调用约定（Procedure Calling Convention）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e8368b14ef6b223abc134f1abf2ee017_Slide04.png" alt="Procedure Calling Convention" width="80%"/>
-<p>需约定：实参放哪、返回值放哪。可尝试用寄存器：如 R1 起传参、R28 存返回地址（<strong>linkage pointer</strong>）、R0 返回值。<code>BR</code>/<code>JMP</code> 正好对应 call/return。</p>
-<p>目标：所有调用与过程体用同一约定——含递归 <code>fact(n-1)</code> 与顶层 <code>fact(3)</code>。</p>
-<h2 id="4-过程链接：初试（Procedure-Linkage-First-Try）">4. 过程链接：初试（Procedure Linkage: First Try）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ef241e01bd813c73246098ac1b13fa15_Slide05.png" alt="Procedure Linkage First Try" width="80%"/>
-<p>按上述约定编译 <code>fact()</code>：入参进 R1，<code>BR</code> 保存返回地址到 R28；递归时又把 <code>n-1</code> 写入 R1、新返回地址写入 R28——<strong>覆盖</strong>外层还需要的 <code>n</code> 与返回地址。深度为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi></mrow><annotation encoding="application/x-tex">d</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span></span></span></span> 时需要约 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mi>d</mi></mrow><annotation encoding="application/x-tex">2d</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6944em;"></span><span class="mord">2</span><span class="mord mathnormal">d</span></span></span></span> 个存储槽，寄存器不够。禁止递归可绕过，但语言通常允许递归 → 必须动态为每次活跃调用分配存储。</p>
-<h2 id="5-过程的存储需求（Procedure-Storage-Needs）">5. 过程的存储需求（Procedure Storage Needs）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a0d9b41751d20e538b786320403c9202_Slide06.png" alt="Procedure Storage Needs" width="80%"/>
-<p>每次活跃调用需要：实参、返回地址、返回值、局部变量、以及调用方寄存器现场。不想限制参数/局部变量个数 → 每次调用一块存储，即<strong>激活记录</strong>。不能静态只为某过程留一块（递归有多份同时活跃）→ 调用时分配、返回时回收。</p>
-<h2 id="6-激活记录（Activation-Records）">6. 激活记录（Activation Records）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e8f40467996e7889aca7f27091a7ee21_Slide07.png" alt="Activation Records" width="80%"/>
-<p><code>fact(3)</code>→<code>fact(2)</code>→<code>fact(1)</code>→<code>fact(0)</code>：每层调用创建自己的激活记录；嵌套调用返回后其记录先丢弃。LIFO：被调方记录总在调用方之前释放——调用方必须等被调返回才能结束。需要高效支持这种分配/释放的结构。</p>
-<h2 id="7-洞察：需要栈！（Insight-We-Need-a-Stack-）">7. 洞察：需要栈！（Insight: We Need a Stack!）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3f3a061f766688454036eb06a2074f3c_Slide08.png" alt="Insight We Need a Stack" width="80%"/>
-<p>激活记录按 LIFO 进出 → <strong>栈</strong>（stack）：<code>PUSH</code> 加顶、<code>POP</code> 去顶。C 过程通常只访问栈顶记录；Java 等可访问其他活跃帧。闭包 / continuation（如 Python <code>yield</code>）需在返回后仍保留帧 → 纯栈不够，属更高级课程话题。</p>
-<h2 id="8-栈实现（Stack-Implementation）">8. 栈实现（Stack Implementation）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7b5f6f95568e4daa6939dfe7bd74a57f_Slide09.png" alt="Stack Implementation" width="80%"/>
-<p>Beta：专用 <strong>R29 = SP</strong>（stack pointer）。<code>PUSH</code> 时递增 SP，栈向高地址生长。约定：SP 指向<strong>下一个未用</strong>字；低于 SP 的地址是已分配内容。</p>
-<p><strong>栈纪律</strong>（stack discipline）：一段代码 <code>PUSH</code> 的内容必须在结束前 <code>POP</code> 掉，使 SP 恢复原值。栈放在大块内存区，系统常设最大栈长，溢出报错。Beta 用现有指令实现栈，纯软件约定；有的 ISA 有专用栈指令。</p>
-<h2 id="9-栈管理宏（Stack-Management-Macros）">9. 栈管理宏（Stack Management Macros）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/374ddee69cd65875183554a38608aa5d_Slide10.png" alt="Stack Management Macros" width="80%"/>
-<p>UASM 宏：</p>
-<ul>
-<li><code>PUSH</code>：先 <code>ADDC</code> 分配栈顶，再 <code>ST</code> 初始化（顺序重要：中断可能夹在两指令之间；先分配再写更安全）</li>
-<li><code>POP</code>：先 <code>LD</code> 取值，再 <code>SUBC</code> 释放</li>
-<li><code>ALLOCATE</code> / <code>DEALLOCATE</code>：预留/释放 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 个字（不必初始化）</li>
-</ul>
-<p>见 <code>PUSH</code>/<code>ALLOCATE</code> 应能找到配对的 <code>POP</code>/<code>DEALLOCATE</code>。</p>
-<h2 id="10-玩转栈（Fun-With-Stacks）">10. 玩转栈（Fun With Stacks）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c4ede911868c94e358b88a4dc9b0a43b_Slide11.png" alt="Fun With Stacks" width="80%"/>
-<p>临时占用寄存器前可 <code>PUSH</code> 旧值，用完按相反顺序 <code>POP</code> 恢复（LIFO）。有了栈，即可解决激活记录的分配/释放问题。</p>
-<h2 id="11-解决过程链接问题（Solving-Procedure-Linkage-Problems）">11. 解决过程链接问题（Solving Procedure Linkage Problems）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/85312ef5c5bdb8f889237146690ae312_Slide12.png" alt="Solving Procedure Linkage Problems" width="80%"/>
-<p>栈上放激活记录：实参、局部变量、以及保存的 LP（以便嵌套调用）。职责分摊：</p>
-<ul>
-<li><strong>调用方（caller）</strong>：求实参并<strong>逆序</strong> <code>PUSH</code>（第一实参最后压栈）；<code>BR</code> 到入口，返回地址进 LP=R28；返回后 <code>DEALLOCATE</code> 去掉实参。</li>
-<li>被调方完成帧的其余部分（下页）。</li>
-</ul>
-<p>逆序原因后文说明（可变参数）。</p>
-<h2 id="12-栈帧作激活记录（Stack-Frames-as-Activation-Records）">12. 栈帧作激活记录（Stack Frames as Activation Records）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1e894bddaceae105583a4892749d98fc_Slide13.png" alt="Stack Frames as Activation Records" width="80%"/>
-<p>入口序列完成帧（也称 <strong>stack frame</strong>）：保存 LP；再保存调用方的 <strong>BP=R27</strong>，并用当前 SP 设本帧 BP；<code>ALLOCATE</code> 局部变量；再 <code>PUSH</code> 本过程将破坏的寄存器（<strong>callee saves</strong>：除 R0 外寄存器跨调用保持）。</p>
-<p>有了 BP，帧内访问用相对 BP 的固定偏移，比相对 SP 更稳（SP 会随 PUSH/POP 变）。</p>
-<h2 id="13-栈帧细节（Stack-Frame-Details）">13. 栈帧细节（Stack Frame Details）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4aeaa59687e58fda07a9f0fc046e7264_Slide14.png" alt="Stack Frame Details" width="80%"/>
-<p>回到问题：为何实参<strong>逆序</strong>压栈？</p>
-<h2 id="14-实参顺序与-BP（Argument-Order-BP-Usage）">14. 实参顺序与 BP（Argument Order &amp; BP Usage）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9242020b05e48fd662c3c4127ac8e13e_Slide15.png" alt="Argument Order and BP Usage" width="80%"/>
-<p>逆序后，第一实参（arg 0）相对 BP 偏移固定（如 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mn>12</mn></mrow><annotation encoding="application/x-tex">-12</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">−</span><span class="mord">12</span></span></span></span>），与共压几个实参无关；第二参 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mn>16</mn></mrow><annotation encoding="application/x-tex">-16</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">−</span><span class="mord">16</span></span></span></span>…… C 的可变参数（如 <code>printf</code>：格式串在第一个实参）依赖这一点。局部变量亦固定偏移：第一局部 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0</mn></mrow><annotation encoding="application/x-tex">0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span>，第二 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>+</mo><mn>4</mn></mrow><annotation encoding="application/x-tex">+4</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">+</span><span class="mord">4</span></span></span></span>…… 帧上更高地址可用于嵌套调用建新帧。</p>
-<h2 id="15-过程链接契约（Procedure-Linkage-The-Contract）">15. 过程链接契约（Procedure Linkage: The Contract）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/49fb4e5d5e1d900a34a02445f27bde2a_Slide16.png" alt="Procedure Linkage The Contract" width="80%"/>
-<p><strong>Caller</strong>：逆序压实参 → <code>BR</code> 到入口（返回地址→LP）→ 返回后卸掉实参。</p>
-<p><strong>Callee</strong>：计算结果放 R0 → <code>JMP</code> 返回地址 → 卸掉自己压上的内容，栈恢复入口时模样 → 除 R0 外保持所有寄存器。</p>
-<h2 id="16-过程链接模板（Procedure-Linkage-Templates）">16. 过程链接模板（Procedure Linkage Templates）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3728697745d5f935b536dde97faeec40_Slide17.png" alt="Procedure Linkage Templates" width="80%"/>
-<p>入口：保存 LP、BP；<code>MOVE(SP,BP)</code>；<code>ALLOCATE</code> 局部；<code>PUSH</code> 将用寄存器。出口：按相反顺序 <code>POP</code> 恢复；<code>MOVE(BP,SP)</code> 隐式撤销 <code>ALLOCATE</code>；最后 <code>JMP(LP)</code> 回调用方。</p>
-<h2 id="17-综合：阶乘（Putting-It-All-Together-Factorial）">17. 综合：阶乘（Putting It All Together: Factorial）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1d68a1469af72f47a3a0d7def3bebbc7_Slide18.png" alt="Putting It All Together Factorial" width="80%"/>
-<p>C 版 <code>fact</code> 的编译结果：入口/出口序列清晰；嵌套调用栈上传参并在返回后 <code>DEALLOCATE</code>；体用上讲模板。链接开销约十余条指令；对极短非递归过程，优化器可能选择内联。</p>
-<h2 id="18-递归？（Recursion-）">18. 递归？（Recursion?）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d86e5032f8ec023288fddaef8f2f7fad_Slide19.png" alt="Recursion" width="80%"/>
-<p>已解决：每次调用新栈帧；返回按逆序释放。沿 BP 链可读出活跃调用、实参、局部变量 → <strong>stack trace</strong>（运行时出错时常打印）。能解读栈帧 ≈ 理解调用约定（测验常见题）。</p>
-<h2 id="19-栈侦探（Stack-Detective）">19. 栈侦探（Stack Detective）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d093fadfb09cb864306359f4572f6c87_Slide20.png" alt="Stack Detective" width="80%"/>
-<p>练习：已知 PC=0x40、栈转储，推断：</p>
-<ul>
-<li>当前 <code>fact</code> 实参为 3；沿保存的 BP/LP 找到原始调用实参为 6</li>
-<li>原始调用的 <code>BR</code> 在 0x7C（保存的 LP=0x80 为下一指令）</li>
-<li>即将执行的是 <code>DEALLOCATE(1)</code>（递归返回后的指令）</li>
-<li>BP 等可由帧布局与十六进制地址推出</li>
-</ul>
-<p>关键：会读帧布局、十六进制算术、区分递归返回地址与外部返回地址。</p>
-<h2 id="20-专用寄存器小结（Summary-of-Dedicated-Registers）">20. 专用寄存器小结（Summary of Dedicated Registers）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a65ff319444a8e484792c1b5dd6fddfa_Slide21.png" alt="Summary of Dedicated Registers" width="80%"/>
-<table>
-<thead>
-<tr>
-<th>寄存器</th>
-<th>角色</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>R31</td>
-<td>ISA 规定恒为 0</td>
-</tr>
-<tr>
-<td>R30</td>
-<td>留给下讲 Beta 实现（XP）；用户代码勿用</td>
-</tr>
-<tr>
-<td>R29 (SP)</td>
-<td>栈指针</td>
-</tr>
-<tr>
-<td>R28 (LP)</td>
-<td>链接指针（返回地址）</td>
-</tr>
-<tr>
-<td>R27 (BP)</td>
-<td>基址指针（当前帧）</td>
-</tr>
-</tbody>
-</table>
-<h2 id="21-小结（Summary）">21. 小结（Summary）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/019cee61090a93d9f856a5cfbaba9f1a_Slide22.png" alt="Summary" width="80%"/>
-<p>激活记录由 caller/callee 共同建造，返回时丢弃；含实参、保存的 LP/BP、其他被保存寄存器、局部变量。BP 指向当前帧；<strong>callee saves</strong>（除 R0）保证嵌套与递归安全。至此可编译并执行任意 C 程序（在约定意义下）。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2276,7 +2428,7 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">148</span>
+          <span class="site-state-item-count">149</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -2289,7 +2441,7 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">44</span>
+        <span class="site-state-item-count">46</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
