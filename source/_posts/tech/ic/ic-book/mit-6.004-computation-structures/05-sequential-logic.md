@@ -20,7 +20,7 @@ mathjax: true
 
 ## 1. 还不能造的东西（Something We Can’t Build (Yet)）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3fd216fac0d8a4dca530c15590a9af85_Slide02.png" alt="Something We Can't Build Yet" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3fd216fac0d8a4dca530c15590a9af85_Slide02.png" alt="Something We Can't Build Yet" width="70%"/>
 
 上一讲学会了按功能规格做组合逻辑：输出只由**当前**输入决定。
 
@@ -30,7 +30,7 @@ mathjax: true
 
 ## 2. 数字状态：想造什么（Digital State: What We’d Like to Build）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/56754b6fe38357d184b4d35ec1948f0c_Slide03.png" alt="Digital State What We'd Like to Build" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/56754b6fe38357d184b4d35ec1948f0c_Slide03.png" alt="Digital State What We'd Like to Build" width="70%"/>
 
 引入**存储器**抽象：用一个或多个比特编码系统当前状态，这些比特作为数字值出现在输出（图中 “Current State”）。
 
@@ -47,7 +47,7 @@ mathjax: true
 
 ## 3. 用电容做存储（Memory: Using Capacitors）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/12a0e958520be77acd5c57e88e385643_Slide04.png" alt="Memory Using Capacitors" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/12a0e958520be77acd5c57e88e385643_Slide04.png" alt="Memory Using Capacitors" width="70%"/>
 
 比特已用电压表示，可考虑用电容存某电压。电容是无源二端器件：两平行板隔绝缘体，电荷 $Q$ 与电压差 $V$ 满足 $Q=CV$。接到较高电压叫**充电**，接到较低电压叫**放电**。
 
@@ -73,7 +73,7 @@ mathjax: true
 
 ## 4. 用反馈做存储（Memory: Using Feedback）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c9962578f708737165ef496378f1337d_Slide05.png" alt="Memory Using Feedback" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c9962578f708737165ef496378f1337d_Slide05.png" alt="Memory Using Feedback" width="70%"/>
 
 两只组合反相器接成**正反馈**环：一输入为数字 0 → 其输出为 1 → 另一反相器输出为 0，又接回原输入。只要接电源与地，该配置在噪声下仍可保持；两线数字值对调也是稳定的。有两种稳定配置，称为**双稳态**（bi-stable）存储元件。
 
@@ -81,7 +81,7 @@ mathjax: true
 
 ## 5. 可置位存储元件（Settable Memory Element）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/90b3c2fd995f56f0b76ec1ddfcf5dc32_Slide06.png" alt="Settable Memory Element" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/90b3c2fd995f56f0b76ec1ddfcf5dc32_Slide06.png" alt="Settable Memory Element" width="70%"/>
 
 用 **2 选 1 MUX** 做可置位存储：MUX 输出作状态输出 $Q$，并回接到 MUX 的 $D_0$；$D_1$ 作数据输入；选择端作加载信号（此处称 **gate**，$G$）。
 
@@ -92,7 +92,7 @@ mathjax: true
 
 ## 6. 新器件：D 锁存器（New Device: D Latch）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/dda8c360d0910e5eda03ff8bfa9d567d_Slide07.png" alt="New Device D Latch" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/dda8c360d0910e5eda03ff8bfa9d567d_Slide07.png" alt="New Device D Latch" width="70%"/>
 
 该存储器称为 **D 锁存器**（D latch），原理图符号如图。
 
@@ -149,7 +149,7 @@ mathjax: true
 
 ## 7. 请求宽容（A Plea for Lenience）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9e6c455c2e0b75885da4d747316ec456_Slide08.png" alt="A Plea for Lenience" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9e6c455c2e0b75885da4d747316ec456_Slide08.png" alt="A Plea for Lenience" width="70%"/>
 
 因此，存储元件选用的是**宽容的**（lenient）MUX；宽容 MUX 的真值表见上图。在下列任一条件下，即使输入发生跳变，输出仍保持有效且稳定：
 
@@ -161,7 +161,7 @@ mathjax: true
 
 ## 8. 还须一点纪律（… With a Little Discipline）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/595e10687a103e0484e86d17d0a9238f_Slide09.png" alt="With a Little Discipline" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/595e10687a103e0484e86d17d0a9238f_Slide09.png" alt="With a Little Discipline" width="70%"/>
 
 保证锁存器按预期工作，需按下列步骤操作：
 
@@ -178,7 +178,7 @@ mathjax: true
 
 ## 9. 试一把（Let’s Try it Out!）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1bb1766344daa10aacf0a6fe11085d7a_Slide10.png" alt="Let's Try it Out" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1bb1766344daa10aacf0a6fe11085d7a_Slide10.png" alt="Let's Try it Out" width="70%"/>
 
 把锁存器用作时序系统的存储：打开锁存器（$G$ HIGH），让新状态传到 $Q$（当前状态），再经组合逻辑更新下一状态。问题：$G$ 若 HIGH 过久，系统形成环路，新状态沿环快速变化，加载计划失败。
 
@@ -186,13 +186,13 @@ mathjax: true
 
 ## 10. 不可靠的控制系统（Flakey Control Systems）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/86301e39b62cfd877a638af7d3f1cbaa_Slide11.png" alt="Flakey Control Systems" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/86301e39b62cfd877a638af7d3f1cbaa_Slide11.png" alt="Flakey Control Systems" width="70%"/>
 
 类比：收费站闸门前排队的车 = 时序逻辑中的状态序列；闸门 = 锁存器。闸门关闭时车等候；打开后第一辆驶出——但何时关闸很难：开得够久让第一辆过，又不能太久让后面的车也过。与单锁存器作存储时的问题相同。
 
 ## 11. 解法：擒纵策略（双闸）（Solution: Escapement Strategy (2 Gates)）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/efb478a7f0db6cea63bfe00f48235bed_Slide12.png" alt="Escapement Strategy Two Gates" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/efb478a7f0db6cea63bfe00f48235bed_Slide12.png" alt="Escapement Strategy Two Gates" width="70%"/>
 
 用**两道闸**：起初 Gate 1 开、Gate 2 关，恰允许一辆进入；某一瞬间关 Gate 1、开 Gate 2，让站内那辆驶出，并挡住后续车辆。重复两步，逐辆处理。关键：**任意时刻不存在同时穿过两道闸的通路**。
 
@@ -200,15 +200,19 @@ mathjax: true
 
 ## 12. 边沿触发 D 寄存器（Edge-triggered D Register）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e8b8c50b21bdf0bcaeedc4539a219633_Slide13.png" alt="Edge-triggered D Register" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e8b8c50b21bdf0bcaeedc4539a219633_Slide13.png" alt="Edge-triggered D Register" width="70%"/>
 
 用两个背靠背锁存器做 **D 寄存器**（D register）：加载信号通常叫**时钟**（clock）；$D$/$Q$ 角色与锁存器相同。
 
-$D$ 接**主锁存器**（master），$Q$ 接**从锁存器**（slave）。时钟在进主锁存器前反相：主开则从关，反之亦然——任意时刻没有从寄存器 $D$ 到 $Q$ 的通路。时钟反相器延迟曾令人担心：上升沿时是否会有短暂两闸门都 HIGH？其实主锁存器可用“$G$ LOW 时打开、$G$ HIGH 时关闭”的极性，往往不必另加反相器。因锁存器内正反馈双稳态，寄存器也常被称为 **flip-flop**。
+从外部看，$D$ 接**主锁存器**（master），$Q$ 接**从锁存器**（slave）。时钟在进主锁存器前反相：主开则从关，反之亦然——任意时刻没有从寄存器 $D$ 到 $Q$ 的通路。
+
+时钟反相器延迟可能会引发担心：上升沿时是否会有短暂两 Gate 都 HIGH？我们可以换用“$G$ LOW 时打开、$G$ HIGH 时关闭”类型的主锁存器，往往不必另加反相器。
+
+因锁存器内正反馈双稳态（具有两个可以长期保持的稳定工作状态），寄存器也常被称为 **flip-flop** （触发器）。
 
 ## 13. D 寄存器波形（D-Register Waveforms）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9e3ee853fa307630648767ab19e47b17_Slide14.png" alt="D-Register Waveforms" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9e3ee853fa307630648767ab19e47b17_Slide14.png" alt="D-Register Waveforms" width="70%"/>
 
 整体行为简单：时钟 **0→1 上升沿**采样 $D$，并保持到下一上升沿；$Q$ 即寄存器中存的值。
 
@@ -223,7 +227,7 @@ $D$ 接**主锁存器**（master），$Q$ 接**从锁存器**（slave）。时�
 
 ## 14. 关于那个保持时间…（Um, About That Hold Time…）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e47ea050dbc032c469af69b71029ec8b_Slide15.png" alt="About That Hold Time" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e47ea050dbc032c469af69b71029ec8b_Slide15.png" alt="About That Hold Time" width="70%"/>
 
 下降沿时从锁存器由开→关，其输入 STAR 必须满足从锁存器的建立/保持时间。麻烦在于：主同时打开，STAR 可能在时钟边沿后很快变化。主的**污染延迟** $t_{\mathrm{CD}}$ 告诉我们旧值在下降沿后还能稳多久；从的保持时间告诉我们边沿后还要稳多久。
 
@@ -231,7 +235,7 @@ $D$ 接**主锁存器**（master），$Q$ 接**从锁存器**（slave）。时�
 
 ## 15. D 寄存器时序（D-Register Timing）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/cbad449926e607f01e053ef60ff0aad3_Slide16.png" alt="D-Register Timing" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/cbad449926e607f01e053ef60ff0aad3_Slide16.png" alt="D-Register Timing" width="70%"/>
 
 D 寄存器时序规格小结：
 
@@ -249,7 +253,7 @@ D 寄存器时序规格小结：
 
 ## 16. 单时钟同步电路（Single-clock Synchronous Circuits）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3c5ff1860eb2c9a36a5c40241c82a154_Slide17.png" alt="Single-clock Synchronous Circuits" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3c5ff1860eb2c9a36a5c40241c82a154_Slide17.png" alt="Single-clock Synchronous Circuits" width="70%"/>
 
 6.004 中使用寄存器的约定称为**单时钟同步纪律**（single-clock synchronous discipline）：
 
@@ -261,7 +265,7 @@ D 寄存器时序规格小结：
 
 ## 17. 单时钟系统中的时序（Timing in a Single-clock System）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7fe759d2481ff7e0b2ec8116ac4e3345_Slide18.png" alt="Timing in a Single-clock System" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7fe759d2481ff7e0b2ec8116ac4e3345_Slide18.png" alt="Timing in a Single-clock System" width="70%"/>
 
 分析某条路径：上游寄存器 → 组合逻辑 → 下游寄存器（逻辑输出记 STAR）。大系统有多条路径，须逐条分析以找出决定最小可用时钟周期的路径（CAD 工具常代劳）。
 
@@ -282,13 +286,13 @@ $t_{\mathrm{CLK}}$ 刻画性能。Intel 等按不同时钟频率卖处理器—�
 
 ## 18. 模型：离散时间（Model: Discrete Time）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d377c41298081890008a96113d85dfba_Slide19.png" alt="Model Discrete Time" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d377c41298081890008a96113d85dfba_Slide19.png" alt="Model Discrete Time" width="70%"/>
 
 用 D 寄存器作时序系统的存储很合适：每个时钟上升沿加载下一状态，在余下时钟周期内作为当前状态出现在输出。组合逻辑用当前状态与输入计算下一状态与输出。一串上升沿与输入产生状态序列，进而产生输出序列。下一章引入**有限状态机**（finite state machine）抽象，便于设计时序系统。
 
 ## 19. 时序电路时序分析（Sequential Circuit Timing）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5bbe99ae9bbcd7ce79d96bab7d97c5ff_Slide20.png" alt="Sequential Circuit Timing" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5bbe99ae9bbcd7ce79d96bab7d97c5ff_Slide20.png" alt="Sequential Circuit Timing" width="70%"/>
 
 对图示时序系统套用上述分析（寄存器与组合逻辑时序参数如图）：
 
@@ -298,6 +302,6 @@ $t_{\mathrm{CLK}}$ 刻画性能。Intel 等按不同时钟频率卖处理器—�
 
 ## 20. 小结（Summary）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1458621dc9f23bbed582c1796a9b25cd_Slide21.png" alt="Summary" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1458621dc9f23bbed582c1796a9b25cd_Slide21.png" alt="Summary" width="70%"/>
 
 本讲完成时序逻辑入门：几乎所有数字系统都是时序系统，并遵守动态纪律施加的时序约束。下次看到 “1.7 GHz 处理器” 广告，就知道 “1.7” 从何而来——由可满足建立时间的最小 $t_{\mathrm{CLK}}$（以及工艺筛选）决定。
