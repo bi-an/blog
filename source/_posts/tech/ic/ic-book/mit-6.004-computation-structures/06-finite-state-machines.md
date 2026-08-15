@@ -20,7 +20,7 @@ mathjax: true
 
 ## 1. 我们的新机器（Our New Machine）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/68c02542c606a9dfbeb43171bcbb9d61_Slide02.png" alt="Our New Machine" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/68c02542c606a9dfbeb43171bcbb9d61_Slide02.png" alt="Our New Machine" width="70%"/>
 
 上一章得到时序逻辑：组合逻辑云 + 状态寄存器。
 
@@ -31,7 +31,7 @@ mathjax: true
 
 ## 2. 一个简单的时序电路（A Simple Sequential Circuit）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/88e72bf365ab07be625d0296d1c76110_Slide03.png" alt="A Simple Sequential Circuit" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/88e72bf365ab07be625d0296d1c76110_Slide03.png" alt="A Simple Sequential Circuit" width="70%"/>
 
 例：密码锁。1 比特输入按位串入口令；输出 UNLOCK 仅当最近四位输入为 `0-1-1-0` 时为 1。
 
@@ -39,7 +39,7 @@ mathjax: true
 
 ## 3. 今日抽象：有限状态机（Abstraction du jour: Finite State Machines）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/cf9238cb993345df80ba1e4ad7babb25_Slide04.png" alt="Finite State Machines" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/cf9238cb993345df80ba1e4ad7babb25_Slide04.png" alt="Finite State Machines" width="70%"/>
 
 **FSM** 描述时序逻辑的输入/输出行为，与具体实现无关。要素：
 
@@ -52,7 +52,7 @@ mathjax: true
 
 ## 4. 状态转移图（State Transition Diagram）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c5025083ffedf14759dbfd3c0cdc6162_Slide05.png" alt="State Transition Diagram" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c5025083ffedf14759dbfd3c0cdc6162_Slide05.png" alt="State Transition Diagram" width="70%"/>
 
 用状态转移图描述密码锁 FSM。初始状态 SX：尚未收到任何口令位；圆圈表示状态，符号名提醒“记住了什么历史”。本例解锁输出 $U$ 仅依赖当前状态，写在圆内；SX 中 $U=0$。初始态用粗边框标出。
 
@@ -64,7 +64,7 @@ mathjax: true
 
 ## 5. 合法的状态图（Valid State Diagrams）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a2facbc7f2e330d15206a52d1768bfb5_Slide06.png" alt="Valid State Diagrams" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a2facbc7f2e330d15206a52d1768bfb5_Slide06.png" alt="Valid State Diagrams" width="70%"/>
 
 良构规则：
 
@@ -75,7 +75,7 @@ mathjax: true
 
 ## 6. 状态转移图即真值表（State Transition Diagram as a Truth Table）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f5faf7a3e0e141813e04bb647c77cd0e_Slide07.png" alt="State Transition Diagram as a Truth Table" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f5faf7a3e0e141813e04bb647c77cd0e_Slide07.png" alt="State Transition Diagram as a Truth Table" width="70%"/>
 
 转移图可写成真值表：行 = 当前状态 + 输入的所有组合；输出列 = 下一状态与输出。用二进制替换符号状态名后，即第 4 章那种真值表。$K$ 个状态需 $\lceil\log_2 K\rceil$ 个状态比特（本例 5 态 → 3 比特）。
 
@@ -83,7 +83,7 @@ mathjax: true
 
 ## 7. 落到硬件（Now Put It in Hardware）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4ecfb54f0d10a8e59b284a051b168b81_Slide08.png" alt="Now Put It in Hardware" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4ecfb54f0d10a8e59b284a051b168b81_Slide08.png" alt="Now Put It in Hardware" width="70%"/>
 
 ROM 由当前状态与输入计算下一状态与输出。5 态用 3 比特编码 → 3 比特状态寄存器（边沿触发矩形为多比特寄存器的示意；线上斜杠 + 数字表示位宽）。
 
@@ -91,7 +91,7 @@ ROM 共 4 根地址输入（3 状态 + 1 输入）→ $2^4=16$ 个单元，对�
 
 ## 8. 离散状态、离散时间（Discrete State, Discrete Time）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f998b521ccfef242b7272405810c45f6_Slide09.png" alt="Discrete State, Discrete Time" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f998b521ccfef242b7272405810c45f6_Slide09.png" alt="Discrete State, Discrete Time" width="70%"/>
 
 回顾设计选择：输出仅依赖状态 → Moore；依赖状态+输入 → Mealy。$S$ 个状态比特可编码 $2^S$ 态。**每多 1 个状态比特，ROM 容量翻倍**——用 ROM 实现时极想减少状态比特。
 
@@ -99,7 +99,7 @@ ROM 共 4 根地址输入（3 状态 + 1 输入）→ $2^4=16$ 个单元，对�
 
 ## 9. 杂务问题（Housekeeping Issues…）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7c5e289f2e4746879908ce5b6d79983c_Slide10.png" alt="Housekeeping Issues" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7c5e289f2e4746879908ce5b6d79983c_Slide10.png" alt="Housekeeping Issues" width="70%"/>
 
 - **复位**：上电需把状态寄存器置为初始态编码；常用 RESET=1 强制初态，再置 0 开始运行
 - **未用编码**：3 比特最多 8 态，本例只用 5 个——可改用门级逻辑；若寄存器误入未用编码，可在 ROM 中令未用态一律指向初态，避免未知行为
@@ -109,14 +109,14 @@ ROM 共 4 根地址输入（3 状态 + 1 输入）→ $2^4=16$ 个单元，对�
 
 ## 10. FSM 的状态（FSM States）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/82a022e1f682dee47837bf697d8240c2_Slide11.png" alt="FSM States" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/82a022e1f682dee47837bf697d8240c2_Slide11.png" alt="FSM States" width="70%"/>
 
 - 用 $K$ 个状态比特的 FSM，转移图中状态数至多 $2^K$
 - 两台 FSM 串联（第一台输出 = 第二台输入）：整体仍是 FSM；不知内部细节时，状态数上界为 $M\times N$（第一台可在任一 $M$ 态，同时第二台在任一 $N$ 态）。上界与输入位宽 $X,Y$ 无关——更宽输入只让转移标签更长，不直接告诉内部状态数
 
 ## 11. 我的转移图是什么？（What’s My Transition Diagram?）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8b48eff61d9a84c762164b8d480a7dd3_Slide12.png" alt="What's My Transition Diagram" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8b48eff61d9a84c762164b8d480a7dd3_Slide12.png" alt="What's My Transition Diagram" width="70%"/>
 
 黑盒 FSM：按钮 0/1，灯输出。实验一小时：按 0 灯灭，按 1 灯亮。能否确定转移图？
 
@@ -124,49 +124,49 @@ ROM 共 4 根地址输入（3 状态 + 1 输入）→ $2^4=16$ 个单元，对�
 
 ## 12. FSM 等价（FSM Equivalence）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4b74e046d7d92fd6b1e17a59dbb1b0a2_Slide13.png" alt="FSM Equivalence" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4b74e046d7d92fd6b1e17a59dbb1b0a2_Slide13.png" alt="FSM Equivalence" width="70%"/>
 
 不同状态数的 FSM 可能等价：对外不可区分即可互换。定义：当且仅当**任意输入序列**在两机上产生**相同输出序列**时，两 FSM 等价。工程上希望找最简（最便宜）的等价机——下一例说明如何化简。
 
 ## 13. 造一只机器蚁（Let’s Build a RoboAnt）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/58f824dca5002a86498e553135c0c9fb_Slide14.png" alt="Let's Build a RoboAnt" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/58f824dca5002a86498e553135c0c9fb_Slide14.png" alt="Let's Build a RoboAnt" width="70%"/>
 
 机器蚁以 FSM 为脑：触角 L、R（触碰为 1）；输出 F 前进、TL/TR 左转/右转。同时请求转向与前进时先转向。触角贴墙时可转，但无法前进。任务：在无孤岛墙的迷宫中用**右手定则**逃出。
 
 ## 14. 迷失太空（Lost in Space）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/03a01995c5d440e95efed6fbf6e7a4fb_Slide15.png" alt="Lost in Space" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/03a01995c5d440e95efed6fbf6e7a4fb_Slide15.png" alt="Lost in Space" width="70%"/>
 
 初态 LOST：断言 F，一直前进直到至少一根触角碰到墙（$L$ 或 $R$ 为 1）。
 
 ## 15. 撞上了！（Bonk!）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d7b3405b48b09dd27733e759ffc5f9a4_Slide16.png" alt="Bonk" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d7b3405b48b09dd27733e759ffc5f9a4_Slide16.png" alt="Bonk" width="70%"/>
 
 碰到墙后的三种姿态：为实现右手定则，逆时针左转直到两触角都离开墙 → 增加 rotate-counterclockwise 态，断言 TL，直到 $L=R=0$。
 
 ## 16. 稍向右转…（A Little to the Right…）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7519e2a0b7df45b60ec57efd12d772b3_Slide17.png" alt="A Little to the Right" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7519e2a0b7df45b60ec57efd12d772b3_Slide17.png" alt="A Little to the Right" width="70%"/>
 
 墙已在右侧，开始用右触角沿墙走：WALL1 断言 TR+F，然后看右触角决定下一步（期望立刻再碰到墙）。
 
 ## 17. 再稍向左转…（Then a Little to the Left…）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6344748c19c9c4768d902ae21a7134cf_Slide18.png" alt="Then a Little to the Left" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6344748c19c9c4768d902ae21a7134cf_Slide18.png" alt="Then a Little to the Left" width="70%"/>
 
 右触角如期碰到 → WALL2：TL+F，再检查触角。右触角仍碰 → 继续转；左触角碰 → 内角，回到 rotate-counterclockwise 把新墙放到右侧；两触角都空 → 回到 WALL1（与墙平行）。期望沿墙时 WALL1/WALL2 交替；遇内角则旋转后继续。
 
 ## 18. 处理外角（Dealing With Outside Corners）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6ff1c0db62000b3af3fb1483b3626e57_Slide19.png" alt="Dealing With Outside Corners" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6ff1c0db62000b3af3fb1483b3626e57_Slide19.png" alt="Dealing With Outside Corners" width="70%"/>
 
 WALL1 中前进并右转后，外角处右触角可能碰不到墙。策略：CORNER 态继续右转并前进，直到右触角再次碰到拐角后的墙，再转入 WALL2。
 
 ## 19. 等价状态化简（Equivalent State Reduction）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b0e06d16783d8e49a9b1ceccf3f9ea54_Slide20.png" alt="Equivalent State Reduction" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b0e06d16783d8e49a9b1ceccf3f9ea54_Slide20.png" alt="Equivalent State Reduction" width="70%"/>
 
 找可合并、对外不可区分的状态对。两态等价当且仅当：
 
@@ -177,7 +177,7 @@ WALL1 中前进并右转后，外角处右触角可能碰不到墙。策略：CO
 
 ## 20. 进化一步（An Evolutionary Step）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/16fdf264e95bd81906069a2aa3373373_Slide21.png" alt="An Evolutionary Step" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/16fdf264e95bd81906069a2aa3373373_Slide21.png" alt="An Evolutionary Step" width="70%"/>
 
 蚁 FSM 中仅 WALL1 与 CORNER 输出相同（皆 TR+F）。二者转移只依赖 $R$：$R=0$ 都到 CORNER，$R=1$ 都到 WALL2 → 等价，可合并为 WALL1。
 
@@ -185,37 +185,37 @@ WALL1 中前进并右转后，外角处右触角可能碰不到墙。策略：CO
 
 ## 21. 建转移表（Building the Transition Table）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6e40d4cd92520f1af527e8c0964d17c4_Slide22.png" alt="Building the Transition Table" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6e40d4cd92520f1af527e8c0964d17c4_Slide22.png" alt="Building the Transition Table" width="70%"/>
 
 不用 ROM、改用门实现时：把转移图逐条写入真值表。LOST（编码 00）：$F=1$；$L=R=0$ 则下一态仍 LOST；任一触角碰 → 转到 rotate-counterclockwise（01），对应 $L,R$ 的三种组合各占一行。再类似地填完其余状态的转移。
 
 ## 22. 实现细节（Implementation Details）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/65646bfa68276c029273f17c3296906f_Slide23.png" alt="Implementation Details" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/65646bfa68276c029273f17c3296906f_Slide23.png" alt="Implementation Details" width="70%"/>
 
 完整表可用 don't-care 压缩行数。再对组合逻辑各输出（2 个下一状态比特 + 3 个运动输出）写布尔方程。下一状态比特用第 4 章 K-map 找素蕴涵项覆盖，得最小 SOP；运动控制输出同法。
 
 ## 23. 蚁脑原理图（Ant Schematic）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4c8bbf23e8daa24b235a3cad0f14b88e_Slide24.png" alt="Ant Schematic" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4c8bbf23e8daa24b235a3cad0f14b88e_Slide24.png" alt="Ant Schematic" width="70%"/>
 
 各 SOP 用 AND/OR 直接实现，即得蚁脑原理图：几个 D 寄存器 + 一把逻辑门就能走出迷宫。
 
 ## 24. 一路都是 FSM？（FSMs All the Way Down?）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a6b5790d1f81c2149319f5752970fb6d_Slide25.png" alt="FSMs All the Way Down" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a6b5790d1f81c2149319f5752970fb6d_Slide25.png" alt="FSMs All the Way Down" width="70%"/>
 
 简单 FSM 可产生复杂群体行为（群集、鸟群、鱼群）；电影大战场面可想成大量并行 FSM。元胞自动机（通信 FSM 阵列）有时比解 PDE 更易建模分子约束。若允许 FSM 改自身转移表——或许可作进化的粗糙模型。FSM 无处不在。
 
 ## 25. 世界不跟我们的时钟跑！（The World Doesn’t Run on Our Clock!）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b352897db8dac2d547ef777b639a9ac5_Slide26.png" alt="The World Doesn't Run on Our Clock" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b352897db8dac2d547ef777b639a9ac5_Slide26.png" alt="The World Doesn't Run on Our Clock" width="70%"/>
 
 **异步输入**：跳变时刻与系统时钟完全无关（来自外界）。第 5 讲末：状态寄存器要求相对时钟上升沿满足建立/保持时间；随时可变的输入必可能违反。思路：对每个异步输入加**同步器**，使输出只在时钟上升沿后不久才改变。
 
 ## 26. 有界时间同步器（The Bounded-Time Synchronizer）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ed3ede13bf7e4e098ad023b0c54878b9_Slide27.png" alt="The Bounded-Time Synchronizer" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ed3ede13bf7e4e098ad023b0c54878b9_Slide27.png" alt="The Bounded-Time Synchronizer" width="70%"/>
 
 规格：输入 IN、CLK，跳变时刻 $t_{\mathrm{IN}}$、$t_{\mathrm{C}}$。
 
@@ -227,7 +227,7 @@ WALL1 中前进并右转后，外角处右触角可能碰不到墙。策略：CO
 
 ## 27. 不可解？那不可能…（Unsolvable? That Can’t Be True…）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d71eb3e955c76f9e811471341b102aba_Slide28.png" alt="Unsolvable" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d71eb3e955c76f9e811471341b102aba_Slide28.png" alt="Unsolvable" width="70%"/>
 
 能否用一个 D 寄存器当同步器？取 $t_{\mathrm{D}}$ = 寄存器传播延迟，$t_{\mathrm{E}}$ = setup/hold 中较大者。满足动态纪律时输出确定；违纪时规格允许 0 或 1——看似搞定。
 
@@ -235,7 +235,7 @@ WALL1 中前进并右转后，外角处右触角可能碰不到墙。策略：CO
 
 ## 28. 神秘的亚稳态（The Mysterious Metastable State）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ae392b52efca848a9a3d845be454cf9f_Slide29.png" alt="The Mysterious Metastable State" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ae392b52efca848a9a3d845be454cf9f_Slide29.png" alt="The Mysterious Metastable State" width="70%"/>
 
 主锁存是宽容 MUX，用正反馈构成双稳态。存储模式 ≈ 两门环路：约束为两门电路的 VTC（绿）以及 $V_{\mathrm{IN}}=V_{\mathrm{OUT}}$（红）。两曲线交于三点；中间交点是问题所在。
 
@@ -243,7 +243,7 @@ IN 与 CLK 同时变时，MUX 关闭启用反馈时 $Q$ 可能正处过渡，环
 
 ## 29. 亚稳态性质（Metastable State: Properties）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e46b265de4434246dc780c15ba83e737_Slide30.png" alt="Metastable State Properties" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e46b265de4434246dc780c15ba83e737_Slide30.png" alt="Metastable State Properties" width="70%"/>
 
 - 落在数字信令的禁止区 → **非法逻辑电平**；违纪后寄存器不再保证有界时间内给出数字输出
 - **逻辑危害**：组合门对非法输入输出不可预测，可污染状态与输出
@@ -257,7 +257,7 @@ IN 与 CLK 同时变时，MUX 关闭启用反馈时 $Q$ 可能正处过渡，环
 
 ## 30. 解法：延迟提高可靠性（Solution: Delay Increases Reliability）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/72c72ab553043ba0ce3ce2597ec0585c_Slide31.png" alt="Solution: Delay Increases Reliability" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/72c72ab553043ba0ce3ce2597ec0585c_Slide31.png" alt="Solution: Delay Increases Reliability" width="70%"/>
 
 做法：D 寄存器同步后再加**第二级寄存器**，把可能亚稳的值**隔离（quarantine）**。第一级违纪亚稳时，第二级挡住；半周期内第二级主锁存关闭，完全不看该值。要到下一时钟边沿（整周期后）第二级才需要合法稳定输入。整周期后仍亚稳的概率可通过加长时钟周期压到任意低——不是 100% 保证，但失效间隔可达年/十年量级；无第二级可能每几小时就失败一次。
 

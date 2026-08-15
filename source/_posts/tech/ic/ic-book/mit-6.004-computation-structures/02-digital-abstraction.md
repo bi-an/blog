@@ -20,7 +20,7 @@ mathjax: true
 
 ## 1. 编码信息（Encoding Information）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/dc16c05b0a93cd723b054e87ba1c3a79_Slide02.png" alt="Encoding Information" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/dc16c05b0a93cd723b054e87ba1c3a79_Slide02.png" alt="Encoding Information" width="70%"/>
 
 好的比特表示应具备哪些性质？
 
@@ -32,7 +32,7 @@ mathjax: true
 
 ## 2. 电来救急（Electricity to the Rescue）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7d28a51dc0ed99e68a860d1c8ca04d18_Slide03.png" alt="Electricity to the Rescue" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7d28a51dc0ed99e68a860d1c8ca04d18_Slide03.png" alt="Electricity to the Rescue" width="70%"/>
 
 可用带电粒子相关的电现象表示信息：
 
@@ -48,7 +48,7 @@ mathjax: true
 
 ## 3. 用电压表示信息（Representing Information with Voltage）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/de240baae461e8062880c14fc99d2aad_Slide04.png" alt="Representing Information with Voltage" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/de240baae461e8062880c14fc99d2aad_Slide04.png" alt="Representing Information with Voltage" width="70%"/>
 
 考虑用电压表示黑白图像：每个 $(x,y)$ 点有强度（黑最弱、白最强）。可把强度映到电压，如 $0\,\mathrm{V}$ 为黑、$1\,\mathrm{V}$ 为白，中间强度用中间电压。
 
@@ -60,13 +60,13 @@ mathjax: true
 
 ## 4. 用电压编码一幅图（Using Voltages to Encode a Picture）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a124acf81d70d7f7e5d12840286bc84c_Slide05.png" alt="Using Voltages to Encode a Picture" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a124acf81d70d7f7e5d12840286bc84c_Slide05.png" alt="Using Voltages to Encode a Picture" width="70%"/>
 
 按约定光栅顺序（如左→右、上→下）扫描图像，把强度转为电压，得到随时间变化的电压序列。早期电视即如此：画面编成在黑白表示之间变化的电压波形，并扩展电压范围以携带行同步、帧同步等**同步信号**（sync signals）。这种可取指定范围内任意值的波形称为**连续波形**（continuous waveform）。
 
 ## 5. 信息处理 = 计算（Information Processing = Computation）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/19c14a2a5ac2c91c00a04cc7784c6acf_Slide06.png" alt="Information Processing = Computation" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/19c14a2a5ac2c91c00a04cc7784c6acf_Slide06.png" alt="Information Processing = Computation" width="70%"/>
 
 用两个简单处理模块搭系统：
 
@@ -77,7 +77,7 @@ mathjax: true
 
 ## 6. 动手搭一个系统！（Let's Build a System!）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/0be86c2cec235cbad710c685f8229ef2_Slide07.png" alt="Let's Build a System" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/0be86c2cec235cbad710c685f8229ef2_Slide07.png" alt="Let's Build a System" width="70%"/>
 
 用若干 COPY 与 INVERTING 模块组成图像处理系统。COPY 不改图像，INVERTING 为偶数个，理论上输出应与输入相同。
 
@@ -85,7 +85,7 @@ mathjax: true
 
 ## 7. 系统为何失败？（Why Did Our System Fail?）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2cd7c04bd2da68b25b1839d1b842ea2e_Slide08.png" alt="Why Did Our System Fail" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2cd7c04bd2da68b25b1839d1b842ea2e_Slide08.png" alt="Why Did Our System Fail" width="70%"/>
 
 COPY / INVERTING 很难严格服从数学描述：制造偏差与环境差异使 COPY 对 $V$ 输入输出 $V+\varepsilon$，INVERTING 同理。在**连续值**强度表示下，$V+\varepsilon$ 仍是合法输出——只是对应另一幅略不同的合法图像。我们无法区分“略受损的信号”与“略不同图像的完美信号”。
 
@@ -95,7 +95,7 @@ COPY / INVERTING 很难严格服从数学描述：制造偏差与环境差异使
 
 ## 8. 数字抽象（The Digital Abstraction）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b5d88bbde4ed3b8c9a7e85f871aa6f66_Slide09.png" alt="The Digital Abstraction" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b5d88bbde4ed3b8c9a7e85f871aa6f66_Slide09.png" alt="The Digital Abstraction" width="70%"/>
 
 引入**数字抽象**（digital abstraction）：用连续的电压世界表示一个小的有限值集合——此处即二进制的 0 与 1。世界本身并非天生数字；我们是用连续物理现象去工程出数字行为。
 
@@ -103,7 +103,7 @@ COPY / INVERTING 很难严格服从数学描述：制造偏差与环境差异使
 
 ## 9. 用电压做数字表示（Using Voltages Digitally）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b4e062668dc8fe88e3a04ed4fd5dabbf_Slide10.png" alt="Using Voltages Digitally" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b4e062668dc8fe88e3a04ed4fd5dabbf_Slide10.png" alt="Using Voltages Digitally" width="70%"/>
 
 核心：约定信令，每次只编码 **1 比特**（0 或 1），系统中各组件与导线使用统一表示。到达可用方案需三轮尝试。
 
@@ -119,7 +119,7 @@ COPY / INVERTING 很难严格服从数学描述：制造偏差与环境差异使
 
 ## 10. 组合器件（Combinational Devices）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/bc62e73670f544e772dee970def1402b_Slide11.png" alt="Combinational Devices" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/bc62e73670f544e772dee970def1402b_Slide11.png" alt="Combinational Devices" width="70%"/>
 
 满足以下四条的器件称为**组合器件**（combinational device）：
 
@@ -132,7 +132,7 @@ COPY / INVERTING 很难严格服从数学描述：制造偏差与环境差异使
 
 ## 11. 组合数字系统（A Combinational Digital System）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/90fb5993efed87da9f29f21d6521df65_Slide12.png" alt="A Combinational Digital System" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/90fb5993efed87da9f29f21d6521df65_Slide12.png" alt="A Combinational Digital System" width="70%"/>
 
 由组合组件组成更大组合系统的规则：
 
@@ -144,7 +144,7 @@ COPY / INVERTING 很难严格服从数学描述：制造偏差与环境差异使
 
 ## 12. 这是组合器件吗？（Is This a Combinational Device?）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1952027a839b7ca97ff3bdcffa8385b6_Slide13.png" alt="Is This a Combinational Device" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1952027a839b7ca97ff3bdcffa8385b6_Slide13.png" alt="Is This a Combinational Device" width="70%"/>
 
 以由组合器件 A、B、C 组成的系统为例，验证整体是否服从静态纪律：
 
@@ -157,7 +157,7 @@ COPY / INVERTING 很难严格服从数学描述：制造偏差与环境差异使
 
 ## 13. 应对噪声（Dealing With Noise）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4e0f1639c2b25a04e37458e7d6897668_Slide14.png" alt="Dealing With Noise" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4e0f1639c2b25a04e37458e7d6897668_Slide14.png" alt="Dealing With Noise" width="70%"/>
 
 定稿信令前还有问题：上游器件输出略低于 $V_{\mathrm{L}}$ 的合法 0；线上噪声使下游看到略高于 $V_{\mathrm{L}}$ 的电压——不再是有效数字输入，下游组合行为不再有保证。
 
@@ -165,7 +165,7 @@ COPY / INVERTING 很难严格服从数学描述：制造偏差与环境差异使
 
 ## 14. 噪声从哪来？（Where Does Noise Come From?）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/566c1b2f734934277c5d7b038f6cb906_Slide15.png" alt="Where Does Noise Come From" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/566c1b2f734934277c5d7b038f6cb906_Slide15.png" alt="Where Does Noise Come From" width="70%"/>
 
 **电压噪声**（偏离标称电压）来源包括：
 
@@ -177,7 +177,7 @@ COPY / INVERTING 很难严格服从数学描述：制造偏差与环境差异使
 
 ## 15. 噪声容限（Noise Margins）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a104c51dda65b0f36c3fbe4d4c000375_Slide16.png" alt="Noise Margins" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a104c51dda65b0f36c3fbe4d4c000375_Slide16.png" alt="Noise Margins" width="70%"/>
 
 最终信令：输入与输出使用**不同**阈值。
 
@@ -200,7 +200,7 @@ COPY / INVERTING 很难严格服从数学描述：制造偏差与环境差异使
 
 ## 16. 电压传输特性（Voltage Transfer Characteristic）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c0159bc28d5b9890e4ea9fc534d7312b_Slide17.png" alt="Voltage Transfer Characteristic" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c0159bc28d5b9890e4ea9fc534d7312b_Slide17.png" alt="Voltage Transfer Characteristic" width="70%"/>
 
 以最简单的组合器件——**缓冲器**（buffer，单输入单输出，输出经传播延迟后复现输入数字值）为例测量。它服从静态纪律，并使用含高低噪声容限的修订信令。
 
@@ -210,7 +210,7 @@ COPY / INVERTING 很难严格服从数学描述：制造偏差与环境差异使
 
 ## 17. VTC 推论（VTC Deductions）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a9fd8ad2231bc0c72f981f044d3917db_Slide18.png" alt="VTC Deductions" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a9fd8ad2231bc0c72f981f044d3917db_Slide18.png" alt="VTC Deductions" width="70%"/>
 
 关于 VTC 的两点观察：
 
@@ -223,7 +223,7 @@ COPY / INVERTING 很难严格服从数学描述：制造偏差与环境差异使
 
 ## 18. VTC 实例（VTC Example）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7d3e2ce5bee51d34132f9255cdc0d956_Slide19.png" alt="VTC Example" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7d3e2ce5bee51d34132f9255cdc0d956_Slide19.png" alt="VTC Example" width="70%"/>
 
 给定某器件的 VTC，能否选 $V_{\mathrm{OL}}$、$V_{\mathrm{IL}}$、$V_{\mathrm{IH}}$、$V_{\mathrm{OH}}$ 使其成为合法组合反相器？
 
@@ -239,7 +239,7 @@ COPY / INVERTING 很难严格服从数学描述：制造偏差与环境差异使
 
 ## 19. 小结（Summary）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b2386ed22dcaa360690f7bb92ceccd46_Slide20.png" alt="Summary" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b2386ed22dcaa360690f7bb92ceccd46_Slide20.png" alt="Summary" width="70%"/>
 
 本讲要点：
 

@@ -18,7 +18,7 @@ mathjax: true
 
 ## 1. 组合器件愿望清单（Combinational Device Wish List）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/42e5019be6a79c380e6a8cb9833f028d_Slide02.png" alt="Combinational Device Wish List" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/42e5019be6a79c380e6a8cb9833f028d_Slide02.png" alt="Combinational Device Wish List" width="70%"/>
 
 回顾组合器件（combinational device）应具备的特性。上一讲用电压表示信息，并允许信息在处理元件系统中流动时承受一定误差。
 
@@ -43,7 +43,7 @@ mathjax: true
 
 ## 2. N 沟道 MOSFET：物理视角（N-Channel MOSFET: Physical View）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d18fcd081f55667ad0111c80b6173df6_Slide03.png" alt="N-Channel MOSFET Physical View" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d18fcd081f55667ad0111c80b6173df6_Slide03.png" alt="N-Channel MOSFET Physical View" width="70%"/>
 
 主角是**金属–氧化物–半导体场效应晶体管**（metal-oxide-semiconductor field-effect transistor, **MOSFET**）。
 
@@ -69,7 +69,7 @@ MOSFET 可视为连接源、漏的**压控开关**（voltage-controlled switch�
 
 ## 3. N 沟道 MOSFET：电学视角（N-Channel MOSFET: Electrical View）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8ab313bffd2125bf69badbb56dc95c26_Slide04.png" alt="N-Channel MOSFET Electrical View" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8ab313bffd2125bf69badbb56dc95c26_Slide04.png" alt="N-Channel MOSFET Electrical View" width="70%"/>
 
 约定：两侧扩散区中**电位较高**的称为漏（drain），较低的称为源（source）；若有电流，则从漏流向源。
 
@@ -85,7 +85,7 @@ MOSFET 可视为连接源、漏的**压控开关**（voltage-controlled switch�
 
 ## 4. N 沟道 MOSFET：I<sub>DS</sub> 与 V<sub>DS</sub>
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/05e66c788f5ea8de4dafcc2f00668c80_Slide05.png" alt="N-Channel MOSFET IDS vs VDS" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/05e66c788f5ea8de4dafcc2f00668c80_Slide05.png" alt="N-Channel MOSFET IDS vs VDS" width="70%"/>
 
 每条曲线是固定 $V_{\mathrm{GS}}$ 下 $I_{\mathrm{DS}}$ 对 $V_{\mathrm{DS}}$ 的关系。
 
@@ -100,7 +100,7 @@ MOSFET 工作机理相当复杂！好在作为设计者，只要在设计 MOSFET
 
 ## 5. 两种 FET（FETs Come in Two Flavors）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b96ef74b7191d7adb37c08c33f7955ec_Slide06.png" alt="FETs Come in Two Flavors" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b96ef74b7191d7adb37c08c33f7955ec_Slide06.png" alt="FETs Come in Two Flavors" width="70%"/>
 
 此前讨论的是：P 型衬底上的 N 型源/漏扩散——**N 沟道 MOSFET**（n-channel MOSFET / **NFET**），反型层为 N 型。电路中将 bulk（B）接 GND，使 $V_{\mathrm{p}} \le V_{\mathrm{n}}$，源漏–衬底 PN 结**反向偏置**（外加电场与内建电场同向，耗尽区变宽），从而源/漏相对衬底保持绝缘。
 
@@ -110,7 +110,7 @@ MOSFET 工作机理相当复杂！好在作为设计者，只要在设计 MOSFET
 
 ## 6. CMOS 指南（CMOS Recipe）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ae0e5e40b7aed5171cf0f5d264d37700_Slide07.png" alt="CMOS Recipe" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ae0e5e40b7aed5171cf0f5d264d37700_Slide07.png" alt="CMOS Recipe" width="70%"/>
 
 用 MOSFET 处理数字编码信息时，遵守两条规则，即可把 MOSFET 抽象为压控开关：
 
@@ -121,7 +121,7 @@ MOSFET 工作机理相当复杂！好在作为设计者，只要在设计 MOSFET
 
 ## 7. CMOS 反相器 VTC（CMOS Inverter VTC）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/800a39e762facfc0efb025112e8d1617_Slide08.png" alt="CMOS Inverter VTC" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/800a39e762facfc0efb025112e8d1617_Slide08.png" alt="CMOS Inverter VTC" width="70%"/>
 
 CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下拉（输出到 GND）与一个 PFET 上拉（输出到 $V_{\mathrm{DD}}$）组成，两管栅极同接输入。
 
@@ -133,7 +133,7 @@ CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下
 
 ## 8. 超越反相器（Beyond Inverters）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/fb14c846b7a09e4e73aee2119a5fa49d_Slide09.png" alt="Beyond Inverters" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/fb14c846b7a09e4e73aee2119a5fa49d_Slide09.png" alt="Beyond Inverters" width="70%"/>
 
 构建其他逻辑门：设计**互补**的上拉与下拉网络（complementary pullup / pulldown）。“互补”指一个导通时另一个不导通。
 
@@ -146,7 +146,7 @@ CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下
 
 ## 9. CMOS 互补结构（CMOS Complements）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/746491e8a34a989bc55593c6ce32dde0_Slide10.png" alt="CMOS Complements" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/746491e8a34a989bc55593c6ce32dde0_Slide10.png" alt="CMOS Complements" width="70%"/>
 
 最简单互补对：单个 NFET 下拉 + 单个 PFET 上拉，同一信号控制时，一开则另一必关。
 
@@ -155,7 +155,7 @@ CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下
 
 ## 10. 小测验：NAND 门（A Pop Quiz!）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/87d30b72542f201ec57b1b55586de37a_Slide11.png" alt="NAND Gate" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/87d30b72542f201ec57b1b55586de37a_Slide11.png" alt="NAND Gate" width="70%"/>
 
 串联 NFET 下拉 + 并联 PFET 上拉。用**真值表**（truth table）列出所有 A、B 组合下的 Z：
 
@@ -174,7 +174,7 @@ CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下
 
 ## 11. 通用 CMOS 门指南（General CMOS Gate Recipe）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/395c88f9208e5d84e701893734adab97_Slide12.png" alt="General CMOS Gate Recipe" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/395c88f9208e5d84e701893734adab97_Slide12.png" alt="General CMOS Gate Recipe" width="70%"/>
 
 更复杂逻辑：用串联/并联开关网络实现。
 
@@ -188,7 +188,7 @@ CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下
 
 ## 12. CMOS 门天然反相（CMOS Gates Are Naturally Inverting）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/69620041d8bfc75f7440f53d56a04852_Slide13.png" alt="CMOS Gates Are Naturally Inverting" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/69620041d8bfc75f7440f53d56a04852_Slide13.png" alt="CMOS Gates Are Naturally Inverting" width="70%"/>
 
 单个 CMOS 门（一个上拉网络 + 一个下拉网络）只能实现**反相函数**（inverting functions）：输入上升导致输出下降，反之亦然。
 
@@ -198,7 +198,7 @@ CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下
 
 ## 13. CMOS 时序规格（CMOS Timing Specifications）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/127417502caff69dbaa0b1e9764ffad3_Slide14.png" alt="CMOS Timing Specifications" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/127417502caff69dbaa0b1e9764ffad3_Slide14.png" alt="CMOS Timing Specifications" width="70%"/>
 
 两级 CMOS 反相器串联，用来刻画**左级**反相器的时序。建立改变 $V_{\mathrm{IN}}$ 时的电学模型。
 
@@ -214,7 +214,7 @@ CMOS 反相器：输入 0 → 输出 1，反之亦然。电路由一个 NFET 下
 
 ## 14. 传播延迟（Propagation Delay）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/32605907e13d9fe3f9daf48e21474a70_Slide15.png" alt="Propagation Delay" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/32605907e13d9fe3f9daf48e21474a70_Slide15.png" alt="Propagation Delay" width="70%"/>
 
 用信号阈值定义延迟的起止。
 
@@ -229,7 +229,7 @@ $t_{\mathrm{PD}}$ 须 $\ge$ 上述任意测得延迟；厂商还需覆盖工艺�
 
 ## 15. 污染延迟（Contamination Delay）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9e113bf15832689f78707177f411b52f_Slide16.png" alt="Contamination Delay" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9e113bf15832689f78707177f411b52f_Slide16.png" alt="Contamination Delay" width="70%"/>
 
 **污染延迟**（contamination delay）$t_{\mathrm{CD}}$：输入开始变化、变为无效之后，输出仍保持原先有效值的时间。技术上是从无效输入到无效输出的延迟**下界** [^lower-bound-tcd]。
 
@@ -240,7 +240,7 @@ $t_{\mathrm{CD}}$ 须 $\le$ 任意测得该间隔。静态纪律并不强制要�
 
 ## 16. 组合契约（The Combinational Contract）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/039976353830d78cae70762b3f946063_Slide17.png" alt="The Combinational Contract" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/039976353830d78cae70762b3f946063_Slide17.png" alt="The Combinational Contract" width="70%"/>
 
 时序规格小结（输入波形 A，输出波形 B）：
 
@@ -251,7 +251,7 @@ $t_{\mathrm{CD}}$ 须 $\le$ 任意测得该间隔。静态纪律并不强制要�
 
 ## 17. 无环组合电路（Acyclic Combinational Circuits）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ef539cae30e79f7e1ae926a1084faf55_Slide18.png" alt="Acyclic Combinational Circuits" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ef539cae30e79f7e1ae926a1084faf55_Slide18.png" alt="Acyclic Combinational Circuits" width="70%"/>
 
 由组件规格推大电路规格的例子：四个 NAND，每个 $t_{\mathrm{PD}} = 4\,\mathrm{ns}$，$t_{\mathrm{CD}} = 1\,\mathrm{ns}$。
 
@@ -260,7 +260,7 @@ $t_{\mathrm{CD}}$ 须 $\le$ 任意测得该间隔。静态纪律并不强制要�
 
 ## 18. 最后一个时序问题（One Last Timing Issue）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/028c371b2c5c10a44a097b088b643fcf_Slide19.png" alt="One Last Timing Issue" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/028c371b2c5c10a44a097b088b643fcf_Slide19.png" alt="One Last Timing Issue" width="70%"/>
 
 非 CMOS 的 NOR 组合器件：A、B 初为 0，Z=1；B：0→1 后 Z 最终 1→0，跳变落在 $(t_{\mathrm{CD}}, t_{\mathrm{PD}})$ 窗口内（图中红阴影表示该区间无保证）。[^nmos-nor]
 
@@ -270,7 +270,7 @@ $t_{\mathrm{CD}}$ 须 $\le$ 任意测得该间隔。静态纪律并不强制要�
 
 ## 19. 宽容门（Lenient Gates）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f9fc1b89b777631c213831b6d134866f_Slide20.png" alt="Lenient Gates" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f9fc1b89b777631c213831b6d134866f_Slide20.png" alt="Lenient Gates" width="70%"/>
 
 CMOS NOR：两输入皆为 1 时，NFET 导通、PFET 截止，Z 接 GND。B：1→0 时 B 控制的开关翻转，但上拉仍不导通，Z 到 GND 仍有路径——只是路径从两条减为一条，Z **全程**保持有效稳定的 0。即：一输入为 1 时，另一输入跳变不影响输出有效性。
 
@@ -280,7 +280,7 @@ CMOS NOR：两输入皆为 1 时，NFET 导通、PFET 截止，Z 接 GND。B：1
 
 ## 20. 小结（Summary）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a5969ad6a91e420d2418dba308c89306_Slide21.png" alt="Summary" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a5969ad6a91e420d2418dba308c89306_Slide21.png" alt="Summary" width="70%"/>
 
 本讲要点：
 

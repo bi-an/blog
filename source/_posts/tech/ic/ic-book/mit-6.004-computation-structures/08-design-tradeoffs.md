@@ -20,7 +20,7 @@ mathjax: true
 
 ## 1. 优化你的设计（Optimizing Your Design）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/02fd721dc2dd430ee926f004e40b92c6_Slide02.png" alt="Optimizing Your Design" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/02fd721dc2dd430ee926f004e40b92c6_Slide02.png" alt="Optimizing Your Design" width="70%"/>
 
 正确折衷取决于设计目标。显卡团队：优先性能，可在限度内换成本与功耗；尺寸有硬上限，再小收益不大。手表团队：尺寸与功耗关键（戴一天、不烫手腕）。
 
@@ -28,7 +28,7 @@ mathjax: true
 
 ## 2. CMOS 静态功耗（CMOS Static Power Dissipation）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/345c19093c798eff3766c490848fd977_Slide03.png" alt="CMOS Static Power Dissipation" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/345c19093c798eff3766c490848fd977_Slide03.png" alt="CMOS Static Power Dissipation" width="70%"/>
 
 **静态功耗**：电路空闲（节点不变）时仍消耗的功率。理想开关模型下 CMOS 静态功耗为 0；早期接近理想，但尺寸缩小、电压降低后两大效应凸显（n/p 沟道皆有）：
 
@@ -39,7 +39,7 @@ mathjax: true
 
 ## 3. CMOS 动态功耗 I（CMOS Dynamic Power Dissipation I）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b98de863ffa12f5f6cc156110401efa1_Slide04.png" alt="CMOS Dynamic Power Dissipation I" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b98de863ffa12f5f6cc156110401efa1_Slide04.png" alt="CMOS Dynamic Power Dissipation I" width="70%"/>
 
 **动态功耗**：节点翻转充放电电容时消耗。以反相器为例：充/放电时电流经 MOSFET，瞬时功率 $I_{\mathrm{DS}}V_{\mathrm{DS}}$。对 1→0 积分（$I=C\,dV/dt$），若时钟周期 $t_{\mathrm{CLK}}$、每半周期一次翻转，经 pulldown 耗散的功率约为 $0.5\,f\,C\,V_{\mathrm{DD}}^2$（$f$ 为每秒翻转次数）。
 
@@ -47,7 +47,7 @@ mathjax: true
 
 ## 4. CMOS 动态功耗 II（CMOS Dynamic Power Dissipation II）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/37e8cd20bb45b2a95b118db5e26eeb42_Slide05.png" alt="CMOS Dynamic Power Dissipation II" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/37e8cd20bb45b2a95b118db5e26eeb42_Slide05.png" alt="CMOS Dynamic Power Dissipation II" width="70%"/>
 
 整电路：每周期约 $N$ 个节点翻转时，可据此估算总能耗。信封估算：1 GHz、1 亿内部节点、每节点 $\sim 1\,\mathrm{fF}$、$V_{\mathrm{DD}}\sim 1\,\mathrm{V}$ → 约 **100 W**——接近白炽灯泡，散热困难。笔记本 CPU 远低于此，靠设计技巧压功耗。
 
@@ -55,7 +55,7 @@ mathjax: true
 
 ## 5. 如何降低功耗？（How Can We Reduce Power?）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3d22a73e648d2472e0f2feb9870983e2_Slide06.png" alt="How Can We Reduce Power" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3d22a73e648d2472e0f2feb9870983e2_Slide06.png" alt="How Can We Reduce Power" width="70%"/>
 
 ALU 常含算术、布尔、移位、比较等独立模块；控制只选其一，其余结果被忽略——但仍在耗动态功耗。机会：关掉不需要的模块。
 
@@ -63,7 +63,7 @@ ALU 常含算术、布尔、移位、比较等独立模块；控制只选其一�
 
 ## 6. 更少翻转 → 更低功耗（Fewer Transitions → Lower Power）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/633c6597c50b97eb31e1f3b768cecce1_Slide07.png" alt="Fewer Transitions Lower Power" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/633c6597c50b97eb31e1f3b768cecce1_Slide07.png" alt="Fewer Transitions Lower Power" width="70%"/>
 
 手段：
 
@@ -75,7 +75,7 @@ ALU 常含算术、布尔、移位、比较等独立模块；控制只选其一�
 
 ## 7. 提速：加法器例子（Improving Speed: Adder Example）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/51a031cceb0374062aceca0b3802dccf_Slide08.png" alt="Improving Speed: Adder Example" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/51a031cceb0374062aceca0b3802dccf_Slide08.png" alt="Improving Speed: Adder Example" width="70%"/>
 
 瓶颈常在**行波进位加法器（ripple-carry）**：最长路径是进位链。触发：A 全 1、B 最低位 1 其余 0（加 $-1$ 与 $1$）→ 进位逐级 ripple。
 
@@ -83,7 +83,7 @@ ALU 常含算术、布尔、移位、比较等独立模块；控制只选其一�
 
 ## 8. 性能/成本分析（Performance/Cost Analysis）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4c0a6a6a7d6f131cb7c8f764b984c337_Slide09.png" alt="Performance/Cost Analysis" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4c0a6a6a7d6f131cb7c8f764b984c337_Slide09.png" alt="Performance/Cost Analysis" width="70%"/>
 
 **渐近分析**：标出 $N\to\infty$ 时主导项。例：$n^2+2n+3$ 被常数倍的 $n^2$ 上下夹住（除有限个 $n$）→ $\Theta(n^2)$。
 
@@ -92,7 +92,7 @@ ALU 常含算术、布尔、移位、比较等独立模块；控制只选其一�
 
 ## 9. 进位选择加法器（Carry-Select Adders）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b4eec9a4dbe07ba8c021e53792e49da2_Slide10.png" alt="Carry-Select Adders" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b4eec9a4dbe07ba8c021e53792e49da2_Slide10.png" alt="Carry-Select Adders" width="70%"/>
 
 高半部不必等低半部进位：做两份高 16 位加法（假设 $C_{\mathrm{in}}=0$ 与 $1$），与低半部并行；再用低半部真实进位选结果 → **carry-select adder**。
 
@@ -100,13 +100,13 @@ ALU 常含算术、布尔、移位、比较等独立模块；控制只选其一�
 
 ## 10. 32 位进位选择加法器（32-Bit Carry-Select Adder）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/46ed3f71f5d694c186d68678f68b0f21_Slide11.png" alt="32-Bit Carry-Select Adder" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/46ed3f71f5d694c186d68678f68b0f21_Slide11.png" alt="32-Bit Carry-Select Adder" width="70%"/>
 
 工程版：块大小使试算和与前级进位几乎同时到达 select MUX；select 负载大时加 buffer。相对 32 bit ripple：**约 2.5× 更快，约 2× 电路**——ALU 提速常记方案。
 
 ## 11. 要更快的进位逻辑！（Wanted: Faster Carry Logic!）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/95254d02690b7d5ffe1b604bf8c2f76f_Slide12.png" alt="Wanted: Faster Carry Logic" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/95254d02690b7d5ffe1b604bf8c2f76f_Slide12.png" alt="Wanted: Faster Carry Logic" width="70%"/>
 
 链 → 树可把线性延迟变对数。改写全加器进位：
 
@@ -117,7 +117,7 @@ $C_{\mathrm{out}}=G\lor(P\land C_{\mathrm{in}})$。常把 P 从 $A\lor B$ 改为
 
 ## 12. 超前进位加法器（Carry Look-Ahead Adders, CLA）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/70c97b96738a16c96f129da9774b1058_Slide13.png" alt="Carry Look-Ahead Adders" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/70c97b96738a16c96f129da9774b1058_Slide13.png" alt="Carry Look-Ahead Adders" width="70%"/>
 
 相邻两模块 H、L：块 generate / propagate：
 
@@ -129,55 +129,55 @@ $$
 
 ## 13. 8 位 CLA（生成 G 与 P）（8-Bit CLA: generate G & P）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9ee781059dbfc183473eb773cb614b89_Slide14.png" alt="8-Bit CLA generate G and P" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9ee781059dbfc183473eb773cb614b89_Slide14.png" alt="8-Bit CLA generate G and P" width="70%"/>
 
 多层 GP 成树：$N$ 输入共 $N-1$ 个 GP 模块，延迟 $\Theta(\log N)$。下一步用 G/P 快速算各全加器的 $C_{\mathrm{in}}$。
 
 ## 14. 8 位 CLA（进位生成）（8-Bit CLA: carry generation）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2852c46e1a334eea1fa84f94375ddc51_Slide15.png" alt="8-Bit CLA carry generation" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2852c46e1a334eea1fa84f94375ddc51_Slide15.png" alt="8-Bit CLA carry generation" width="70%"/>
 
 给定最低位 $C_0$：块的低半直接用该进位；高半进位用低半 G/P 算出。C 模块再排成树，层层算出各全加器 $C_{\mathrm{in}}$，延迟仍 $\Theta(\log N)$。注意同一位置 C 的 $G_L,P_L$ 与 GP 树输入对应。
 
 ## 15. 8 位 CLA（完整）（8-Bit CLA: complete）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/fb004b8363ed061d385f690330be17ca_Slide16.png" alt="8-Bit CLA complete" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/fb004b8363ed061d385f690330be17ca_Slide16.png" alt="8-Bit CLA complete" width="70%"/>
 
 GP 与 C 合成 **carry-lookahead 模块**：向上传 G/P，向下传进位。上行+下行总延迟 $\Theta(\log N)$，再加一级 XOR 得和 → 整加法器延迟 $\Theta(\log N)$，远优于 ripple 的 $\Theta(N)$。全加器内原 carry-out 逻辑可删。同类策略的极致见 Kogge-Stone 等。
 
 ## 16. 二进制乘法（Binary Multiplication）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6d9abf5815abc53e2a8c95d70638c091_Slide17.png" alt="Binary Multiplication" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6d9abf5815abc53e2a8c95d70638c091_Slide17.png" alt="Binary Multiplication" width="70%"/>
 
 小学竖式：乘数每位 × 被乘数得**部分积**，左移对齐后相加。1 bit×1 bit 即 **AND**，无进位；部分积宽 $N$。$M$ 位乘数 → $M$ 个部分积；相加得 $N+M$ 位结果。贵在把 $M$ 个 $N$ 位部分积相加。
 
 ## 17. 组合乘法器（Combinational Multiplier）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/474405b2bc4c533af42b4f9ff7da3a86_Slide18.png" alt="Combinational Multiplier" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/474405b2bc4c533af42b4f9ff7da3a86_Slide18.png" alt="Combinational Multiplier" width="70%"/>
 
 $M\times N$ 个 AND 算部分积；行间用全加器/半加器累加。信息只向下或向左，最长路径至多 $N+M$ 个模块 → 延迟 $\Theta(N)$（$M,N$ 差常数倍）；吞吐 $=1/\textrm{latency}$；硬件 $\Theta(N^2)$。
 
 ## 18. 补码乘法（2’s Complement Multiplication）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5752935a18c90254f7a2f6f4c2cced9f_Slide19.png" alt="2's Complement Multiplication" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5752935a18c90254f7a2f6f4c2cced9f_Slide19.png" alt="2's Complement Multiplication" width="70%"/>
 
 补码最高位负权重 → 部分积需**符号扩展**到 $N+M$ 位；末个部分积因乘数符号位而改为**减**。技巧：在若干列加 1 再抵消，把符号扩展与减法化成：若干位取反 + 两处加常数 1——最终表几乎与无符号竖式同形。
 
 ## 19. 补码乘法器电路（2’s Complement Multiplier）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/41539f33e60418a55b8874e6c0c63f4f_Slide20.png" alt="2's Complement Multiplier" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/41539f33e60418a55b8874e6c0c63f4f_Slide20.png" alt="2's Complement Multiplier" width="70%"/>
 
 相对无符号版：部分 AND→NAND（取反），并改两处加 1 的逻辑。延迟、吞吐、硬件代价与无符号版同阶。
 
 ## 20. 流水提高吞吐（Increase Throughput with Pipelining）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/64941f00eca147e2afa39f8f33bab9f9_Slide21.png" alt="Increase Throughput with Pipelining" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/64941f00eca147e2afa39f8f33bab9f9_Slide21.png" alt="Increase Throughput with Pipelining" width="70%"/>
 
 原组合乘吞吐约每 $2N$ 拍出一个结果。画输出轮廓得 1-pipeline；再对半切可翻倍吞吐，但仍 $\Theta(1/N)$。关键洞察：整行在同一级 → 级延迟仍含 $N$ bit ripple → $\Theta(N)$。
 
 ## 21. Carry-Save 流水乘法器（Carry-Save Pipelined Multiplier）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/90cfb1333b316167622017a4a36cb268_Slide22.png" alt="Carry-Save Pipelined Multiplier" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/90cfb1333b316167622017a4a36cb268_Slide22.png" alt="Carry-Save Pipelined Multiplier" width="70%"/>
 
 重画进位链：进位仍向左一列，但接到**下一行**同列。水平流水线切断长进位；每级延迟常数（与 $N$ 无关）。需 $\Theta(N)$ 额外行收尾进位。
 
@@ -185,7 +185,7 @@ $\Theta(N)$ 级 → 级延迟/时钟/吞吐皆 $\Theta(1)$；系统延迟 $\Thet
 
 ## 22. 时序逻辑减面积（Reduce Area with Sequential Logic）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/dd318325bc7631c4be4a663b6d919631_Slide23.png" alt="Reduce Area with Sequential Logic" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/dd318325bc7631c4be4a663b6d919631_Slide23.png" alt="Reduce Area with Sequential Logic" width="70%"/>
 
 时序乘法器：每拍算一个部分积并累加到 P，共 $\Theta(N)$ 步。B 最低位 × 被乘数 → carry-save 加法器；P 与加法器输出为 **carry-save 格式**（数据和 + 保存的进位）。每拍 P、B 右移 1——等价于“部分积左移”的对偶。
 
@@ -193,7 +193,7 @@ $\Theta(N)$ 级 → 级延迟/时钟/吞吐皆 $\Theta(1)$；系统延迟 $\Thet
 
 ## 23. 小结（Summary）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8012e7beaf1574bff538acf378456720_Slide24.png" alt="Summary" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8012e7beaf1574bff538acf378456720_Slide24.png" alt="Summary" width="70%"/>
 
 Part 1 收束：信息与编码 → 冗余检错/纠错 → 数字抽象与噪声容限 → MOSFET/CMOS 与组合综合 → 双稳态存储与动态纪律 → FSM 与亚稳态/同步 → 延迟与吞吐 → 本讲功耗与加法/乘法折衷。
 

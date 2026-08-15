@@ -20,7 +20,7 @@ mathjax: true
 
 ## 1. 什么是信息？（What is Information?）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/65423aeca9fb8ec48e3bd7e60d75eb79_Slide02.png" alt="What is Information" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/65423aeca9fb8ec48e3bd7e60d75eb79_Slide02.png" alt="What is Information" width="70%"/>
 
 工程定义：**信息** = 被传送或接收、并能**消除关于某事实/情形之不确定性**的数据。消除的不确定性越大，传达的信息越多。
 
@@ -35,7 +35,7 @@ mathjax: true
 
 ## 2. 量化信息（Quantifying Information）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c712ec74bd8166c73fd97549b100bed0_Slide03.png" alt="Quantifying Information" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c712ec74bd8166c73fd97549b100bed0_Slide03.png" alt="Quantifying Information" width="70%"/>
 
 用离散随机变量 $X$ 建模：可取 $N$ 个值 $\{x_1,\ldots,x_N\}$，概率分别为 $p_1,\ldots,p_N$。概率越小，该取值越不确定。
 
@@ -49,7 +49,7 @@ $1/p_i$ 刻画不确定性；$\log_2$ 把度量落到 **bit**（可取 0/1 的�
 
 ## 3. 数据传达的信息（Information Conveyed by Data）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4d2e86dc510f5091e8748905b5eb032a_Slide04.png" alt="Information Conveyed by Data" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4d2e86dc510f5091e8748905b5eb032a_Slide04.png" alt="Information Conveyed by Data" width="70%"/>
 
 数据未必消除全部不确定性。推广为
 
@@ -71,7 +71,7 @@ $$
 
 ## 4. 信息量例子（Example: Information Content）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ab94a835b4510f2c516240bd0a867795_Slide05.png" alt="Example: Information Content" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ab94a835b4510f2c516240bd0a867795_Slide05.png" alt="Example: Information Content" width="70%"/>
 
 - 公平硬币正反面：$2\to 1$ → $\log_2(2/1)=1$ bit
 - 抽牌得知红心：$52\to 13$ → $\log_2(52/13)=2$ bits
@@ -81,13 +81,13 @@ $$
 
 ## 5. 概率与信息量（Probability and Information Content）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6f5768a992170055f44cc9cd93895157_Slide06.png" alt="Probability and Information Content" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6f5768a992170055f44cc9cd93895157_Slide06.png" alt="Probability and Information Content" width="70%"/>
 
 回到抽牌例子：表格列出各数据事件的概率与信息量，与直觉一致——消除不确定性越多，信息量越大。自杀国王信息量最大；“不是黑桃 A”信息量最小。
 
 ## 6. 熵（Entropy）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b5f96e073a49da8c725e1ab903463848_Slide07.png" alt="Entropy" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b5f96e073a49da8c725e1ab903463848_Slide07.png" alt="Entropy" width="70%"/>
 
 离散随机变量 $X$ 的**熵** $H(X)$ 是得知 $X$ 取值时的**平均信息量**：
 
@@ -105,7 +105,7 @@ $$
 
 ## 7. 熵的含义（Meaning of Entropy）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ea873b76be0dfdda6ddd0956adc2ce10_Slide08.png" alt="Meaning of Entropy" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ea873b76be0dfdda6ddd0956adc2ce10_Slide08.png" alt="Meaning of Entropy" width="70%"/>
 
 对 $X$ 的取值序列：
 
@@ -117,7 +117,7 @@ $$
 
 ## 8. 编码（Encodings）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a50b2d799bdda7ee55486874eaa78bea_Slide09.png" alt="Encodings" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a50b2d799bdda7ee55486874eaa78bea_Slide09.png" alt="Encodings" width="70%"/>
 
 **编码** = 比特串与待编码集合元素之间的**无歧义映射**。
 
@@ -127,7 +127,7 @@ $$
 
 ## 9. 编码与二叉树（Encodings as Binary Trees）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/015b5044faa5606fa91f9ba6b65edb0f_Slide10.png" alt="Encodings as Binary Trees" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/015b5044faa5606fa91f9ba6b65edb0f_Slide10.png" alt="Encodings as Binary Trees" width="70%"/>
 
 无歧义编码 ↔ 二叉树：边标 0/1，符号只在**叶子**；内部节点无符号。
 
@@ -135,7 +135,7 @@ $$
 
 ## 10. 定长编码（Fixed-length Encodings）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/dd43b3ce1f791fd2e9163dedcc4948b8_Slide11.png" alt="Fixed-length Encodings" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/dd43b3ce1f791fd2e9163dedcc4948b8_Slide11.png" alt="Fixed-length Encodings" width="70%"/>
 
 符号等概（或无先验）时用定长：所有叶子到根距离相同。优点：**随机访问**——第 $n$ 个符号可跳过固定比特数后解码。
 
@@ -146,7 +146,7 @@ $$
 
 ## 11. 编码正整数（Encoding Positive Integers）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b4c96abf6ad757c10f319e42353a671c_Slide12.png" alt="Encoding Positive Integers" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b4c96abf6ad757c10f319e42353a671c_Slide12.png" alt="Encoding Positive Integers" width="70%"/>
 
 无符号整数用**二进制（base-2）**：各位权重 $2^{N-1},\ldots,2^0$。例：12 位 `011111010000` = $1024+512+256+128+64+16=2000$。
 
@@ -154,7 +154,7 @@ $N$ bit 范围：$0$ 到 $2^N-1$。固定字长（如 32/64 bit）系统对超�
 
 ## 12. 十六进制记法（Hexadecimal Notation）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8de0286001936ea7448ce94bd0d26fb0_Slide13.png" alt="Hexadecimal Notation" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8de0286001936ea7448ce94bd0d26fb0_Slide13.png" alt="Hexadecimal Notation" width="70%"/>
 
 长二进制串易抄错 → 用 **hex（radix-16）**：每 4 bit 一个十六进制数字（0–9, A–F）。从最低位起按 4 位分组。
 
@@ -162,7 +162,7 @@ $N$ bit 范围：$0$ 到 $2^N-1$。固定字长（如 32/64 bit）系统对超�
 
 ## 13. 编码有符号整数（Encoding Signed Integers）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2528a3240357161dfe04883b640589ed_Slide14.png" alt="Encoding Signed Integers" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2528a3240357161dfe04883b640589ed_Slide14.png" alt="Encoding Signed Integers" width="70%"/>
 
 **原码（signed magnitude）**：最高位作符号（0 正 / 1 负），其余为幅度。例：$-2000$ = 符号位 1 + 2000 的二进制。
 
@@ -170,7 +170,7 @@ $N$ bit 范围：$0$ 到 $2^N-1$。固定字长（如 32/64 bit）系统对超�
 
 ## 14. 补码编码（Two’s Complement Encoding）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f33b3724cb2048285d7d571ca6975af2_Slide15.png" alt="Two's Complement Encoding" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f33b3724cb2048285d7d571ca6975af2_Slide15.png" alt="Two's Complement Encoding" width="70%"/>
 
 现代系统多用 **two’s complement**：$N$ bit 最高位权重为 **负** $-2^{N-1}$。最高位 1 → 负数（兼作符号位）。
 
@@ -181,7 +181,7 @@ $N$ bit 范围：$0$ 到 $2^N-1$。固定字长（如 32/64 bit）系统对超�
 
 ## 15. 补码更多性质（More Two’s Complement）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/69a5b749b6c2e7e53846fa8243f5e5f3_Slide16.png" alt="More Two's Complement" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/69a5b749b6c2e7e53846fa8243f5e5f3_Slide16.png" alt="More Two's Complement" width="70%"/>
 
 $-1+1$ 用普通二进制加法得全 0 → 补码算术统一。$B-A=B+(-A)$。
 
@@ -195,7 +195,7 @@ $$
 
 ## 16. 变长编码（Variable-length Encodings）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/59194dfeceb85780feac7f7f3f222371_Slide17.png" alt="Variable-length Encodings" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/59194dfeceb85780feac7f7f3f222371_Slide17.png" alt="Variable-length Encodings" width="70%"/>
 
 概率不等时，定长非最优。看**期望码长**：$\sum_i p_i\cdot(\textrm{len of }x_i)$。希望逼近 $H(X)$。
 
@@ -203,7 +203,7 @@ $$
 
 ## 17. 变长编码例子（Example: Variable-length Encoding）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/194e9389a5ce4fc3aa79a33e4f5e588d_Slide18.png" alt="Example: Variable-length Encoding" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/194e9389a5ce4fc3aa79a33e4f5e588d_Slide18.png" alt="Example: Variable-length Encoding" width="70%"/>
 
 A,B,C,D 概率如前；编码使符号皆在叶子 → 无歧义。例：`0 100 11 0 11 101` → BCABAD。
 
@@ -213,7 +213,7 @@ A,B,C,D 概率如前；编码使符号皆在叶子 → 无歧义。例：`0 100 
 
 ## 18. Huffman 算法（Huffman’s Algorithm）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2a62a328bc14dbab68c0383db38c10a5_Slide19.png" alt="Huffman's Algorithm" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2a62a328bc14dbab68c0383db38c10a5_Slide19.png" alt="Huffman's Algorithm" width="70%"/>
 
 给定符号与概率，**Huffman 算法**自底向上建最优变长码（逐符号编码时期望码长最短）：
 
@@ -225,7 +225,7 @@ A,B,C,D 概率如前；编码使符号皆在叶子 → 无歧义。例：`0 100 
 
 ## 19. 还能更好吗？（Can We Do Better?）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6c9806b4d50a7e7da296c7c22080de87_Slide20.png" alt="Can We Do Better" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6c9806b4d50a7e7da296c7c22080de87_Slide20.png" alt="Can We Do Better" width="70%"/>
 
 逐符号 Huffman 已最优；若对**符号对/更长块**编码，可进一步逼近熵。例：按对编码期望约 1.646 bit/符号（优于 1.667）。
 
@@ -233,31 +233,31 @@ A,B,C,D 概率如前；编码使符号皆在叶子 → 无歧义。例：`0 100 
 
 ## 20. 检错（Error Detection）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a3d416e08de2208d949e4b1a0a73fc32_Slide21.png" alt="Error Detection" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a3d416e08de2208d949e4b1a0a73fc32_Slide21.png" alt="Error Detection" width="70%"/>
 
 比特可能在传输中翻转。简单编码：heads=0, tails=1。Bob 发 0 被翻成 1 → Alice 收到 tails，**无法区分**“无错的 tails”与“出错的 heads”→ 无法检测单比特错。
 
 ## 21. Hamming 距离（Hamming Distance）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e9d1937b04ffd2cefd6b8f787f82397e_Slide22.png" alt="Hamming Distance" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e9d1937b04ffd2cefd6b8f787f82397e_Slide22.png" alt="Hamming Distance" width="70%"/>
 
 **Hamming distance**：两等长编码对应位不同的个数。例：两 7 bit 码差第 3、5 位 → 距离 2。距离 0 → 完全相同。
 
 ## 22. Hamming 距离与比特错误（Hamming Distance and Bit Errors）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7a22718b2d636cf2f536c624bddf7299_Slide23.png" alt="Hamming Distance and Bit Errors" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7a22718b2d636cf2f536c624bddf7299_Slide23.png" alt="Hamming Distance and Bit Errors" width="70%"/>
 
 单比特错把码字推到 Hamming 距离为 1 的邻点。若合法码字之间最小距离也是 1（如 `0` 与 `1`），则错误把合法码变成另一合法码 → 不可检测。图中箭头表示距离 1 的邻接。
 
 ## 23. 单比特检错（Single-bit Error Detection）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c0dcbafaf9d05e13862097b5b2c3cc75_Slide24.png" alt="Single-bit Error Detection" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c0dcbafaf9d05e13862097b5b2c3cc75_Slide24.png" alt="Single-bit Error Detection" width="70%"/>
 
 要检测单错：合法码字间最小 Hamming 距离至少为 **2**。做法：加**奇偶校验位（parity bit）**。偶校验使码字中 1 的个数为偶：heads `0`→`00`，tails `1`→`11`，最小距离升为 2。
 
 ## 24. 奇偶校验（Parity Check）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/610b83463c1a40360f3a57ee7e3262f4_Slide25.png" alt="Parity Check" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/610b83463c1a40360f3a57ee7e3262f4_Slide25.png" alt="Parity Check" width="70%"/>
 
 单错：`00`→`01`/`10`，皆非法 → 可检出。合法码偶个 1，出错后奇个 1 → **parity error**。数 1 的个数（或用 XOR）即可校验。
 
@@ -265,13 +265,13 @@ A,B,C,D 概率如前；编码使符号皆在叶子 → 无歧义。例：`0 100 
 
 ## 25. 检测多比特错误（Detecting Multi-bit Errors）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5603be4e19211cd61e85b281bdb407e8_Slide26.png" alt="Detecting Multi-bit Errors" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5603be4e19211cd61e85b281bdb407e8_Slide26.png" alt="Detecting Multi-bit Errors" width="70%"/>
 
 一般：检测至多 $E$ 个错误，需最小 Hamming 距离 $\ge E+1$。例：`000` 与 `111` 距离 3 → 可检测最多 2 错（长度 2 的路径到不了另一合法码）。
 
 ## 26. 纠错（Error Correction）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6250ef58dbd92980d8ab4fbe8b00d770_Slide27.png" alt="Error Correction" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6250ef58dbd92980d8ab4fbe8b00d770_Slide27.png" alt="Error Correction" width="70%"/>
 
 最小距离升到 3：各合法码的单错邻域互不重叠 → 可**纠正**单错（收到 `001` 则判原码为 `000`）。
 
@@ -279,7 +279,7 @@ A,B,C,D 概率如前；编码使符号皆在叶子 → 无歧义。例：`0 100 
 
 ## 27. 小结（Summary）
 
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7b12324c43fedb4ec57d795d48876f85_Slide28.png" alt="Summary" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7b12324c43fedb4ec57d795d48876f85_Slide28.png" alt="Summary" width="70%"/>
 
 要点回顾：
 
