@@ -60,7 +60,7 @@
 <meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f33c4794a89597a3495d9aaeaa1eabf1_Slide32.png">
 <meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/66856949cb3c8902b07464d0bce19aba_Slide33.png">
 <meta property="article:published_time" content="2026-08-11T10:09:00.000Z">
-<meta property="article:modified_time" content="2026-08-14T14:48:44.391Z">
+<meta property="article:modified_time" content="2026-08-15T14:10:54.525Z">
 <meta property="article:author" content="bi-an">
 <meta property="article:tag" content="ic">
 <meta property="article:tag" content="digital-circuit">
@@ -258,7 +258,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-14 14:48:44" itemprop="dateModified" datetime="2026-08-14T14:48:44+00:00">2026-08-14</time>
+                <time title="Modified: 2026-08-15 14:10:54" itemprop="dateModified" datetime="2026-08-15T14:10:54+00:00">2026-08-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -289,42 +289,42 @@
 <h1>L09：指令集设计（Designing an Instruction Set）</h1>
 <p>从专用阶乘硬件出发，抽象出可编程 datapath 与控制 FSM，引入 von Neumann 存储程序模型，并定量设计本课的 <strong>Beta</strong> RISC ISA：寄存器、定长指令、ALU/访存/分支。</p>
 <h2 id="1-例子：阶乘-I（Example-Factorial-I）">1. 例子：阶乘 I（Example: Factorial I）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/78edbda355b4e46eb8025b1e782e02b6_Slide02.png" alt="Example: Factorial I" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/78edbda355b4e46eb8025b1e782e02b6_Slide02.png" alt="Example: Factorial I" width="70%"/>
 <p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo stretchy="false">!</mo><mo>=</mo><mi>N</mi><mo>⋅</mo><mo stretchy="false">(</mo><mi>N</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo><mo>⋯</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">N!=N\cdot(N-1)\cdots 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span><span class="mclose">!</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.109em;">N</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner">⋯</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">1</span></span></span></span>。用 C 描述：变量 <code>a</code> 累乘结果，<code>b</code> 为下一乘数（初值 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span>）；循环中 <code>a=a*b</code>，<code>b=b-1</code>。</p>
 <h2 id="2-例子：阶乘-II（Example-Factorial-II）">2. 例子：阶乘 II（Example: Factorial II）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/30a64f22ab90270fce261a53d1fdd493_Slide03.png" alt="Example: Factorial II" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/30a64f22ab90270fce261a53d1fdd493_Slide03.png" alt="Example: Factorial II" width="70%"/>
 <p>用<strong>高层 FSM</strong> 描述：各态“输出”是对变量的运算公式，而非简单电平。状态序列对应 C 程序步骤；<code>b</code> 新值为 0 时进入 DONE。</p>
 <p>实现：32 bit 寄存器存 <code>a</code>/<code>b</code>，2 bit 状态寄存器；逻辑判断 <code>b==0</code>，并实现乘、减一与选通写入。</p>
 <h2 id="3-阶乘的-Datapath（Datapath-for-Factorial）">3. 阶乘的 Datapath（Datapath for Factorial）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ca3abf969b196c3f15127760919756f1_Slide04.png" alt="Datapath for Factorial" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ca3abf969b196c3f15127760919756f1_Slide04.png" alt="Datapath for Factorial" width="70%"/>
 <p><strong>Datapath</strong>：存值寄存器 + 组合运算。START：<code>a←1</code>，<code>b←N</code>；LOOP：<code>a←a*b</code>，<code>b←b-1</code>；DONE：保持。MUX（WASEL/WBSEL）选择写入值。</p>
 <h2 id="4-阶乘的控制-FSM（Control-FSM-for-Factorial）">4. 阶乘的控制 FSM（Control FSM for Factorial）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2bce59951de75309b69a626d117e2ffb_Slide05.png" alt="Control FSM for Factorial" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2bce59951de75309b69a626d117e2ffb_Slide05.png" alt="Control FSM for Factorial" width="70%"/>
 <p>Datapath 给出 Z（新 <code>b</code> 是否为 0）。控制 FSM：输入 Z，输出 WASEL/WBSEL；真值表含当前态 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0576em;">S</span></span></span></span> 与下一态 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>S</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup></mrow><annotation encoding="application/x-tex">S&#x27;</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7519em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0576em;">S</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7519em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span></span></span></span>。</p>
 <h2 id="5-控制-FSM-硬件（Control-FSM-Hardware）">5. 控制 FSM 硬件（Control FSM Hardware）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6ba0f97ff5175b98b3668d7e5af1d26a_Slide06.png" alt="Control FSM Hardware" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6ba0f97ff5175b98b3668d7e5af1d26a_Slide06.png" alt="Control FSM Hardware" width="70%"/>
 <p>乘/减一用组合电路；控制用寄存器+ROM：<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Z</mi></mrow><annotation encoding="application/x-tex">Z</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0715em;">Z</span></span></span></span>+2 bit 状态 → 3 输入，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>3</mn></msup><mo>=</mo><mn>8</mn></mrow><annotation encoding="application/x-tex">2^3=8</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8141em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">8</span></span></span></span> 单元，每单元 6 bit（WASEL、WBSEL、下一态各 2 bit）。</p>
 <h2 id="6-目前：专用硬件（So-Far-Single-Purpose-Hardware）">6. 目前：专用硬件（So Far: Single-Purpose Hardware）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/60942d9567f7c1d623d9c33daae661a8_Slide07.png" alt="So Far: Single-Purpose Hardware" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/60942d9567f7c1d623d9c33daae661a8_Slide07.png" alt="So Far: Single-Purpose Hardware" width="70%"/>
 <p>流程：高层 FSM → datapath → 控制 FSM。整体也是 FSM，但 datapath 寄存器也算“状态”则约 66 bit → <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>66</mn></msup></mrow><annotation encoding="application/x-tex">2^{66}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8141em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">66</span></span></span></span></span></span></span></span></span></span></span></span> 行真值表不可行 → <strong>datapath 与控制 FSM 分离思考</strong>。</p>
 <p>通用化：更多存储、更丰富运算集（最小充分集出人意料地小；复杂运算常拆成加减乘序列）。架构乐趣在折衷。</p>
 <h2 id="7-简单可编程-Datapath（A-Simple-Programmable-Datapath）">7. 简单可编程 Datapath（A Simple Programmable Datapath）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/0540a7336a69e92b50f8dc688caafd25_Slide08.png" alt="A Simple Programmable Datapath" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/0540a7336a69e92b50f8dc688caafd25_Slide08.png" alt="A Simple Programmable Datapath" width="70%"/>
 <p>4 个数据寄存器；ASEL/BSEL 选操作数；OPSEL 选运算结果；WEN+WSEL 写回（寄存器带 load-enable）。控制 FSM 序列产生控制信号；Z 支持数据相关转移。</p>
 <h2 id="8-阶乘的控制-FSM（A-Control-FSM-for-Factorial）">8. 阶乘的控制 FSM（A Control FSM for Factorial）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/bf65ee84688b613160d96e4c9563d02b_Slide09.png" alt="A Control FSM for Factorial" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/bf65ee84688b613160d96e4c9563d02b_Slide09.png" alt="A Control FSM for Factorial" width="70%"/>
 <p>通用 datapath 每拍一运算 → 每轮循环需乘、减一、判零三态。通用机往往比专用电路<strong>更多周期、可能更多硬件</strong>。</p>
 <h2 id="9-新问题-→-新控制-FSM（New-Problem-→-New-Control-FSM）">9. 新问题 → 新控制 FSM（New Problem → New Control FSM）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8e97c8a926efe7b772ec8969e150fb95_Slide10.png" alt="New Problem New Control FSM" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8e97c8a926efe7b772ec8969e150fb95_Slide10.png" alt="New Problem New Control FSM" width="70%"/>
 <p>同一硬件可做幂、除、开方等（寄存器 ≤4）。设计控制 FSM ≈ <strong>编程</strong>：规定运算序列。</p>
 <h2 id="10-ENIAC-计算机（The-ENIAC-Computer）">10. ENIAC 计算机（The ENIAC Computer）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/549641b72f7e4e51232507454c29bb50_Slide11.png" alt="The ENIAC Computer" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/549641b72f7e4e51232507454c29bb50_Slide11.png" alt="The ENIAC Computer" width="70%"/>
 <p>早期数字计算机正是如此工作。图为 1943 宾大 ENIAC。</p>
 <h2 id="11-给-ENIAC-编程（Programming-The-ENIAC）">11. 给 ENIAC 编程（Programming The ENIAC）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/49a5dee98d5a68e47025289ff4b41103_Slide12.png" alt="Programming The ENIAC" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/49a5dee98d5a68e47025289ff4b41103_Slide12.png" alt="Programming The ENIAC" width="70%"/>
 <p>ENIAC 支持循环、分支、子程序，但映射到机器常需数周；拨开关、插线需数日，再单步调试。急需更轻便的编程方式。</p>
 <h2 id="12-von-Neumann-模型（The-von-Neumann-Model）">12. von Neumann 模型（The von Neumann Model）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d9c1c2af7294972e4bab04d5253b1560_Slide13.png" alt="The von Neumann Model" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d9c1c2af7294972e4bab04d5253b1560_Slide13.png" alt="The von Neumann Model" width="70%"/>
 <p>现代机多基于 1945 von Neumann <strong>存储程序</strong>模型，三部分：</p>
 <ol>
 <li><strong>CPU</strong>：datapath + 控制 FSM</li>
@@ -332,75 +332,75 @@
 <li><strong>I/O</strong>：与外界通信、非易失存储等</li>
 </ol>
 <h2 id="13-关键思想：存储程序计算机（Key-Idea-Stored-Program-Computer）">13. 关键思想：存储程序计算机（Key Idea: Stored-Program Computer）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d57a2325f20ea5d5aa4814e2136a5cb8_Slide14.png" alt="Key Idea: Stored-Program Computer" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d57a2325f20ea5d5aa4814e2136a5cb8_Slide14.png" alt="Key Idea: Stored-Program Computer" width="70%"/>
 <p>指令与数据同存主存，皆为二进制。指令含 opcode、源/目的寄存器等字段；CPU 解释并执行，再取下一条。</p>
 <p>如何区分指令与数据？看值本身不行——看<strong>用法</strong>：进 datapath → 数据；被控制逻辑取用 → 指令。</p>
 <h2 id="14-von-Neumann-机解剖（Anatomy-of-a-von-Neumann-Computer）">14. von Neumann 机解剖（Anatomy of a von Neumann Computer）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ec8d1a0caa4d695cb664932aa0c94834_Slide15.png" alt="Anatomy of a von Neumann Computer" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ec8d1a0caa4d695cb664932aa0c94834_Slide15.png" alt="Anatomy of a von Neumann Computer" width="70%"/>
 <ul>
 <li><strong>Datapath（肌肉）</strong>：寄存器、ALU、访存通路</li>
 <li><strong>控制单元（大脑）</strong>：从主存取指令，译成 ASEL/BSEL/DEST/FN 等；含 <strong>PC（program counter）</strong> 指向下一条；接收状态以支持条件执行</li>
 </ul>
 <p>32 个寄存器 → 选择信号各 5 bit；ALU 功能码可 6 bit。</p>
 <h2 id="15-指令（Instructions）">15. 指令（Instructions）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6c3e02341c71f25e260275b0d8a7e3c0_Slide16.png" alt="Instructions" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6c3e02341c71f25e260275b0d8a7e3c0_Slide16.png" alt="Instructions" width="70%"/>
 <p>指令是基本工作单元。执行循环：按 PC 取指 → 译码控制 datapath → ALU 运算写回 → <strong>PC ← 下一指令地址</strong>。现代机能每秒数十亿条。</p>
 <h2 id="16-指令集架构-ISA（Instruction-Set-Architecture）">16. 指令集架构 ISA（Instruction Set Architecture）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/dc61d42539d5fbe625191955db78e953_Slide17.png" alt="Instruction Set Architecture" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/dc61d42539d5fbe625191955db78e953_Slide17.png" alt="Instruction Set Architecture" width="70%"/>
 <p><strong>ISA</strong> = 指令字段含义 + 存储/运算的功能规格，是硬件与程序员的契约。可换软件；硬件可升级而软件不变（x86 从约 30 万 IPS 到约 50 亿 IPS）。</p>
 <p>警告：ISA 中嵌入的技术约束（寄存器数、字宽、地址空间）成功后难改——旧软件要跑在新机器上，坏选择可能背几十年。</p>
 <h2 id="17-ISA-设计（ISA-Design）">17. ISA 设计（ISA Design）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/01b2712d08a818610771c410e6612fe5_Slide18.png" alt="ISA Design" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/01b2712d08a818610771c410e6612fe5_Slide18.png" alt="ISA Design" width="70%"/>
 <p>难题：支持哪些运算？多少寄存器？多大内存？编码偏紧凑还是译码简单？</p>
 <p><strong>定量方法</strong>：选代表性 benchmark → 用拟议 ISA 实现并模拟 → 按速度/能耗/面积/成本评估。原则：<strong>识别常见操作并优化它们</strong>（通用计算中算术与访存极常见）。本课机器称 <strong>Beta</strong>。</p>
 <h2 id="18-Beta-ISA：存储（Beta-ISA-Storage）">18. Beta ISA：存储（Beta ISA: Storage）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/aa9abe6b2bde90c23f77f04833a8932e_Slide19.png" alt="Beta ISA: Storage" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/aa9abe6b2bde90c23f77f04833a8932e_Slide19.png" alt="Beta ISA: Storage" width="70%"/>
 <p>Beta 是 <strong>RISC</strong>：多数指令只访问内部寄存器；访存用独立 LD/ST，地址计算简单。同类：ARM、MIPS；x86 更复杂。</p>
 <p>CPU 状态：32 bit <strong>PC</strong>；<strong>32 个 32 bit 寄存器</strong> R0–R31（指令中 5 bit 编号）。<strong>R31 恒为 0，写入无效</strong>。主存为 32 bit 字（4 字节），仅支持字访问，但用<strong>字节地址</strong>：相邻字地址差 4。常用 <code>0x</code> 十六进制。</p>
 <h2 id="19-存储约定（Storage-Conventions）">19. 存储约定（Storage Conventions）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/15e84db13f5631eddf569c9a742f0419_Slide20.png" alt="Storage Conventions" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/15e84db13f5631eddf569c9a742f0419_Slide20.png" alt="Storage Conventions" width="70%"/>
 <p>变量住在主存固定地址。算 <code>y=x*37</code>：LD x→R0，乘 37，ST 回 y。热数据尽量留在寄存器。模板：<strong>load → 计算 → store</strong> → <strong>load-store 架构</strong>。</p>
 <h2 id="20-Beta-ISA：指令（Beta-ISA-Instructions）">20. Beta ISA：指令（Beta ISA: Instructions）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4a66d150bbb400c86f1eeb9797f45aac_Slide21.png" alt="Beta ISA: Instructions" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4a66d150bbb400c86f1eeb9797f45aac_Slide21.png" alt="Beta ISA: Instructions" width="70%"/>
 <p>三类：计算、LD/ST、分支。全部 <strong>32 bit 定长</strong>，占一字 → 译码简单；多数指令下一地址 = PC+4。</p>
 <p>定长常不如变长紧凑，但变长译码复杂、能耗/性能代价高；当今内存相对充裕，Beta 选择定长以换小而快的执行引擎。</p>
 <h2 id="21-Beta-ALU-指令（Beta-ALU-Instructions）">21. Beta ALU 指令（Beta ALU Instructions）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/136f068be8fca7f8df21f14b9ef4d539_Slide22.png" alt="Beta ALU Instructions" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/136f068be8fca7f8df21f14b9ef4d539_Slide22.png" alt="Beta ALU Instructions" width="70%"/>
 <p>字段：6 bit <strong>opcode</strong>，5 bit <strong>ra/rb</strong> 源，5 bit <strong>rc</strong> 目的；其余填 0。Opcode 固定在 [31:26]。</p>
 <p>例：ADD，opcode <code>0b100000</code>，<code>ADD(r1,r2,r3)</code> → R3←R1+R2；编码 <code>0x80611000</code>。同一寄存器可兼源与目的（如 R1←R1+R1 即 ×2）。助记符比二进制好写。</p>
 <h2 id="22-实现草图-1（Implementation-Sketch-1）">22. 实现草图 #1（Implementation Sketch #1）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ab15da9c0e9f3c3faf009d5be579b604_Slide23.png" alt="Implementation Sketch #1" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ab15da9c0e9f3c3faf009d5be579b604_Slide23.png" alt="Implementation Sketch #1" width="70%"/>
 <p>ra/rb 选操作数（R31→常数 0）；rc 选写回。Opcode→ALU 功能可用 64 项 ROM。PC 每指令 +4。RISC 好处：许多字段可直接作控制信号。</p>
 <h2 id="23-是否支持常数操作数？（Should-We-Support-Constant-Operands-）">23. 是否支持常数操作数？（Should We Support Constant Operands?）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/0c7ab2a57a182c554b1e7bd0657f9d49_Slide24.png" alt="Should We Support Constant Operands" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/0c7ab2a57a182c554b1e7bd0657f9d49_Slide24.png" alt="Should We Support Constant Operands" width="70%"/>
 <p>用定量法评估“第二操作数可为小常数”：腾出 16 bit 常数域。看<strong>实际执行</strong>（非静态出现次数）：算术指令过半第二操作数为小常数；比较约 80%；地址计算亦常见 → <strong>批准该特性</strong>（程序更小更快）。</p>
 <h2 id="24-带常数的-Beta-ALU-指令（Beta-ALU-Instructions-with-Constant）">24. 带常数的 Beta ALU 指令（Beta ALU Instructions with Constant）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/16a01bf2e05ba7990874b729730d1abd_Slide25.png" alt="Beta ALU Instructions with Constant" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/16a01bf2e05ba7990874b729730d1abd_Slide25.png" alt="Beta ALU Instructions with Constant" width="70%"/>
 <p>第二格式：rb 换为 16 bit 补码常数（<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mn>32768</mn><mo>∼</mo><mn>32767</mn></mrow><annotation encoding="application/x-tex">-32768\sim 32767</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">−</span><span class="mord">32768</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∼</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">32767</span></span></span></span>）。例：<code>ADDC(r1,-3,r3)</code>。16→32 bit 用<strong>符号扩展</strong>（复制符号位），纯布线即可。助记符加后缀 <strong>C</strong>；超 16 bit 常数须放主存再 LD。</p>
 <h2 id="25-实现草图-2（Implementation-Sketch-2）">25. 实现草图 #2（Implementation Sketch #2）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3210daba87d1c166f648bde306e64a72_Slide26.png" alt="Implementation Sketch #2" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3210daba87d1c166f648bde306e64a72_Slide26.png" alt="Implementation Sketch #2" width="70%"/>
 <p>多一个 MUX：BSEL=1 选符号扩展常数，否则选 rb。细节后几讲再展开。</p>
 <h2 id="26-Beta-的-Load-Store（Beta-Load-and-Store-Instructions）">26. Beta 的 Load / Store（Beta Load and Store Instructions）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9d61c14cbcc83fbd2684c2d44dc37cd2_Slide27.png" alt="Beta Load and Store Instructions" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9d61c14cbcc83fbd2684c2d44dc37cd2_Slide27.png" alt="Beta Load and Store Instructions" width="70%"/>
 <p>访存<strong>唯一</strong>途径。地址 = Ra + 符号扩展(const)（与 ADDC 同硬件）。LD：内存→Rc；ST：Rc→内存。ST 特殊：唯一需读 Rc；符号形式中 Rc 写在前；唯一<strong>不写寄存器堆</strong>的指令。</p>
 <h2 id="27-使用-LD-与-ST（Using-LD-and-ST）">27. 使用 LD 与 ST（Using LD and ST）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/596728265d7364130f37f263d9b98484_Slide28.png" alt="Using LD and ST" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/596728265d7364130f37f263d9b98484_Slide28.png" alt="Using LD and ST" width="70%"/>
 <p><code>y=x*37</code> 三条：<code>LD(0x1008,r31,r?)</code> 等。地址适合 16 bit 常数时直接编入；更大地址当大常数存内存。低内存放不下全部大常数时，可用后讲的 <strong>LDR（load relative）</strong>。</p>
 <h2 id="28-仅用-ALU-能解阶乘吗？（Can-We-Solve-Factorial-with-ALU-Instructions-）">28. 仅用 ALU 能解阶乘吗？（Can We Solve Factorial with ALU Instructions?）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5c690db57723ecdab177dddf9bd0cd23_Slide29.png" alt="Can We Solve Factorial with ALU Instructions" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5c690db57723ecdab177dddf9bd0cd23_Slide29.png" alt="Can We Solve Factorial with ALU Instructions" width="70%"/>
 <p>顺序执行不够：需循环/跳过 → <strong>条件分支</strong>。条件成立则 PC 改到 <strong>branch target</strong>；否则 PC+4。用于循环、if、过程调用等。</p>
 <h2 id="29-Beta-分支指令（Beta-Branch-Instructions）">29. Beta 分支指令（Beta Branch Instructions）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ba9ca7a113a57a6f19551bceb45ae7f4_Slide30.png" alt="Beta Branch Instructions" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ba9ca7a113a57a6f19551bceb45ae7f4_Slide30.png" alt="Beta Branch Instructions" width="70%"/>
 <p><strong>BEQ</strong>：先把 PC+4 写入 Rc（不需要可写 R31）；若 Ra==0 则 PC 加 <strong>字偏移×4</strong>（PC-relative）；否则 PC+4。偏移 0 = 下一条；<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">-1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">−</span><span class="mord">1</span></span></span></span> = 分支自身。负偏移常用于循环回跳；正偏移用于 if 前跳。</p>
 <p><code>BEQ(R31,…)</code> 恒成立 → 无条件分支。<strong>BNE</strong>：Ra≠0 时跳转。</p>
 <h2 id="30-现在能写阶乘了吗？（Can-We-Solve-Factorial-Now-）">30. 现在能写阶乘了吗？（Can We Solve Factorial Now?）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c1f07d0b0222586238fa858c2709e19c_Slide31.png" alt="Can We Solve Factorial Now" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c1f07d0b0222586238fa858c2709e19c_Slide31.png" alt="Can We Solve Factorial Now" width="70%"/>
 <p>迭代阶乘：标号 <code>L:</code> 处 MUL、减一，<code>BNE</code> 回 <code>L</code>。符号形式写标号，由汇编器算偏移。与早先高层 FSM 各态高度对应（datapath 相似时常见）。</p>
 <h2 id="31-Beta-JMP-指令（Beta-JMP-Instruction）">31. Beta JMP 指令（Beta JMP Instruction）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f33c4794a89597a3495d9aaeaa1eabf1_Slide32.png" alt="Beta JMP Instruction" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f33c4794a89597a3495d9aaeaa1eabf1_Slide32.png" alt="Beta JMP Instruction" width="70%"/>
 <p><strong>JMP</strong>：PC←Ra，并可选保存 PC+4 到 Rc。配合无条件分支：调用时 BEQ 跳到过程并保存返回地址；过程末 JMP 返回。同一过程可从多处调用（返回地址不同）。过程细节后讲。</p>
 <h2 id="32-Beta-ISA-小结（Beta-ISA-Summary）">32. Beta ISA 小结（Beta ISA Summary）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/66856949cb3c8902b07464d0bce19aba_Slide33.png" alt="Beta ISA Summary" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/66856949cb3c8902b07464d0bce19aba_Slide33.png" alt="Beta ISA Summary" width="70%"/>
 <ul>
 <li>32 个寄存器；程序与数据在主存；<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>32</mn></msup></mrow><annotation encoding="application/x-tex">2^{32}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8141em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">32</span></span></span></span></span></span></span></span></span></span></span></span> 字节地址空间；字访问、地址为 4 的倍数</li>
 <li>两种格式：opcode+三寄存器，或 opcode+两寄存器+符号扩展 16 bit 常数</li>

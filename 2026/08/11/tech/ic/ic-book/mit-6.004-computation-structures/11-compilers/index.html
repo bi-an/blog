@@ -60,7 +60,7 @@
 <meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5667f4503d1c5154b88e7ba16ecd7e52_Slide32.png">
 <meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1ab32272df7cf36304a2526469a78a24_Slide33.png">
 <meta property="article:published_time" content="2026-08-11T10:11:00.000Z">
-<meta property="article:modified_time" content="2026-08-14T14:48:44.391Z">
+<meta property="article:modified_time" content="2026-08-15T14:10:54.525Z">
 <meta property="article:author" content="bi-an">
 <meta property="article:tag" content="ic">
 <meta property="article:tag" content="digital-circuit">
@@ -258,7 +258,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-14 14:48:44" itemprop="dateModified" datetime="2026-08-14T14:48:44+00:00">2026-08-14</time>
+                <time title="Modified: 2026-08-15 14:10:54" itemprop="dateModified" datetime="2026-08-15T14:10:54+00:00">2026-08-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -289,23 +289,23 @@
 <h1>L11：编译器（Compilers）</h1>
 <p>本讲从高级语言出发，对比<strong>解释</strong>（interpretation）与<strong>编译</strong>（compilation），再用递归下降模板把 C 表达式/语句翻译成 Beta 汇编；随后拆解现代编译器前端（词法/语法/语义）、中间表示（IR / CFG）与多遍优化，最后做代码生成。</p>
 <h2 id="1-编程语言（Programming-Languages）">1. 编程语言（Programming Languages）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/34f32b11c581ff12667156e220c1d1ec_Slide02.png" alt="Programming Languages" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/34f32b11c581ff12667156e220c1d1ec_Slide02.png" alt="Programming Languages" width="70%"/>
 <p>已学 Beta ISA：对寄存器中的 32 位数据做 datapath 操作，并访存、改 PC；指令由 opcode / 源 / 目的等字段组成 32 位字。汇编一句对应一条指令，程序员自己管寄存器与主存，并把数组访问等拆成 Beta 操作序列。</p>
 <p>高级语言用变量与数据结构抽象存储与搬移；用表达式与赋值 <code>=</code> 等紧凑描述本需大量汇编的计算。本讲核心：如何把高级语言程序翻译成可在 Beta 上运行的代码。</p>
 <h2 id="2-高级语言（High-Level-Languages）">2. 高级语言（High-Level Languages）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/738299146f0f4ed47c7bcfff7b478be4_Slide03.png" alt="High-Level Languages" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/738299146f0f4ed47c7bcfff7b478be4_Slide03.png" alt="High-Level Languages" width="70%"/>
 <p>以欧几里得求 GCD 的 C 代码为例；课程用 C 的简单子集作示例语言。C 由 Dennis Ritchie 在 AT&amp;T Bell Labs 为 Unix 而开发；此后语言不断加入 OOP、新数据结构与控制结构。</p>
 <p>用高级语言可不提寄存器、具体指令等 ISA 细节 → 写得更快、更易读、更易维护；类型检查可拦下把字符串赋给数值变量等错误；动态分配等可自动化。因抽象掉具体 ISA，同一源码可移植到不同机器。代价取决于执行策略：<strong>解释</strong>还是<strong>编译</strong>。</p>
 <h2 id="3-解释（Interpretation）">3. 解释（Interpretation）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/48f454c0102fb9926d436a2eff7218e9_Slide04.png" alt="Interpretation" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/48f454c0102fb9926d436a2eff7218e9_Slide04.png" alt="Interpretation" width="70%"/>
 <p>在真实机器 M1 上跑<strong>解释器</strong>，模拟易编程的抽象机 M2：每条 M2 操作由一段 M1 指令序列实现。解释器 + M1 ≡ M2 的一种实现。</p>
 <p>常见多层解释：笔记本 x86 跑 Python 解释器 → 加载 SciPy → 一条 SciPy 命令展开为大量 Python 语句 → 每条 Python 再变成数百条 x86。适合一次性计算或探索算法；不必手写全部机器指令。</p>
 <h2 id="4-编译（Compilation）">4. 编译（Compilation）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/29a385517f7edf981057120150adb734_Slide05.png" alt="Compilation" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/29a385517f7edf981057120150adb734_Slide05.png" alt="Compilation" width="70%"/>
 <p>对需反复执行、愿付前期成本的任务用编译：把高级程序 P2 <strong>逐语句翻译</strong>成 M1 上的等价程序 P1（并不在翻译时“跑”P2）。做翻译的程序叫<strong>编译器</strong>（compiler）。</p>
 <p>编译一次得 P1，之后直接跑 P1，避免运行时解析源码与多层解释开销。换不同编译器可把同一 P2 落到 M2、M3… 而不改写源码。解释与编译都能改源码、抽象真实机器，且在现代系统中并存。</p>
 <h2 id="5-解释-vs-编译（Interpretation-vs-Compilation）">5. 解释 vs. 编译（Interpretation vs. Compilation）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/233447eb861533c3c448eb9ef9d4b661_Slide06.png" alt="Interpretation vs Compilation" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/233447eb861533c3c448eb9ef9d4b661_Slide06.png" alt="Interpretation vs Compilation" width="70%"/>
 <p>对语句 <code>x+2</code>：解释器处理时立刻取 <code>x</code> 并加 2；编译器则生成 <code>LD</code>/<code>ADD</code> 等指令，留待以后执行。循环中解释器会反复处理同一语句；编译器只生成指令一次。</p>
 <table>
 <thead>
@@ -335,15 +335,15 @@
 </table>
 <p>一般编译代码快得多；解释器可按 <code>x</code> 的实际类型改变行为。</p>
 <h2 id="6-编译器（Compilers）">6. 编译器（Compilers）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/825798a692e25db597d14e2da4a6398c_Slide07.png" alt="Compilers" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/825798a692e25db597d14e2da4a6398c_Slide07.png" alt="Compilers" width="70%"/>
 <p>编译器：把高级语言程序翻译成功能等价的机器指令序列（汇编）。先检查良构性：语句是否合法、有无无意义的运算（字符串+整数）、未初始化就用等；并警告浮点转整型可能溢出等。</p>
 <p>通过检查后生成高效指令，常重排计算使序列更短更快。现代优化编译器耐心探索替代方案，往往难被手写汇编全面超越。本节先看简单编译策略，再看现代编译器结构。</p>
 <h2 id="7-简单编译策略（A-Simple-Compilation-Strategy）">7. 简单编译策略（A Simple Compilation Strategy）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ebbf386f679fd739c66c430c39218887_Slide08.png" alt="A Simple Compilation Strategy" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ebbf386f679fd739c66c430c39218887_Slide08.png" alt="A Simple Compilation Strategy" width="70%"/>
 <p>两主例程：<code>compile_statement</code> 与 <code>compile_expr</code>。源程序是语句序列，反复调前者。关注四类语句：无条件（求一次表达式）、复合（顺序执行子语句）、条件（<code>if</code>：测表达式真则执行 then）、以及迭代（后文 WHILE）。</p>
 <p><code>compile_expr</code>：生成求值表达式并把结果放在某寄存器的代码。表达式含常量、标量/数组变量、赋值、一元/二元运算、过程调用等。复杂算术可拆成一元/二元序列。过程调用留待下讲；其余表达式与语句可直接模板化。</p>
 <h2 id="8-compile-expr-expr-→-Rx">8. compile_expr(expr) → Rx</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/db87d6c47aeb9561ee46c34daad70753_Slide09.png" alt="compile_expr expr to Rx" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/db87d6c47aeb9561ee46c34daad70753_Slide09.png" alt="compile_expr expr to Rx" width="70%"/>
 <ul>
 <li><strong>小常量</strong>（<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mn>32768</mn><mo>∼</mo><mo>+</mo><mn>32767</mn></mrow><annotation encoding="application/x-tex">-32768\sim +32767</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">−</span><span class="mord">32768</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∼</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">+</span><span class="mord">32767</span></span></span></span>）：<code>CMOVE</code> 符号扩展进寄存器；过大则存主存再 <code>LD</code>。</li>
 <li><strong>变量</strong>：与大常量类似，<code>LD</code> 对应地址。</li>
@@ -352,55 +352,55 @@
 <li><strong>算术</strong>：分别编译操作数到寄存器，再生成对应 ALU 指令。</li>
 </ul>
 <h2 id="9-编译表达式（Compiling-Expressions）">9. 编译表达式（Compiling Expressions）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/fc46224972d36e38f05d11df9762adec_Slide10.png" alt="Compiling Expressions" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/fc46224972d36e38f05d11df9762adec_Slide10.png" alt="Compiling Expressions" width="70%"/>
 <p>例：含减、乘、加的赋值。按赋值模板递归编译 RHS；遇乘则再编译左操作数（减）……直至叶节点（变量/常量）生成 <code>LD</code>/<code>CMOVE</code>，再沿表达式树上返回生成 <code>SUB</code>/<code>MUL</code>/<code>ADD</code> 等。</p>
 <p>此即<strong>递归下降</strong>（recursive descent）：每层表达式更简单，直到叶。相邻指令还可做<strong>窥孔优化</strong>（peephole）：如 <code>CMOVE</code> 后跟算术常可合并为带常量操作数的单条指令。</p>
 <h2 id="10-compile-statement">10. compile_statement</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9caa57defd4fffd7bed534f088dd1f91_Slide11.png" alt="compile_statement" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9caa57defd4fffd7bed534f088dd1f91_Slide11.png" alt="compile_statement" width="70%"/>
 <ul>
 <li><strong>无条件语句</strong>：多为赋值或过程调用 → 交给 <code>compile_expr</code>。</li>
 <li><strong>复合语句</strong>：对每个子语句递归 <code>compile_statement</code>；生成代码首尾相接，顺序执行。</li>
 </ul>
 <h2 id="11-compile-statement：条件（Conditional）">11. compile_statement：条件（Conditional）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ba763f151457b1ac2dc01f44414ca27e_Slide12.png" alt="compile_statement Conditional" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/ba763f151457b1ac2dc01f44414ca27e_Slide12.png" alt="compile_statement Conditional" width="70%"/>
 <p>最简 <code>if</code>：编译 test；若寄存器为 FALSE，分支跳过 THEN 子句代码。完整 <code>if–else</code> 用分支与标签保证：真走 then，假走 else，最后汇合。</p>
 <p>编译本质：套用许多小模板，逐步把代码生成拆成更小任务，并用分支把碎片粘成正确控制流。</p>
 <h2 id="12-compile-statement：迭代（Iteration）">12. compile_statement：迭代（Iteration）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d944798591b63162596bfdf8cb6d681b_Slide13.png" alt="compile_statement Iteration" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d944798591b63162596bfdf8cb6d681b_Slide13.png" alt="compile_statement Iteration" width="70%"/>
 <p><code>while</code> 模板类似 <code>if</code>，末尾再分支回测表达式，直到为假。可重组使每轮只需一条 <code>BT</code>（原模板每轮 <code>BF</code>+<code>BR</code>），循环内小优化可累积为大收益。</p>
 <p><code>for</code> 可改写成带更新的 <code>while</code>，再套上述模板。</p>
 <h2 id="13-综合：阶乘（Putting-It-All-Together-Factorial）">13. 综合：阶乘（Putting It All Together: Factorial）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/45bfd0bcd813e7cbbe9323f931d7f1c0_Slide14.png" alt="Putting It All Together Factorial" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/45bfd0bcd813e7cbbe9323f931d7f1c0_Slide14.png" alt="Putting It All Together Factorial" width="70%"/>
 <p>把模板套到迭代版阶乘：生成代码可与前述模板一一对应。非最优，但递归下降已够用。</p>
 <h2 id="14-优化：值留在寄存器（Optimization-keep-values-in-regs）">14. 优化：值留在寄存器（Optimization: keep values in regs）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a941a67234d1f22d3fa42c7c702efb69_Slide15.png" alt="Optimization keep values in regs" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a941a67234d1f22d3fa42c7c702efb69_Slide15.png" alt="Optimization keep values in regs" width="70%"/>
 <p>让变量住在专用寄存器而非主存，可少掉大量 <code>LD</code>/<code>ST</code>。例：循环内指令从 10 条减到 4。优化编译器擅长找此类机会。下文改谈更一般的现代编译器流程。</p>
 <h2 id="15-现代编译器解剖（Anatomy-of-a-Modern-Compiler）">15. 现代编译器解剖（Anatomy of a Modern Compiler）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e0df7a87249a55fe123034ed552b2041_Slide16.png" alt="Anatomy of a Modern Compiler" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e0df7a87249a55fe123034ed552b2041_Slide16.png" alt="Anatomy of a Modern Compiler" width="70%"/>
 <ul>
 <li><strong>前端 / 分析</strong>：检查语法与语义（类型等），把源程序变成机器无关的<strong>中间表示</strong>（IR）。多语言前端可共享同一 IR。</li>
 <li><strong>后端 / 综合</strong>：先对 IR 做优化（如把与循环下标无关的运算提出循环），再为目标 ISA 生成指令，并做 ISA 相关窥孔优化（如 Beta 上 <code>CMOVE</code>+算术合并）。</li>
 </ul>
 <h2 id="16-前端：词法分析（Frontend-Stages-Lexical-Analysis）">16. 前端：词法分析（Frontend Stages: Lexical Analysis）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9b4c4190a20ac6643dfa4bc5f291932b_Slide17.png" alt="Frontend Stages Lexical Analysis" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9b4c4190a20ac6643dfa4bc5f291932b_Slide17.png" alt="Frontend Stages Lexical Analysis" width="70%"/>
 <p>扫描源文本 → <strong>token</strong> 序列；空格/制表/换行仅作分隔，扫描后去掉。token 带文件名、行号、列号以便报错。非法 token（如 C 中 <code>3x</code>）在此阶段报错。</p>
 <h2 id="17-前端：语法分析（Frontend-Stages-Syntactic-Analysis）">17. 前端：语法分析（Frontend Stages: Syntactic Analysis）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2aea3cfc8fef0a08bbb45daad2105917_Slide18.png" alt="Frontend Stages Syntactic Analysis" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2aea3cfc8fef0a08bbb45daad2105917_Slide18.png" alt="Frontend Stages Syntactic Analysis" width="70%"/>
 <p><strong>解析</strong>（parsing）把 token 建成<strong>语法树</strong>（syntax tree）：操作数挂到一元/二元结点，语句各部件标好角色。树结点标签与前述代码模板对应；深度优先遍历即可按标签选模板——但先还要做语义分析与变换。</p>
 <h2 id="18-前端：语义分析（Frontend-Stages-Semantic-Analysis）">18. 前端：语义分析（Frontend Stages: Semantic Analysis）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/64a9cb31fc7ff29454ea494731283989_Slide19.png" alt="Frontend Stages Semantic Analysis" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/64a9cb31fc7ff29454ea494731283989_Slide19.png" alt="Frontend Stages Semantic Analysis" width="70%"/>
 <p>在语法树上检查语义：如 <code>x = &quot;bananas&quot;</code> 语法合法（左变量、右表达式），但若 <code>x</code> 声明为 <code>int</code>、右为 string，则类型不兼容。查符号表比对类型。完成后：语法树表示语法正确且语义有效的、语言无关的操作序列。</p>
 <h2 id="19-中间表示-IR（Intermediate-Representation）">19. 中间表示 IR（Intermediate Representation）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/09e316d5be168697e77c1b9932ba9b88_Slide20.png" alt="Intermediate Representation IR" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/09e316d5be168697e77c1b9932ba9b88_Slide20.png" alt="Intermediate Representation IR" width="70%"/>
 <p>语法树是常用 IR：独立于源语言与目标 ISA；保留运算顺序与分组信息；允许多前端共用一后端。后端可再分：机无关 IR 优化 → 代码生成到目标 ISA。</p>
 <h2 id="20-常用-IR：控制流图（Common-IR-Control-Flow-Graph）">20. 常用 IR：控制流图（Common IR: Control Flow Graph）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5283f7ef2c81e6613a47b1287b97112b_Slide21.png" alt="Common IR Control Flow Graph" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5283f7ef2c81e6613a47b1287b97112b_Slide21.png" alt="Common IR Control Flow Graph" width="70%"/>
 <p>把语法树重组为<strong>控制流图</strong>（CFG）：结点为<strong>基本块</strong>（basic block）——以分支结束的赋值/表达式序列；一旦进入块，块内其余操作会连着执行。边表示跳转到哪一块。基本块边界清晰，便于寄存器暂存变量等优化。</p>
 <h2 id="21-GCD-的控制流图（Control-Flow-Graph-for-GCD）">21. GCD 的控制流图（Control Flow Graph for GCD）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e2851f4acb66e276dd58f805c78547ff_Slide22.png" alt="Control Flow Graph for GCD" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e2851f4acb66e276dd58f805c78547ff_Slide22.png" alt="Control Flow Graph for GCD" width="70%"/>
 <p>条件分支块有标 <code>T</code>/<code>F</code> 的两条出边；无条件则单出边。若某块仅一个前驱，可继承前驱关于寄存器中已有 <code>x</code>、<code>y</code> 等知识；多前驱时只能用<strong>所有</strong>前驱共有的知识。CFG 很像高级 FSM 的状态转移图。</p>
 <h2 id="22-IR-优化（IR-Optimization）">22. IR 优化（IR Optimization）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9745dcee00abd38fedf6bdbf64c28ad6_Slide23.png" alt="IR Optimization" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9745dcee00abd38fedf6bdbf64c28ad6_Slide23.png" alt="IR Optimization" width="70%"/>
 <p>对 CFG 多遍简单优化，反复直到无进展；简单变换可叠加出复杂效果。例：</p>
 <ul>
 <li><strong>死代码消除</strong>（dead code elimination）：删从未用的赋值、不可达块</li>
@@ -408,25 +408,25 @@
 <li><strong>常量折叠</strong>（constant folding）：编译期求常量表达式</li>
 </ul>
 <h2 id="23-IR-优化示例-I（Example-IR-Optimizations-I）">23. IR 优化示例 I（Example IR Optimizations I）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c07ac52814a15709afe1089f313e91a4_Slide24.png" alt="Example IR Optimizations I" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c07ac52814a15709afe1089f313e91a4_Slide24.png" alt="Example IR Optimizations I" width="70%"/>
 <p>略造作的源程序及其 CFG：复杂表达式拆成简单二元运算，中间结果用临时名如 <code>_t1</code>。</p>
 <h2 id="24-IR-优化示例-II（Example-IR-Optimizations-II）">24. IR 优化示例 II（Example IR Optimizations II）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d5bb16690b95c1a92d8126b1593dc24a_Slide25.png" alt="Example IR Optimizations II" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d5bb16690b95c1a92d8126b1593dc24a_Slide25.png" alt="Example IR Optimizations II" width="70%"/>
 <p>死代码消除去掉第一块中对 <code>Z</code> 的赋值（后续再赋且中间未用）；发现 <code>X=3</code> 且不再赋值 → 传播常量 3；再常量折叠。</p>
 <h2 id="25-IR-优化示例-II（续）（Example-IR-Optimizations-II-continued）">25. IR 优化示例 II（续）（Example IR Optimizations II continued）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/aa454c55254f5781d15cc3a3d3ec2894_Slide26.png" alt="Example IR Optimizations II continued" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/aa454c55254f5781d15cc3a3d3ec2894_Slide26.png" alt="Example IR Optimizations II continued" width="70%"/>
 <p>更新后的 CFG 再一轮：死代码 → 常量传播 → 常量折叠。</p>
 <h2 id="26-IR-优化示例-III（Example-IR-Optimizations-III）">26. IR 优化示例 III（Example IR Optimizations III）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1fb9ffb6c636f88ddc811b97c8d91b45_Slide27.png" alt="Example IR Optimizations III" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1fb9ffb6c636f88ddc811b97c8d91b45_Slide27.png" alt="Example IR Optimizations III" width="70%"/>
 <p>两轮后赋值大减。第三轮：死代码；并可判定条件分支结果 → 删空块或不可达块。</p>
 <h2 id="27-IR-优化示例-IV（Example-IR-Optimizations-IV）">27. IR 优化示例 IV（Example IR Optimizations IV）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c57a3560c024f3d97fc001d3247a0e63_Slide28.png" alt="Example IR Optimizations IV" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c57a3560c024f3d97fc001d3247a0e63_Slide28.png" alt="Example IR Optimizations IV" width="70%"/>
 <p>IR 明显变小。继续常量传播、折叠、死代码消除。</p>
 <h2 id="28-IR-优化示例-IV（续）（Example-IR-Optimizations-IV-continued）">28. IR 优化示例 IV（续）（Example IR Optimizations IV continued）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/70fbef84308277a4b8a8a22f4dac1221_Slide29.png" alt="Example IR Optimizations IV continued" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/70fbef84308277a4b8a8a22f4dac1221_Slide29.png" alt="Example IR Optimizations IV continued" width="70%"/>
 <p>直到无更多优化。简单变换反复应用，得到算同一最终 <code>Z</code> 的更小程序。还可加：公共子表达式消除、循环无关代码外提、短循环展开等。</p>
 <h2 id="29-代码生成（Code-Generation）">29. 代码生成（Code Generation）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/028d57410f7f34e71ef7d055a5c962bb_Slide30.png" alt="Code Generation" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/028d57410f7f34e71ef7d055a5c962bb_Slide30.png" alt="Code Generation" width="70%"/>
 <ol>
 <li>为变量分配专用寄存器；不够则部分进内存，必要时 <code>LD</code>/<code>ST</code></li>
 <li>用模板把赋值/运算译成指令</li>
@@ -435,13 +435,13 @@
 <li>目标相关窥孔优化</li>
 </ol>
 <h2 id="30-综合-I（Putting-It-All-Together-I）">30. 综合 I（Putting It All Together I）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/557a429644ca286f12a8661b4a1f9026_Slide31.png" alt="Putting It All Together I" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/557a429644ca286f12a8661b4a1f9026_Slide31.png" alt="Putting It All Together I" width="70%"/>
 <p>GCD 的原 CFG 与略优化 CFG：主要是常量传播/折叠。顶块关于变量的知识不能简单传到多前驱的 <code>if</code> 块。</p>
 <h2 id="31-综合-II（Putting-It-All-Together-II）">31. 综合 II（Putting It All Together II）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5667f4503d1c5154b88e7ba16ecd7e52_Slide32.png" alt="Putting It All Together II" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5667f4503d1c5154b88e7ba16ecd7e52_Slide32.png" alt="Putting It All Together II" width="70%"/>
 <p>为 <code>x</code>、<code>y</code> 专配寄存器；按块生成；重排消除无条件分支。结果已接近人手难再明显改进的质量。</p>
 <h2 id="32-小结（Summary）">32. 小结（Summary）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1ab32272df7cf36304a2526469a78a24_Slide33.png" alt="Summary" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1ab32272df7cf36304a2526469a78a24_Slide33.png" alt="Summary" width="70%"/>
 <p>编译流水线按序把源码变为高质量汇编：词法 → 语法 → 语义 → IR/CFG 优化 → 代码生成。耐心多遍优化常优于手写汇编；程序员专注功能正确性，细节交给编译器。</p>
 
     </div>

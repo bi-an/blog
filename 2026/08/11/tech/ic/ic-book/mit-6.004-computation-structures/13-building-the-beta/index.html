@@ -59,7 +59,7 @@
 <meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/faf09afca0fc5062e2a19e39c8ba3415_Slide31.png">
 <meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c46606980a81ef685afb6415bd989aaf_Slide32.png">
 <meta property="article:published_time" content="2026-08-11T10:13:00.000Z">
-<meta property="article:modified_time" content="2026-08-14T14:48:44.392Z">
+<meta property="article:modified_time" content="2026-08-15T14:10:54.525Z">
 <meta property="article:author" content="bi-an">
 <meta property="article:tag" content="ic">
 <meta property="article:tag" content="digital-circuit">
@@ -257,7 +257,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-14 14:48:44" itemprop="dateModified" datetime="2026-08-14T14:48:44+00:00">2026-08-14</time>
+                <time title="Modified: 2026-08-15 14:10:54" itemprop="dateModified" datetime="2026-08-15T14:10:54+00:00">2026-08-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -288,13 +288,13 @@
 <h1>L13：构建 Beta（Building the Beta）</h1>
 <p>本讲增量搭建单周期 Beta：寄存器堆、ALU / 访存 / 分支 / LDR 数据通路，以及异常与中断；并汇总控制信号 ROM 方案。目标是“每时钟一条指令”的可工作 32 位 RISC。</p>
 <h2 id="1-CPU-设计权衡（CPU-Design-Tradeoffs）">1. CPU 设计权衡（CPU Design Tradeoffs）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8739da650177b37a215297f046e4b2dd_Slide02.png" alt="CPU Design Tradeoffs" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8739da650177b37a215297f046e4b2dd_Slide02.png" alt="CPU Design Tradeoffs" width="70%"/>
 <p>正确执行 Beta ISA 是底线；还要权衡：性能（常用 <strong>MIPS</strong> = Millions of Instructions Per Second）、芯片面积（成本）、性能/价格、性能/瓦特等。Intel 8080（1974）约 0.29 MIPS；现代多核可达 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>10</mn><mn>4</mn></msup><mo>∼</mo><msup><mn>10</mn><mn>5</mn></msup></mrow><annotation encoding="application/x-tex">10^4\sim 10^5</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8141em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">4</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∼</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.8141em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">5</span></span></span></span></span></span></span></span></span></span></span> MIPS。Apple Watch 与高端桌面目标集不同。</p>
 <h2 id="2-处理器性能（Processor-Performance）">2. 处理器性能（Processor Performance）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/020855b152d04544e78a2e0b3c662df3_Slide03.png" alt="Processor Performance" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/020855b152d04544e78a2e0b3c662df3_Slide03.png" alt="Processor Performance" width="70%"/>
 <p>执行时间 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>∝</mo></mrow><annotation encoding="application/x-tex">\propto</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mrel">∝</span></span></span></span> 程序指令数 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>×</mo></mrow><annotation encoding="application/x-tex">\times</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord">×</span></span></span></span> 每条平均时钟数 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>×</mo></mrow><annotation encoding="application/x-tex">\times</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord">×</span></span></span></span> 时钟周期。可减少指令数、降低 CPI、或缩短周期（简化逻辑）。本讲实现<strong>每时钟一条指令</strong>；组合路径较长，日后可用流水线提吞吐。</p>
 <h2 id="3-回顾：Beta-ISA（Reminder-Beta-ISA）">3. 回顾：Beta ISA（Reminder: Beta ISA）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/404d904ad2737e9c7c346f761861a84e_Slide04.png" alt="Reminder Beta ISA" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/404d904ad2737e9c7c346f761861a84e_Slide04.png" alt="Reminder Beta ISA" width="70%"/>
 <p>32 个 32 位寄存器。两类主要格式：</p>
 <ul>
 <li>opcode 高 2 位 <code>0b10</code>：双寄存器操作数（Ra、Rb）→ Rc</li>
@@ -302,88 +302,88 @@
 </ul>
 <p>操作含算术、比较、布尔、移位。仅两种格式 → 译码/控制简单，许多指令位可直接接到数据通路。</p>
 <h2 id="4-方法：增量加功能（Approach-Incremental-Featurism）">4. 方法：增量加功能（Approach: Incremental Featurism）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f7bf486389ed4c9bf512f2212a95d2dc_Slide05.png" alt="Approach Incremental Featurism" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/f7bf486389ed4c9bf512f2212a95d2dc_Slide05.png" alt="Approach Incremental Featurism" width="70%"/>
 <p>顺序：先 ALU 指令 → 访存与分支 → 异常。构件：多位寄存器（上升沿加载）、大量 MUX、Part 1 的 ALU、以及寄存器堆与主存。</p>
 <h2 id="5-多端口寄存器堆（Multi-ported-Register-File）">5. 多端口寄存器堆（Multi-ported Register File）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6fb2df496c2ea1693df0af51048b3d6b_Slide06.png" alt="Multi-ported Register File" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6fb2df496c2ea1693df0af51048b3d6b_Slide06.png" alt="Multi-ported Register File" width="70%"/>
 <p>32 个带 EN 的寄存器：EN=1 时下一上升沿装入 D；<strong>禁止门控时钟</strong>（NO GATED CLOCKS）。两套读 MUX（地址 RA1/RA2）独立读；写口用 5 位 WA 译码选中一个 WE。R31 读出恒为 0。封装为双读一写寄存器堆。</p>
 <h2 id="6-寄存器堆时序（Register-File-Timing）">6. 寄存器堆时序（Register File Timing）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b5463bafbd31e54e8b047562068d1644_Slide07.png" alt="Register File Timing" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b5463bafbd31e54e8b047562068d1644_Slide07.png" alt="Register File Timing" width="70%"/>
 <p>读：地址稳定后经 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">P</mi><mi mathvariant="normal">D</mi></mrow></msub></mrow><annotation encoding="application/x-tex">t_{\mathrm{PD}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">PD</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 出数据。写：WA/WD/WE 须满足建立/保持时间。同一周期可读旧值、周期末写入、下一周期才见新值——可同址同周期“读旧写新”。</p>
 <h2 id="7-ALU-指令（ALU-Instructions）">7. ALU 指令（ALU Instructions）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7e96042fb66664215b3c435ddde7ed98_Slide08.png" alt="ALU Instructions" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7e96042fb66664215b3c435ddde7ed98_Slide08.png" alt="ALU Instructions" width="70%"/>
 <p>五步：<strong>Fetch</strong>（按 PC 取指）→ <strong>Decode</strong>（opcode→控制）→ <strong>Read</strong>（Ra/Rb）→ <strong>Execute</strong>（ALU + 下一 PC）→ <strong>Write-back</strong>（写 Rc）。时钟上升沿更新寄存器堆与 PC，标志当前指令结束。周期须覆盖五步总延迟；若 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">C</mi><mi mathvariant="normal">L</mi><mi mathvariant="normal">K</mi></mrow></msub><mo>=</mo><mn>10</mn><mtext> </mtext><mrow><mi mathvariant="normal">n</mi><mi mathvariant="normal">s</mi></mrow></mrow><annotation encoding="application/x-tex">t_{\mathrm{CLK}}=10\,\mathrm{ns}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">CLK</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">10</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathrm">ns</span></span></span></span></span> → 100 MHz → 100 MIPS。</p>
 <h2 id="8-取指-译码（Instruction-Fetch-Decode）">8. 取指/译码（Instruction Fetch/Decode）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3910af72706e4c08fe212a045add03aa_Slide09.png" alt="Instruction Fetch Decode" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3910af72706e4c08fe212a045add03aa_Slide09.png" alt="Instruction Fetch Decode" width="70%"/>
 <p>PC → 主存取指；ALU 类下一地址为 PC+4（专用加法器）。RESET 时 MUX 选初始 PC。部分指令字段可直连；其余控制由 opcode 逻辑产生。</p>
 <h2 id="9-ALU-操作数据通路-I（ALU-Op-Datapath-I）">9. ALU 操作数据通路 I（ALU Op Datapath I）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/03fd3f09e2add1349a292477fefdb996_Slide10.png" alt="ALU Op Datapath I" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/03fd3f09e2add1349a292477fefdb996_Slide10.png" alt="ALU Op Datapath I" width="70%"/>
 <p>Ra/Rb/Rc 字段直连寄存器堆读写地址；读数进 ALU；ALUFN 由 opcode 经控制逻辑（可实现为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>6</mn></msup><mo>=</mo><mn>64</mn></mrow><annotation encoding="application/x-tex">2^6=64</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8141em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">6</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">64</span></span></span></span> 项 ROM）给出。ALU 结果回写 Rc；<strong>WERF</strong>（write-enable register file）=1 时写入。课程吉祥物 Werf 即以此命名。</p>
 <h2 id="10-ALU-操作数据通路-II（ALU-Op-Datapath-II）">10. ALU 操作数据通路 II（ALU Op Datapath II）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e804bf92068fcdae06daa5d9fca6dfc1_Slide11.png" alt="ALU Op Datapath II" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/e804bf92068fcdae06daa5d9fca6dfc1_Slide11.png" alt="ALU Op Datapath II" width="70%"/>
 <p>取指后 Ra/Rb 读出 → ALUFN 选定 → 结果经 WERF=1 写回 Rc。RISC 优势：执行所需数据通路直观。</p>
 <h2 id="11-带常量的-ALU-I（ALU-Operations-with-constant-I）">11. 带常量的 ALU I（ALU Operations with constant I）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8d41919becb427fb16aebe97bd449981_Slide12.png" alt="ALU Operations with constant I" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8d41919becb427fb16aebe97bd449981_Slide12.png" alt="ALU Operations with constant I" width="70%"/>
 <p>第二操作数 = 指令低 16 位符号扩展。加 <strong>BSEL</strong> MUX：0 选寄存器，1 选常量。符号扩展纯接线：复制 <code>ID[15]</code> 十六次，无需门。</p>
 <h2 id="12-带常量的-ALU-II（ALU-Operations-with-constant-II）">12. 带常量的 ALU II（ALU Operations with constant II）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c4774136a52743eccd7e91f8cf8510e4_Slide13.png" alt="ALU Operations with constant II" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c4774136a52743eccd7e91f8cf8510e4_Slide13.png" alt="ALU Operations with constant II" width="70%"/>
 <p>BSEL=1，其余同双寄存器 ALU。至此已能执行大部分 ISA；剩下访存与分支。</p>
 <h2 id="13-Load-指令-I（Load-Instruction-I）">13. Load 指令 I（Load Instruction I）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/0bf8007cf2364904abaf9c9fd480132f_Slide14.png" alt="Load Instruction I" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/0bf8007cf2364904abaf9c9fd480132f_Slide14.png" alt="Load Instruction I" width="70%"/>
 <p>LD/ST 访问与指令同一主存（图上分画两盒）。地址计算同 ADDC：Ra + 符号扩展字面量，复用 ALU。LD：ALU 结果作地址；MOE=1 读出；经 <strong>WDSEL</strong> 三选一 MUX（另两路留给分支写回 PC+4 等）写回 Rc。MWE 用于写存。</p>
 <h2 id="14-Load-指令-II（Load-Instruction-II）">14. Load 指令 II（Load Instruction II）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/75c083b00fb31b15c42f32b059131193_Slide15.png" alt="Load Instruction II" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/75c083b00fb31b15c42f32b059131193_Slide15.png" alt="Load Instruction II" width="70%"/>
 <p>操作数选法同 ADDC，ALU 做 ADD；WDSEL=2 选存返回数据写寄存器堆。</p>
 <h2 id="15-Store-指令-I（Store-Instruction-I）">15. Store 指令 I（Store Instruction I）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/00de86fbe80bf6f6c5fbb6e5f52f4199_Slide16.png" alt="Store Instruction I" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/00de86fbe80bf6f6c5fbb6e5f52f4199_Slide16.png" alt="Store Instruction I" width="70%"/>
 <p>要写的数据来自 Rc，但 Rc 未接读口；ST 不用 Rb → 加 <strong>RA2SEL</strong> MUX：1 时第二读口地址用 Rc。该读数进主存 WD。ST 不写寄存器堆 → WERF=0。</p>
 <h2 id="16-Store-指令-II（Store-Instruction-II）">16. Store 指令 II（Store Instruction II）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/14d6b0751ffec005312e336d2010fe6b_Slide17.png" alt="Store Instruction II" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/14d6b0751ffec005312e336d2010fe6b_Slide17.png" alt="Store Instruction II" width="70%"/>
 <p>地址同 LD；MWR/MWE=1 在周期末写存；WERF=0；WDSEL 为 don’t care（可任选便于逻辑最小化）。<strong>注意</strong>：MWE 绝不能是 don’t care，以免误写。</p>
 <h2 id="17-JMP-指令-I（JMP-Instruction-I）">17. JMP 指令 I（JMP Instruction I）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5f216c8e4b03e67b64cc41789cf0f8a8_Slide18.png" alt="JMP Instruction I" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5f216c8e4b03e67b64cc41789cf0f8a8_Slide18.png" alt="JMP Instruction I" width="70%"/>
 <p><strong>PCSEL</strong> MUX 选下一 PC：0→PC+4，2→Ra。JMP/分支还把 PC+4 写入 Rc（WDSEL=0）。</p>
 <h2 id="18-JMP-指令-II（JMP-Instruction-II）">18. JMP 指令 II（JMP Instruction II）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/058b80b37e401bd6a10694e6d7b55c38_Slide19.png" alt="JMP Instruction II" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/058b80b37e401bd6a10694e6d7b55c38_Slide19.png" alt="JMP Instruction II" width="70%"/>
 <p>WERF=1 写回 PC+4；PCSEL=2 选 Ra。其余多为 don’t care，但 MWR 必须安全为 0。</p>
 <h2 id="19-BEQ-BNE-指令-I（BEQ-BNE-Instructions-I）">19. BEQ/BNE 指令 I（BEQ/BNE Instructions I）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/063544445b874078a1108103f9fd70c9_Slide20.png" alt="BEQ BNE Instructions I" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/063544445b874078a1108103f9fd70c9_Slide20.png" alt="BEQ BNE Instructions I" width="70%"/>
 <p>偏移加法器：PC+4 +（字面量左移 2 位的符号扩展偏移）。乘 4 靠接线插两个 0；符号扩展复制 <code>ID[15]</code> 十四次。32 位 NOR 得 <strong>Z</strong>（Ra 全 0）。分支成立 → PCSEL=1 选目标；否则 PCSEL=0。</p>
 <h2 id="20-BEQ-BNE-指令-II（BEQ-BNE-Instructions-II）">20. BEQ/BNE 指令 II（BEQ/BNE Instructions II）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3760061cff104997306fe7aa897efd8e_Slide21.png" alt="BEQ BNE Instructions II" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3760061cff104997306fe7aa897efd8e_Slide21.png" alt="BEQ BNE Instructions II" width="70%"/>
 <p>PC+4 写 Rc；Z 与偏移加法器结果共同决定 PCSEL。</p>
 <h2 id="21-相对加载-LDR（Load-Relative-Instruction）">21. 相对加载 LDR（Load Relative Instruction）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/82f59ccaf861bd6151ee2e0ae838acc0_Slide22.png" alt="Load Relative Instruction" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/82f59ccaf861bd6151ee2e0ae838acc0_Slide22.png" alt="Load Relative Instruction" width="70%"/>
 <p>LDR 像 LD，但地址来自分支偏移加法器——用于加载放在代码旁、装不下 16 位字面量的大常量。常量放过程后等位置，且须避免被当作指令执行。</p>
 <h2 id="22-LDR-指令-I（LDR-Instruction-I）">22. LDR 指令 I（LDR Instruction I）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1906ba8776a08d6f78845a85d1731af5_Slide23.png" alt="LDR Instruction I" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/1906ba8776a08d6f78845a85d1731af5_Slide23.png" alt="LDR Instruction I" width="70%"/>
 <p>加 <strong>ASEL</strong> MUX：1 时第一 ALU 操作数来自偏移加法器；ALU 做布尔 “A” 把该值送到地址口。为何不把 ASEL 直接接到存地址？那样 LD/ST 地址会多串一级 MUX，拉长关键路径、拖慢<strong>所有</strong>指令时钟；ASEL 与 BSEL 延迟重叠则几乎零性能代价。</p>
 <h2 id="23-LDR-指令-II（LDR-Instruction-II）">23. LDR 指令 II（LDR Instruction II）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/adbacfe6050fcf3f4ff98580e62fe9af_Slide24.png" alt="LDR Instruction II" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/adbacfe6050fcf3f4ff98580e62fe9af_Slide24.png" alt="LDR Instruction II" width="70%"/>
 <p>偏移 → ASEL → ALU(“A”) → 存地址 → 数据经 WDSEL 写 Rc。</p>
 <h2 id="24-异常（Exceptions）">24. 异常（Exceptions）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/968c0977554281e59c6eda210ce70695_Slide25.png" alt="Exceptions" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/968c0977554281e59c6eda210ce70695_Slide25.png" alt="Exceptions" width="70%"/>
 <p>指令无法执行时（非法 opcode / illop、地址越界、除零等）：停止用户程序，转入处理程序——可转储状态、或用软件模拟未实现指令再恢复。外部 I/O 事件则需<strong>中断</strong>当前程序、处理后无感恢复。硬件把异常当成强制过程调用，保存 PC+4 以便返回。这是用户程序与 OS 接口的关键。</p>
 <h2 id="25-异常处理（Exception-Processing）">25. 异常处理（Exception Processing）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/59e5c431cda8dc8a89492d7c78d99673_Slide26.png" alt="Exception Processing" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/59e5c431cda8dc8a89492d7c78d99673_Slide26.png" alt="Exception Processing" width="70%"/>
 <p>打断当前程序，如同当前指令变成对 handler 的调用；handler 可用普通过程返回恢复。<strong>Exception</strong>：由当前程序某指令引起的同步异常。<strong>Interrupt</strong>：与程序无关的异步外部事件。</p>
 <h2 id="26-异常实现（Exception-Implementation）">26. 异常实现（Exception Implementation）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8fbc7c3a1729add37ce2ec5d276d399e_Slide27.png" alt="Exception Implementation" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/8fbc7c3a1729add37ce2ec5d276d399e_Slide27.png" alt="Exception Implementation" width="70%"/>
 <p>两类实现相同：硬件表现得像 taken BR 到 0x4（同步）或 0x8（异步）；PC+4 写入 <strong>R30 = XP</strong>（exception pointer）。用户程序不可用 XP（随时可能被中断覆盖）。例：未实现 DIV → illop → 0x4 → handler 用 XP 取非法指令并模拟，再 <code>JMP(XP)</code> 继续。</p>
 <h2 id="27-异常-I（Exceptions-I）">27. 异常 I（Exceptions I）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6ec6428816eb7a3bd9779f6b59d89da5_Slide28.png" alt="Exceptions I" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/6ec6428816eb7a3bd9779f6b59d89da5_Slide28.png" alt="Exceptions I" width="70%"/>
 <p><strong>WASEL</strong> MUX：1 时写回地址强制为 XP（R30），0 时用 Rc。PCSEL 增加常量输入 0x4 / 0x8。</p>
 <h2 id="28-异常-II（Exceptions-II）">28. 异常 II（Exceptions II）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2afa8d77a1c028852d34e03bfe57c108_Slide29.png" alt="Exceptions II" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2afa8d77a1c028852d34e03bfe57c108_Slide29.png" alt="Exceptions II" width="70%"/>
 <p>PC+4 经 WDSEL 写入 XP；PCSEL=3 或 4 进 handler。被打断指令<strong>未执行</strong>；若要重试须先对 XP 减 4 再 <code>JMP(XP)</code>。</p>
 <h2 id="29-Beta：最终答案（Beta-Our-Final-Answer）">29. Beta：最终答案（Beta: Our Final Answer）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5ec963163138f9e5dcd8316b83d7cf0d_Slide30.png" alt="Beta Our Final Answer" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5ec963163138f9e5dcd8316b83d7cf0d_Slide30.png" alt="Beta Our Final Answer" width="70%"/>
 <p>完整单周期数据通路已齐。硬件量不大，适合实验课亲手完成。现代 CPU 另有流水、多发射、复杂存储层次等（后续讲）。Beta 约 1–2 mm²，现代 Intel 芯片 300–600 mm²——多出来的面积为性能服务。</p>
 <h2 id="30-控制逻辑（Control-Logic）">30. 控制逻辑（Control Logic）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/faf09afca0fc5062e2a19e39c8ba3415_Slide31.png" alt="Control Logic" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/faf09afca0fc5062e2a19e39c8ba3415_Slide31.png" alt="Control Logic" width="70%"/>
 <p>按指令类汇总控制表（含异常与 RESET）；无关信号标 don’t care。MWE 与（多数情况下）WERF 必须有定义值。最简：opcode 索引 ROM；Z 与 IRQ 用少量逻辑修正 ROM 输出。亦可 Karnaugh 图做门级最小化——建议先 ROM 跑通再优化。</p>
 <h2 id="31-Beta-Inside">31. Beta Inside!</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c46606980a81ef685afb6415bd989aaf_Slide32.png" alt="Beta Inside" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c46606980a81ef685afb6415bd989aaf_Slide32.png" alt="Beta Inside" width="70%"/>
 <p>简单编码 + 只做常见操作的硬件；复杂/少见功能交给软件；异常机制在硬件不够时把控制交给软件。完成 Beta 设计是许多 MIT 学生的 “Yes!” 时刻——并收获 “Beta Inside” 贴纸。</p>
 
     </div>

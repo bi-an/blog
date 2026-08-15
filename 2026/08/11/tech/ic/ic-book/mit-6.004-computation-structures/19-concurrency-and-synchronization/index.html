@@ -53,7 +53,7 @@
 <meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a897d8e1eb4d36deea89b12ad008a9ee_Slide25.png">
 <meta property="og:image" content="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/73a898d12dac31e50cc7be6ed22195ef_Slide26.png">
 <meta property="article:published_time" content="2026-08-11T10:19:00.000Z">
-<meta property="article:modified_time" content="2026-08-14T14:48:44.393Z">
+<meta property="article:modified_time" content="2026-08-15T14:10:54.526Z">
 <meta property="article:author" content="bi-an">
 <meta property="article:tag" content="concurrent">
 <meta property="article:tag" content="ic">
@@ -252,7 +252,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-08-14 14:48:44" itemprop="dateModified" datetime="2026-08-14T14:48:44+00:00">2026-08-14</time>
+                <time title="Modified: 2026-08-15 14:10:54" itemprop="dateModified" datetime="2026-08-15T14:10:54+00:00">2026-08-15</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -283,7 +283,7 @@
 <h1>L19：并发与同步（Concurrency and Synchronization）</h1>
 <p>本讲以 <strong>producer–consumer</strong> 为线索，引入 precedence constraint、FIFO 缓冲，以及 Dijkstra 的 <strong>semaphore</strong>（WAIT/SIGNAL）；覆盖资源分配、互斥临界区、多生产者/消费者，以及用 SVC 或 <strong>TCLR</strong>（test-and-clear）实现 semaphore；最后讨论 <strong>deadlock</strong>（Dining Philosophers）与全局资源序 / 检测恢复。</p>
 <h2 id="1-进程间通信（Interprocess-Communication）">1. 进程间通信（Interprocess Communication）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/eb4084d127d79b1af9f75365ff615bd9_Slide02.png" alt="Interprocess Communication" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/eb4084d127d79b1af9f75365ff615bd9_Slide02.png" alt="Interprocess Communication" width="70%"/>
 <p>应用常拆成多进程：视频压缩可并行处理宏块；游戏分前端 UI 与后端仿真/渲染。进程封装独立状态，需要时再共享信息。</p>
 <p>通信方式：</p>
 <ul>
@@ -292,17 +292,17 @@
 </ul>
 <p>本讲用经典 <strong>producer–consumer</strong> 作并发同步范例。</p>
 <h2 id="2-同步通信（Synchronous-Communication）">2. 同步通信（Synchronous Communication）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3fcd6b0266322bfe94c8e661a0b720b2_Slide03.png" alt="Synchronous Communication" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/3fcd6b0266322bfe94c8e661a0b720b2_Slide03.png" alt="Synchronous Communication" width="70%"/>
 <p>单进程内程序计数器决定执行顺序。跨进程还需 <strong>precedence constraints</strong>（记号 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>≺</mo></mrow><annotation encoding="application/x-tex">\prec</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mrel">≺</span></span></span></span>）：第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> 次 send 须先于第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> 次 receive；若共享单单元，第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> 次 receive 须先于第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">i+1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7429em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> 次 send（防覆盖）。二者使产消<strong>紧耦合</strong>——消费完才能再生产。下一节用缓冲放松约束。</p>
 <h2 id="3-FIFO-缓冲（FIFO-Buffering）">3. FIFO 缓冲（FIFO Buffering）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/cbb5722d9bbf949e6dba2a5f1f6afb86_Slide04.png" alt="FIFO Buffering" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/cbb5722d9bbf949e6dba2a5f1f6afb86_Slide04.png" alt="FIFO Buffering" width="70%"/>
 <p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 字符 <strong>FIFO</strong>：空则消费者等，满则生产者等。覆盖约束放宽为：第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> 次 receive <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>≺</mo></mrow><annotation encoding="application/x-tex">\prec</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mrel">≺</span></span></span></span> 第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mo>+</mo><mi>N</mi></mrow><annotation encoding="application/x-tex">i+N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7429em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 次 send——生产者最多超前 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 个。</p>
 <p>实现：长度 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 的环形数组 + 读/写下标（模 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 递增）；另需计数（图中略）。任意交错执行皆可，只要不满写、不空读。</p>
 <h2 id="4-例：有界缓冲问题（Example-Bounded-Buffer-Problem）">4. 例：有界缓冲问题（Example: Bounded Buffer Problem）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7f17e586f3fa2e9cef5a958bf2c5643e_Slide05.png" alt="Bounded Buffer Problem" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7f17e586f3fa2e9cef5a958bf2c5643e_Slide05.png" alt="Bounded Buffer Problem" width="70%"/>
 <p>共享数组与 <code>IN</code>/<code>OUT</code>。<code>SEND</code> 用 <code>IN</code> 写，<code>RCV</code> 用 <code>OUT</code> 读，各自模 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 递增。如图代码<strong>未强制</strong>任何 precedence——可空读、可满写。需要同步抽象。</p>
 <h2 id="5-信号量（Dijkstra）（Semaphores-Dijkstra-）">5. 信号量（Dijkstra）（Semaphores (Dijkstra)）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/782c2bd2fdb2289ea369fc01c2e12a18_Slide06.png" alt="Semaphores" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/782c2bd2fdb2289ea369fc01c2e12a18_Slide06.png" alt="Semaphores" width="70%"/>
 <p>Dijkstra 提出 <strong>semaphore</strong>：共享整数 ≥0；操作：</p>
 <ul>
 <li><strong>WAIT(s)</strong>：等 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>&gt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">s&gt;0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mord mathnormal">s</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span> 再减一返回（实现上可忙等或挂起）</li>
@@ -310,40 +310,40 @@
 </ul>
 <p>初值 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0715em;">K</span></span></span></span> 保证：第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> 次 SIGNAL <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>≺</mo></mrow><annotation encoding="application/x-tex">\prec</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mrel">≺</span></span></span></span> 第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mo>+</mo><mi>K</mi></mrow><annotation encoding="application/x-tex">i+K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7429em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0715em;">K</span></span></span></span> 次 WAIT 完成。本课不允许负值。文献亦称 P/V（荷兰语“测/增”）。</p>
 <h2 id="6-用信号量表达先后（Semaphores-for-Precedence）">6. 用信号量表达先后（Semaphores for Precedence）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c7b1ead2c4b41f946a2fcf649fcb15a8_Slide07.png" alt="Semaphores for Precedence" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c7b1ead2c4b41f946a2fcf649fcb15a8_Slide07.png" alt="Semaphores for Precedence" width="70%"/>
 <p>指南：semaphore 初值 0；箭头<strong>起点</strong>后放 <code>signal(s)</code>，<strong>终点</strong>前放 <code>wait(s)</code>。例：A2 后 signal、B4 前 wait → 保证 A2 完成才开始 B4。初值 0 强制第一次 signal 先于第一次 wait。</p>
 <h2 id="7-用信号量做资源分配（Semaphores-for-Resource-Allocation）">7. 用信号量做资源分配（Semaphores for Resource Allocation）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2e0ee81b0052ac4e534b604dd8862c84_Slide08.png" alt="Semaphores for Resource Allocation" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/2e0ee81b0052ac4e534b604dd8862c84_Slide08.png" alt="Semaphores for Resource Allocation" width="70%"/>
 <p>另一视角：初值 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.0715em;">K</span></span></span></span> = 共享资源池大小。SIGNAL 归还/加入资源，WAIT 独占领取；当前值 = 剩余未分配数。WAIT/SIGNAL 可同进程或跨进程。</p>
 <h2 id="8-有界缓冲-信号量（Bounded-Buffer-Problem-with-Semaphores）">8. 有界缓冲 + 信号量（Bounded Buffer Problem with Semaphores）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/466700fb4097b8f26bf717610c6d32b1_Slide09.png" alt="Bounded Buffer with Semaphores" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/466700fb4097b8f26bf717610c6d32b1_Slide09.png" alt="Bounded Buffer with Semaphores" width="70%"/>
 <p><code>CHARS</code> 初值 0：SEND 写入后 <code>signal(CHARS)</code>；RCV 先 <code>wait(CHARS)</code> 再读。保证消费者不空读。但只实现了两条 precedence 中的一条。</p>
 <h2 id="9-流控问题（Flow-Control-Problems）">9. 流控问题（Flow Control Problems）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/69cf34264659c1247eb3a74cea16bdd9_Slide10.png" alt="Flow Control Problems" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/69cf34264659c1247eb3a74cea16bdd9_Slide10.png" alt="Flow Control Problems" width="70%"/>
 <p>仅有 <code>CHARS</code> 时，生产者仍可写入超过 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 个 → <strong>buffer overflow</strong>，字符流损坏。还需：第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mo>+</mo><mi>N</mi></mrow><annotation encoding="application/x-tex">i+N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7429em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">i</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span> 次 send 之前必须完成第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> 次 receive。</p>
 <h2 id="10-更多信号量的有界缓冲（Bounded-Buffer-Problem-with-More-Semaphores）">10. 更多信号量的有界缓冲（Bounded Buffer Problem with More Semaphores）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c01bf6d559a14c22b299330837470cab_Slide11.png" alt="Bounded Buffer More Semaphores" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c01bf6d559a14c22b299330837470cab_Slide11.png" alt="Bounded Buffer More Semaphores" width="70%"/>
 <p>加 <code>SPACES</code> 初值 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span>：生产者 <code>wait(SPACES)</code> 再写；消费者读后 <code>signal(SPACES)</code>。对称：生产者消费空位、生产字符；消费者反之。单生产者+单消费者至此正确；多对多另有问题。</p>
 <h2 id="11-同时事务（Simultaneous-Transactions）">11. 同时事务（Simultaneous Transactions）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4d090643f7efaaef7818c2e9b68614e6_Slide12.png" alt="Simultaneous Transactions" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4d090643f7efaaef7818c2e9b68614e6_Slide12.png" alt="Simultaneous Transactions" width="70%"/>
 <p>两客户同时从同一账户取 $50。若两次 <code>Debit</code> 完整串行执行：余额减 $100，正确。</p>
 <h2 id="12-但若…（But-What-If…）">12. 但若…（But, What If…）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c4791bbd00a4b82ba0372f71f16b8827_Slide13.png" alt="But What If" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c4791bbd00a4b82ba0372f71f16b8827_Slide13.png" alt="But What If" width="70%"/>
 <p>进程 A 读完余额后被打断，B 完成扣款，A 用过期余额写回 → 只扣了 $50。共享数据上的 LD/修改/ST 构成 <strong>critical section</strong>，需要 <strong>mutual exclusion</strong>：同时只有一个进程在临界区内。Semaphore + 临界区 ≈ <strong>transaction</strong>（期间共享数据不被他进程读写）。</p>
 <h2 id="13-互斥用信号量（Semaphores-for-Mutual-Exclusion）">13. 互斥用信号量（Semaphores for Mutual Exclusion）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7ba6611519d0b6eb9579af3331aec584_Slide14.png" alt="Semaphores for Mutual Exclusion" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7ba6611519d0b6eb9579af3331aec584_Slide14.png" alt="Semaphores for Mutual Exclusion" width="70%"/>
 <p><code>LOCK</code> 初值 1：进临界区前 WAIT（acquire），出后 SIGNAL（release）。锁的<strong>粒度</strong>重要：全行一个锁会串行化无关账户；<strong>每账户一锁</strong>只阻塞真正冲突的事务，吞吐更好。</p>
 <h2 id="14-产消原子性问题（Producer-Consumer-Atomicity-Problems）">14. 产消原子性问题（Producer/Consumer Atomicity Problems）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a9b2e2d16758fa0c0e3fa62a4b217399_Slide15.png" alt="Producer Consumer Atomicity" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a9b2e2d16758fa0c0e3fa62a4b217399_Slide15.png" alt="Producer Consumer Atomicity" width="70%"/>
 <p>多生产者同时插入时，对 FIFO/<code>IN</code> 的更新可能交错 → 覆盖或下标错误。插入路径是临界区，须原子执行。</p>
 <h2 id="15-再加信号量的有界缓冲（Bounded-Buffer-Problem-with-Even-More-Semaphores）">15. 再加信号量的有界缓冲（Bounded Buffer Problem with Even More Semaphores）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/357dd1158430cee1ec864ce10b2ac60a_Slide16.png" alt="Bounded Buffer Even More Semaphores" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/357dd1158430cee1ec864ce10b2ac60a_Slide16.png" alt="Bounded Buffer Even More Semaphores" width="70%"/>
 <p>第三 semaphore <code>LOCK</code> 保护 SEND/RCV 中操作缓冲的临界区。同锁可用于多消费者，但生产者用 <code>IN</code>、消费者用 <code>OUT</code>，共用一把锁引入多余先后约束——可拆成两把锁。</p>
 <h2 id="16-信号量的威力（The-Power-of-Semaphores）">16. 信号量的威力（The Power of Semaphores）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4e2f8ef94bb743f997dab9e20ccd307e_Slide17.png" alt="The Power of Semaphores" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/4e2f8ef94bb743f997dab9e20ccd307e_Slide17.png" alt="The Power of Semaphores" width="70%"/>
 <p>Semaphore 像瑞士军刀：跨进程 WAIT/SIGNAL 保证时序（空不读、满不写）；同进程内可实现临界区原子性（如 <code>IN</code>/<code>OUT</code> 的读改写不被打断）。</p>
 <h2 id="17-信号量实现（Semaphore-Implementation）">17. 信号量实现（Semaphore Implementation）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c173dceca094760016349a4ce797ccda_Slide18.png" alt="Semaphore Implementation" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/c173dceca094760016349a4ce797ccda_Slide18.png" alt="Semaphore Implementation" width="70%"/>
 <p>Semaphore 自身是共享数据，WAIT/SIGNAL 的读改写也是临界区——不能再用 semaphore 实现 semaphore（<strong>bootstrap</strong>）。出路：</p>
 <ol>
 <li>不可中断内核上的 <strong>SVC</strong></li>
@@ -352,20 +352,20 @@
 </ol>
 <p>本讲详述前两种。</p>
 <h2 id="18-作为-SVC-的信号量（Semaphores-as-a-Supervisor-Call）">18. 作为 SVC 的信号量（Semaphores as a Supervisor Call）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9059d77ae437a6f04313f507ce660af0_Slide19.png" alt="Semaphores as SVC" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9059d77ae437a6f04313f507ce660af0_Slide19.png" alt="Semaphores as SVC" width="70%"/>
 <p>内核态 SVC 不可中断 → handler 天然临界区。WAIT：值非零则减一并返回；为零则安排重试 SVC 并 <code>SLEEP</code>。SIGNAL：加一并 <code>WAKEUP</code> 等该 semaphore 的进程。</p>
 <p>默认实现<strong>无公平性</strong>——调度顺序决定谁先拿到；若要公平，WAIT 可维护等待队列。</p>
 <h2 id="19-硬件支持（Hardware-Support-for-Semaphores）">19. 硬件支持（Hardware Support for Semaphores）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7ed986d4ea119554ac7686769dcb97e6_Slide20.png" alt="Hardware Support for Semaphores" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/7ed986d4ea119554ac7686769dcb97e6_Slide20.png" alt="Hardware Support for Semaphores" width="70%"/>
 <p><strong>TCLR</strong>（test-and-clear）：一次原子操作读内存当前值并清零。自旋：TCLR 得 0 → 别人持锁，重试；得非 0 → 已获取锁（且已把锁置 0）。临界区结束用 ST 写回非 0 释放。</p>
 <h2 id="20-同步的阴暗面（Synchronization-The-Dark-Side）">20. 同步的阴暗面（Synchronization: The Dark Side）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9664c5191d8248fd1117914449a9219a_Slide21.png" alt="Synchronization Dark Side" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/9664c5191d8248fd1117914449a9219a_Slide21.png" alt="Synchronization Dark Side" width="70%"/>
 <p>转账需拿两账户锁。两人按<strong>相反顺序</strong>各拿到第一把锁后，都等对方释放第二把 → <strong>deadlock（deadly embrace）</strong>。多资源同步需额外纪律。</p>
 <h2 id="21-哲学家就餐（Dining-Philosophers）">21. 哲学家就餐（Dining Philosophers）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b1ec628d898f7ccfb1b7276925dd6f8f_Slide22.png" alt="Dining Philosophers" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/b1ec628d898f7ccfb1b7276925dd6f8f_Slide22.png" alt="Dining Philosophers" width="70%"/>
 <p>5 哲学家、5 筷；每人需左右两筷。算法：先左后右，吃完归还。典型的“多资源才可完成”设定。</p>
 <h2 id="22-死锁！（Deadlock-）">22. 死锁！（Deadlock!）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d3261c81a0a0f2696f5691f10d628d5d_Slide23.png" alt="Deadlock" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/d3261c81a0a0f2696f5691f10d628d5d_Slide23.png" alt="Deadlock" width="70%"/>
 <p>若人人先拿左筷，则无人能拿右筷 → 死锁。四条件：</p>
 <ol>
 <li><strong>Mutual exclusion</strong></li>
@@ -375,13 +375,13 @@
 </ol>
 <p>对策：<strong>避免</strong>，或<strong>检测 + 恢复</strong>。</p>
 <h2 id="23-一种解法（One-Solution）">23. 一种解法（One Solution）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5aacddd6c3a3182ff8945ec7b796e6b9_Slide24.png" alt="One Solution" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/5aacddd6c3a3182ff8945ec7b796e6b9_Slide24.png" alt="One Solution" width="70%"/>
 <p>给筷子唯一编号，<strong>按全局序</strong>取资源（先低号再高号）。若全部筷子都被拿起，必有人已持有最高号筷，此前也已拿到另一侧低号筷 → 此人可吃并归还，打破 hold-and-wait 环。全系统约定资源全局序并按序获取 → 无环等待死锁。</p>
 <h2 id="24-处理死锁（Dealing-With-Deadlocks）">24. 处理死锁（Dealing With Deadlocks）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a897d8e1eb4d36deea89b12ad008a9ee_Slide25.png" alt="Dealing With Deadlocks" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/a897d8e1eb4d36deea89b12ad008a9ee_Slide25.png" alt="Dealing With Deadlocks" width="70%"/>
 <p>转账：先锁低账号，再锁高账号——双方先争同一把“第一资源”，胜者可安全拿齐其余。无法改应用时：OS 的 WAIT 可检测环等待并终止一进程释放资源；数据库则检测冲突、<strong>abort</strong> 事务并由程序员决定重试，提交前改动只在事务私有副本上，确认后才 <strong>commit</strong>。</p>
 <h2 id="25-小结（Summary）">25. 小结（Summary）</h2>
-<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/73a898d12dac31e50cc7be6ed22195ef_Slide26.png" alt="Summary" width="80%"/>
+<img src="https://ocw.mit.edu/courses/6-004-computation-structures-spring-2017/73a898d12dac31e50cc7be6ed22195ef_Slide26.png" alt="Summary" width="70%"/>
 <ul>
 <li>多进程组织应用常更自然；用 <strong>semaphore</strong> 保证 precedence 与 <strong>mutual exclusion</strong></li>
 <li>临界区 + 锁实现事务语义</li>
