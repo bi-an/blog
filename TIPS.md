@@ -60,6 +60,26 @@ code_dir: downloads/code
 ```
 
 `title` 直接写在 `include_code` 后并用双引号括起，不要使用 `title:` 关键字。
+
+## Graphviz
+
+站点通过 `scripts/graphviz.js` 将 ```` ```graphviz ```` 转为页面容器，并由 NexT `bodyEnd` 注入的 [viz.js](https://github.com/mdaines/viz.js) 渲染为 SVG。开关在 `_config.yml`：
+
+```yaml
+graphviz:
+  enable: true
+```
+
+边两端分别标注用 DOT 的 `taillabel`（靠近起点）与 `headlabel`（靠近终点），例如：
+
+````markdown
+```graphviz
+digraph G {
+  1 -> 2 [taillabel="边0", headlabel="10"];
+}
+```
+````
+
 ## 插件
 
 插件通过 npm 管理，可用插件见 [Hexo 插件列表](https://hexo.io/docs/plugins)。首次安装项目依赖见 [`README.md`](README.md)；以下命令针对单个插件的安装与卸载。
