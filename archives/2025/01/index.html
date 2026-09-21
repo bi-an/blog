@@ -192,7 +192,7 @@
     <div class="posts-collapse">
       <div class="collection-title">
         
-        <span class="collection-header">Great! 149 posts in total. Keep on posting.</span>
+        <span class="collection-header">Great! 150 posts in total. Keep on posting.</span>
       </div>
 
       
@@ -334,7 +334,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">149</span>
+          <span class="site-state-item-count">150</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -473,6 +473,35 @@ if (document.querySelectorAll('pre.mermaid').length) {
   
 
   
+
+<script src="https://cdn.jsdelivr.net/npm/viz.js@1.8.2/viz.js"></script>
+<script>
+(function() {
+  function renderGraphviz() {
+    if (typeof Viz !== 'function') return;
+    document.querySelectorAll('div.graphviz').forEach(function(el) {
+      if (el.getAttribute('data-rendered') === '1') return;
+      var src = el.textContent.replace(/\u2013/g, '--').trim();
+      if (!src) return;
+      try {
+        var svg = Viz(src, 'svg');
+        var wrap = document.createElement('div');
+        wrap.className = 'graphviz-svg';
+        wrap.style.textAlign = 'center';
+        wrap.style.overflowX = 'auto';
+        wrap.innerHTML = svg;
+        el.setAttribute('data-rendered', '1');
+        el.style.display = 'none';
+        el.parentNode.insertBefore(wrap, el.nextSibling);
+      } catch (err) {
+        el.outerHTML = '<pre class="graphviz-error">' + String(err) + '</pre>';
+      }
+    });
+  }
+  renderGraphviz();
+  document.addEventListener('pjax:success', renderGraphviz);
+})();
+</script>
 
 </body>
 </html>
