@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en, zh_CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="C++17 引入的 PMR（Polymorphic Memory Resource，多态内存资源）位于 &lt;memory_resource&gt;，核心类型包括 std::pmr::memory_resource、std::pmr::polymorphic_allocator，以及一组绑定了该分配器的容器别名（如 std::pmr::vector、std::pmr::string）。本文先剖析">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++ PMR 详解">
+<meta property="og:url" content="https://bi-an.github.io/blog/2026/09/23/tech/cpp/basic/pmr/index.html">
+<meta property="og:site_name" content="江南人物的博客">
+<meta property="og:description" content="C++17 引入的 PMR（Polymorphic Memory Resource，多态内存资源）位于 &lt;memory_resource&gt;，核心类型包括 std::pmr::memory_resource、std::pmr::polymorphic_allocator，以及一组绑定了该分配器的容器别名（如 std::pmr::vector、std::pmr::string）。本文先剖析">
+<meta property="og:locale">
+<meta property="article:published_time" content="2026-09-23T17:38:32.000Z">
+<meta property="article:modified_time" content="2026-09-23T11:26:03.348Z">
+<meta property="article:author" content="bi-an">
+<meta property="article:tag" content="cpp">
+<meta property="article:tag" content="basic">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://bi-an.github.io/blog/2026/09/23/tech/cpp/basic/pmr/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en, zh_CN'
+  };
+</script>
+
+  <title>C++ PMR 详解 | 江南人物的博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">江南人物的博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2026/09/23/tech/cpp/basic/pmr/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C++ PMR 详解
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2026-09-23 17:38:32 / Modified: 11:26:03" itemprop="dateCreated datePublished" datetime="2026-09-23T17:38:32+00:00">2026-09-23</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>C++17 引入的 <strong>PMR</strong>（Polymorphic Memory Resource，多态内存资源）位于 <code>&lt;memory_resource&gt;</code>，核心类型包括 <code>std::pmr::memory_resource</code>、<code>std::pmr::polymorphic_allocator</code>，以及一组绑定了该分配器的容器别名（如 <code>std::pmr::vector</code>、<code>std::pmr::string</code>）。本文先剖析传统容器分配器模型的弊端，再说明 PMR 的统一性设计，以及内存池的上游回退机制。</p>
+<h2 id="传统容器的弊端">传统容器的弊端</h2>
+<p>STL 容器将 <code>Allocator</code> 作为模板参数，在<strong>编译期</strong>固化分配策略：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">T</span>, <span class="keyword">class</span> <span class="title class_">Allocator</span> = std::allocator&lt;T&gt;&gt;</span><br><span class="line"><span class="keyword">class</span> vector;</span><br></pre></td></tr></table></figure>
+<p>这在类型系统上精确，却带来三个工程症结。</p>
+<p><strong>接口无法在类型层面统一。</strong> <code>std::vector&lt;T, A1&gt;</code> 与 <code>std::vector&lt;T, A2&gt;</code> 是不同的类型。要在同一函数签名或同一容器中容纳“元素类型相同、分配策略不同”的对象，只能二选一：</p>
+<ul>
+<li>
+<p><strong>函数写成模板</strong>——把 <code>Allocator</code> 留作模板参数，编译器为每种分配器各生成一份函数：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Alloc&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print_size</span><span class="params">(<span class="type">const</span> std::vector&lt;<span class="type">int</span>, Alloc&gt;&amp; v)</span> </span>&#123;</span><br><span class="line">    std::cout &lt;&lt; v.<span class="built_in">size</span>() &lt;&lt; <span class="string">&#x27;\n&#x27;</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">PoolAlloc</span> &#123; <span class="comment">/* ... 满足 Allocator 要求 ... */</span> &#125;;</span><br><span class="line"></span><br><span class="line">std::vector&lt;<span class="type">int</span>&gt;            a;</span><br><span class="line">std::vector&lt;<span class="type">int</span>, PoolAlloc&gt; b;</span><br><span class="line"><span class="built_in">print_size</span>(a);  <span class="comment">// 实例化 print_size&lt;std::allocator&lt;int&gt;&gt;</span></span><br><span class="line"><span class="built_in">print_size</span>(b);  <span class="comment">// 实例化 print_size&lt;PoolAlloc&gt;</span></span><br></pre></td></tr></table></figure>
+<p>代价：接口必须进头文件；模板函数<strong>不能</strong>是虚函数，进不了抽象基类的多态接口。</p>
+</li>
+<li>
+<p><strong>类型擦除包装</strong>——自己造一层非模板外壳，用虚函数把具体 <code>vector&lt;T, Alloc&gt;</code> 藏起来。所谓类型擦除，就是抹掉编译期可见的 <code>Alloc</code> 差异，只保留运行期可调用的公共行为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">AnyIntVector</span> &#123;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">Concept</span> &#123;</span><br><span class="line">        <span class="keyword">virtual</span> ~<span class="built_in">Concept</span>() = <span class="keyword">default</span>;</span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> std::<span class="type">size_t</span> <span class="title">size</span><span class="params">()</span> <span class="type">const</span> </span>= <span class="number">0</span>;</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Alloc</span>&gt;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">Model</span> : Concept &#123;</span><br><span class="line">        std::vector&lt;<span class="type">int</span>, Alloc&gt; v;</span><br><span class="line">        <span class="function"><span class="keyword">explicit</span> <span class="title">Model</span><span class="params">(std::vector&lt;<span class="type">int</span>, Alloc&gt; x)</span> : v(std::move(x)) &#123;</span>&#125;</span><br><span class="line">        <span class="function">std::<span class="type">size_t</span> <span class="title">size</span><span class="params">()</span> <span class="type">const</span> <span class="keyword">override</span> </span>&#123; <span class="keyword">return</span> v.<span class="built_in">size</span>(); &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">    std::unique_ptr&lt;Concept&gt; self_;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Alloc&gt;</span></span><br><span class="line"><span class="function">    <span class="title">AnyIntVector</span><span class="params">(std::vector&lt;<span class="type">int</span>, Alloc&gt; v)</span></span></span><br><span class="line"><span class="function">        : self_(std::make_unique&lt;Model&lt;Alloc&gt;&gt;(std::move(v))) &#123;</span>&#125;</span><br><span class="line">    <span class="function">std::<span class="type">size_t</span> <span class="title">size</span><span class="params">()</span> <span class="type">const</span> </span>&#123; <span class="keyword">return</span> self_-&gt;<span class="built_in">size</span>(); &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print_size</span><span class="params">(<span class="type">const</span> AnyIntVector&amp; v)</span> </span>&#123; std::cout &lt;&lt; v.<span class="built_in">size</span>() &lt;&lt; <span class="string">&#x27;\n&#x27;</span>; &#125;</span><br><span class="line"></span><br><span class="line">std::vector&lt;AnyIntVector&gt; bag;</span><br><span class="line">bag.<span class="built_in">emplace_back</span>(std::vector&lt;<span class="type">int</span>&gt;&#123;<span class="number">1</span>, <span class="number">2</span>&#125;);</span><br><span class="line">bag.<span class="built_in">emplace_back</span>(std::vector&lt;<span class="type">int</span>, PoolAlloc&gt;&#123;<span class="number">3</span>, <span class="number">4</span>&#125;);</span><br></pre></td></tr></table></figure>
+<p>代价：每个操作都要在 <code>Concept</code> 里声明；多一层虚调用与堆上 <code>Model</code>；为每个容器手写包装工程量大。标准库中的 <code>std::function</code>、<code>std::any</code> 也是同类手法。</p>
+</li>
+</ul>
+<p><strong>与虚函数机制冲突。</strong> 虚函数在运行期决议类型，模板参数必须在编译期确定，二者无法直接组合：不能声明“元素类型固定、分配器可变”的虚接口再让派生类各自绑定不同 <code>Allocator</code>。</p>
+<p><strong>嵌套结构中分配策略难以贯通。</strong> 外层容器与内层元素各自持有默认分配器时，一次深拷贝会触发大量彼此无关的堆分配，无法共享缓存池，也难以统一生命周期与局部性。默认分配器下的典型情形：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">std::vector&lt;std::string&gt; vec1 = <span class="comment">/* ... */</span>;</span><br><span class="line">std::vector&lt;std::string&gt; vec2 = vec1;  <span class="comment">// 深拷贝：每个 string 各走一次堆分配</span></span><br></pre></td></tr></table></figure>
+<h2 id="PMR-的统一性设计">PMR 的统一性设计</h2>
+<p>PMR 将“如何分配”从编译期模板参数剥离，下沉为运行期可替换的 <code>memory_resource</code>，再由类型擦除后的 <code>polymorphic_allocator</code> 统一挂接（对 <code>memory_resource*</code> 做类型擦除，标准库已实现）。容器类型因此保持一致——<code>std::pmr::vector</code>、<code>std::pmr::string</code> 等别名固定，变化的是构造时绑定的 <code>memory_resource*</code>——分配策略在运行期注入。于是非模板函数与虚接口可直接传递同一族容器，多级嵌套也可共享同一资源，分别对应上一节的三个症结。</p>
+<p>以嵌套深拷贝为例，外层与内层绑定同一预分配资源：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">std::pmr::monotonic_buffer_resource pool&#123;<span class="comment">/* 预分配缓冲区 */</span>&#125;;</span><br><span class="line">std::pmr::vector&lt;std::pmr::string&gt; vec1&#123;&amp;pool&#125;;</span><br><span class="line">std::pmr::vector&lt;std::pmr::string&gt; vec2&#123;vec1, &amp;pool&#125;;  <span class="comment">// 深拷贝，仍走同一 resource</span></span><br></pre></td></tr></table></figure>
+<p>二者均通过同一套 <code>polymorphic_allocator</code> 向 <code>pool</code> 取内存。若底层是单调缓冲等预分配实现，后续请求往往只需在缓冲区内推进指针，而不必对每个字符串再走全局堆。“一次深拷贝”从 N 次散落的 <code>malloc</code> 收敛为对同一资源的连续操作。</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>传统 <code>Allocator</code> 模板参数</th>
+<th>PMR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>策略绑定时机</td>
+<td>编译期，刻入类型</td>
+<td>运行期，经指针注入</td>
+</tr>
+<tr>
+<td>接口统一</td>
+<td>不同分配器 → 不同类型</td>
+<td>容器类型可保持一致</td>
+</tr>
+<tr>
+<td>与虚函数</td>
+<td>难以直接组合</td>
+<td>可在多态边界传递同一族类型</td>
+</tr>
+<tr>
+<td>嵌套深拷贝</td>
+<td>易退化为多次独立堆分配</td>
+<td>可共享同一资源，降低分配开销</td>
+</tr>
+</tbody>
+</table>
+<h2 id="内存池的上游回退机制">内存池的上游回退机制</h2>
+<p>上一节案例依赖有限预分配缓冲。缓冲用尽时，程序不会无故崩溃；行为由该资源绑定的 <strong>upstream（上游）</strong> 决定。<code>monotonic_buffer_resource</code> 等标准池化实现普遍支持这种链式退路。</p>
+<table>
+<thead>
+<tr>
+<th>配置</th>
+<th>Buffer 耗尽后</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>默认（未指定 upstream）</td>
+<td>向 <code>get_default_resource()</code> 续借，初始即为 <code>new_delete_resource()</code></td>
+<td>通用：本地加速，超出后平滑降级</td>
+</tr>
+<tr>
+<td><code>null_memory_resource()</code></td>
+<td>抛出 <code>std::bad_alloc</code>，绝不碰堆</td>
+<td>硬实时 / 嵌入式 / 禁止堆分配</td>
+</tr>
+<tr>
+<td>自定义 upstream</td>
+<td>转向指定的二级资源</td>
+<td>多级 / 异构内存架构</td>
+</tr>
+</tbody>
+</table>
+<p><strong>默认续借。</strong> 只传缓冲、不指定 upstream 时，未满则在 buffer 内指针推进；已满则向上游申请更大的新块再划出本次所需。程序继续正确运行，超出部分退化为普通堆分配速度。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">std::array&lt;std::byte, 1024&gt; buffer;</span><br><span class="line">std::<span class="function">pmr::monotonic_buffer_resource <span class="title">pool</span><span class="params">(buffer.data(), buffer.size())</span></span>;</span><br><span class="line">std::<span class="function">pmr::vector&lt;std::pmr::string&gt; <span class="title">vec</span><span class="params">(&amp;pool)</span></span>;</span><br></pre></td></tr></table></figure>
+<p><strong>禁止堆分配。</strong> 将 upstream 设为 <code>null_memory_resource()</code>，超限即抛异常，不会私自向系统申请堆内存：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">std::<span class="function">pmr::monotonic_buffer_resource <span class="title">pool</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    buffer.data(), buffer.size(),</span></span></span><br><span class="line"><span class="params"><span class="function">    std::pmr::null_memory_resource())</span></span>;</span><br><span class="line"></span><br><span class="line">std::<span class="function">pmr::vector&lt;<span class="type">int</span>&gt; <span class="title">vec</span><span class="params">(&amp;pool)</span></span>;</span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10000</span>; ++i)</span><br><span class="line">        vec.<span class="built_in">push_back</span>(i);</span><br><span class="line">&#125; <span class="built_in">catch</span> (<span class="type">const</span> std::bad_alloc&amp;) &#123;</span><br><span class="line">    <span class="comment">// 预分配已耗尽</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>增长策略。</strong> 上游为默认堆时，并不是每缺一字节就 <code>malloc</code> 一次，而是几何扩容：先耗尽给定 Buffer（如 1KB），再向上游要约 2KB、4KB……把对 <code>::operator new</code> 的调用压到对数级。</p>
+<p><strong>实现原理。</strong> 本质是基类多态与组合式链式代理：<code>memory_resource</code> 为抽象基类；具体池既继承它（“我是资源”），又持有另一个 <code>memory_resource*</code>（“后备资源”）。基类采用 NVI——对外 <code>allocate</code>，对内纯虚 <code>do_allocate</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> std::pmr &#123;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">memory_resource</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">virtual</span> ~<span class="built_in">memory_resource</span>() = <span class="keyword">default</span>;</span><br><span class="line">    <span class="function"><span class="type">void</span>* <span class="title">allocate</span><span class="params">(std::<span class="type">size_t</span> bytes,</span></span></span><br><span class="line"><span class="params"><span class="function">                   std::<span class="type">size_t</span> alignment = <span class="keyword">alignof</span>(std::<span class="type">max_align_t</span>))</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">do_allocate</span>(bytes, alignment);</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span>* <span class="title">do_allocate</span><span class="params">(std::<span class="type">size_t</span> bytes, std::<span class="type">size_t</span> alignment)</span> </span>= <span class="number">0</span>;</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span>  <span class="title">do_deallocate</span><span class="params">(<span class="type">void</span>* p, std::<span class="type">size_t</span> bytes, std::<span class="type">size_t</span> alignment)</span> </span>= <span class="number">0</span>;</span><br><span class="line">&#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>monotonic_buffer_resource</code> 示意（非标准库原文）：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">monotonic_buffer_resource</span> : <span class="keyword">public</span> memory_resource &#123;</span><br><span class="line">    <span class="type">void</span>* current_ptr_;</span><br><span class="line">    std::<span class="type">size_t</span> remaining_;</span><br><span class="line">    memory_resource* upstream_;  <span class="comment">// 默认 get_default_resource()</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">monotonic_buffer_resource</span>(<span class="type">void</span>* buffer, std::<span class="type">size_t</span> size,</span><br><span class="line">                              memory_resource* upstream = <span class="built_in">get_default_resource</span>())</span><br><span class="line">        : <span class="built_in">current_ptr_</span>(buffer), <span class="built_in">remaining_</span>(size), <span class="built_in">upstream_</span>(upstream) &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">protected</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span>* <span class="title">do_allocate</span><span class="params">(std::<span class="type">size_t</span> bytes, std::<span class="type">size_t</span> alignment)</span> <span class="keyword">override</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="comment">/* 当前块装得下 */</span>)</span><br><span class="line">            <span class="keyword">return</span> <span class="comment">/* 对齐并推进游标 */</span>;</span><br><span class="line"></span><br><span class="line">        std::<span class="type">size_t</span> next = <span class="comment">/* calculate_next_block_size(bytes) */</span>;</span><br><span class="line">        <span class="type">void</span>* new_block = upstream_-&gt;<span class="built_in">allocate</span>(next, alignment);</span><br><span class="line">        current_ptr_ = new_block;</span><br><span class="line">        remaining_   = next;</span><br><span class="line">        <span class="keyword">return</span> <span class="comment">/* 从新块划出本次所需 */</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>调用链：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">vec.push_back()</span><br><span class="line">  → polymorphic_allocator::allocate()</span><br><span class="line">    → pool-&gt;allocate()</span><br><span class="line">      ├─ Buffer 够用 → 指针偏移返回</span><br><span class="line">      └─ 不够 → upstream_-&gt;allocate(下一块)</span><br><span class="line">            ├─ new_delete_resource  → ::operator new</span><br><span class="line">            ├─ null_memory_resource → throw std::bad_alloc</span><br><span class="line">            └─ 其它自定义资源      → 其 do_allocate</span><br></pre></td></tr></table></figure>
+<p>池无需知晓上游具体类型，只依赖虚接口。因此可将 Pool A 的 upstream 设为 Pool B、再把 B 接到堆上，自然嵌套出多级分配器。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/cpp/" rel="tag"># cpp</a>
+              <a href="/blog/tags/basic/" rel="tag"># basic</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2026/09/21/tech/algo/graph-storage/" rel="prev" title="图的存储">
+      <i class="fa fa-chevron-left"></i> 图的存储
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%A0%E7%BB%9F%E5%AE%B9%E5%99%A8%E7%9A%84%E5%BC%8A%E7%AB%AF"><span class="nav-text">传统容器的弊端</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PMR-%E7%9A%84%E7%BB%9F%E4%B8%80%E6%80%A7%E8%AE%BE%E8%AE%A1"><span class="nav-text">PMR 的统一性设计</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E6%B1%A0%E7%9A%84%E4%B8%8A%E6%B8%B8%E5%9B%9E%E9%80%80%E6%9C%BA%E5%88%B6"><span class="nav-text">内存池的上游回退机制</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="bi-an"
+      src="/blog/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">bi-an</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">151</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/bi-an" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;bi-an" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ah_zzg@126.com" title="E-Mail → mailto:ah_zzg@126.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://cuda-doc.readthedocs.io/" title="https:&#x2F;&#x2F;cuda-doc.readthedocs.io" rel="noopener" target="_blank">CUDA中文手册</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://infiniband-doc.readthedocs.io/" title="https:&#x2F;&#x2F;infiniband-doc.readthedocs.io&#x2F;" rel="noopener" target="_blank">InfiniBand中文手册</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">bi-an</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/blog/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : 'forest',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+  
+
+<script src="https://cdn.jsdelivr.net/npm/viz.js@1.8.2/viz.js"></script>
+<script>
+(function() {
+  function renderGraphviz() {
+    if (typeof Viz !== 'function') return;
+    document.querySelectorAll('div.graphviz').forEach(function(el) {
+      if (el.getAttribute('data-rendered') === '1') return;
+      var src = el.textContent.replace(/\u2013/g, '--').trim();
+      if (!src) return;
+      try {
+        var svg = Viz(src, 'svg');
+        var wrap = document.createElement('div');
+        wrap.className = 'graphviz-svg';
+        wrap.style.textAlign = 'center';
+        wrap.style.overflowX = 'auto';
+        wrap.innerHTML = svg;
+        el.setAttribute('data-rendered', '1');
+        el.style.display = 'none';
+        el.parentNode.insertBefore(wrap, el.nextSibling);
+      } catch (err) {
+        el.outerHTML = '<pre class="graphviz-error">' + String(err) + '</pre>';
+      }
+    });
+  }
+  renderGraphviz();
+  document.addEventListener('pjax:success', renderGraphviz);
+})();
+</script>
+
+</body>
+</html>

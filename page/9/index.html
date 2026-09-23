@@ -188,6 +188,205 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/07/31/tech/cpp/compile-link/mixed-compilation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/07/31/tech/cpp/compile-link/mixed-compilation/" class="post-title-link" itemprop="url">混合编译</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-07-31 15:29:32" itemprop="dateCreated datePublished" datetime="2025-07-31T15:29:32+00:00">2025-07-31</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-09-23 11:26:03" itemprop="dateModified" datetime="2026-09-23T11:26:03+00:00">2026-09-23</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/cpp/" itemprop="url" rel="index"><span itemprop="name">cpp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="简介">简介</h2>
+<p>“Hybrid Build”（混合构建）是指一种 兼顾调试能力与运行性能 的构建方式，常用于需要在 Release 环境中进行问题分析，但又不能完全使用 Debug 构建的场景。</p>
+<h3 id="🧩-Hybrid-Build-的核心特征">🧩 Hybrid Build 的核心特征</h3>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>优化等级</td>
+<td>使用 -O2 或 -O3，保持接近 Release 的性能</td>
+</tr>
+<tr>
+<td>调试信息</td>
+<td>保留 -g，生成 DWARF 调试符号，便于分析 core dump 或使用 gdb</td>
+</tr>
+<tr>
+<td>符号表</td>
+<td>可选开启 -fno-omit-frame-pointer，便于栈回溯</td>
+</tr>
+<tr>
+<td>日志/保护机制</td>
+<td>可嵌入轻量级日志、ASAN-lite、canary 等机制，增强可观测性</td>
+</tr>
+<tr>
+<td>部署策略</td>
+<td>仅在内部或特定客户环境中使用，避免暴露完整源码结构或调试符号</td>
+</tr>
+</tbody>
+</table>
+<p>✅ 编译示例（GCC/Clang）</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ -O2 -g -fno-omit-frame-pointer -DNDEBUG -o your_program main.cpp</span><br></pre></td></tr></table></figure>
+<ul>
+<li>-O2：优化代码，接近 Release 性能</li>
+<li>-g：保留调试信息</li>
+<li>-fno-omit-frame-pointer：保留帧指针，便于栈追踪</li>
+<li>-DNDEBUG：关闭断言（assert）</li>
+</ul>
+<h3 id="🎯-使用场景">🎯 使用场景</h3>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>是否推荐使用 Hybrid Build</th>
+<th>原因说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>客户现场复现崩溃</td>
+<td>✅</td>
+<td>可通过 core dump + 符号表快速定位问题</td>
+</tr>
+<tr>
+<td>内部性能测试</td>
+<td>✅</td>
+<td>保持优化效果，同时可调试</td>
+</tr>
+<tr>
+<td>正式发布给客户（大规模部署）</td>
+<td>❌</td>
+<td>不建议，可能暴露符号信息，体积较大</td>
+</tr>
+<tr>
+<td>与 ASAN/TSAN 联合使用</td>
+<td>⚠️（需关闭优化）</td>
+<td>ASAN/TSAN 更适合 Debug 构建，Hybrid 会影响检测精度</td>
+</tr>
+</tbody>
+</table>
+<h3 id="🛠️-实践建议">🛠️ 实践建议</h3>
+<ul>
+<li>符号分离：使用 <code>objcopy --only-keep-debug</code> 分离调试符号，避免暴露给客户。</li>
+<li>符号服务器：内部维护符号服务器，支持通过 core 文件自动符号化。</li>
+<li>结合日志框架：Hybrid Build 可与轻量级日志框架结合，增强问题定位能力。</li>
+</ul>
+<h2 id="符号分离（Split-Debug-Info）">符号分离（Split Debug Info）</h2>
+<p><strong>✅ 为什么要分离？</strong></p>
+<ul>
+<li>Release 版本：体积小，性能高，但缺少调试信息</li>
+<li>调试符号文件：保留完整符号信息，用于内部分析 core dump</li>
+</ul>
+<p><strong>🛠️ 分离流程（以 GCC/Clang 为例）</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 编译时保留调试信息</span></span><br><span class="line">g++ -O2 -g -o your_program main.cpp</span><br><span class="line"></span><br><span class="line"><span class="comment"># 分离调试符号</span></span><br><span class="line">objcopy --only-keep-debug your_program your_program.debug</span><br><span class="line"></span><br><span class="line"><span class="comment"># 去除主程序中的调试信息</span></span><br><span class="line">strip --strip-debug --strip-unneeded your_program</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加调试符号关联信息</span></span><br><span class="line">objcopy --add-gnu-debuglink=your_program.debug your_program</span><br></pre></td></tr></table></figure>
+<p>或者：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 编译 Debug 版本（带调试信息）</span></span><br><span class="line">gcc -g -O2 -o myapp_debug myapp.c</span><br><span class="line"></span><br><span class="line"><span class="comment"># 提取调试信息</span></span><br><span class="line">objcopy --only-keep-debug myapp_debug myapp.debug</span><br><span class="line"></span><br><span class="line"><span class="comment"># 编译 Release 版本（去除调试信息）</span></span><br><span class="line">strip --strip-debug myapp_debug -o myapp_release</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用 GDB 加载 Release + 调试符号</span></span><br><span class="line">gdb --<span class="built_in">exec</span>=myapp_release --symbols=myapp.debug</span><br></pre></td></tr></table></figure>
+<p>这样你就可以像调试 Debug 版本一样使用 GDB，但运行的是 Release 版本。</p>
+<p>如果你有 Debug 和 Release 两个版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gdb --<span class="built_in">exec</span>=myapp_release --symbols=myapp_debug</span><br></pre></td></tr></table></figure>
+<p>这会让 GDB 使用 Debug 版本的符号信息来调试 Release 程序。</p>
+<p><strong>✅ 最终产物：</strong></p>
+<ul>
+<li>your_program：可交付给客户的 Release 可执行文件</li>
+<li>your_program.debug：内部使用的调试符号文件</li>
+</ul>
+<h2 id="core-dump-分析">core dump 分析</h2>
+<p><strong>1. 客户侧设置 core dump</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ulimit</span> -c unlimited</span><br></pre></td></tr></table></figure>
+<p><strong>2. 客户运行程序并生成 core 文件</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">./your_program crash_input.txt</span><br><span class="line"><span class="comment"># 程序崩溃后生成 core 文件，如 core.12345</span></span><br></pre></td></tr></table></figure>
+<p><strong>3. 客户提供 core 文件 + 可执行文件</strong></p>
+<ul>
+<li>core.12345</li>
+<li>your_program（Release 版本）</li>
+</ul>
+<p><strong>4. 你在内部分析 core 文件</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">gdb your_program core.12345</span><br><span class="line"><span class="comment"># 加载调试符号</span></span><br><span class="line">(gdb) symbol-file your_program.debug</span><br><span class="line">(gdb) bt  <span class="comment"># 查看调用栈</span></span><br></pre></td></tr></table></figure>
+<h2 id="栈指针寄存器">栈指针寄存器</h2>
+<p>TODO：</p>
+<ul>
+<li>
+<p><code>rsp</code></p>
+</li>
+<li>
+<p><code>rbp</code></p>
+</li>
+<li>
+<p>压栈和出栈的过程</p>
+</li>
+<li>
+<p>使用 <code>rsp</code> 可以节省指令和寄存器</p>
+</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/07/31/tech/cpp/debug/memory-analysis/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -219,7 +418,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-21 11:19:27" itemprop="dateModified" datetime="2026-09-21T11:19:27+00:00">2026-09-21</time>
+                <time title="Modified: 2026-09-23 11:26:03" itemprop="dateModified" datetime="2026-09-23T11:26:03+00:00">2026-09-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -536,7 +735,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-21 11:19:27" itemprop="dateModified" datetime="2026-09-21T11:19:27+00:00">2026-09-21</time>
+                <time title="Modified: 2026-09-23 11:26:03" itemprop="dateModified" datetime="2026-09-23T11:26:03+00:00">2026-09-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -698,7 +897,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-21 11:19:27" itemprop="dateModified" datetime="2026-09-21T11:19:27+00:00">2026-09-21</time>
+                <time title="Modified: 2026-09-23 11:26:03" itemprop="dateModified" datetime="2026-09-23T11:26:03+00:00">2026-09-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -878,7 +1077,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-21 11:19:27" itemprop="dateModified" datetime="2026-09-21T11:19:27+00:00">2026-09-21</time>
+                <time title="Modified: 2026-09-23 11:26:03" itemprop="dateModified" datetime="2026-09-23T11:26:03+00:00">2026-09-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -954,7 +1153,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-21 11:19:27" itemprop="dateModified" datetime="2026-09-21T11:19:27+00:00">2026-09-21</time>
+                <time title="Modified: 2026-09-23 11:26:03" itemprop="dateModified" datetime="2026-09-23T11:26:03+00:00">2026-09-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1317,7 +1516,7 @@ compare_exchange_strong 更适合需要确保操作成功的场景，如线程�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-21 11:19:27" itemprop="dateModified" datetime="2026-09-21T11:19:27+00:00">2026-09-21</time>
+                <time title="Modified: 2026-09-23 11:26:03" itemprop="dateModified" datetime="2026-09-23T11:26:03+00:00">2026-09-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1444,7 +1643,7 @@ compare_exchange_strong 更适合需要确保操作成功的场景，如线程�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-21 11:19:27" itemprop="dateModified" datetime="2026-09-21T11:19:27+00:00">2026-09-21</time>
+                <time title="Modified: 2026-09-23 11:26:03" itemprop="dateModified" datetime="2026-09-23T11:26:03+00:00">2026-09-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1765,7 +1964,7 @@ inout 引脚通过三态缓冲器和控制信号的组合，实现了同一引�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-21 11:19:27" itemprop="dateModified" datetime="2026-09-21T11:19:27+00:00">2026-09-21</time>
+                <time title="Modified: 2026-09-23 11:26:03" itemprop="dateModified" datetime="2026-09-23T11:26:03+00:00">2026-09-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2134,7 +2333,7 @@ inout 引脚通过三态缓冲器和控制信号的组合，实现了同一引�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-21 11:19:27" itemprop="dateModified" datetime="2026-09-21T11:19:27+00:00">2026-09-21</time>
+                <time title="Modified: 2026-09-23 11:26:03" itemprop="dateModified" datetime="2026-09-23T11:26:03+00:00">2026-09-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2374,98 +2573,10 @@ inout 引脚通过三态缓冲器和控制信号的组合，实现了同一引�
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2024/09/28/tech/algo/data-structures-segment-tree/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2024/09/28/tech/algo/data-structures-segment-tree/" class="post-title-link" itemprop="url">线段树</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-09-28 20:57:33" itemprop="dateCreated datePublished" datetime="2024-09-28T20:57:33+00:00">2024-09-28</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-21 11:19:27" itemprop="dateModified" datetime="2026-09-21T11:19:27+00:00">2026-09-21</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/algo/" itemprop="url" rel="index"><span itemprop="name">algo</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>线段树（Segment Tree）是一种将数组区间存储为树的数据结构 <sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>。</p>
-<h2 id="时间复杂度">时间复杂度</h2>
-<p>查询连续子数组 或 查询范围内的最小元素：O(logn)</p>
-<h2 id="最简单形式的线段树">最简单形式的线段树</h2>
-<h2 id="高阶版本的线段树">高阶版本的线段树</h2>
-<p>TODO</p>
-<h2 id="参考">参考</h2>
-<hr class="footnotes-sep">
-<section class="footnotes">
-<ol class="footnotes-list">
-<li id="fn1" class="footnote-item"><p><a target="_blank" rel="noopener" href="https://cp-algorithms.com/data_structures/segment_tree.html">https://cp-algorithms.com/data_structures/segment_tree.html</a><br>
-<a target="_blank" rel="noopener" href="https://oi-wiki.org/ds/seg/#%E5%AE%9E%E7%8E%B0">OI wiki</a> <a href="#fnref1" class="footnote-backref">↩︎</a></p>
-</li>
-</ol>
-</section>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/blog/page/8/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/8/">8</a><span class="page-number current">9</span><a class="page-number" href="/blog/page/10/">10</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/15/">15</a><a class="extend next" rel="next" href="/blog/page/10/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+    <a class="extend prev" rel="prev" href="/blog/page/8/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/8/">8</a><span class="page-number current">9</span><a class="page-number" href="/blog/page/10/">10</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/16/">16</a><a class="extend next" rel="next" href="/blog/page/10/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -2533,7 +2644,7 @@ inout 引脚通过三态缓冲器和控制信号的组合，实现了同一引�
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">150</span>
+          <span class="site-state-item-count">151</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
