@@ -219,7 +219,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-29 10:20:09" itemprop="dateModified" datetime="2026-09-29T10:20:09+00:00">2026-09-29</time>
+                <time title="Modified: 2026-09-29 10:25:22" itemprop="dateModified" datetime="2026-09-29T10:25:22+00:00">2026-09-29</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -263,13 +263,8 @@
 <p><strong>与虚函数机制冲突。</strong> 虚函数在运行期决议类型，模板参数必须在编译期确定，二者无法直接组合：不能声明“元素类型固定、分配器可变”的虚接口再让派生类各自绑定不同 <code>Allocator</code>。</p>
 <p><strong>嵌套结构中分配策略难以贯通。</strong> 外层容器与内层元素各自持有默认分配器时，一次深拷贝会触发大量彼此无关的堆分配，无法共享缓存池，也难以统一生命周期与局部性。默认分配器下的典型情形：</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">std::vector&lt;std::string&gt; vec1 = <span class="comment">/* ... */</span>;</span><br><span class="line">std::vector&lt;std::string&gt; vec2 = vec1;  <span class="comment">// 深拷贝：每个 string 各走一次堆分配</span></span><br></pre></td></tr></table></figure>
-<p><code>vec2 = vec1</code> 至少分裂为两层互不相关的分配：</p>
-<ol>
-<li><strong>外层 <code>vector</code></strong>：按 <code>vec1.size()</code> 向自己的 <code>std::allocator</code> 申请一块连续内存，用以放置 N 个 <code>std::string</code> <strong>对象本身</strong>（每个对象通常只含指针、长度、容量或 SSO 本地缓冲等若干字，体积很小）。这是<strong>一次</strong>堆分配（或再分配）。</li>
-<li><strong>内层每个 <code>string</code></strong>：拷贝构造时复制字符内容。若长度超过实现相关的 SSO（Small String Optimization）阈值，则该 <code>string</code> 再通过<strong>自己的</strong> <code>std::allocator</code> 向全局堆申请一块缓冲存放字符数据。N 个超长字符串即对应 <strong>N 次</strong>独立的堆分配。<br>
-<strong>注</strong>：SSO 阈值由标准库实现决定，标准未规定；常见 64 位平台约为：libstdc++（GCC）与 MSVC STL 可本地存放约 <strong>15</strong> 个 <code>char</code>（不含结尾 <code>'\0'</code> 时 <code>capacity()</code> 常为 15），libc++（Clang）约 <strong>22</strong> 个 <code>char</code>。未超过阈值时字符留在 <code>string</code> 对象内部，拷贝不触发该层堆分配。</li>
-</ol>
-<p>关键在于：外层 <code>vector</code> 的分配器与内层 <code>string</code> 的分配器是两套默认的 <code>std::allocator</code>，互不知情。外层只负责“摆放 N 个 string 对象”，并不（也无法）把同一块缓冲交给内层字符数据使用；每个 <code>string</code> 拷贝时各自调用 <code>allocate</code>，分配彼此分离、地址分散，缓存局部性差，且无法共享同一内存池的生命周期管理。</p>
+<p><code>vec2 = vec1</code> 至少分裂为两层互不相关的分配（示意）：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 外层 vector：自己的 std::allocator，一次申请 N 个 string 对象的连续区</span></span><br><span class="line">std::string* elems = vector_alloc.<span class="built_in">allocate</span>(N);  <span class="comment">// 第 1 次堆分配</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (std::<span class="type">size_t</span> i = <span class="number">0</span>; i &lt; N; ++i) &#123;</span><br><span class="line">    <span class="comment">// 内层每个 string：自己的 std::allocator，与 vector 互不知情</span></span><br><span class="line">    <span class="comment">// 超 SSO 阈值时再向全局堆要字符缓冲（SSO：libstdc++/MSVC ≈15 char，libc++ ≈22 char）</span></span><br><span class="line">    <span class="comment">// placement new：在 elems[i] 已有的存储上就地构造，不再为「对象本身」申请内存；</span></span><br><span class="line">    <span class="comment">// 但 string 拷贝构造若超 SSO，仍会另向堆申请字符缓冲</span></span><br><span class="line">    <span class="keyword">new</span> (elems + i) std::<span class="built_in">string</span>(vec1[i]);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h2 id="PMR-的统一性设计">PMR 的统一性设计</h2>
 <p>PMR 将“如何分配”从编译期模板参数剥离，下沉为运行期可替换的 <code>memory_resource</code>，再由类型擦除后的 <code>polymorphic_allocator</code> 统一挂接（对 <code>memory_resource*</code> 做类型擦除，标准库已实现）。容器类型因此保持一致——<code>std::pmr::vector</code>、<code>std::pmr::string</code> 等别名固定，变化的是构造时绑定的 <code>memory_resource*</code>——分配策略在运行期注入。于是非模板函数与虚接口可直接传递同一族容器，多级嵌套也可共享同一资源，分别对应上一节的三个症结。</p>
 <p>以嵌套深拷贝为例，外层与内层绑定同一预分配资源：</p>
@@ -397,7 +392,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-29 10:20:09" itemprop="dateModified" datetime="2026-09-29T10:20:09+00:00">2026-09-29</time>
+                <time title="Modified: 2026-09-29 10:25:22" itemprop="dateModified" datetime="2026-09-29T10:25:22+00:00">2026-09-29</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -595,7 +590,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-29 10:20:09" itemprop="dateModified" datetime="2026-09-29T10:20:09+00:00">2026-09-29</time>
+                <time title="Modified: 2026-09-29 10:25:22" itemprop="dateModified" datetime="2026-09-29T10:25:22+00:00">2026-09-29</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -886,7 +881,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-29 10:20:09" itemprop="dateModified" datetime="2026-09-29T10:20:09+00:00">2026-09-29</time>
+                <time title="Modified: 2026-09-29 10:25:22" itemprop="dateModified" datetime="2026-09-29T10:25:22+00:00">2026-09-29</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1094,7 +1089,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-29 10:20:09" itemprop="dateModified" datetime="2026-09-29T10:20:09+00:00">2026-09-29</time>
+                <time title="Modified: 2026-09-29 10:25:22" itemprop="dateModified" datetime="2026-09-29T10:25:22+00:00">2026-09-29</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1320,7 +1315,7 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-29 10:20:09" itemprop="dateModified" datetime="2026-09-29T10:20:09+00:00">2026-09-29</time>
+                <time title="Modified: 2026-09-29 10:25:22" itemprop="dateModified" datetime="2026-09-29T10:25:22+00:00">2026-09-29</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1506,7 +1501,7 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-29 10:20:09" itemprop="dateModified" datetime="2026-09-29T10:20:09+00:00">2026-09-29</time>
+                <time title="Modified: 2026-09-29 10:25:22" itemprop="dateModified" datetime="2026-09-29T10:25:22+00:00">2026-09-29</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1707,7 +1702,7 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-29 10:20:09" itemprop="dateModified" datetime="2026-09-29T10:20:09+00:00">2026-09-29</time>
+                <time title="Modified: 2026-09-29 10:25:22" itemprop="dateModified" datetime="2026-09-29T10:25:22+00:00">2026-09-29</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1881,7 +1876,7 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-29 10:20:09" itemprop="dateModified" datetime="2026-09-29T10:20:09+00:00">2026-09-29</time>
+                <time title="Modified: 2026-09-29 10:25:22" itemprop="dateModified" datetime="2026-09-29T10:25:22+00:00">2026-09-29</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2083,7 +2078,7 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-29 10:20:09" itemprop="dateModified" datetime="2026-09-29T10:20:09+00:00">2026-09-29</time>
+                <time title="Modified: 2026-09-29 10:25:22" itemprop="dateModified" datetime="2026-09-29T10:25:22+00:00">2026-09-29</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
