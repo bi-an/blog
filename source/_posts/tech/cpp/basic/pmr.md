@@ -80,13 +80,20 @@ std::vector<std::string> vec1 = /* ... */;
 std::vector<std::string> vec2 = vec1;  // 深拷贝：每个 string 各走一次堆分配
 ```
 
-`vec2 = vec1` 至少分裂为两层互不相关的分配：
+`vec2 = vec1` 至少分裂为两层互不相关的分配（示意）：
 
-1. **外层 `vector`**：按 `vec1.size()` 向自己的 `std::allocator` 申请一块连续内存，用以放置 N 个 `std::string` **对象本身**（每个对象通常只含指针、长度、容量或 SSO 本地缓冲等若干字，体积很小）。这是**一次**堆分配（或再分配）。
-2. **内层每个 `string`**：拷贝构造时复制字符内容。若长度超过实现相关的 SSO（Small String Optimization）阈值，则该 `string` 再通过**自己的** `std::allocator` 向全局堆申请一块缓冲存放字符数据。N 个超长字符串即对应 **N 次**独立的堆分配。
-   **注**：SSO 阈值由标准库实现决定，标准未规定；常见 64 位平台约为：libstdc++（GCC）与 MSVC STL 可本地存放约 **15** 个 `char`（不含结尾 `'\0'` 时 `capacity()` 常为 15），libc++（Clang）约 **22** 个 `char`。未超过阈值时字符留在 `string` 对象内部，拷贝不触发该层堆分配。
+```cpp
+// 外层 vector：自己的 std::allocator，一次申请 N 个 string 对象的连续区
+std::string* elems = vector_alloc.allocate(N);  // 第 1 次堆分配
 
-关键在于：外层 `vector` 的分配器与内层 `string` 的分配器是两套默认的 `std::allocator`，互不知情。外层只负责“摆放 N 个 string 对象”，并不（也无法）把同一块缓冲交给内层字符数据使用；每个 `string` 拷贝时各自调用 `allocate`，分配彼此分离、地址分散，缓存局部性差，且无法共享同一内存池的生命周期管理。
+for (std::size_t i = 0; i < N; ++i) {
+    // 内层每个 string：自己的 std::allocator，与 vector 互不知情
+    // 超 SSO 阈值时再向全局堆要字符缓冲（SSO：libstdc++/MSVC ≈15 char，libc++ ≈22 char）
+    // placement new：在 elems[i] 已有的存储上就地构造，不再为「对象本身」申请内存；
+    // 但 string 拷贝构造若超 SSO，仍会另向堆申请字符缓冲
+    new (elems + i) std::string(vec1[i]);
+}
+```
 
 ## PMR 的统一性设计
 
