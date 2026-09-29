@@ -80,6 +80,14 @@ std::vector<std::string> vec1 = /* ... */;
 std::vector<std::string> vec2 = vec1;  // 深拷贝：每个 string 各走一次堆分配
 ```
 
+`vec2 = vec1` 至少分裂为两层互不相关的分配：
+
+1. **外层 `vector`**：按 `vec1.size()` 向自己的 `std::allocator` 申请一块连续内存，用以放置 N 个 `std::string` **对象本身**（每个对象通常只含指针、长度、容量或 SSO 本地缓冲等若干字，体积很小）。这是**一次**堆分配（或再分配）。
+2. **内层每个 `string`**：拷贝构造时复制字符内容。若长度超过实现相关的 SSO（Small String Optimization）阈值，则该 `string` 再通过**自己的** `std::allocator` 向全局堆申请一块缓冲存放字符数据。N 个超长字符串即对应 **N 次**独立的堆分配。
+   **注**：SSO 阈值由标准库实现决定，标准未规定；常见 64 位平台约为：libstdc++（GCC）与 MSVC STL 可本地存放约 **15** 个 `char`（不含结尾 `'\0'` 时 `capacity()` 常为 15），libc++（Clang）约 **22** 个 `char`。未超过阈值时字符留在 `string` 对象内部，拷贝不触发该层堆分配。
+
+关键在于：外层 `vector` 的分配器与内层 `string` 的分配器是两套默认的 `std::allocator`，互不知情。外层只负责“摆放 N 个 string 对象”，并不（也无法）把同一块缓冲交给内层字符数据使用；每个 `string` 拷贝时各自调用 `allocate`，分配彼此分离、地址分散，缓存局部性差，且无法共享同一内存池的生命周期管理。
+
 ## PMR 的统一性设计
 
 PMR 将“如何分配”从编译期模板参数剥离，下沉为运行期可替换的 `memory_resource`，再由类型擦除后的 `polymorphic_allocator` 统一挂接（对 `memory_resource*` 做类型擦除，标准库已实现）。容器类型因此保持一致——`std::pmr::vector`、`std::pmr::string` 等别名固定，变化的是构造时绑定的 `memory_resource*`——分配策略在运行期注入。于是非模板函数与虚接口可直接传递同一族容器，多级嵌套也可共享同一资源，分别对应上一节的三个症结。
@@ -92,7 +100,30 @@ std::pmr::vector<std::pmr::string> vec1{&pool};
 std::pmr::vector<std::pmr::string> vec2{vec1, &pool};  // 深拷贝，仍走同一 resource
 ```
 
-二者均通过同一套 `polymorphic_allocator` 向 `pool` 取内存。若底层是单调缓冲等预分配实现，后续请求往往只需在缓冲区内推进指针，而不必对每个字符串再走全局堆。“一次深拷贝”从 N 次散落的 `malloc` 收敛为对同一资源的连续操作。
+外层 `pmr::vector` 与内层每个 `pmr::string` 均通过同一套 `polymorphic_allocator` 向 `pool` 取内存。`monotonic_buffer_resource` 在缓冲未耗尽时的分配，本质就是游标推进（示意）：
+
+```cpp
+// pool 内部：一块预分配缓冲 + 游标
+std::byte* current_ = buffer;
+std::byte* end_     = buffer + buffer_size;
+
+void* allocate(std::size_t n, std::size_t /*align*/) {
+    // 省略对齐；缓冲不够时走 upstream（见下一节）
+    void* p = current_;
+    current_ += n;   // 只改指针，不调用 malloc / ::operator new
+    return p;
+}
+
+void deallocate(void*, std::size_t, std::size_t) {
+    // 单调缓冲：单次释放为空操作，整块在 pool 析构时回收
+}
+
+// 深拷贝 vec2 = vec1 时，多次 allocate 都落在同一块 buffer 上，例如：
+//   allocate(N * sizeof(pmr::string));  // 外层：N 个 string 对象的连续区
+//   allocate(len0);                     // 内层：string[0] 的字符缓冲（超 SSO 时）
+//   allocate(len1);                     // 内层：string[1] 的字符缓冲
+//   ...
+```
 
 | 维度 | 传统 `Allocator` 模板参数 | PMR |
 |------|---------------------------|-----|
