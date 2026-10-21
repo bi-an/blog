@@ -20,15 +20,15 @@
     var CONFIG = {"hostname":"bi-an.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="Makefile默认shell Makefile 默认的 shell 是 &#x2F;bin&#x2F;sh: 查看 Makefile 默认的 shell: $(warning ${SHELL}) # 查看默认 shell 如果在 Makefile 开头加上以下语句，可以指定 shell: SHELL :&#x3D; &#x2F;bin&#x2F;bash Makefile 的 shell 命令似乎每一条都会新开辟一个 shell 环境来执行，因">
+  <meta name="description" content="Makefile默认shell Makefile 默认的 shell 是 &#x2F;bin&#x2F;sh。查看默认 shell： 1$(warning $&#123;SHELL&#125;) # 查看默认 shell 如果在 Makefile 开头加上以下语句，可以指定 shell： 1SHELL :&#x3D; &#x2F;bin&#x2F;bash Makefile 的 shell 命令似乎每一条都会新开辟一个 shell 环境来执行，因">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Makefile入门">
 <meta property="og:url" content="https://bi-an.github.io/blog/2023/11/17/tech/cpp/build-tool/makefile-introduction/index.html">
 <meta property="og:site_name" content="江南人物的博客">
-<meta property="og:description" content="Makefile默认shell Makefile 默认的 shell 是 &#x2F;bin&#x2F;sh: 查看 Makefile 默认的 shell: $(warning ${SHELL}) # 查看默认 shell 如果在 Makefile 开头加上以下语句，可以指定 shell: SHELL :&#x3D; &#x2F;bin&#x2F;bash Makefile 的 shell 命令似乎每一条都会新开辟一个 shell 环境来执行，因">
+<meta property="og:description" content="Makefile默认shell Makefile 默认的 shell 是 &#x2F;bin&#x2F;sh。查看默认 shell： 1$(warning $&#123;SHELL&#125;) # 查看默认 shell 如果在 Makefile 开头加上以下语句，可以指定 shell： 1SHELL :&#x3D; &#x2F;bin&#x2F;bash Makefile 的 shell 命令似乎每一条都会新开辟一个 shell 环境来执行，因">
 <meta property="og:locale">
 <meta property="article:published_time" content="2023-11-17T14:19:35.000Z">
-<meta property="article:modified_time" content="2026-09-29T10:25:22.868Z">
+<meta property="article:modified_time" content="2026-10-21T09:42:53.204Z">
 <meta property="article:author" content="bi-an">
 <meta property="article:tag" content="cpp">
 <meta property="article:tag" content="make">
@@ -225,7 +225,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-09-29 10:25:22" itemprop="dateModified" datetime="2026-09-29T10:25:22+00:00">2026-09-29</time>
+                <time title="Modified: 2026-10-21 09:42:53" itemprop="dateModified" datetime="2026-10-21T09:42:53+00:00">2026-10-21</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -249,79 +249,99 @@
 
       
         <h2 id="Makefile默认shell">Makefile默认shell</h2>
-<p>Makefile 默认的 shell 是 /bin/sh:<br>
-查看 Makefile 默认的 shell:<br>
-$(warning ${SHELL}) # 查看默认 shell</p>
-<p>如果在 Makefile 开头加上以下语句，可以指定 shell:<br>
-SHELL := /bin/bash</p>
-<p>Makefile 的 shell 命令似乎每一条都会新开辟一个 shell 环境来执行，因为每条 shell 命令似乎都执行了一次 .cshrc 脚本。<br>
+<p>Makefile 默认的 shell 是 <code>/bin/sh</code>。查看默认 shell：</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$(<span class="built_in">warning</span> $&#123;SHELL&#125;)</span> <span class="comment"># 查看默认 shell</span></span><br></pre></td></tr></table></figure>
+<p>如果在 Makefile 开头加上以下语句，可以指定 shell：</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SHELL := /bin/bash</span><br></pre></td></tr></table></figure>
+<p>Makefile 的 shell 命令似乎每一条都会新开辟一个 shell 环境来执行，因为每条 shell 命令似乎都执行了一次 <code>.cshrc</code> 脚本。<br>
 要想在同一个 shell 环境中执行所有命令，则需要使用分号分割并转义换行符。</p>
 <h2 id="Makefile环境变量">Makefile环境变量</h2>
-<p>你可以通过设置环境变量 MAKEFLAGS 来让所有的子shell都将 make 认作 make -n：<br>
-export MAKEFLAGS=“-n”<br>
-注：-n, --dry-run 表示只打印将要执行的命令，但是不真正执行它们。</p>
-<p>Makefile 设置 PATH 环境变量：<br>
-PATH := mypath:$(PATH)<br>
-必须使用 “:=” ，因为 “:=” 是简单赋值，但是 “=” 会递归展开，会导致报错 “Recursive variable `PATH’ references itself (eventually)”。</p>
-<p>Makefile 定义多行变量：使用 define 语句。<br>
-Makefile 接收命令行参数</p>
-<p>非常奇特的现象：<br>
-$ make clean<br>
-cat <a target="_blank" rel="noopener" href="http://clean.sh">clean.sh</a> &gt;clean<br>
-chmod a+x clean<br>
-因为 Makefile 文件中没有 clean 的 recipe，但是当前目录下有个 <a target="_blank" rel="noopener" href="http://clean.sh">clean.sh</a> 文件。<br>
-但是，当再次执行 make clean，clean 脚本还是不会被执行：<br>
-$ make clean<br>
-make: `clean’ is up to date.</p>
+<p>你可以通过设置环境变量 <code>MAKEFLAGS</code> 来让所有的子 shell 都将 make 认作 <code>make -n</code>：</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> MAKEFLAGS=<span class="string">&quot;-n&quot;</span></span><br></pre></td></tr></table></figure>
+<p>注：<code>-n</code>、<code>--dry-run</code> 表示只打印将要执行的命令，但是不真正执行它们。</p>
+<p>Makefile 设置 <code>PATH</code> 环境变量：</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PATH := mypath:<span class="variable">$(PATH)</span></span><br></pre></td></tr></table></figure>
+<p>必须使用 <code>:=</code>，因为 <code>:=</code> 是简单赋值，但是 <code>=</code> 会递归展开，会导致报错 “Recursive variable `PATH’ references itself (eventually)”。</p>
+<p>Makefile 定义多行变量：使用 <code>define</code> 语句。<br>
+Makefile 接收命令行参数。</p>
+<p>非常奇特的现象：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ make clean</span><br><span class="line">cat clean.sh &gt;clean</span><br><span class="line">chmod a+x clean</span><br></pre></td></tr></table></figure>
+<p>因为 Makefile 文件中没有 <code>clean</code> 的 recipe，但是当前目录下有个 <code>clean.sh</code> 文件。<br>
+但是，当再次执行 <code>make clean</code>，<code>clean</code> 脚本还是不会被执行：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ make clean</span><br><span class="line">make: `clean&#x27; is up to date.</span><br></pre></td></tr></table></figure>
 <h2 id="特殊符号">特殊符号</h2>
 <h3 id="空格">空格</h3>
-<p>Makefile对空格的处理，似乎是：从第一个非空格开始，到明确的截止符（换行、逗号、括号、注释标记’#'等）为止。<br>
-a =   b   #注意末尾有3个空格<br>
-<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><mi>w</mi><mi>a</mi><mi>r</mi><mi>n</mi><mi>i</mi><mi>n</mi><mi>g</mi><mi>a</mi><mo>=</mo></mrow><annotation encoding="application/x-tex">(warning a=</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.0269em;">w</span><span class="mord mathnormal">a</span><span class="mord mathnormal" style="margin-right:0.0278em;">r</span><span class="mord mathnormal">nin</span><span class="mord mathnormal" style="margin-right:0.0359em;">g</span><span class="mord mathnormal">a</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span></span></span></span>(a)c)</p>
-<p>结果：<br>
-a=    b   c</p>
-<p>Makefile转义符：<br>
-字符	转义方法<br>
-$	$$</p>
-<h1>#</h1>
-<p>\	\</p>
-<p>注意：这里说的是Makefile中的转义符，不是bash中的转义符。</p>
+<p>Makefile 对空格的处理，似乎是：从第一个非空格开始，到明确的截止符（换行、逗号、括号、注释标记 <code>#</code> 等）为止。</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">a =   b   <span class="comment">#注意末尾有3个空格</span></span><br><span class="line"><span class="variable">$(<span class="built_in">warning</span> a=<span class="variable">$(a)</span>c)</span></span><br></pre></td></tr></table></figure>
+<p>结果：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">a=    b   c</span><br></pre></td></tr></table></figure>
+<p>Makefile 转义符：</p>
+<table>
+<thead>
+<tr>
+<th>字符</th>
+<th>转义方法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>$</code></td>
+<td><code>$$</code></td>
+</tr>
+<tr>
+<td><code>#</code></td>
+<td><code>\#</code></td>
+</tr>
+<tr>
+<td><code>\</code></td>
+<td><code>\\</code></td>
+</tr>
+</tbody>
+</table>
+<p>注意：这里说的是 Makefile 中的转义符，不是 bash 中的转义符。</p>
 <h3 id="括号">括号</h3>
 <p>引用变量时，Shell使用大括号，Makefile则大括号和小括号都行。但是在命令中使用Shell变量就需要使用大括号。</p>
 <p><a target="_blank" rel="noopener" href="https://blog.csdn.net/bigmarco/article/details/6687337">参考</a></p>
 <h2 id="Makefile调试方法">Makefile调试方法</h2>
-<p>要调试 Makefile 并查看其执行过程，可以使用以下几种方法：<br>
-1. 使用 make 的 -n 或 --dry-run 选项：这将显示 Makefile 中的所有命令，而不会真正执行它们。<br>
-make -n<br>
-1. 使用 make 的 -d 或 --debug 选项：这将显示详细的调试信息，包括变量的展开和规则的匹配过程。<br>
-make -d<br>
-1. 使用 make 的 -p 或 --print-data-base 选项：这将打印所有的变量、规则和隐含规则。<br>
-make -p<br>
-1. 在 Makefile 中添加调试信息：你可以在 Makefile 中添加一些调试信息，例如使用 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><mi>i</mi><mi>n</mi><mi>f</mi><mi>o</mi><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mo stretchy="false">)</mo><mtext>来打印变量的值。</mtext><mi>p</mi><mi>r</mi><mi>i</mi><mi>n</mi><mi>t</mi><mo>:</mo><mi mathvariant="normal">@</mi></mrow><annotation encoding="application/x-tex">(info ...) 来打印变量的值。
-print:
-    @</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal">in</span><span class="mord mathnormal" style="margin-right:0.1076em;">f</span><span class="mord mathnormal">o</span><span class="mord">...</span><span class="mclose">)</span><span class="mord cjk_fallback">来打印变量的值。</span><span class="mord mathnormal">p</span><span class="mord mathnormal" style="margin-right:0.0278em;">r</span><span class="mord mathnormal">in</span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">:</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6944em;"></span><span class="mord">@</span></span></span></span>(foreach V, $(.VARIABLES), $(info $(V) = <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo></mrow><annotation encoding="application/x-tex">(</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span></span></span></span>(V))))<br>
-1. 使用 make 的 -j 选项：如果你使用并行执行，可以使用 -j 选项来限制并行任务的数量，并更容易地跟踪输出。<br>
-make -j1</p>
-<p>makefile打印所有变量的值：<br>
-debug:<br>
-@$(foreach V, $(.VARIABLES), $(info $(V) = <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo></mrow><annotation encoding="application/x-tex">(</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span></span></span></span>(V))))<br>
-然后在命令行中运行：<br>
-make debug<br>
-这将打印所有变量及其值。</p>
-<p>print-%:<br>
-@echo $* = <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo></mrow><annotation encoding="application/x-tex">(</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span></span></span></span>*)</p>
-<p>print-% 是一个 Makefile 目标，用于打印变量的值。具体步骤如下：<br>
-1. 定义一个目标 print-%，其中 % 是一个通配符，表示任意变量名。<br>
-2. 使用 @echo $* = <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo></mrow><annotation encoding="application/x-tex">(</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span></span></span></span>*) 打印变量名和变量值。</p>
-<p>示例代码：<br>
-print-%:<br>
-@echo $* = <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo></mrow><annotation encoding="application/x-tex">(</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span></span></span></span>*)<br>
-使用方法：<br>
-在命令行中运行：<br>
-make print-VARIABLE_NAME<br>
-例如：<br>
-make print-XTENSA_SW_RELEASE<br>
-这将打印 XTENSA_SW_RELEASE 变量的值。</p>
+<p>要调试 Makefile 并查看其执行过程，可以使用以下几种方法：</p>
+<ol>
+<li>使用 make 的 <code>-n</code> 或 <code>--dry-run</code> 选项：这将显示 Makefile 中的所有命令，而不会真正执行它们。</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make -n</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>使用 make 的 <code>-d</code> 或 <code>--debug</code> 选项：这将显示详细的调试信息，包括变量的展开和规则的匹配过程。</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make -d</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>使用 make 的 <code>-p</code> 或 <code>--print-data-base</code> 选项：这将打印所有的变量、规则和隐含规则。</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make -p</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>在 Makefile 中添加调试信息：你可以在 Makefile 中添加一些调试信息，例如使用 <code>$(info ...)</code> 来打印变量的值。</li>
+</ol>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">print:</span></span><br><span class="line">	@<span class="variable">$(<span class="built_in">foreach</span> V, $(.VARIABLES)</span>, <span class="variable">$(info <span class="variable">$(V)</span> = $(<span class="variable">$(V)</span>)</span>))</span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>使用 make 的 <code>-j</code> 选项：如果你使用并行执行，可以使用 <code>-j</code> 选项来限制并行任务的数量，并更容易地跟踪输出。</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make -j1</span><br></pre></td></tr></table></figure>
+<p>makefile 打印所有变量的值：</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">debug:</span></span><br><span class="line">	@<span class="variable">$(<span class="built_in">foreach</span> V, $(.VARIABLES)</span>, <span class="variable">$(info <span class="variable">$(V)</span> = $(<span class="variable">$(V)</span>)</span>))</span><br></pre></td></tr></table></figure>
+<p>然后在命令行中运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make debug</span><br></pre></td></tr></table></figure>
+<p>这将打印所有变量及其值。</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">print-%:</span></span><br><span class="line">	@echo <span class="variable">$*</span> = $(<span class="variable">$*</span>)</span><br></pre></td></tr></table></figure>
+<p><code>print-%</code> 是一个 Makefile 目标，用于打印变量的值。具体步骤如下：</p>
+<ol>
+<li>定义一个目标 <code>print-%</code>，其中 <code>%</code> 是一个通配符，表示任意变量名。</li>
+<li>使用 <code>@echo $* = $($*)</code> 打印变量名和变量值。</li>
+</ol>
+<p>示例代码：</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">print-%:</span></span><br><span class="line">	@echo <span class="variable">$*</span> = $(<span class="variable">$*</span>)</span><br></pre></td></tr></table></figure>
+<p>使用方法：在命令行中运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make print-VARIABLE_NAME</span><br></pre></td></tr></table></figure>
+<p>例如：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make print-XTENSA_SW_RELEASE</span><br></pre></td></tr></table></figure>
+<p>这将打印 <code>XTENSA_SW_RELEASE</code> 变量的值。</p>
 <h2 id="命令行参数">命令行参数</h2>
 <p>See <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2214575/passing-arguments-to-make-run">here</a>.</p>
 <p><code>@:</code> See <a target="_blank" rel="noopener" href="https://unix.stackexchange.com/questions/92978/what-does-this-2-mean-in-shell-scripting">here</a>.</p>
@@ -358,7 +378,8 @@ make print-XTENSA_SW_RELEASE<br>
 <p>这种空规则会让 make 把 intermediate 视为中间目标，构建失败时自动删除。避免这种写法，或者配合 .PRECIOUS 使用。</p>
 <p>🛠️ 方法四：将中间文件输出到特定目录<br>
 你可以将中间文件集中到一个目录中，便于管理和保留：</p>
-<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">OBJ_DIR := build/obj</span><br><span class="line"><span class="variable">$(OBJ_DIR)</span>/%.o: %.cpp</span><br><span class="line">    <span class="variable">$(CXX)</span> -c <span class="variable">$&lt;</span> -o <span class="variable">$@</span></span><br><span class="line">然后用 .PRECIOUS: <span class="variable">$(OBJ_DIR)</span>/%.o 保留它们。</span><br></pre></td></tr></table></figure>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">OBJ_DIR := build/obj</span><br><span class="line"><span class="variable">$(OBJ_DIR)</span>/%.o: %.cpp</span><br><span class="line">	<span class="variable">$(CXX)</span> -c <span class="variable">$&lt;</span> -o <span class="variable">$@</span></span><br></pre></td></tr></table></figure>
+<p>然后用 <code>.PRECIOUS: $(OBJ_DIR)/%.o</code> 保留它们。</p>
 <p>📌 示例：保留 .o 和 .d 文件</p>
 <figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">.PRECIOUS: %.o %.d</span></span><br><span class="line"></span><br><span class="line"><span class="section">main: main.o</span></span><br><span class="line">    <span class="variable">$(CC)</span> <span class="variable">$^</span> -o <span class="variable">$@</span></span><br><span class="line"></span><br><span class="line"><span class="section">main.o: main.c</span></span><br><span class="line">    <span class="variable">$(CC)</span> -c <span class="variable">$&lt;</span> -o <span class="variable">$@</span></span><br></pre></td></tr></table></figure>
 <p>gcc可以使用 <code>-save-temps</code> 选项保留中间文件：</p>
@@ -449,7 +470,7 @@ make print-XTENSA_SW_RELEASE<br>
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Makefile%E9%BB%98%E8%AE%A4shell"><span class="nav-text">Makefile默认shell</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Makefile%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F"><span class="nav-text">Makefile环境变量</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%89%B9%E6%AE%8A%E7%AC%A6%E5%8F%B7"><span class="nav-text">特殊符号</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A9%BA%E6%A0%BC"><span class="nav-text">空格</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-text">#</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8B%AC%E5%8F%B7"><span class="nav-text">括号</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Makefile%E8%B0%83%E8%AF%95%E6%96%B9%E6%B3%95"><span class="nav-text">Makefile调试方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%8F%82%E6%95%B0"><span class="nav-text">命令行参数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#makefile%E5%90%8C%E5%90%8D%E7%9B%AE%E6%A0%87%E5%A4%84%E7%90%86%E6%96%B9%E5%BC%8F"><span class="nav-text">makefile同名目标处理方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Makefile%E4%B8%AD%E7%9F%AD%E5%88%92%E7%BA%BF"><span class="nav-text">Makefile中短划线</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E6%AF%8F%E4%B8%AA%E6%BA%90%E6%96%87%E4%BB%B6%E7%94%9F%E6%88%90%E4%B8%80%E4%B8%AA%E5%8F%AF%E6%89%A7%E8%A1%8C%E7%A8%8B%E5%BA%8F"><span class="nav-text">为每个源文件生成一个可执行程序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Makefile%E4%BF%9D%E7%95%99%E4%B8%AD%E9%97%B4%E6%96%87%E4%BB%B6"><span class="nav-text">Makefile保留中间文件</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Makefile%E9%BB%98%E8%AE%A4shell"><span class="nav-text">Makefile默认shell</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Makefile%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F"><span class="nav-text">Makefile环境变量</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%89%B9%E6%AE%8A%E7%AC%A6%E5%8F%B7"><span class="nav-text">特殊符号</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A9%BA%E6%A0%BC"><span class="nav-text">空格</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8B%AC%E5%8F%B7"><span class="nav-text">括号</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Makefile%E8%B0%83%E8%AF%95%E6%96%B9%E6%B3%95"><span class="nav-text">Makefile调试方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%8F%82%E6%95%B0"><span class="nav-text">命令行参数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#makefile%E5%90%8C%E5%90%8D%E7%9B%AE%E6%A0%87%E5%A4%84%E7%90%86%E6%96%B9%E5%BC%8F"><span class="nav-text">makefile同名目标处理方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Makefile%E4%B8%AD%E7%9F%AD%E5%88%92%E7%BA%BF"><span class="nav-text">Makefile中短划线</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E6%AF%8F%E4%B8%AA%E6%BA%90%E6%96%87%E4%BB%B6%E7%94%9F%E6%88%90%E4%B8%80%E4%B8%AA%E5%8F%AF%E6%89%A7%E8%A1%8C%E7%A8%8B%E5%BA%8F"><span class="nav-text">为每个源文件生成一个可执行程序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Makefile%E4%BF%9D%E7%95%99%E4%B8%AD%E9%97%B4%E6%96%87%E4%BB%B6"><span class="nav-text">Makefile保留中间文件</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -465,14 +486,14 @@ make print-XTENSA_SW_RELEASE<br>
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">151</span>
+          <span class="site-state-item-count">153</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">18</span>
+        <span class="site-state-item-count">19</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
