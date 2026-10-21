@@ -10,57 +10,84 @@ tags:
 
 ## Makefile默认shell
 
-Makefile 默认的 shell 是 /bin/sh:
-查看 Makefile 默认的 shell:
+Makefile 默认的 shell 是 `/bin/sh`。查看默认 shell：
+
+```makefile
 $(warning ${SHELL}) # 查看默认 shell
+```
 
-如果在 Makefile 开头加上以下语句，可以指定 shell:
+如果在 Makefile 开头加上以下语句，可以指定 shell：
+
+```makefile
 SHELL := /bin/bash
+```
 
-Makefile 的 shell 命令似乎每一条都会新开辟一个 shell 环境来执行，因为每条 shell 命令似乎都执行了一次 .cshrc 脚本。
+Makefile 的 shell 命令似乎每一条都会新开辟一个 shell 环境来执行，因为每条 shell 命令似乎都执行了一次 `.cshrc` 脚本。
 要想在同一个 shell 环境中执行所有命令，则需要使用分号分割并转义换行符。
 
 ## Makefile环境变量
 
-你可以通过设置环境变量 MAKEFLAGS 来让所有的子shell都将 make 认作 make -n：
+你可以通过设置环境变量 `MAKEFLAGS` 来让所有的子 shell 都将 make 认作 `make -n`：
+
+```makefile
 export MAKEFLAGS="-n"
-注：-n, --dry-run 表示只打印将要执行的命令，但是不真正执行它们。
+```
 
+注：`-n`、`--dry-run` 表示只打印将要执行的命令，但是不真正执行它们。
 
-Makefile 设置 PATH 环境变量：
+Makefile 设置 `PATH` 环境变量：
+
+```makefile
 PATH := mypath:$(PATH)
-必须使用 ":=" ，因为 ":=" 是简单赋值，但是 "=" 会递归展开，会导致报错 “Recursive variable `PATH' references itself (eventually)”。
+```
 
-Makefile 定义多行变量：使用 define 语句。
-Makefile 接收命令行参数
+必须使用 `:=`，因为 `:=` 是简单赋值，但是 `=` 会递归展开，会导致报错 “Recursive variable `PATH' references itself (eventually)”。
+
+Makefile 定义多行变量：使用 `define` 语句。
+Makefile 接收命令行参数。
 
 非常奇特的现象：
+
+```text
 $ make clean
 cat clean.sh >clean
 chmod a+x clean
-因为 Makefile 文件中没有 clean 的 recipe，但是当前目录下有个 clean.sh 文件。
-但是，当再次执行 make clean，clean 脚本还是不会被执行：
+```
+
+因为 Makefile 文件中没有 `clean` 的 recipe，但是当前目录下有个 `clean.sh` 文件。
+但是，当再次执行 `make clean`，`clean` 脚本还是不会被执行：
+
+```text
 $ make clean
 make: `clean' is up to date.
+```
 
 ## 特殊符号
 
 ### 空格
 
-Makefile对空格的处理，似乎是：从第一个非空格开始，到明确的截止符（换行、逗号、括号、注释标记'#'等）为止。
+Makefile 对空格的处理，似乎是：从第一个非空格开始，到明确的截止符（换行、逗号、括号、注释标记 `#` 等）为止。
+
+```makefile
 a =   b   #注意末尾有3个空格
 $(warning a=$(a)c)
+```
 
 结果：
+
+```text
 a=    b   c
+```
 
-Makefile转义符：
-字符	转义方法
-$	$$
-#	\#
-\	\
+Makefile 转义符：
 
-注意：这里说的是Makefile中的转义符，不是bash中的转义符。
+| 字符 | 转义方法 |
+|------|----------|
+| `$` | `$$` |
+| `#` | `\#` |
+| `\` | `\\` |
+
+注意：这里说的是 Makefile 中的转义符，不是 bash 中的转义符。
 
 ### 括号
 
@@ -71,42 +98,83 @@ $	$$
 ## Makefile调试方法
 
 要调试 Makefile 并查看其执行过程，可以使用以下几种方法：
-	1. 使用 make 的 -n 或 --dry-run 选项：这将显示 Makefile 中的所有命令，而不会真正执行它们。
-make -n
-	1. 使用 make 的 -d 或 --debug 选项：这将显示详细的调试信息，包括变量的展开和规则的匹配过程。
-make -d
-	1. 使用 make 的 -p 或 --print-data-base 选项：这将打印所有的变量、规则和隐含规则。
-make -p
-	1. 在 Makefile 中添加调试信息：你可以在 Makefile 中添加一些调试信息，例如使用 $(info ...) 来打印变量的值。
-print:
-    @$(foreach V, $(.VARIABLES), $(info $(V) = $($(V))))
-	1. 使用 make 的 -j 选项：如果你使用并行执行，可以使用 -j 选项来限制并行任务的数量，并更容易地跟踪输出。
-make -j1
 
-makefile打印所有变量的值：
+1. 使用 make 的 `-n` 或 `--dry-run` 选项：这将显示 Makefile 中的所有命令，而不会真正执行它们。
+
+```bash
+make -n
+```
+
+2. 使用 make 的 `-d` 或 `--debug` 选项：这将显示详细的调试信息，包括变量的展开和规则的匹配过程。
+
+```bash
+make -d
+```
+
+3. 使用 make 的 `-p` 或 `--print-data-base` 选项：这将打印所有的变量、规则和隐含规则。
+
+```bash
+make -p
+```
+
+4. 在 Makefile 中添加调试信息：你可以在 Makefile 中添加一些调试信息，例如使用 `$(info ...)` 来打印变量的值。
+
+```makefile
+print:
+	@$(foreach V, $(.VARIABLES), $(info $(V) = $($(V))))
+```
+
+5. 使用 make 的 `-j` 选项：如果你使用并行执行，可以使用 `-j` 选项来限制并行任务的数量，并更容易地跟踪输出。
+
+```bash
+make -j1
+```
+
+makefile 打印所有变量的值：
+
+```makefile
 debug:
-    @$(foreach V, $(.VARIABLES), $(info $(V) = $($(V))))
+	@$(foreach V, $(.VARIABLES), $(info $(V) = $($(V))))
+```
+
 然后在命令行中运行：
+
+```bash
 make debug
+```
+
 这将打印所有变量及其值。
 
-
+```makefile
 print-%:
-    @echo $* = $($*)
+	@echo $* = $($*)
+```
 
-print-% 是一个 Makefile 目标，用于打印变量的值。具体步骤如下：
-	1. 定义一个目标 print-%，其中 % 是一个通配符，表示任意变量名。
-	2. 使用 @echo $* = $($*) 打印变量名和变量值。
+`print-%` 是一个 Makefile 目标，用于打印变量的值。具体步骤如下：
+
+1. 定义一个目标 `print-%`，其中 `%` 是一个通配符，表示任意变量名。
+2. 使用 `@echo $* = $($*)` 打印变量名和变量值。
 
 示例代码：
+
+```makefile
 print-%:
-    @echo $* = $($*)
-使用方法：
-在命令行中运行：
+	@echo $* = $($*)
+```
+
+使用方法：在命令行中运行：
+
+```bash
 make print-VARIABLE_NAME
+```
+
 例如：
+
+```bash
 make print-XTENSA_SW_RELEASE
-这将打印 XTENSA_SW_RELEASE 变量的值。
+```
+
+这将打印 `XTENSA_SW_RELEASE` 变量的值。
 
 ## 命令行参数
 
@@ -207,9 +275,10 @@ intermediate: ;
 ```makefile
 OBJ_DIR := build/obj
 $(OBJ_DIR)/%.o: %.cpp
-    $(CXX) -c $< -o $@
-然后用 .PRECIOUS: $(OBJ_DIR)/%.o 保留它们。
+	$(CXX) -c $< -o $@
 ```
+
+然后用 `.PRECIOUS: $(OBJ_DIR)/%.o` 保留它们。
 
 📌 示例：保留 .o 和 .d 文件
 
