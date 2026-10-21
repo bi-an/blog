@@ -35,6 +35,8 @@
 
 `<theme>` 取自 `_config.yml` 的 `theme` 字段。
 
+`server.charset`（`_config.yml`）让 `hexo server` 为文本响应带上字符集。直接打开 `.cpp` 等源码时，内置服务器只返回 `text/x-c`，浏览器会按错误编码显示中文。实现是 `scripts/server-charset.js`。改为 `false` 即关闭。需要重启 `hexo server` 后生效。
+
 ## include_code
 
 Hexo 内置 Tag Plugin，用于将 `source/downloads/code/` 下的代码文件嵌入文章正文。官方文档：[Include Code](https://hexo.io/docs/tag-plugins#Include-Code)。
