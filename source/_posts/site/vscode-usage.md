@@ -11,7 +11,7 @@ tags:
 ---
 
 
-## Reduce the disk usage of VSCode
+## 减少 VSCode 磁盘占用
 
 以下文件可以删除：
 
@@ -28,16 +28,16 @@ tags:
   [这里](https://github.com/microsoft/vscode-cpptools/issues/6594)：
   ![C_Cpp.intelliSenseCacheSize](/assets/images/site/vscode-usage-01.png)
 
-## Hot keys
+## 快捷键
 
 1. 跳转到对应大括号：`Ctrl Shift \`
 
-## Debug code in VSCode
+## 用 VSCode 调试代码
 
 - [Debug multiple processes in VSCode](https://code.visualstudio.com/Docs/editor/debugging#_multitarget-debugging)
 - [Debug Python Subprocess](https://stackoverflow.com/questions/60515935/visual-studio-code-does-not-attach-debugger-to-multi-processes-in-python-using-p)
 
-## Useful plugins
+## 实用插件
 
 - `Remote - SSH`: Windows 连接 Linux。前置条件：Windows 本身需要安装 ssh 命令行工具。
 - `Perforce for VS Code`: perforce 工具。
@@ -48,8 +48,23 @@ tags:
 - `All in one`
 - `c/c++ definition generator`
 - `KoroFileHeader`: 参考 [这里](https://zhuanlan.zhihu.com/p/610490070)。
+- 打开大文件
+  - `BigView`
+  	- 加载流畅
+  	- 搜索语法类似 VSCode
+  	- 可以像 VSCode `Text Editor` 一样，在右下角设置高亮语法
+  - `Maximus`
+  	- 加载 3 s 左右
+  	- 搜索语法有些不一样
+  	- 不能设置高亮语法
+  - `Open Log Viewer`
+  	- 第一次打开很慢
+  	- 分页
+  	- 美观
+  	- 具备统计功能
+  	- 只支持 .log 和 .txt，其他文件后缀名需要使用 `Command Palette` 手动打开
 
-## Useful configurations
+## 实用配置
 
 [自动填充头文件，比如 ifndef 宏](https://www.cxyzjd.com/article/weixin_45461426/105936955)
 
