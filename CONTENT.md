@@ -15,7 +15,7 @@
 - 交叉内容：物理目录归大类，标签做关联
 
 - 目录/文件单复数命名规则：
-  - `_posts` 下的目录统一采用单数名（类 Go），例如 `movie`。
+  - `_posts` 下的目录统一采用单数名（类 Go），例如 `cpp`。
   - Hexo 通用资源目录采用复数名，例如 `images`。
   - 笔记与资源文件名遵循下文「全量文件命名规范」。
 ---
@@ -26,10 +26,6 @@
 source
 ├── assets/                 # 静态资源根目录
 │   └── images/             # 全局图片根目录
-│       ├── study/          # study 笔记配图
-│       │   ├── idiom/      # study/idiom 笔记配图
-│       │   ├── word/       # study/word 笔记配图
-│       │   └── movie/      # study/movie 笔记配图
 │       └── tech/           # tech 笔记配图
 │           ├── cpp/        # tech/cpp 笔记配图（按需创建）
 │           ├── linux/      # tech/linux 笔记配图（按需创建）
@@ -55,11 +51,7 @@ source
 │       │   ├── linux/
 │       │   ├── ic/
 │       │   └── project/
-│       ├── site/           # 镜像 _posts/site
-│       └── study/          # 镜像 _posts/study 二级子目录
-│           ├── idiom/
-│           ├── word/
-│           └── movie/
+│       └── site/           # 镜像 _posts/site
 │
 └── _posts/
     ├── tech/                   # 核心技术体系
@@ -89,13 +81,8 @@ source
     │   │   └── ic-project          # IC/EDA 工程实战项目
     │   └── project/                # 全局综合大型跨领域项目
     │
-    ├── site/                   # 个人站点搭建与运维
+    └── site/                   # 个人站点搭建与运维
     │   # 包含：Hexo搭建、主题配置、部署、优化、博客运维、网站搭建实操
-    │
-    └── study/                  # 英语学习笔记总目录
-        ├── idiom/              # 习语、俗语笔记
-        ├── word/               # 单词、词汇笔记
-        └── movie/              # 影视台词+词汇笔记
 ```
 
 ---
@@ -121,8 +108,6 @@ source
 - **实战项目**：单一领域完整落地工程、项目架构、复盘踩坑记录，存放对应领域下 xxx\-project 目录；跨领域综合大型项目统一归全局 project 目录；零散代码Demo、知识点测试代码归属原技术目录
 
 - **站点搭建**：所有个人博客、网站搭建、部署配置、主题改造、运维优化内容，统一归 site 目录
-
-- **英语学习**：所有英语词汇、语法、口语、刷题、备考、电影台词、影视词汇、复盘等英语相关学习笔记，统一归 study 目录
 
 ### 1\. cpp 目录规范
 
@@ -183,16 +168,6 @@ source
 ### 11\. site 目录规范
 
 收录Hexo及个人网站搭建、环境部署、主题配置、插件使用、网站优化、博客日常运维等站点相关实操内容。
-
-### 12\. study 目录规范
-
-收录英语学习相关内容，包含词汇、语法、句式、刷题、备考、电影台词、影视词汇、学习复盘等所有英语类笔记。
-
-- **idiom**：习语、俗语类笔记
-
-- **word**：单词、词汇类笔记
-
-- **movie**：影视台词、影视词汇类笔记
 
 ---
 
@@ -260,71 +235,11 @@ tech/ic/ic-book/
 
 - network\-config\-operation\.md
 
-### study 英语笔记专属命名规范
-
-#### study/idiom（习语笔记）
-
-格式：`分类-主题.md`
-
-- daily\-idiom\.md
-
-- animal\-idiom\.md
-
-- food\-idiom\.md
-
-#### study/word（词汇笔记）
-
-词汇合集：`分类-主题.md`；单个重点单词：`单词名.md`
-
-- body\-word\.md
-
-- travel\-word\.md
-
-- phrasal\-verb\.md
-
-- hair\.md
-
-- hand\.md
-
-#### study/movie（影视笔记）
-
-格式：`影片英文原名.md`
-
-- forrest\-gump\.md
-
-- titanic\.md
-
-- zootopia\.md
-
 ### assets/images 图片资源命名与引用规范
 
 命名格式：`笔记名-序号.后缀`，目录已区分板块，不重复加前缀
 
 引用格式：Hexo 绝对路径引用（写 `/assets/...`；由 `_config.yml` 中 `markdown.images.prepend_root: true` 自动加站点 `root`）
-
-#### assets/images/study/idiom 示例
-
-- daily\-idiom\-01\.png
-
-- animal\-idiom\-01\.jpg
-
-引用示例：`![配图](/assets/images/study/idiom/daily-idiom-01.png)`
-
-#### assets/images/study/word 示例
-
-- hair\-01\.png
-
-- body\-word\-01\.png
-
-引用示例：`![配图](/assets/images/study/word/hair-01.png)`
-
-#### assets/images/study/movie 示例
-
-- forrest\-gump\-01\.jpg
-
-- titanic\-01\.png
-
-引用示例：`![配图](/assets/images/study/movie/forrest-gump-01.jpg)`
 
 ### downloads/code 代码资源命名与引用规范
 
@@ -334,7 +249,7 @@ tech/ic/ic-book/
 
 - **独立工程代码**：project 目录下不属于任何笔记的完整工程，可使用语义化命名
 
-代码资源统一存放于 `downloads/code`，目录镜像规则：1:1 复刻 `_posts` 真实目录，完整镜像一、二级目录；仅 cpp、study 存在的三级业务目录同步镜像，其余领域不新建空目录。采用 include\_code 插件绝对路径引入代码。
+代码资源统一存放于 `downloads/code`，目录镜像规则：1:1 复刻 `_posts` 真实目录，完整镜像一、二级目录；仅 cpp 存在的三级业务目录同步镜像，其余领域不新建空目录。采用 include\_code 插件绝对路径引入代码。
 
 #### 技术代码示例（downloads/code/tech/cpp/basic）
 
@@ -343,12 +258,6 @@ tech/ic/ic-book/
 - cpp\-basic\-class\-01\.c
 
 引入示例：`{% include_code downloads/code/tech/cpp/basic/cpp-basic-stl-01.c lang:c %}`
-
-#### 英语代码示例（downloads/code/study）
-
-- daily\-idiom\-01\.py
-
-引入示例：`{% include_code downloads/code/study/daily-idiom-01.py lang:python %}`
 
 ### 代码目录镜像强制规则
 
@@ -360,7 +269,7 @@ tech/ic/ic-book/
 
 - 镜像原则：**完全跟随 \_posts 真实目录结构**，有则镜像、无则不建，1:1 复刻
 
-- 适配范围：tech 下 cpp 全部三级业务目录、study 全部二级子目录，全额镜像
+- 适配范围：tech 下 cpp 全部三级业务目录，全额镜像
 
 - 冗余规避：无三级子目录的领域（io/process/thread/memory/linux等），不强行新建空目录，保持简洁
 
@@ -408,10 +317,6 @@ tech/ic/ic-book/
 
 - hexo、blog\-build、blog\-config、deploy、theme、plugin
 
-#### study 英语类
-
-- english、idiom、vocabulary、movie\-line
-
 ### 标签搭配规则
 
 - 主标签：固定归属领域标签（唯一）
@@ -427,10 +332,6 @@ tech/ic/ic-book/
 - IO 多路复用笔记：`tags: [io, epoll, network]`
 
 - Linux 运维笔记：`tags: [linux, shell]`
-
-- 英语习语笔记：`tags: [english, idiom]`
-
-- 影视台词笔记：`tags: [english, movie-line]`
 
 - 数字电路笔记：`tags: [ic, digital-circuit]`
 
