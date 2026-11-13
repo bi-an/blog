@@ -188,166 +188,6 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
-    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/15/tech/concurrent/reference-counting-aba/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="bi-an">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="江南人物的博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/blog/2025/09/15/tech/concurrent/reference-counting-aba/" class="post-title-link" itemprop="url">基于引用计数的 ABA 消除机制</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2025-09-15 20:23:48" itemprop="dateCreated datePublished" datetime="2025-09-15T20:23:48+00:00">2025-09-15</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-10-21 09:42:53" itemprop="dateModified" datetime="2026-10-21T09:42:53+00:00">2026-10-21</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/blog/categories/concurrent/" itemprop="url" rel="index"><span itemprop="name">concurrent</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1>前言</h1>
-<p>源码：<a target="_blank" rel="noopener" href="https://github.com/cameron314/concurrentqueue">https://github.com/cameron314/concurrentqueue</a></p>
-<p>原文<br>
-：<a target="_blank" rel="noopener" href="https://moodycamel.com/blog/2014/solving-the-aba-problem-for-lock-free-free-lists">Solving the ABA Problem for Lock-Free Free Lists</a></p>
-<h2 id="共识">共识</h2>
-<ul>
-<li>CAS 足以保证线程安全；</li>
-<li>我们要做的是消除 CAS 的 ABA 问题。</li>
-</ul>
-<h2 id="常见的解决方案">常见的解决方案</h2>
-<h3 id="Tagged-versioned-指针">Tagged / versioned 指针</h3>
-<p>每次修改 head 的同时也变更一个版本号（tag/version），把 (pointer, version) 当作 CAS 的对象。即使指针<br>
-回到同一个 A，只要版本号不同，CAS 就会失败，防止 ABA。</p>
-<p>缺点包括：在某些机器上需要双字宽度（两个 word）CAS，如果 硬件 / 编译器 / 平台 不支持就只能 模拟 / 锁<br>
-住；或者要压缩 pointer 或 tag 大小，可能限制可管理的节点数量 / 地址空间。</p>
-<h3 id="LL-SC（Load-Linked-Store-Conditional）原语">LL/SC（Load-Linked / Store-Conditional）原语</h3>
-<p>在支持 LL/SC 的架构上，它自然就可以阻止 ABA：因为 store-conditional 会检测在 load 和 store 之间地址<br>
-是否被“写过”，哪怕写了后来改回原来的值也不行。缺点是很多主流架构（尤其 x86）不支持或者支持有限。</p>
-<h2 id="作者的方法：以引用计数＋“should-be-on-freelist”标志（标志-引用计数）">作者的方法：以引用计数＋“should be on freelist”标志（标志 + 引用计数）</h2>
-<p>作者提出了一个适用于 free list 的通用方法来避免 ABA，且保持 lock‐free 特性。</p>
-<p>提示：该代码应该从 <code>try_get()</code> 开始阅读，然后回到 <code>add()</code> ，这样才能理解设计引用计数的意图，否则很容<br>
-易迷惑。</p>
-<ul>
-<li>引用计数是状态标志：
-<ul>
-<li>表示当前有多少线程正在操作节点；</li>
-<li><strong>空闲链表本身也持有一个对节点的引用计数</strong>。</li>
-</ul>
-</li>
-<li>任何线程尝试摘取空闲链表的节点（总是从头部开始）时（<code>try_get()</code>）：
-<ul>
-<li>必须先增加 head 的引用计数（不同线程可能并发地将节点的引用计数增加到某个值）；→ <code>(3)</code></li>
-<li>next = head-&gt;next；</li>
-<li>然后 CAS 竞争，尝试将 freeListHead 调整为 next；
-<ul>
-<li>如果 CAS 竞争成功，则成功将 freeListHead 调整为 next，该节点被摘下；引用计数减 2（自己增加 的<br>
-引用计数 + 链表本身持有的引用计数），我们称该线程为<code>线程 1</code>。→ <code>(1)</code></li>
-<li>如果 CAS 竞争失败，则回退：将自己所增加的引用计数减去；用 CAS 返回的新的 head 重试（下一次获取<br>
-新的 head 节点），这是<code>线程 2</code>；→ <code>(2)</code></li>
-<li>注意：这两步之间以及每一步自身内，对引用计数的操作都有中间状态，但是此时引用计数必然大于 0 （<br>
-<strong>重点！</strong> ）。</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><strong>ABA 问题</strong>：如果成功摘取节点的<code>线程 1</code>完成节点的使用，将节点又添加回空闲链表（<code>add()</code>）：
-<ul>
-<li>它会发现某个线程正在第 <code>(2)</code> 步的回退过程中（还没有将自身增加的引用计数减回去），所以此时引用计<br>
-数还是大于 0（也就是说<code>线程 1</code>使用该节点的整个过程，该节点的引用计数都是大于 0 的，但是不影响）<br>
-。</li>
-<li>此时它可以选择自旋地等待引用计数降为 0 （即所有之前在 <code>try_get()</code> 中 CAS 竞争失败的线程（<br>
-如<code>线程 2</code>）回退成功）。因为只有引用计数降为 0 了，才能说明自己是唯一一个尝试在链表上操作该节点<br>
-的线程。但是这从技术上说，就是一个 lock。</li>
-<li>作者设计了一个更聪明的办法：<code>add()</code> 设置一个 <code>SHOULD_BE_ON_FREELIST</code> 标志，然后直接放弃<br>
-（<code>add()</code>的任务已经完成了）。</li>
-<li>让处于回退中的 <code>线程 2</code>，在回退结束的时候，检查 <code>SHOULD_BE_ON_FREELIST</code> 标志，如果有该标志，并且<br>
-自己就是最后一个操作该节点的线程的话（即此时的引用计数已经降为 0 了），就帮助 <code>add()</code> 把该节点添<br>
-加到 free list。</li>
-</ul>
-</li>
-</ul>
-<h3 id="引用计数">引用计数</h3>
-<p>现在我们回过头来看引用计数的作用：</p>
-<ul>
-<li>
-<p>如果 <code>refs &gt; 0</code>：</p>
-<ul>
-<li>(1) 要么该节点在链表上；</li>
-<li>(2) 要么有线程正在操作该节点（准确来讲，是在 <code>try_get()</code>）；</li>
-<li>(3) 要么以上两种情况同时存在。</li>
-<li>注：(1)(2) 可以只存在一种，见上面的 ABA 问题的描述。</li>
-</ul>
-</li>
-<li>
-<p>如果 <code>refs == 0</code>：</p>
-<ul>
-<li>节点已经被从空闲链表上取下；</li>
-<li>并且其他线程都已经从 <code>try_get()</code> 成功回退了。</li>
-</ul>
-</li>
-</ul>
-<p>如果第三个线程，与<code>线程 1</code>、<code>线程 2</code>一起进入上面的 <code>try_get()</code> 竞争，但是当<code>线程 3</code>即将执行步<br>
-骤<code>(3)</code>时，发现 <code>refs == 0</code>，它就不能够再增加 head 的引用计数了，因为节点已经被成功取下。否则当它成<br>
-功增加引用计数，再去拿取 head-&gt;next 的时候，是未定义行为。</p>
-<p>正是基于此，在步骤<code>(3)</code>增加引用计数的时候，我们需要判断 <code>refs == 0 ?</code> 和使用 CAS 增加引用计数，如果<br>
-不符合预期，则放弃增加，进入下一轮重试。</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> ((refs &amp; REFS_MASK) == <span class="number">0</span> || !head-&gt;freeListRefs.<span class="built_in">compare_exchange_strong</span>(refs, refs + <span class="number">1</span>, std::memory_order_acquire)) &#123;</span><br><span class="line">	head = freeListHead.<span class="built_in">load</span>(std::memory_order_acquire);</span><br><span class="line">	<span class="keyword">continue</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
     <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/09/15/tech/concurrent/aba-problem/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -379,7 +219,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-10-21 09:42:53" itemprop="dateModified" datetime="2026-10-21T09:42:53+00:00">2026-10-21</time>
+                <time title="Modified: 2026-11-13 07:04:12" itemprop="dateModified" datetime="2026-11-13T07:04:12+00:00">2026-11-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -501,7 +341,7 @@ GC 是在链表队列里用来避免这种 悬空引用 + ABA 的。</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-10-21 09:42:53" itemprop="dateModified" datetime="2026-10-21T09:42:53+00:00">2026-10-21</time>
+                <time title="Modified: 2026-11-13 07:04:12" itemprop="dateModified" datetime="2026-11-13T07:04:12+00:00">2026-11-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -594,7 +434,7 @@ GC 是在链表队列里用来避免这种 悬空引用 + ABA 的。</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-10-21 09:42:53" itemprop="dateModified" datetime="2026-10-21T09:42:53+00:00">2026-10-21</time>
+                <time title="Modified: 2026-11-13 07:04:12" itemprop="dateModified" datetime="2026-11-13T07:04:12+00:00">2026-11-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -756,7 +596,7 @@ CAS），前提是在此期间头部块没有发生变化。为了避免 ABA 问
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-10-21 09:42:53" itemprop="dateModified" datetime="2026-10-21T09:42:53+00:00">2026-10-21</time>
+                <time title="Modified: 2026-11-13 07:04:12" itemprop="dateModified" datetime="2026-11-13T07:04:12+00:00">2026-11-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -886,7 +726,7 @@ fetch_add 不是一个原子操作，而是三个：load, add, store. 所以不�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-10-21 09:42:53" itemprop="dateModified" datetime="2026-10-21T09:42:53+00:00">2026-10-21</time>
+                <time title="Modified: 2026-11-13 07:04:12" itemprop="dateModified" datetime="2026-11-13T07:04:12+00:00">2026-11-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1304,7 +1144,7 @@ psync 是同步写入，每次调用 pwrite()，适合模拟数据库或日志�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-10-21 09:42:53" itemprop="dateModified" datetime="2026-10-21T09:42:53+00:00">2026-10-21</time>
+                <time title="Modified: 2026-11-13 07:04:12" itemprop="dateModified" datetime="2026-11-13T07:04:12+00:00">2026-11-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1380,7 +1220,7 @@ psync 是同步写入，每次调用 pwrite()，适合模拟数据库或日志�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-10-21 09:42:53" itemprop="dateModified" datetime="2026-10-21T09:42:53+00:00">2026-10-21</time>
+                <time title="Modified: 2026-11-13 07:04:12" itemprop="dateModified" datetime="2026-11-13T07:04:12+00:00">2026-11-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1556,7 +1396,7 @@ psync 是同步写入，每次调用 pwrite()，适合模拟数据库或日志�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-10-21 09:42:53" itemprop="dateModified" datetime="2026-10-21T09:42:53+00:00">2026-10-21</time>
+                <time title="Modified: 2026-11-13 07:04:12" itemprop="dateModified" datetime="2026-11-13T07:04:12+00:00">2026-11-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1874,7 +1714,7 @@ psync 是同步写入，每次调用 pwrite()，适合模拟数据库或日志�
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2026-10-21 09:42:53" itemprop="dateModified" datetime="2026-10-21T09:42:53+00:00">2026-10-21</time>
+                <time title="Modified: 2026-11-13 07:04:12" itemprop="dateModified" datetime="2026-11-13T07:04:12+00:00">2026-11-13</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -2566,10 +2406,215 @@ libc 层。</strong></p>
   
   
 
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en, zh_CN">
+    <link itemprop="mainEntityOfPage" href="https://bi-an.github.io/blog/2025/08/21/tech/dmtcp/dmtcp-memory-management-jalib/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="bi-an">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="江南人物的博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2025/08/21/tech/dmtcp/dmtcp-memory-management-jalib/" class="post-title-link" itemprop="url">DMTCP 之内存管理 (jalib)</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-08-21 09:59:55" itemprop="dateCreated datePublished" datetime="2025-08-21T09:59:55+00:00">2025-08-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-11-13 07:04:12" itemprop="dateModified" datetime="2026-11-13T07:04:12+00:00">2026-11-13</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/dmtcp/" itemprop="url" rel="index"><span itemprop="name">dmtcp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="源码">源码</h2>
+<p><a target="_blank" rel="noopener" href="https://github.com/dmtcp/dmtcp/tree/main/jalib">https://github.com/dmtcp/dmtcp/tree/main/jalib</a></p>
+<h2 id="malloc-的特性和局限">malloc 的特性和局限</h2>
+<p><code>malloc</code>/<code>free</code> 是操作系统（或 C 库）提供的通用堆分配器。</p>
+<ul>
+<li>它通常会采用 “内存池 + 分块 + 空闲链表” 等技术，但它为了通用性和线程安全，设计得很复杂，开销较大。</li>
+<li>在高并发 / 频繁小块分配释放的场景下，<code>malloc</code> 的性能和碎片控制未必理想。</li>
+</ul>
+<p><code>malloc</code> 很难让你：</p>
+<ul>
+<li>控制分配内存的位置（如 DMTCP 需要特殊内存区域）</li>
+<li>统计 / 追踪所有分配的内存块</li>
+<li>实现定制的分配策略（如无锁、分层小块池、预扩展等）</li>
+<li>轻松调试和隔离内存问题</li>
+</ul>
+<h3 id="内存碎片">内存碎片</h3>
+<p>malloc 的确在其实现内部也维护着自己的 “内存池”，并且会对小块内存（small bins/tcache/fast bins 等）做优化和分组管理。比如在 glibc 的 malloc（ptmalloc）中，就有针对小块内存的快速分配机制。</p>
+<ol>
+<li>
+<p>malloc 是 “通用分配器”<br>
+malloc 需要支持所有应用场景，包括大 / 小 / 奇异尺寸的分配、跨多线程、兼容各种系统调用和 ABI。<br>
+为了兼容性和健壮性，malloc 实现复杂，包含很多额外的元数据和检查，导致分配 / 释放开销更大。</p>
+</li>
+<li>
+<p>malloc 的小块管理是 “全局的”<br>
+malloc 管理的小块是全进程共享的，所有线程 / 模块都会竞争同一套管理结构（如 fastbin、tcache、small bin）。<br>
+在高并发、频繁小块分配 / 释放的场景下，锁竞争和同步成本变高，可能成为性能瓶颈。</p>
+</li>
+<li>
+<p>自定义分配器（如 jalib）“更窄、更专用”<br>
+jalib 只服务 DMTCP 内部的特殊内存分配需求，只关注固定几种典型的小块尺寸（如 64/256/1024…）。<br>
+可以用更简单、更高效的 “无锁链表 + 内存对齐块” 来管理池，分配和释放几乎都是 O(1)的原子操作。<br>
+不需要兼容所有 malloc 的场景（如 realloc、跨模块释放等），所以能极致优化。</p>
+</li>
+<li>
+<p>控制权和可观测性<br>
+jalib 可以完全掌控池的生命周期、分配区域、分配策略（如预扩展、定制回收），还可以追踪统计、调试。<br>
+malloc 的内部状态你无法直接控制或感知，也无法方便地和 DMTCP 的 checkpoint、回滚等功能集成。</p>
+</li>
+<li>
+<p>内存碎片和确定性<br>
+专用分配器能保证分配块 “定长、对齐”，几乎无碎片，分配和回收都是确定性的。<br>
+malloc 需要兼容各种尺寸，碎片和内存抖动不可避免。</p>
+</li>
+</ol>
+<h2 id="jalib（自定义分配器）的设计动机">jalib（自定义分配器）的设计动机</h2>
+<h3 id="性能优化">性能优化</h3>
+<ul>
+<li>DMTCP 频繁地分配和释放小块内存（如元数据、临时缓存等），如果每次都用 malloc，性能损耗大。</li>
+<li>jalib 采用分级固定块池，每次分配 / 释放只需操作链表和原子变量，比 malloc 更快、更少碎片。</li>
+</ul>
+<h3 id="线程安全的高效实现">线程安全的高效实现</h3>
+<ul>
+<li>jalib 用无锁（128 位 CAS）或轻量级互斥方案，适合高并发分配 / 释放。</li>
+<li>malloc 虽然线程安全，但实现方式更重，适用范围更广，未必最优。</li>
+</ul>
+<h3 id="可控性和可追踪性">可控性和可追踪性</h3>
+<ul>
+<li>jalib 可以统计分配次数、追踪所有内存池区，方便调试、分析和 checkpoint 恢复。</li>
+<li>可根据实际需求预分配或批量扩展，避免运行时大规模内存抖动。</li>
+</ul>
+<h3 id="适应-DMTCP-的特殊需求">适应 DMTCP 的特殊需求</h3>
+<ul>
+<li>DMTCP 需要在 checkpoint/restore 时管理所有内存区域，jalib 可以定制分配区域、分配方式，malloc 无法满足。</li>
+<li>可实现特定平台的优化，如 mmap 固定地址分配等。</li>
+</ul>
+<h3 id="故障隔离和调试">故障隔离和调试</h3>
+<ul>
+<li>jalib 可以在有 bug 或内存泄漏时，帮助定位具体的分配 / 释放流程。</li>
+<li>可以方便地记录所有 arena 信息，甚至实现特殊的调试模式。</li>
+</ul>
+<h3 id="总结">总结</h3>
+<p>虽然 malloc 也是内存池管理，但它是为通用用途设计的，不能满足 DMTCP 这类高性能、高可控性、特殊内存管理需求场景。自定义 jalib 分配器可以更高效地管理小块内存，优化多线程性能，便于调试和适配特定需求。</p>
+<p>可以归纳为三点：</p>
+<ul>
+<li>性能更高，碎片更少</li>
+<li>更好地适应 DMTCP 的需求</li>
+<li>更易于调试和控制</li>
+</ul>
+<h2 id="jalloc-设计思路">jalloc 设计思路</h2>
+<h3 id="多层级固定大小块分配（层级分配器）">多层级固定大小块分配（层级分配器）</h3>
+<ul>
+<li>设计了 5 个分配层级（lvl1~lvl5），每层负责不同大小的定长内存块（如 64、256、1024、4096、16384 字节）。</li>
+<li>小于等于这 5 个等级的分配请求，会被分配到各自的层级。</li>
+<li>超过最大层级的请求，则直接调用 <code>_alloc_raw</code>（通常是 <code>mmap</code>）。</li>
+</ul>
+<p>优点：</p>
+<ul>
+<li>小块内存可以复用，减少系统调用和碎片。</li>
+<li>大块内存仍可直接用系统接口，兼顾通用性。</li>
+</ul>
+<h3 id="固定块分配器-JFixedAllocStack">固定块分配器 JFixedAllocStack</h3>
+<p>每个层级对应一个 <code>JFixedAllocStack&lt;N&gt;</code>，其核心是无锁栈式管理：</p>
+<ul>
+<li>内部维护一个空闲块栈（LIFO 链表）。</li>
+<li>allocate 时从栈取出一个空闲块，栈空时调用 expand 申请一批新块。</li>
+<li>deallocate 时将块归还到栈顶。</li>
+</ul>
+<p>核心技术点</p>
+<ul>
+<li>
+<p>原子双字比较交换（128 位 CAS）</p>
+<p>为了线程安全，栈顶指针 _top 需要原子更新。这里用到了 128 位 CAS（Compare-And-Swap），保证 node 指针和计数器同时更新，避免 ABA 问题。</p>
+</li>
+<li>
+<p>CAS 不可用时的降级方案</p>
+<p>对于不支持 128 位原子操作的平台，采用 futex+memcpy 的方式手动实现互斥和原子性。</p>
+</li>
+</ul>
+<h3 id="线程安全设计">线程安全设计</h3>
+<p>分配和释放都用原子操作保护，无需锁，性能高。<br>
+多线程环境下不会出现竞争条件或内存破坏。</p>
+<h3 id="Arena-记录和调试">Arena 记录和调试</h3>
+<p>分配的内存区域（arena）可以记录到全局数组中，方便调试和统计。<br>
+通过 <code>JAlloc::getAllocArenas()</code> 可获得分配区域列表。</p>
+<h3 id="全局-new-delete-重载（可选）">全局 new/delete 重载（可选）</h3>
+<p>如果定义了 <code>OVERRIDE_GLOBAL_ALLOCATOR</code>，会重载 <code>operator new</code> 和 <code>operator delete</code>，让全局 <code>new</code>/<code>delete</code> 也用这个分配器。</p>
+<h3 id="灵活切换">灵活切换</h3>
+<p>可以通过宏 <code>JALIB_ALLOCATOR</code> 切换：</p>
+<ul>
+<li>启用时用自定义分配器</li>
+<li>否则回退为标准 malloc/free</li>
+</ul>
+<h3 id="总结-2">总结</h3>
+<p>本内存分配器的设计核心在于：</p>
+<ul>
+<li>采用多级固定块内存池 + 无锁算法，高效服务于小块高频分配 / 释放；</li>
+<li>通过 128 位原子操作或 futex 确保并发安全，适用多平台；</li>
+<li>提供 arena 管理和统计，方便调试与维护；</li>
+<li>兼容传统分配方式，易于集成和切换。</li>
+</ul>
+<p>这种设计非常适合像 DMTCP 这样对性能和内存管理有特殊要求的系统级软件。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/blog/page/5/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/5/">5</a><span class="page-number current">6</span><a class="page-number" href="/blog/page/7/">7</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/16/">16</a><a class="extend next" rel="next" href="/blog/page/7/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+    <a class="extend prev" rel="prev" href="/blog/page/5/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/blog/">1</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/5/">5</a><span class="page-number current">6</span><a class="page-number" href="/blog/page/7/">7</a><span class="space">&hellip;</span><a class="page-number" href="/blog/page/15/">15</a><a class="extend next" rel="next" href="/blog/page/7/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -2637,20 +2682,20 @@ libc 层。</strong></p>
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">153</span>
+          <span class="site-state-item-count">147</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/blog/categories/">
           
-        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-count">17</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/blog/tags/">
           
-        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-count">42</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
