@@ -3,13 +3,12 @@ title: vscode 使用
 date: 2024-01-24 17:26:44
 categories: site
 tags:
- - hexo
- - blog-build
- - blog-config
- - deploy
- - theme
+  - hexo
+  - blog-build
+  - blog-config
+  - deploy
+  - theme
 ---
-
 
 ## 减少 VSCode 磁盘占用
 
@@ -50,19 +49,21 @@ tags:
 - `KoroFileHeader`: 参考 [这里](https://zhuanlan.zhihu.com/p/610490070)。
 - 打开大文件
   - `BigView`
-  	- 加载流畅
-  	- 搜索语法类似 VSCode
-  	- 可以像 VSCode `Text Editor` 一样，在右下角设置高亮语法
+    - 加载流畅
+    - 搜索语法类似 VSCode
+    - 可以像 VSCode `Text Editor` 一样，在右下角设置高亮语法
+    - 只读
   - `Maximus`
-  	- 加载 3 s 左右
-  	- 搜索语法有些不一样
-  	- 不能设置高亮语法
+    - 加载 3 s 左右
+    - 搜索语法有些不一样
+    - 不能设置高亮语法
+    - 可编辑
   - `Open Log Viewer`
-  	- 第一次打开很慢
-  	- 分页
-  	- 美观
-  	- 具备统计功能
-  	- 只支持 .log 和 .txt，其他文件后缀名需要使用 `Command Palette` 手动打开
+    - 第一次打开很慢
+    - 分页
+    - 美观
+    - 具备统计功能
+    - 只支持 .log 和 .txt，其他文件后缀名需要使用 `Command Palette` 手动打开
 
 ## 实用配置
 
@@ -169,7 +170,6 @@ cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
 就会在构建目录中生成该文件
 
 Bear 工具：适用于非 CMake 项目（如 Makefile），通过拦截编译命令生成该文件
-
 
 ## 标签页高亮
 
